@@ -11,12 +11,12 @@ const LANGS=[{code:'cs',label:'Čeština'},{code:'en',label:'English'},{code:'de
 
 export default function App(){
   const [screen,setScreen]=useState('lobby')
-  const [mode,setMode]=useState('x01')          // x01 | cricket | around | shanghai (scaffold)
+  const [mode,setMode]=useState('x01')
   const [startScore,setStartScore]=useState(501)
-  const [doubleOut,setDoubleOut]=useState(true)  // u X01
+  const [doubleOut,setDoubleOut]=useState(true)
   const [lang,setLang]=useState(((navigator.language||'cs').slice(0,2))||'cs')
   const [soundOn,setSoundOn]=useState(true)
-  const [ai,setAi]=useState('off')              // off | easy | medium | hard (bot je poslední hráč)
+  const [ai,setAi]=useState('off')
   const [randomOrder,setRandomOrder]=useState(false)
 
   const [players,setPlayers]=useState([
@@ -24,18 +24,37 @@ export default function App(){
     {id:uid(),name:'Mirek',color:colors[1], remaining:startScore, darts:[], legs:0},
   ])
   const [current,setCurrent]=useState(0)
-  const [buffer,setBuffer]=useState([])          // aktuální 3 šipky
-  const [history,setHistory]=useState([])        // uzavřené tahy
-  const [mult,setMult]=useState(1)               // 1/2/3 = S/D/T
+  const [buffer,setBuffer]=useState([])
+  const [history,setHistory]=useState([])
+  const [mult,setMult]=useState(1)
 
-  // Zvuk
   const hitRef=useRef(null)
-  useEffect(()=>{ const a=new Audio('/dart-hit.mp3'); a.preload='auto'; a.oncanplay=()=>hitRef.current=a; a.onerror=()=>hitRef.current='fallback'; a.load(); },[])
-  const playHit=()=>{ if(!soundOn) return; const r=hitRef.current; if(r&&r.play){ r.currentTime=0; r.play().catch(()=>{}); } }
-  const speakTotal=(total)=>{ if(!soundOn || !('speechSynthesis' in window))return; const u=new SpeechSynthesisUtterance((lang==='cs'?'Celkem ':'Total ')+total); u.lang=lang; u.rate=1.05; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u); }
+  useEffect(()=>{ 
+    const a=new Audio('/dart-hit.mp3'); 
+    a.preload='auto'; 
+    a.oncanplay=()=>hitRef.current=a; 
+    a.onerror=()=>hitRef.current='fallback'; 
+    a.load(); 
+  },[])
+  const playHit=()=>{ 
+    if(!soundOn) return; 
+    const r=hitRef.current; 
+    if(r&&r.play){ r.currentTime=0; r.play().catch(()=>{}); } 
+  }
+  const speakTotal=(total)=>{ 
+    if(!soundOn || !('speechSynthesis' in window))return; 
+    const u=new SpeechSynthesisUtterance((lang==='cs'?'Celkem ':'Total ')+total); 
+    u.lang=lang; 
+    u.rate=1.05; 
+    window.speechSynthesis.cancel(); 
+    window.speechSynthesis.speak(u); 
+  }
 
-  // Lobby → drž stejné startovní skóre
-  useEffect(()=>{ if(screen==='lobby'){ setPlayers(ps=>ps.map(p=>({...p,remaining:startScore,darts:[]}))) } },[startScore,screen])
+  useEffect(()=>{ 
+    if(screen==='lobby'){ 
+      setPlayers(ps=>ps.map(p=>({...p,remaining:startScore,darts:[]}))) 
+    } 
+  },[startScore,screen])
 
   const sum = a => a.reduce((s,x)=>s+x,0)
 
@@ -43,7 +62,6 @@ export default function App(){
     const after = remainBefore - value
     if(after<0) return {ok:false,bust:true}
     if(after>0) return {ok:true,bust:false}
-    // after === 0
     if(mode!=='x01') return {ok:true,bust:false}
     if(!doubleOut)  return {ok:true,bust:false}
     const isDouble = notation.startsWith('D') || value===50
@@ -57,7 +75,6 @@ export default function App(){
     setBuffer([]); setHistory([]); setCurrent(0); setScreen('game')
   }
 
-  // Vstup z Keypadu
   function onNumber(n){
     const val = (n===25? (mult===1?25:50) : n*mult)
     const notation=(mult===1?'S':mult===2?'D':'T')+n
@@ -79,7 +96,6 @@ export default function App(){
     }
     const nb=[...buffer,value]; setBuffer(nb)
 
-    // Zavření (X01)
     if(mode==='x01' && before - value === 0){
       const total = sum(nb)
       speakTotal(total)
@@ -91,7 +107,6 @@ export default function App(){
       return
     }
 
-    // Po 3. šipce uzavři tah
     if(nb.length>=3){
       const total = sum(nb)
       setPlayers(ps=>ps.map((x,i)=> i===current ? {...x, remaining: mode==='x01'? x.remaining-total : x.remaining, darts:[...x.darts,...nb]} : x ))
@@ -105,13 +120,11 @@ export default function App(){
   function next(){
     const idx=(current+1)%players.length
     setCurrent(idx)
-    // Robot = poslední hráč, když zapnutý
     if(ai!=='off' && idx===players.length-1){
       setTimeout(()=>{ 
         for(let i=0;i<3;i++){
-          const t=botThrow(ai,20) // jednoduchý cíl; později chytřejší
+          const t=botThrow(ai,20)
           const val = t.value, notation = t.notation
-          // voláme enter sekvenčně s malou prodlevou
           setTimeout(()=>enter(notation,val), i*160)
         }
       },220)
@@ -135,7 +148,6 @@ export default function App(){
   }
   function deletePlayer(i){ setPlayers(ps=>ps.filter((_,ix)=>ix!==i)) }
 
-  // Statistiky
   const statsToday = aggregate(1).totals
   const stats7     = aggregate(7).totals
   const stats30    = aggregate(30).totals
@@ -143,7 +155,6 @@ export default function App(){
 
   return (
     <div className="container">
-      {/* Horní lišta */}
       <header className="header">
         <div className="logo"><span className="dart"></span><span>DartScore Pro</span></div>
         <div className="row">
@@ -154,7 +165,6 @@ export default function App(){
         </div>
       </header>
 
-      {/* Reklamní pás (placeholder) */}
       <div className="adstrip">
         <div className="adcard">AdMob banner (placeholder)</div>
         <div className="adcard">Ad</div><div className="adcard">Ad</div>
@@ -163,7 +173,6 @@ export default function App(){
       {screen==='lobby' ? (
         <div className="card">
           <div className="row wrap" style={{justifyContent:'space-between'}}>
-            {/* Hráči */}
             <div className="card" style={{flex:'1 1 320px'}}>
               <h3>Hráči</h3>
               {players.map((p,i)=>(
@@ -181,7 +190,6 @@ export default function App(){
               <button className="btn" onClick={()=>setPlayers(ps=>[...ps,{id:uid(),name:`Player ${ps.length+1}`,color:colors[ps.length%colors.length],remaining:startScore,darts:[],legs:0}])}>+ Přidat hráče</button>
             </div>
 
-            {/* Nastavení */}
             <div className="card" style={{flex:'1 1 260px'}}>
               <h3>Nastavení</h3>
               <div className="row wrap">
@@ -215,7 +223,6 @@ export default function App(){
               </div>
             </div>
 
-            {/* Statistiky */}
             <div className="card" style={{flex:'1 1 220px'}}>
               <h3>Statistiky</h3>
               <div className="kpi">
@@ -233,4 +240,32 @@ export default function App(){
           </details>
 
           <div className="row" style={{justifyContent:'space-between'}}>
-            <span c
+            <span className="badge">Po 3. šipce se přepne hráč automaticky.</span>
+            <button className="btn green" onClick={startGame}>▶ Start hry</button>
+          </div>
+        </div>
+      ) : (
+        <div className="card">
+          <div className="row wrap" style={{justifyContent:'space-between',marginBottom:8}}>
+            {players.map((p,idx)=>(
+              <div key={p.id} className={'player '+(idx===current?'active':'')} style={{flex:'1 1 200px', borderLeft:`6px solid ${p.color}`}}>
+                <div className="row" style={{justifyContent:'space-between'}}>
+                  <strong>{p.name}</strong>
+                  <span className="score">{p.remaining}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Keypad
+            onNumber={onNumber}
+            onMiss={onMiss}
+            onBack={onBack}
+            onDouble={onDouble}
+            onTriple={onTriple}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
