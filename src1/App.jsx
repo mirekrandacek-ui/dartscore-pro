@@ -1,149 +1,236 @@
-import React, { useEffect, useState } from 'react'
-import { t, getLang, setLang } from './i18n'
+import React, { useEffect, useRef, useState } from 'react'
+import './app.css'
+import Keypad from './ui/Keypad.jsx'
+import { RULES } from './rules'
+import { botThrow } from './bots'
+import { aggregate, saveGame } from './stats'
 
 function uid(){ return Math.random().toString(36).slice(2,9) }
+const colors = ['#22c55e','#3b82f6','#ef4444','#16a34a','#8b5cf6','#14b8a6','#e11d48','#f59e0b']
+const LANGS=[{code:'cs',label:'Čeština'},{code:'en',label:'English'},{code:'de',label:'Deutsch'},{code:'ru',label:'Русский'},{code:'nl',label:'Nederlands'},{code:'es',label:'Español'}]
 
 export default function App(){
-  const [players,setPlayers] = useState([{id:uid(),name:'Player 1',remaining:501,scores:[]},{id:uid(),name:'Player 2',remaining:501,scores:[]}])
-  const [currentIdx,setCurrentIdx] = useState(0)
-  const [dartIdx,setDartIdx] = useState(1)
-  const [buffer,setBuffer] = useState([])
-  const [adsRemoved,setAdsRemoved] = useState(()=>localStorage.getItem('ads_removed')==='1')
-  const [lang,setLangState] = useState(getLang())
+  const [screen,setScreen]=useState('lobby')
+  const [mode,setMode]=useState('x01')          // x01 | cricket | around | shanghai (scaffold)
+  const [startScore,setStartScore]=useState(501)
+  const [doubleOut,setDoubleOut]=useState(true)  // u X01
+  const [lang,setLang]=useState(((navigator.language||'cs').slice(0,2))||'cs')
+  const [soundOn,setSoundOn]=useState(true)
+  const [ai,setAi]=useState('off')              // off | easy | medium | hard (bot je poslední hráč)
+  const [randomOrder,setRandomOrder]=useState(false)
 
-  useEffect(()=>{
-    localStorage.setItem('ads_removed', adsRemoved?'1':'0')
-  },[adsRemoved])
+  const [players,setPlayers]=useState([
+    {id:uid(),name:'Pepa', color:colors[0], remaining:startScore, darts:[], legs:0},
+    {id:uid(),name:'Mirek',color:colors[1], remaining:startScore, darts:[], legs:0},
+  ])
+  const [current,setCurrent]=useState(0)
+  const [buffer,setBuffer]=useState([])          // aktuální 3 šipky
+  const [history,setHistory]=useState([])        // uzavřené tahy
+  const [mult,setMult]=useState(1)               // 1/2/3 = S/D/T
 
-  function addPlayer(){
-    setPlayers(p=>[...p,{id:uid(),name:'Player '+(p.length+1),remaining:501,scores:[]}])
+  // Zvuk
+  const hitRef=useRef(null)
+  useEffect(()=>{ const a=new Audio('/dart-hit.mp3'); a.preload='auto'; a.oncanplay=()=>hitRef.current=a; a.onerror=()=>hitRef.current='fallback'; a.load(); },[])
+  const playHit=()=>{ if(!soundOn) return; const r=hitRef.current; if(r&&r.play){ r.currentTime=0; r.play().catch(()=>{}); } }
+  const speakTotal=(total)=>{ if(!soundOn || !('speechSynthesis' in window))return; const u=new SpeechSynthesisUtterance((lang==='cs'?'Celkem ':'Total ')+total); u.lang=lang; u.rate=1.05; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u); }
+
+  // Lobby → drž stejné startovní skóre
+  useEffect(()=>{ if(screen==='lobby'){ setPlayers(ps=>ps.map(p=>({...p,remaining:startScore,darts:[]}))) } },[startScore,screen])
+
+  const sum = a => a.reduce((s,x)=>s+x,0)
+
+  function finishOk(remainBefore,value,notation){
+    const after = remainBefore - value
+    if(after<0) return {ok:false,bust:true}
+    if(after>0) return {ok:true,bust:false}
+    // after === 0
+    if(mode!=='x01') return {ok:true,bust:false}
+    if(!doubleOut)  return {ok:true,bust:false}
+    const isDouble = notation.startsWith('D') || value===50
+    return {ok:isDouble,bust:!isDouble}
   }
-  function setName(id,name){
-    setPlayers(ps=>ps.map(p=>p.id===id?{...p,name}:p))
+
+  function startGame(){
+    let order=[...players]
+    if(randomOrder) order.sort(()=>Math.random()-0.5)
+    setPlayers(order.map(p=>({...p,remaining: mode==='x01'?startScore:0, darts:[]})))
+    setBuffer([]); setHistory([]); setCurrent(0); setScreen('game')
   }
-  function sum(a){return a.reduce((s,x)=>s+x,0)}
-  function enterDart(score){
-    const p = players[currentIdx]
+
+  // Vstup z Keypadu
+  function onNumber(n){
+    const val = (n===25? (mult===1?25:50) : n*mult)
+    const notation=(mult===1?'S':mult===2?'D':'T')+n
+    enter(notation,val)
+  }
+  function onMiss(){ enter('0',0) }
+  function onBack(){ undo() }
+  function onDouble(){ setMult(2); setTimeout(()=>setMult(1),800) }
+  function onTriple(){ setMult(3); setTimeout(()=>setMult(1),800) }
+
+  function enter(notation,value){
+    const p=players[current]
     const before = p.remaining - sum(buffer)
-    const after = before - score
-    if(after<0){
-      // bust - end turn no change
-      finalizeTurn([], true)
+    playHit()
+    const check = finishOk(before,value,notation)
+    if(!check.ok && check.bust){
+      setHistory(h=>[...h,{player:p.name,darts:[...buffer,notation],total:0,bust:true,remaining:p.remaining}])
+      setBuffer([]); return next()
+    }
+    const nb=[...buffer,value]; setBuffer(nb)
+
+    // Zavření (X01)
+    if(mode==='x01' && before - value === 0){
+      const total = sum(nb)
+      speakTotal(total)
+      saveGame({mode:'x01', ppd: total/3, darts: nb.length})
+      setTimeout(()=>{ 
+        setPlayers(ps=>ps.map(x=>({...x,remaining:startScore,darts:[]})))
+        setBuffer([]); setCurrent((current+1)%players.length)
+      },200)
       return
     }
-    if(after===0){
-      // win leg - finalize
-      finalizeTurn([...buffer,score], false, true)
-      return
-    }
-    const newBuf = [...buffer, score]
-    setBuffer(newBuf)
-    if(newBuf.length>=3){
-      finalizeTurn(newBuf,false)
-    }else{
-      setDartIdx(newBuf.length+1)
-    }
-  }
-  function finalizeTurn(values, bust=false, win=false){
-    const i=currentIdx; const p=players[i]
-    if(!bust){
-      const total = sum(values)
-      setPlayers(ps=>ps.map((x,ix)=> ix===i?{...x,remaining:Math.max(0,x.remaining-total),scores:[...x.scores,...values]}:x))
-    }
-    setBuffer([])
-    setDartIdx(1)
-    if(!win){
-      setCurrentIdx(i=>(i+1)%players.length)
+
+    // Po 3. šipce uzavři tah
+    if(nb.length>=3){
+      const total = sum(nb)
+      setPlayers(ps=>ps.map((x,i)=> i===current ? {...x, remaining: mode==='x01'? x.remaining-total : x.remaining, darts:[...x.darts,...nb]} : x ))
+      setHistory(h=>[...h,{player:p.name,darts:nb,total,remaining: mode==='x01'? p.remaining-total : p.remaining}])
+      setBuffer([])
+      speakTotal(total)
+      next()
     }
   }
 
-  function keypadAdd(n){
-    n = Math.max(0, Math.min(60, n))
-    enterDart(n)
+  function next(){
+    const idx=(current+1)%players.length
+    setCurrent(idx)
+    // Robot = poslední hráč, když zapnutý
+    if(ai!=='off' && idx===players.length-1){
+      setTimeout(()=>{ 
+        for(let i=0;i<3;i++){
+          const t=botThrow(ai,20) // jednoduchý cíl; později chytřejší
+          const val = t.value, notation = t.notation
+          // voláme enter sekvenčně s malou prodlevou
+          setTimeout(()=>enter(notation,val), i*160)
+        }
+      },220)
+    }
   }
 
-  function changeLang(l){
-    setLang(l).then(()=>{
-      setLangState(l)
-      document.title = t('app_title')
-    })
+  function undo(){
+    if(buffer.length>0){ setBuffer(b=>b.slice(0,-1)); return }
+    const last=history[history.length-1]; if(!last) return
+    setHistory(h=>h.slice(0,-1))
+    const idx=(current-1+players.length)%players.length; setCurrent(idx)
+    setPlayers(ps=>ps.map((p,i)=> i===idx ? {
+      ...p,
+      remaining: p.remaining + (mode==='x01'?(last.total||0):0),
+      darts: p.darts.slice(0,-(last.darts?.length||0))
+    } : p))
   }
 
-  return <div style={{maxWidth:900, margin:'0 auto', padding:'16px 12px'}}>
-    <header style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12}}>
-      <h1 style={{margin:0}}>{t('app_title')}</h1>
-      <div style={{display:'flex',gap:8,alignItems:'center'}}>
-        <select value={lang} onChange={e=>changeLang(e.target.value)}>
-          <option value='cs'>Čeština</option>
-          <option value='en'>English</option>
-          <option value='de'>Deutsch</option>
-          <option value='ru'>Русский</option>
-          <option value='nl'>Nederlands</option>
-          <option value='es'>Español</option>
-        </select>
-        <button onClick={()=>alert('Share not implemented in this demo')}>{t('share')}</button>
-        <button onClick={()=>alert('History placeholder')}>{t('history')}</button>
-        <button onClick={()=>alert('Settings placeholder')}>{t('settings')}</button>
-      </div>
-    </header>
+  function movePlayer(i,dir){
+    setPlayers(ps=>{ const a=[...ps]; const j=i+dir; if(j<0||j>=a.length) return a; [a[i],a[j]]=[a[j],a[i]]; return a })
+  }
+  function deletePlayer(i){ setPlayers(ps=>ps.filter((_,ix)=>ix!==i)) }
 
-    <section style={{marginTop:12, display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
-      <div style={{background:'#111827',border:'1px solid #1f2937',borderRadius:12,padding:12}}>
-        <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}>
-          <strong>{t('players')}</strong>
-          <button onClick={addPlayer}>{t('add_player')}</button>
+  // Statistiky
+  const statsToday = aggregate(1).totals
+  const stats7     = aggregate(7).totals
+  const stats30    = aggregate(30).totals
+  const statsAll   = aggregate().totals
+
+  return (
+    <div className="container">
+      {/* Horní lišta */}
+      <header className="header">
+        <div className="logo"><span className="dart"></span><span>DartScore Pro</span></div>
+        <div className="row">
+          <select value={lang} onChange={e=>setLang(e.target.value)} className="input">
+            {LANGS.map(l=><option key={l.code} value={l.code}>{l.label}</option>)}
+          </select>
+          <button className="btn ghost" onClick={()=>setSoundOn(v=>!v)}>{soundOn?'🔊':'🔈'}</button>
         </div>
-        {players.map((p,idx)=>(
-          <div key={p.id} style={{display:'flex',alignItems:'center',gap:8, padding:8, borderRadius:10, background: idx===currentIdx?'#0f766e33':'#0b132033', marginBottom:8}}>
-            <input value={p.name} onChange={e=>setName(p.id,e.target.value)} />
-            <div style={{marginLeft:'auto', textAlign:'right'}}>
-              <div style={{fontVariantNumeric:'tabular-nums', fontWeight:700}}>{p.remaining}</div>
-              <small>PPD {((501 - p.remaining)/(p.scores.length||1)).toFixed(2)}</small>
+      </header>
+
+      {/* Reklamní pás (placeholder) */}
+      <div className="adstrip">
+        <div className="adcard">AdMob banner (placeholder)</div>
+        <div className="adcard">Ad</div><div className="adcard">Ad</div>
+      </div>
+
+      {screen==='lobby' ? (
+        <div className="card">
+          <div className="row wrap" style={{justifyContent:'space-between'}}>
+            {/* Hráči */}
+            <div className="card" style={{flex:'1 1 320px'}}>
+              <h3>Hráči</h3>
+              {players.map((p,i)=>(
+                <div key={p.id} className="player" style={{borderLeft:`6px solid ${p.color}`}}>
+                  <div className="row" style={{justifyContent:'space-between',gap:8}}>
+                    <input className="input" value={p.name} onChange={e=>setPlayers(ps=>ps.map((x,ix)=>ix===i?{...x,name:e.target.value}:x))} />
+                    <div className="row">
+                      <button className="btn ghost" onClick={()=>movePlayer(i,-1)}>↑</button>
+                      <button className="btn ghost" onClick={()=>movePlayer(i,1)}>↓</button>
+                      <button className="btn red" onClick={()=>deletePlayer(i)}>✕</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <button className="btn" onClick={()=>setPlayers(ps=>[...ps,{id:uid(),name:`Player ${ps.length+1}`,color:colors[ps.length%colors.length],remaining:startScore,darts:[],legs:0}])}>+ Přidat hráče</button>
+            </div>
+
+            {/* Nastavení */}
+            <div className="card" style={{flex:'1 1 260px'}}>
+              <h3>Nastavení</h3>
+              <div className="row wrap">
+                <label>Režim</label>
+                <select className="input" value={mode} onChange={e=>setMode(e.target.value)}>
+                  <option value="x01">X01 (301/501)</option>
+                  <option value="cricket">Cricket</option>
+                  <option value="around">Around the Clock</option>
+                  <option value="shanghai">Shanghai</option>
+                </select>
+              </div>
+              {mode==='x01' && (
+                <div className="row wrap" style={{marginTop:8}}>
+                  <button className="btn" onClick={()=>setStartScore(301)} disabled={startScore===301}>301</button>
+                  <button className="btn" onClick={()=>setStartScore(501)} disabled={startScore===501}>501</button>
+                  <div className="row"><span className="badge">Double-Out</span><button className="btn" onClick={()=>setDoubleOut(v=>!v)}>{doubleOut?'ON':'OFF'}</button></div>
+                </div>
+              )}
+              <div className="row wrap" style={{marginTop:8}}>
+                <span className="badge">Náhodné pořadí</span>
+                <button className="btn" onClick={()=>setRandomOrder(v=>!v)}>{randomOrder?'ANO':'NE'}</button>
+              </div>
+              <div className="row wrap" style={{marginTop:8}}>
+                <label>Robot</label>
+                <select className="input" value={ai} onChange={e=>setAi(e.target.value)}>
+                  <option value="off">Vypnuto</option>
+                  <option value="easy">Snadná</option>
+                  <option value="medium">Střední</option>
+                  <option value="hard">Těžká</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Statistiky */}
+            <div className="card" style={{flex:'1 1 220px'}}>
+              <h3>Statistiky</h3>
+              <div className="kpi">
+                <div className="tag">Dnes: {statsToday.games} • Ø {statsToday.avg}</div>
+                <div className="tag">7 dní: {stats7.games} • Ø {stats7.avg}</div>
+                <div className="tag">30 dní: {stats30.games} • Ø {stats30.avg}</div>
+                <div className="tag">Celkem: {statsAll.games} • Ø {statsAll.avg}</div>
+              </div>
             </div>
           </div>
-        ))}
-      </div>
 
-      <div style={{background:'#111827',border:'1px solid #1f2937',borderRadius:12,padding:12}}>
-        <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}>
-          <strong>{t('current_turn')}</strong>
-          <div><small>{t('dart')} {dartIdx}/3</small></div>
-        </div>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
-          {[20,19,18,17,16,15,14,13,12].map(n=>(
-            <button key={n} onClick={()=>keypadAdd(n)}>{n}</button>
-          ))}
-          <button onClick={()=>keypadAdd(25)}>25</button>
-          <button onClick={()=>keypadAdd(50)}>50</button>
-          <button onClick={()=>keypadAdd(0)}>0</button>
-        </div>
-        <div style={{marginTop:8}}>
-          <button onClick={()=>alert('Undo in full app')}>{t('undo')}</button>
-          <button onClick={()=>window.location.reload()} style={{marginLeft:8}}>{t('new_leg')}</button>
-        </div>
-      </div>
-    </section>
+          <details className="card">
+            <summary className="btn ghost">📖 Pravidla her</summary>
+            <dl className="rules">{RULES.map(r=>(<React.Fragment key={r.key}><dt>{r.name}</dt><dd>{r.text}</dd></React.Fragment>))}</dl>
+          </details>
 
-    {!adsRemoved && (
-      <div style={{position:'fixed',left:0,right:0,bottom:0, background:'#0f172a', borderTop:'1px solid #1f2937', padding:'8px 12px', display:'flex', alignItems:'center', justifyContent:'space-between'}}>
-        <div>{t('ads_banner')}</div>
-        <button onClick={()=>document.getElementById('paywall').showModal()}>{t('remove_ads')}</button>
-      </div>
-    )}
-    {adsRemoved && (
-      <div style={{position:'fixed',left:0,right:0,bottom:0, background:'#0f172a', borderTop:'1px solid #1f2937', padding:'6px 12px', textAlign:'center'}}>
-        <small>{t('ads_removed')}</small>
-      </div>
-    )}
-
-    <dialog id="paywall">
-      <h3>{t('paywall_title')}</h3>
-      <p>{t('paywall_body')}</p>
-      <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
-        <button onClick={()=>document.getElementById('paywall').close()}>{t('close')}</button>
-        <button onClick={()=>{ setAdsRemoved(true); document.getElementById('paywall').close(); }}>{t('pay')}</button>
-      </div>
-      <p style={{marginTop:8,fontSize:12,opacity:.7}}>Pozn.: Tohle je jen simulace. Skutečný nákup nastavíme v Google Play/App Store (viz návod).</p>
-    </dialog>
-  </div>
-}
+          <div className="row" style={{justifyContent:'space-between'}}>
+            <span c
