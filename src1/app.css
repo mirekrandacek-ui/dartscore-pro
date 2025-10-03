@@ -1,22 +1,14 @@
 :root{
-  --bg:#1f2227;        /* neutrální šedé pozadí */
-  --panel:#24282e;
-  --text:#ffffff;
-  --muted:#cfd6df;
-  --line:#2d3239;
-
-  --green:#16a34a;     /* terčová zelená */
-  --red:#ef4444;       /* terčová červená */
-  --key:#2b2f36;       /* klávesy */
+  --bg:#1f2227; --panel:#24282e; --text:#ffffff; --muted:#cfd6df; --line:#2d3239;
+  --green:#16a34a; --red:#ef4444; --key:#2b2f36;
 }
 *{box-sizing:border-box}
 html,body,#root{height:100%}
 body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
 
-/* Rozvržení – vše na výšku obrazovky */
 .container{height:100vh;display:flex;flex-direction:column;min-height:0}
 
-/* Horní lišta – jeden řádek */
+/* HLAVIČKA – jeden řádek + back pro herní obrazovku */
 .header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px;background:#13161a;border-bottom:1px solid var(--line)}
 .header .left{display:flex;align-items:center;gap:8px;min-width:0}
 .logo{display:flex;align-items:center;gap:8px;font-weight:900;white-space:nowrap}
@@ -28,50 +20,46 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-appl
 .btn.green{background:linear-gradient(#1f7a39,#15692f);border-color:#14532d}
 .btn.red{background:linear-gradient(#a21d1d,#7a1616);border-color:#7a1616}
 
-/* Reklamní pás (nízký) */
+/* REKLAMY – nízký pás */
 .adstrip{display:flex;gap:6px;overflow:auto;padding:6px 8px;background:#171a1f;border-bottom:1px solid var(--line)}
 .adcard{min-width:140px;height:44px;background:#fff;color:#111;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800}
 
-/* Hlavní oblast – bez scrollu celé stránky */
 .main{flex:1;display:flex;flex-direction:column;min-height:0}
 .panel{padding:8px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px;margin-bottom:8px}
 
-/* Taby 301/501 a režimy OUT */
+/* Taby */
 .tab{padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:#171a1f;cursor:pointer;font-weight:800;color:#fff}
 .tab.active{background:var(--green);border-color:#14532d}
 
-/* Hráči – vše do JEDNOHO řádku */
+/* Hráč v JEDNOM řádku */
 .playerRow{display:grid;grid-template-columns: 1fr auto auto;gap:8px;align-items:center;padding:6px;border:1px solid var(--line);border-radius:10px;background:#1c2026}
 .playerRow.active{outline:2px solid #22c55e77}
-.playerName{min-width:0}
 .playerName input{width:100%}
-.score{font-variant-numeric:tabular-nums;font-size:34px;font-weight:900}
+.score{font-variant-numeric:tabular-nums;font-size:32px;font-weight:900}
 
-/* 3 sloty hodů + součet */
-.slots{display:flex;gap:6px}
-.slot{min-width:40px;min-height:34px;border-radius:8px;border:1px dashed #526070;display:flex;align-items:center;justify-content:center;font-weight:900;background:#12151a;color:#fff}
+/* Sloty hodů + součet */
+.slots{display:flex;gap:6px;margin-top:4px}
+.slot{min-width:38px;min-height:32px;border-radius:8px;border:1px dashed #526070;display:flex;align-items:center;justify-content:center;font-weight:900;background:#12151a;color:#fff}
 .turnTotal{margin-top:4px;font-weight:900;font-size:20px}
 
-/* Seznam hráčů / průběh – zabere vše mezi headerem a keypadem */
-.scroll{flex:1;overflow:auto;padding:8px;min-height:0}
+/* Viditelná oblast hráčů – zabere všechno mezi headerem a keypadem */
+.scroll{flex:1 1 auto;overflow:auto;padding:8px;min-height:0}
 
-/* Keypad – NAPE-VNO dole, kompaktní */
-.keypadDock{position:sticky;bottom:0;left:0;right:0;background:#13161a;border-top:1px solid var(--line);padding:6px}
+/* Kompaktní keypad – aby se vše vešlo NA JEDNU OBRAZOVKU */
+.keypadDock{position:sticky;bottom:0;left:0;right:0;background:#13161a;border-top:1px solid var(--line);padding:4px}
 .grid{display:grid;gap:6px}
 .grid-keys{grid-template-columns:repeat(3,1fr)}
-.key{padding:16px;border-radius:10px;border:1px solid var(--line);background:linear-gradient(#2f343c,#262a31);color:#fff;font-size:22px;font-weight:900;box-shadow:0 2px 0 #000}
+.key{padding:12px;border-radius:10px;border:1px solid var(--line);background:linear-gradient(#2f343c,#262a31);color:#fff;font-size:20px;font-weight:900;box-shadow:0 2px 0 #000}
 .key.big{grid-column:span 2}
 .key.red{background:linear-gradient(#b91c1c,#7f1d1d)}
 .key.green{background:linear-gradient(#16a34a,#14532d)}
 .key.back{background:linear-gradient(#374151,#111827)}
 .key:active{transform:translateY(1px);box-shadow:0 1px 0 #000;filter:brightness(1.07)}
 
-/* Pravidla */
 .rules dt{font-weight:900;margin-top:6px}
 .rules dd{margin:0 0 6px 0;color:var(--muted)}
 
-/* Ohňostroj */
 .fireworks{position:fixed;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);animation:fade .8s ease-in-out forwards}
 .fireworks::after{content:'🎉 Výhra!';font-size:48px;filter:drop-shadow(0 2px 0 #000)}
 @keyframes fade{0%{opacity:0}10%{opacity:1}90%{opacity:1}100%{opacity:0}}
