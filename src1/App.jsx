@@ -31,7 +31,6 @@ export default function App(){
   const [mult,setMult]=useState(1)
   const [showWin,setShowWin]=useState(false)
 
-  // AUDIO
   const hitRef=useRef(null); const fanfareRef=useRef(null)
   useEffect(()=>{ const a=new Audio('/dart-hit.mp3'); a.preload='auto'; a.oncanplay=()=>hitRef.current=a; a.onerror=()=>hitRef.current='fallback'; a.load();
                   const f=new Audio('https://cdn.jsdelivr.net/gh/napars/dummy-audio/fanfare.mp3'); fanfareRef.current=f;},[])
@@ -39,7 +38,6 @@ export default function App(){
   const playHit =()=>{ if(!soundOn) return; const r=hitRef.current; if(r&&r.play){ r.currentTime=0; r.play().catch(()=>{}) } }
   const speak   =(t)=>{ if(!voiceOn || !('speechSynthesis'in window))return; const u=new SpeechSynthesisUtterance(t); u.lang=lang; u.rate=1.05; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u)}
 
-  // Lobby sync
   useEffect(()=>{ if(screen==='lobby'){ setPlayers(ps=>ps.map(p=>({...p,remaining:startScore,darts:[],last:0}))) } },[startScore,screen])
 
   const sum=a=>a.reduce((s,x)=>s+x,0)
@@ -88,28 +86,24 @@ export default function App(){
     playHit(); vibrate()
     speak(spoken!==0? String(spoken) : (lang==='cs'?'nula':'zero'))
 
-    // Bust?
     if(remainBefore - value < 0){
       speak(lang==='cs'?'bez skóre':'no score')
       setHistory(h=>[...h,{player:p.name,darts:[...buffer,value],total:0,bust:true,remaining:p.remaining}])
       setBuffer([]); setBufferSpoken([]); return next()
     }
 
-    // Okamžité zavření
     if(mode==='x01' && canClose(remainBefore,value,notation)){
       const newBuffer=[...buffer,value]; const total=sum(newBuffer)
       setPlayers(ps=>ps.map((x,i)=> i===current ? {...x,remaining:0,darts:[...x.darts,...newBuffer],last:total} : x))
       setHistory(h=>[...h,{player:p.name,darts:newBuffer,total,remaining:0}])
       setBuffer([]); setBufferSpoken([])
-      try{fanfareRef.current?.play?.()}catch{}
-      setShowWin(true); setTimeout(()=>setShowWin(false),800)
+      try{fanfareRef.current?.play?.()}catch{}; setShowWin(true); setTimeout(()=>setShowWin(false),800)
       saveGame({mode:`x01-${outMode}`,ppd:total/3,darts:newBuffer.length})
       return setTimeout(()=> setCurrent((current+1)%players.length),260)
     }
 
     const nb=[...buffer,value]; const ns=[...bufferSpoken,spoken]
     setBuffer(nb); setBufferSpoken(ns)
-
     if(nb.length>=3){
       const total=sum(nb)
       const newRemain = mode==='x01' ? (p.remaining - total) : p.remaining
@@ -145,11 +139,13 @@ export default function App(){
   const statsToday=aggregate(1).totals, stats7=aggregate(7).totals, stats30=aggregate(30).totals, statsAll=aggregate().totals
   const Tab=({active,children,onClick})=>(<button className={'tab'+(active?' active':'')} onClick={onClick}>{children}</button>)
 
+  /* ====== RENDER ====== */
   return (
     <div className="container">
-      {/* HLAVIČKA – jeden řádek, plná šířka */}
+      {/* HLAVIČKA – v herní obrazovce ukáže šipku „zpět“ */}
       <div className="header">
         <div className="left">
+          {screen==='game' && <button className="btn ghost" onClick={()=>setScreen('lobby')} title="Zpět">←</button>}
           <div className="logo"><span className="dart"></span><span>DartScore Pro</span></div>
         </div>
         <div className="controls">
@@ -170,7 +166,7 @@ export default function App(){
       <div className="main">
         {screen==='lobby' ? (
           <div className="panel">
-            {/* 1) výběr hry – kompaktní */}
+            {/* 1) výběr hry */}
             <div className="card">
               <div className="controls" style={{flexWrap:'wrap'}}>
                 <span>Režim</span>
@@ -206,7 +202,7 @@ export default function App(){
               </div>
             </div>
 
-            {/* 2) hráči – ovládání ve STEJNÉM řádku */}
+            {/* 2) hráči – ovládání vpravo v řádku */}
             <div className="card">
               {players.map((p,i)=>(
                 <div key={p.id} className="playerRow">
@@ -224,12 +220,11 @@ export default function App(){
               <button className="btn" onClick={()=>setPlayers(ps=>[...ps,{id:uid(),name:`Hráč ${ps.length+1}`,color:colors[ps.length%colors.length],remaining:startScore,darts:[],last:0}])}>+ Přidat hráče</button>
             </div>
 
-            {/* 3) Start vpravo, zelený */}
+            {/* Start */}
             <div style={{display:'flex',justifyContent:'flex-end'}}>
               <button className="btn green" onClick={startGame}>▶ Start hry</button>
             </div>
 
-            {/* stručná pravidla */}
             <details className="card" style={{marginTop:6}}>
               <summary className="btn ghost">📖 Pravidla her</summary>
               <dl className="rules">{RULES.map(r=>(<React.Fragment key={r.key}><dt>{r.name}</dt><dd>{r.text}</dd></React.Fragment>))}</dl>
@@ -237,7 +232,7 @@ export default function App(){
           </div>
         ) : (
           <>
-            {/* Scrollují jen hráči (aby se vše vešlo spolu s keypad) */}
+            {/* Hráči – jsou vždy vidět, scrolluje pouze seznam */}
             <div className="scroll">
               {players.map((p,idx)=>(
                 <div key={p.id} className={'playerRow '+(idx===current?'active':'')}>
@@ -245,7 +240,7 @@ export default function App(){
                     <strong>{p.name}</strong>
                     {idx===current && (
                       <>
-                        <div className="slots" style={{marginTop:4}}>
+                        <div className="slots">
                           <div className="slot">{bufferSpoken[0] ?? ''}</div>
                           <div className="slot">{bufferSpoken[1] ?? ''}</div>
                           <div className="slot">{bufferSpoken[2] ?? ''}</div>
@@ -256,15 +251,13 @@ export default function App(){
                     {idx!==current && p.last>0 && <div style={{marginTop:4,color:'#cfd6df'}}>Poslední: <strong>{p.last}</strong></div>}
                   </div>
                   <div className="controls">
-                    {/* undo jen pro rychlý přístup */}
-                    {idx===current && <button className="btn" onClick={()=>onBack()}>← Zpět</button>}
+                    {idx===current && <button className="btn" onClick={undo} title="Zpět">←</button>}
                   </div>
                   <div><span className="score">{p.remaining}</span></div>
                 </div>
               ))}
             </div>
 
-            {/* Napevno dole – menší, aby se vše vešlo bez scrollu stránky */}
             <div className="keypadDock">
               <Keypad
                 onNumber={onNumber}
