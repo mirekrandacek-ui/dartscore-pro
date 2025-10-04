@@ -19,47 +19,32 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-appl
 .btn.green{background:linear-gradient(#1f7a39,#15692f);border-color:#14532d}
 .btn.red{background:linear-gradient(#a21d1d,#7a1616);border-color:#7a1616}
 
+/* icon buttons (speaker/head) */
+.iconBtn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border:1px solid var(--line);border-radius:10px;background:#171a1f;position:relative}
+.icon{width:22px;height:22px;fill:#cfe5ff}
+.iconBtn.muted .icon{opacity:.6}
+.iconBtn.muted::after{content:"";position:absolute;inset:auto 6px 6px auto;width:16px;height:16px;border-radius:50%;background:linear-gradient(#ff5a5a,#d61f1f);box-shadow:0 0 0 2px #13161a}
+
 /* ads */
 .adstrip{display:flex;gap:6px;overflow:auto;padding:6px 8px;background:#171a1f;border-bottom:1px solid var(--line)}
 .adcard{min-width:140px;height:44px;background:#fff;color:#111;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800}
 
-.main{flex:1;display:flex;flex-direction:column;min-height:0}
-.panel{padding:8px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px;margin-bottom:8px}
-
-/* tabs */
+/* lobby */
+.lobbyWrap{display:flex;flex-direction:column;gap:8px;padding:8px;flex:1;min-height:0}
+.lobbyCard{flex:1 1 100%;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px}
+.lobbyControls{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.lobbyControls span{color:#fff;font-weight:800} /* bílé popisky */
 .tab{padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:#171a1f;cursor:pointer;font-weight:800}
 .tab.active{background:var(--green);border-color:#14532d}
 
-/* players row */
-.playerRow{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:6px;border:1px solid var(--line);border-radius:10px;background:#1c2026}
-.playerRow.active{outline:2px solid #22c55e77}
+/* hráči – jméno | šipky | skóre | KOŠ úplně vpravo */
+.playerRow{display:grid;grid-template-columns: 1fr auto auto auto;gap:8px;align-items:center;padding:6px;border:1px solid var(--line);border-radius:10px;background:#1c2026}
 .playerName input{width:100%}
-.score{font-variant-numeric:tabular-nums;font-size:32px;font-weight:900}
-.meta{color:var(--muted);font-size:12px}
+.score{font-variant-numeric:tabular-nums;font-size:28px;font-weight:900}
+.playerActions{display:flex;gap:6px}
+.playerDelete{display:flex;justify-content:flex-end}
+.trash{width:40px;height:40px;border:1px solid var(--line);border-radius:10px;background:linear-gradient(#b91c1c,#7f1d1d);color:#fff;font-weight:900}
 
-/* slots + total */
-.slots{display:flex;gap:6px;margin-top:4px}
-.slot{min-width:38px;min-height:32px;border-radius:8px;border:1px dashed #526070;display:flex;align-items:center;justify-content:center;font-weight:900;background:#12151a}
-.turnTotal{margin-top:4px;font-weight:900;font-size:20px}
-
-/* GAME split 50/50: top players / bottom keypad */
-.gameSplit{flex:1;display:flex;flex-direction:column;min-height:0}
-.gameTop{flex:1 1 50%;overflow:auto;padding:8px;min-height:0}
-.gameBottom{flex:1 1 50%;display:flex;flex-direction:column}
-.keypadDock{flex:1;display:flex;align-items:stretch;padding:4px;background:#13161a;border-top:1px solid var(--line)}
-.grid{display:grid;gap:6px;width:100%}
-.grid-keys{grid-template-columns:repeat(3,1fr)}
-.key{padding:10px;border-radius:10px;border:1px solid var(--line);background:linear-gradient(#2f343c,#262a31);color:#fff;font-size:20px;font-weight:900}
-.key.red{background:linear-gradient(#b91c1c,#7f1d1d)}
-.key.green{background:linear-gradient(#16a34a,#14532d)}
-.key:active{transform:translateY(1px);filter:brightness(1.07)}
-
+/* rules */
 .rules dt{font-weight:900;margin-top:6px}
 .rules dd{margin:0 0 6px 0;color:var(--muted)}
-
-.fireworks{position:fixed;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);animation:fade .8s ease-in-out forwards}
-.fireworks::after{content:'🎉 Výhra!';font-size:48px;filter:drop-shadow(0 2px 0 #000)}
-@keyframes fade{0%{opacity:0}10%{opacity:1}90%{opacity:1}100%{opacity:0}}
-
-@media (min-width:560px){ .grid-keys{grid-template-columns:repeat(4,1fr)} }
