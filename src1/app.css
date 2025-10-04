@@ -1,50 +1,229 @@
 :root{
-  --bg:#1f2227; --panel:#24282e; --text:#fff; --muted:#cfd6df; --line:#2d3239;
-  --green:#16a34a; --red:#ef4444; --key:#2b2f36;
+  --bg:#1f2227; 
+  --panel:#24282e; 
+  --text:#fff; 
+  --muted:#cfd6df; 
+  --line:#2d3239;
+  --green:#16a34a; 
+  --red:#ef4444; 
+  --key:#2b2f36;
 }
+
 *{box-sizing:border-box}
 html,body,#root{height:100%}
-body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-.container{height:calc(var(--vh,1vh)*100);display:flex;flex-direction:column;min-height:0}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+}
+.container{
+  height:calc(var(--vh,1vh)*100);
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+}
 
-/* header */
-.header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px;background:#13161a;border-bottom:1px solid var(--line)}
-.header .left{display:flex;align-items:center;gap:8px;min-width:0}
-.logo{display:flex;align-items:center;gap:8px;font-weight:900;white-space:nowrap}
-.logo .dart{width:18px;height:18px;border-radius:50%;background:conic-gradient(#000 0 5deg,#ef4444 5deg 35deg,#000 35deg 40deg,#16a34a 40deg 70deg,#000 70deg 75deg,#fff 75deg 105deg,#000 105deg 110deg,#ef4444 110deg 140deg,#000 140deg 145deg,#16a34a 145deg 175deg,#000 175deg 180deg,#fff 180deg 210deg,#000 210deg 215deg,#ef4444 215deg 245deg,#000 245deg 250deg,#16a34a 250deg 280deg,#000 280deg 285deg,#fff 285deg 315deg,#000 315deg 320deg,#ef4444 320deg 350deg,#000 350deg 360deg);border:2px solid #333}
-.controls{display:flex;align-items:center;gap:6px}
-.input,select{background:#12151a;color:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:14px}
-.btn{border:1px solid var(--line);background:#171a1f;color:#fff;border-radius:10px;padding:8px 10px;font-weight:800;cursor:pointer;font-size:14px}
+/* ====== HEADER ====== */
+.header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:6px 8px;
+  background:#13161a;
+  border-bottom:1px solid var(--line);
+}
+.header .left{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+}
+.logo{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.logo .dart{
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:conic-gradient(
+    #000 0 5deg,#ef4444 5deg 35deg,#000 35deg 40deg,#16a34a 40deg 70deg,#000 70deg 75deg,
+    #fff 75deg 105deg,#000 105deg 110deg,#ef4444 110deg 140deg,#000 140deg 145deg,
+    #16a34a 145deg 175deg,#000 175deg 180deg,#fff 180deg 210deg,#000 210deg 215deg,
+    #ef4444 215deg 245deg,#000 245deg 250deg,#16a34a 250deg 280deg,#000 280deg 285deg,
+    #fff 285deg 315deg,#000 315deg 320deg,#ef4444 320deg 350deg,#000 350deg 360deg
+  );
+  border:2px solid #333;
+}
+.controls{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+/* ====== ICON BUTTONS ====== */
+.iconBtn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:40px;
+  height:40px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#171a1f;
+  position:relative;
+}
+.icon{
+  width:22px;
+  height:22px;
+  fill:#bfc7d5; /* šedá */
+}
+.iconBtn.muted .icon{opacity:.55}
+
+/* Červený křížek přes ikonu při vypnutí */
+.iconBtn.muted::before,
+.iconBtn.muted::after{
+  content:"";
+  position:absolute;
+  width:22px;
+  height:2.5px;
+  background:#ef4444;
+  top:50%;
+  left:50%;
+  transform-origin:center;
+  box-shadow:0 0 0 1px #13161a;
+  border-radius:2px;
+}
+.iconBtn.muted::before{transform:translate(-50%,-50%) rotate(45deg);}
+.iconBtn.muted::after {transform:translate(-50%,-50%) rotate(-45deg);}
+
+/* ====== INPUTS / BUTTONS ====== */
+.input, select{
+  background:#12151a;
+  color:#fff;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:8px 10px;
+  font-size:14px;
+}
+.input::placeholder{color:#fff;opacity:.7;}
+input[type="text"],input[type="number"],input[type="email"]{color:#fff;}
+
+.btn{
+  border:1px solid var(--line);
+  background:#171a1f;
+  color:#fff;
+  border-radius:10px;
+  padding:8px 10px;
+  font-weight:800;
+  cursor:pointer;
+  font-size:14px;
+}
 .btn.ghost{background:transparent}
-.btn.green{background:linear-gradient(#1f7a39,#15692f);border-color:#14532d}
-.btn.red{background:linear-gradient(#a21d1d,#7a1616);border-color:#7a1616}
+.btn.green{
+  background:linear-gradient(#1f7a39,#15692f);
+  border-color:#14532d;
+}
+.btn.red{
+  background:linear-gradient(#a21d1d,#7a1616);
+  border-color:#7a1616;
+}
 
-/* icon buttons (speaker/head) */
-.iconBtn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border:1px solid var(--line);border-radius:10px;background:#171a1f;position:relative}
-.icon{width:22px;height:22px;fill:#cfe5ff}
-.iconBtn.muted .icon{opacity:.6}
-.iconBtn.muted::after{content:"";position:absolute;inset:auto 6px 6px auto;width:16px;height:16px;border-radius:50%;background:linear-gradient(#ff5a5a,#d61f1f);box-shadow:0 0 0 2px #13161a}
+/* ====== ADS ====== */
+.adstrip{
+  display:flex;
+  gap:6px;
+  overflow:auto;
+  padding:6px 8px;
+  background:#171a1f;
+  border-bottom:1px solid var(--line);
+}
+.adcard{
+  min-width:140px;
+  height:44px;
+  background:#fff;
+  color:#111;
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:800;
+}
 
-/* ads */
-.adstrip{display:flex;gap:6px;overflow:auto;padding:6px 8px;background:#171a1f;border-bottom:1px solid var(--line)}
-.adcard{min-width:140px;height:44px;background:#fff;color:#111;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800}
+/* ====== LOBBY ====== */
+.lobbyWrap{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding:8px;
+  flex:1;
+  min-height:0;
+}
+.lobbyCard{
+  flex:1 1 100%;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:8px;
+}
+.lobbyControls{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.lobbyControls span{
+  color:#fff;
+  font-weight:800;
+}
+.tab{
+  padding:6px 10px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#171a1f;
+  cursor:pointer;
+  font-weight:800;
+  color:#fff;
+}
+.tab.active{
+  background:var(--green);
+  border-color:#14532d;
+}
 
-/* lobby */
-.lobbyWrap{display:flex;flex-direction:column;gap:8px;padding:8px;flex:1;min-height:0}
-.lobbyCard{flex:1 1 100%;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px}
-.lobbyControls{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.lobbyControls span{color:#fff;font-weight:800} /* bílé popisky */
-.tab{padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:#171a1f;cursor:pointer;font-weight:800}
-.tab.active{background:var(--green);border-color:#14532d}
+/* ====== Hráči (jeden řádek) ====== */
+.playerRow{
+  display:grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap:8px;
+  align-items:center;
+  padding:6px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#1c2026;
+}
+.playerName input{width:100%;}
+.score{
+  font-variant-numeric:tabular-nums;
+  font-size:28px;
+  font-weight:900;
+}
+.playerActions{display:flex;gap:6px;}
+.playerDelete{display:flex;justify-content:flex-end;}
+.trash{
+  width:40px;
+  height:40px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:linear-gradient(#b91c1c,#7f1d1d);
+  color:#fff;
+  font-weight:900;
+}
 
-/* hráči – jméno | šipky | skóre | KOŠ úplně vpravo */
-.playerRow{display:grid;grid-template-columns: 1fr auto auto auto;gap:8px;align-items:center;padding:6px;border:1px solid var(--line);border-radius:10px;background:#1c2026}
-.playerName input{width:100%}
-.score{font-variant-numeric:tabular-nums;font-size:28px;font-weight:900}
-.playerActions{display:flex;gap:6px}
-.playerDelete{display:flex;justify-content:flex-end}
-.trash{width:40px;height:40px;border:1px solid var(--line);border-radius:10px;background:linear-gradient(#b91c1c,#7f1d1d);color:#fff;font-weight:900}
-
-/* rules */
-.rules dt{font-weight:900;margin-top:6px}
-.rules dd{margin:0 0 6px 0;color:var(--muted)}
+/* ====== RULES ====== */
+.rules dt{font-weight:900;margin-top:6px;}
+.rules dd{margin:0 0 6px 0;color:var(--muted);}
