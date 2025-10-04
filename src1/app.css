@@ -1,14 +1,13 @@
 :root{
-  --bg:#1f2227; --panel:#24282e; --text:#ffffff; --muted:#cfd6df; --line:#2d3239;
+  --bg:#1f2227; --panel:#24282e; --text:#fff; --muted:#cfd6df; --line:#2d3239;
   --green:#16a34a; --red:#ef4444; --key:#2b2f36;
 }
 *{box-sizing:border-box}
 html,body,#root{height:100%}
 body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+.container{height:calc(var(--vh,1vh)*100);display:flex;flex-direction:column;min-height:0}
 
-.container{height:100vh;display:flex;flex-direction:column;min-height:0}
-
-/* HLAVIČKA – jeden řádek + back pro herní obrazovku */
+/* header */
 .header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px;background:#13161a;border-bottom:1px solid var(--line)}
 .header .left{display:flex;align-items:center;gap:8px;min-width:0}
 .logo{display:flex;align-items:center;gap:8px;font-weight:900;white-space:nowrap}
@@ -20,7 +19,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-appl
 .btn.green{background:linear-gradient(#1f7a39,#15692f);border-color:#14532d}
 .btn.red{background:linear-gradient(#a21d1d,#7a1616);border-color:#7a1616}
 
-/* REKLAMY – nízký pás */
+/* ads */
 .adstrip{display:flex;gap:6px;overflow:auto;padding:6px 8px;background:#171a1f;border-bottom:1px solid var(--line)}
 .adcard{min-width:140px;height:44px;background:#fff;color:#111;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800}
 
@@ -28,34 +27,33 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-appl
 .panel{padding:8px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px;margin-bottom:8px}
 
-/* Taby */
-.tab{padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:#171a1f;cursor:pointer;font-weight:800;color:#fff}
+/* tabs */
+.tab{padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:#171a1f;cursor:pointer;font-weight:800}
 .tab.active{background:var(--green);border-color:#14532d}
 
-/* Hráč v JEDNOM řádku */
-.playerRow{display:grid;grid-template-columns: 1fr auto auto;gap:8px;align-items:center;padding:6px;border:1px solid var(--line);border-radius:10px;background:#1c2026}
+/* players row */
+.playerRow{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:6px;border:1px solid var(--line);border-radius:10px;background:#1c2026}
 .playerRow.active{outline:2px solid #22c55e77}
 .playerName input{width:100%}
 .score{font-variant-numeric:tabular-nums;font-size:32px;font-weight:900}
+.meta{color:var(--muted);font-size:12px}
 
-/* Sloty hodů + součet */
+/* slots + total */
 .slots{display:flex;gap:6px;margin-top:4px}
-.slot{min-width:38px;min-height:32px;border-radius:8px;border:1px dashed #526070;display:flex;align-items:center;justify-content:center;font-weight:900;background:#12151a;color:#fff}
+.slot{min-width:38px;min-height:32px;border-radius:8px;border:1px dashed #526070;display:flex;align-items:center;justify-content:center;font-weight:900;background:#12151a}
 .turnTotal{margin-top:4px;font-weight:900;font-size:20px}
 
-/* Viditelná oblast hráčů – zabere všechno mezi headerem a keypadem */
-.scroll{flex:1 1 auto;overflow:auto;padding:8px;min-height:0}
-
-/* Kompaktní keypad – aby se vše vešlo NA JEDNU OBRAZOVKU */
-.keypadDock{position:sticky;bottom:0;left:0;right:0;background:#13161a;border-top:1px solid var(--line);padding:4px}
-.grid{display:grid;gap:6px}
+/* GAME split 50/50: top players / bottom keypad */
+.gameSplit{flex:1;display:flex;flex-direction:column;min-height:0}
+.gameTop{flex:1 1 50%;overflow:auto;padding:8px;min-height:0}
+.gameBottom{flex:1 1 50%;display:flex;flex-direction:column}
+.keypadDock{flex:1;display:flex;align-items:stretch;padding:4px;background:#13161a;border-top:1px solid var(--line)}
+.grid{display:grid;gap:6px;width:100%}
 .grid-keys{grid-template-columns:repeat(3,1fr)}
-.key{padding:12px;border-radius:10px;border:1px solid var(--line);background:linear-gradient(#2f343c,#262a31);color:#fff;font-size:20px;font-weight:900;box-shadow:0 2px 0 #000}
-.key.big{grid-column:span 2}
+.key{padding:10px;border-radius:10px;border:1px solid var(--line);background:linear-gradient(#2f343c,#262a31);color:#fff;font-size:20px;font-weight:900}
 .key.red{background:linear-gradient(#b91c1c,#7f1d1d)}
 .key.green{background:linear-gradient(#16a34a,#14532d)}
-.key.back{background:linear-gradient(#374151,#111827)}
-.key:active{transform:translateY(1px);box-shadow:0 1px 0 #000;filter:brightness(1.07)}
+.key:active{transform:translateY(1px);filter:brightness(1.07)}
 
 .rules dt{font-weight:900;margin-top:6px}
 .rules dd{margin:0 0 6px 0;color:var(--muted)}
