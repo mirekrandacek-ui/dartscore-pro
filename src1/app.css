@@ -7,6 +7,13 @@
   --green:#16a34a;
   --red:#ef4444;
   --key:#2b2f36;
+
+  /* pevná výška spodní klávesnice, ať je vždy vidět */
+  --padH: 260px;
+}
+
+@media (max-height: 720px){
+  :root{ --padH: 220px; }
 }
 
 *{box-sizing:border-box}
@@ -120,13 +127,20 @@ input[type="text"],input[type="number"],input[type="email"]{color:#fff}
   background:linear-gradient(#b91c1c,#7f1d1d);color:#fff;font-weight:900
 }
 
+/* ===== RULES ===== */
+.rules dt{font-weight:900;margin-top:6px}
+.rules dd{margin:0 0 6px 0;color:var(--muted)}
+
 /* ===== GAME ===== */
 .gameWrap{
   display:flex;flex-direction:column;gap:8px;padding:8px;flex:1;min-height:0;
+  /* výška celé sekce hry = 100% kontejneru; dole pevná klávesnice */
 }
 .playersPane{
-  flex:1 1 50%;
-  overflow:auto;display:flex;flex-direction:column;gap:8px;
+  flex:1 1 calc(100% - var(--padH));
+  min-height:0;
+  overflow:auto;
+  display:flex;flex-direction:column;gap:8px;
 }
 .playerCard{
   background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px;
@@ -145,7 +159,11 @@ input[type="text"],input[type="number"],input[type="email"]{color:#fff}
 .lastTotal{margin-left:auto;color:var(--muted);font-weight:800}
 
 .padPane{
-  flex:0 0 auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px
+  flex:0 0 var(--padH);
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:8px;
 }
 .padRow{display:flex;gap:8px;justify-content:center;margin-bottom:8px}
 .key{
