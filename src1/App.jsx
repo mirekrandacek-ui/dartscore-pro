@@ -9,7 +9,7 @@ const IconSpeaker = () => (
   </svg>
 );
 
-/* ====== jednoduché „t“ (zatím bez i18n.js) ====== */
+/* ====== jednoduché texty (i18n později) ====== */
 const T = {
   cs: {
     app:'DartScore Pro',
@@ -43,28 +43,33 @@ const defaultNameFor=(lang,n)=>({cs:`Hráč ${n}`,en:`Player ${n}`}[lang]||`Play
 const autoNameRx = [/^Hráč (\d+)$/, /^Player (\d+)$/];
 
 export default function App(){
-  /* viewport fix pro mobily */
-  useEffect(()=>{ const setVh=()=>document.documentElement.style.setProperty('--vh',`${window.innerHeight*0.01}px`); setVh(); window.addEventListener('resize',setVh); return()=>window.removeEventListener('resize',setVh)},[]);
+  /* viewport fix pro mobily (100vh) */
+  useEffect(()=>{ 
+    const setVh=()=>document.documentElement.style.setProperty('--vh',`${window.innerHeight*0.01}px`); 
+    setVh(); 
+    window.addEventListener('resize',setVh); 
+    return()=>window.removeEventListener('resize',setVh);
+  },[]);
 
-  /* základní stav */
+  /* stav */
   const [screen,setScreen] = useState('lobby'); // lobby | game
   const [lang,setLang]     = useState(((navigator.language||'cs').slice(0,2))||'cs');
   const [soundOn,setSoundOn] = useState(true);
   const [voiceOn,setVoiceOn] = useState(true);
 
-  const [mode,setMode] = useState('classic');   // classic | cricket | around
+  const [mode,setMode] = useState('classic');      // classic | cricket | around
   const [startScore,setStartScore] = useState(501);
   const [outMode,setOutMode] = useState('double'); // single | double | triple | master
 
   const [randomOrder,setRandomOrder] = useState(false);
-  const [ai,setAi] = useState('off');           // off | easy | medium | hard
+  const [ai,setAi] = useState('off');              // off | easy | medium | hard
 
   const [players,setPlayers] = useState([
     {id:uid(), name:defaultNameFor(lang,1), color:colors[0], bot:false},
     {id:uid(), name:defaultNameFor(lang,2), color:colors[1], bot:false}
   ]);
 
-  /* načti/ulož lobby do localStorage, ať se to neztrácí mezi releasy */
+  /* load/save lobby do localStorage */
   useEffect(()=>{ try{
     const s=JSON.parse(localStorage.getItem('lobby')||'{}');
     if(s.lang) setLang(s.lang);
@@ -79,9 +84,9 @@ export default function App(){
     localStorage.setItem('lobby', JSON.stringify({lang,mode,startScore,outMode,randomOrder,ai,players}));
   }catch{} },[lang,mode,startScore,outMode,randomOrder,ai,players]);
 
-  /* při změně jazyka přelož automatická jména (ruční nech) */
+  /* při změně jazyka přelož automatická jména (nechá ruční) */
   useEffect(()=>{
-    setPlayers(ps=>ps.map((p,ix)=>{
+    setPlayers(ps=>ps.map(p=>{
       for(const rx of autoNameRx){
         const m=p.name.match(rx);
         if(m){ const n=parseInt(m[1],10); return {...p, name:defaultNameFor(lang,n)}; }
@@ -90,7 +95,7 @@ export default function App(){
     }));
   },[lang]);
 
-  /* ROBOT – drž konzistenci (přidat/odebrat) */
+  /* ROBOT – konzistence: přidat/odebrat + drž úroveň a label */
   useEffect(()=>{
     setPlayers(ps=>{
       const hasBot = ps.some(p=>p.bot);
@@ -98,11 +103,8 @@ export default function App(){
         return hasBot ? ps.filter(p=>!p.bot) : ps;
       }
       if(!hasBot){
-        // vlož bota na konec
-        const level = ai;
-        return [...ps, {id:uid(), name:`🤖 ${t(lang,'robot')} (${t(lang,level)})`, color:colors[ps.length%colors.length], bot:true, level}];
+        return [...ps, {id:uid(), name:`🤖 ${t(lang,'robot')} (${t(lang,ai)})`, color:colors[ps.length%colors.length], bot:true, level:ai}];
       }
-      // aktualizuj label úrovně
       return ps.map(p=>p.bot ? {...p, name:`🤖 ${t(lang,'robot')} (${t(lang,ai)})`, level:ai} : p);
     });
   },[ai,lang]);
@@ -116,7 +118,7 @@ export default function App(){
 
   const startGame = () => setScreen('game');
 
-  /* pomocný styl pro „nižší“ čipy (aby výška byla menší, dynamická) */
+  /* menší „chip“ prvky pro nižší výšku */
   const chipStyle = { padding:'4px 8px', lineHeight:1.1 };
 
   return (
@@ -134,7 +136,6 @@ export default function App(){
             <IconSpeaker/>
           </button>
           <button className={`iconBtn ${!voiceOn?'muted':''}`} onClick={()=>setVoiceOn(v=>!v)} aria-label={t(lang,'voice')}>
-            {/* Tvoje silueta hlavy – barví se v CSS přes .iconHead masku */}
             <span className="iconHead" aria-hidden="true"></span>
           </button>
           <select className="input" value={lang} onChange={e=>setLang(e.target.value)}>
@@ -149,6 +150,7 @@ export default function App(){
         <div className="adcard">AdMob</div><div className="adcard">Ad</div><div className="adcard">Ad</div>
       </div>
 
+      {/* ====== OBSAH ====== */}
       {screen==='lobby' ? (
         <div className="lobbyWrap">
           {/* Režim */}
