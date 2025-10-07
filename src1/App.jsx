@@ -9,7 +9,7 @@ const IconSpeaker = () => (
   </svg>
 );
 
-/* ====== jednoduché texty (i18n později) ====== */
+/* ====== jednoduché texty (i18n přidáme později) ====== */
 const T = {
   cs: {
     app:'DartScore Pro',
@@ -43,11 +43,10 @@ const defaultNameFor=(lang,n)=>({cs:`Hráč ${n}`,en:`Player ${n}`}[lang]||`Play
 const autoNameRx = [/^Hráč (\d+)$/, /^Player (\d+)$/];
 
 export default function App(){
-  /* viewport fix pro mobily (100vh) */
+  /* viewport fix (100vh) */
   useEffect(()=>{ 
     const setVh=()=>document.documentElement.style.setProperty('--vh',`${window.innerHeight*0.01}px`); 
-    setVh(); 
-    window.addEventListener('resize',setVh); 
+    setVh(); window.addEventListener('resize',setVh); 
     return()=>window.removeEventListener('resize',setVh);
   },[]);
 
@@ -69,7 +68,7 @@ export default function App(){
     {id:uid(), name:defaultNameFor(lang,2), color:colors[1], bot:false}
   ]);
 
-  /* load/save lobby do localStorage */
+  /* load/save lobby */
   useEffect(()=>{ try{
     const s=JSON.parse(localStorage.getItem('lobby')||'{}');
     if(s.lang) setLang(s.lang);
@@ -84,7 +83,7 @@ export default function App(){
     localStorage.setItem('lobby', JSON.stringify({lang,mode,startScore,outMode,randomOrder,ai,players}));
   }catch{} },[lang,mode,startScore,outMode,randomOrder,ai,players]);
 
-  /* při změně jazyka přelož automatická jména (nechá ruční) */
+  /* přelož auto-jména při změně jazyka */
   useEffect(()=>{
     setPlayers(ps=>ps.map(p=>{
       for(const rx of autoNameRx){
@@ -95,7 +94,7 @@ export default function App(){
     }));
   },[lang]);
 
-  /* ROBOT – konzistence: přidat/odebrat + drž úroveň a label */
+  /* ROBOT – přidat/odebrat/aktualizovat podle selectu */
   useEffect(()=>{
     setPlayers(ps=>{
       const hasBot = ps.some(p=>p.bot);
@@ -113,13 +112,33 @@ export default function App(){
     const a=[...ps], j=i+dir; if(j<0||j>=a.length) return a;
     [a[i],a[j]]=[a[j],a[i]]; return a;
   });
-  const deletePlayer = (i) => setPlayers(ps=>ps.filter((_,ix)=>ix!==i));
-  const addPlayer = () => setPlayers(ps=>[...ps,{id:uid(), name:defaultNameFor(lang, ps.length+1), color:colors[ps.length%colors.length], bot:false}]);
+
+  const deletePlayer = (i) => {
+    setPlayers(ps=>{
+      const toDelete = ps[i];
+      // Pokud mažu bota, zároveň vypni AI, aby se hned znovu nepřidal.
+      if(toDelete?.bot){ setAi('off'); }
+      return ps.filter((_,ix)=>ix!==i);
+    });
+  };
+
+  const addPlayer = () =>
+    setPlayers(ps=>[...ps,{id:uid(), name:defaultNameFor(lang, ps.length+1), color:colors[ps.length%colors.length], bot:false}]);
 
   const startGame = () => setScreen('game');
 
-  /* menší „chip“ prvky pro nižší výšku */
+  /* menší „chip“ prvky = nižší výška */
   const chipStyle = { padding:'4px 8px', lineHeight:1.1 };
+
+  /* Pomocné handlery pro auto-select jména */
+  const handleNameFocus = (e) => {
+    // vyber celé jméno – psaní okamžitě přepíše
+    e.target.select();
+  };
+  const handleNameMouseUp = (e) => {
+    // zabrání zrušení selectu po kliknutí (hlavně mobil/Chrome)
+    e.preventDefault();
+  };
 
   return (
     <div className="container">
@@ -219,18 +238,22 @@ export default function App(){
             {players.map((p,i)=>(
               <div key={p.id} className="playerRow">
                 <div className="playerName">
-                  <input className="input" value={p.name}
-                         onChange={e=>setPlayers(ps=>ps.map((x,ix)=>ix===i?{...x,name:e.target.value}:x))}/>
+                  <input
+                    className="input"
+                    value={p.name}
+                    onChange={e=>setPlayers(ps=>ps.map((x,ix)=>ix===i?{...x,name:e.target.value}:x))}
+                    onFocus={handleNameFocus}
+                    onMouseUp={handleNameMouseUp}
+                  />
                 </div>
                 <div className="playerActions">
-                  <button className="btn ghost" onClick={()=>movePlayer(i,-1)} title="Up" style={chipStyle}>↑</button>
-                  <button className="btn ghost" onClick={()=>movePlayer(i,1)}  title="Down" style={chipStyle}>↓</button>
+                  <button className="btn ghost" onClick={()=>movePlayer(i,-1)} title="Up" style={{padding:'4px 8px',lineHeight:1.1}}>↑</button>
+                  <button className="btn ghost" onClick={()=>movePlayer(i,1)}  title="Down" style={{padding:'4px 8px',lineHeight:1.1}}>↓</button>
                 </div>
                 <div><span className="score">{mode==='classic'? startScore : '-'}</span></div>
                 <div className="playerDelete">
-                  {!p.bot && (
-                    <button className="trash" onClick={()=>deletePlayer(i)} title="Delete">🗑️</button>
-                  )}
+                  {/* Koš je vidět i u robota; smazání bota zároveň vypne AI */}
+                  <button className="trash" onClick={()=>deletePlayer(i)} title="Delete">🗑️</button>
                 </div>
               </div>
             ))}
@@ -243,7 +266,7 @@ export default function App(){
           </div>
         </div>
       ) : (
-        /* jednoduchý placeholder herní obrazovky – jen ověření přepnutí */
+        /* jednoduchý placeholder herní obrazovky – ověření přepnutí */
         <div className="lobbyWrap">
           <div className="lobbyCard">
             <h3 style={{margin:'6px 0'}}>{t(lang,'game')}</h3>
