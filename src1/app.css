@@ -50,16 +50,12 @@ body{
   width:40px;height:40px;border:1px solid var(--line);
   border-radius:10px;background:#171a1f;position:relative
 }
-.icon{width:22px;height:22px;fill:#bfc7d5}   /* šedá barva pro megafon (SVG) */
-
-/* silueta hlavy – public/voice-head.png */
+.icon{width:22px;height:22px;fill:#bfc7d5}
 .iconHead{
-  width:22px;height:22px;display:inline-block;background:#bfc7d5; /* šedá */
+  width:22px;height:22px;display:inline-block;background:#bfc7d5;
   -webkit-mask:url('/voice-head.png') center/contain no-repeat;
           mask:url('/voice-head.png') center/contain no-repeat;
 }
-
-/* při mute: červený křížek (X) přes ikonu */
 .iconBtn.muted .icon{opacity:.55}
 .iconBtn.muted .iconHead{opacity:.55}
 .iconBtn.muted::before,
@@ -97,8 +93,6 @@ input[type="text"],input[type="number"],input[type="email"]{color:#fff}
 
 /* ===== LOBBY ===== */
 .lobbyWrap{display:flex;flex-direction:column;gap:8px;padding:8px;flex:1;min-height:0}
-
-/* karty = výška podle obsahu (žádné nafukování) */
 .lobbyCard{
   flex:0 0 auto;
   background:var(--panel);
@@ -106,18 +100,13 @@ input[type="text"],input[type="number"],input[type="email"]{color:#fff}
   border-radius:14px;
   padding:8px;
 }
-
 .lobbyControls{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .lobbyControls span{color:#fff;font-weight:800}
-
 .tab{
-  padding:4px 8px; /* nízké čipy */
-  border:1px solid var(--line);border-radius:10px;background:#171a1f;
+  padding:4px 8px;border:1px solid var(--line);border-radius:10px;background:#171a1f;
   cursor:pointer;font-weight:800;color:#fff;line-height:1.1
 }
 .tab.active{background:var(--green);border-color:#14532d}
-
-/* ===== PLAYERS ===== */
 .playerRow{
   display:grid;grid-template-columns:1fr auto auto auto;gap:8px;align-items:center;
   padding:6px;border:1px solid var(--line);border-radius:10px;background:#1c2026
@@ -131,6 +120,42 @@ input[type="text"],input[type="number"],input[type="email"]{color:#fff}
   background:linear-gradient(#b91c1c,#7f1d1d);color:#fff;font-weight:900
 }
 
-/* ===== RULES ===== */
-.rules dt{font-weight:900;margin-top:6px}
-.rules dd{margin:0 0 6px 0;color:var(--muted)}
+/* ===== GAME ===== */
+.gameWrap{
+  display:flex;flex-direction:column;gap:8px;padding:8px;flex:1;min-height:0;
+}
+.playersPane{
+  flex:1 1 50%;
+  overflow:auto;display:flex;flex-direction:column;gap:8px;
+}
+.playerCard{
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px;
+}
+.playerCard.active{outline:2px solid var(--green)}
+.playerCard.winner{outline:2px solid #f59e0b}
+.playerHeader{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.playerNameText{font-weight:900}
+.playerStats{display:flex;gap:8px;color:var(--muted)}
+.playerScore{font-size:40px;font-weight:900}
+.playerTurn{display:flex;align-items:center;gap:8px;margin-top:6px}
+.dartBox{
+  min-width:56px;height:40px;border-radius:10px;background:#171a1f;border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-weight:900
+}
+.lastTotal{margin-left:auto;color:var(--muted);font-weight:800}
+
+.padPane{
+  flex:0 0 auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px
+}
+.padRow{display:flex;gap:8px;justify-content:center;margin-bottom:8px}
+.key{
+  flex:1 1 auto;min-width:48px;height:56px;border-radius:12px;border:1px solid var(--line);
+  background:#0f1318;color:#fff;font-weight:900;font-size:20px;
+  box-shadow:inset 0 -2px 0 #0005;transition:transform .05s;
+}
+.key:active{transform:translateY(1px)}
+.multBtn{
+  flex:1 1 auto;min-width:120px;height:44px;border-radius:12px;border:1px solid var(--line);
+  background:#1a1f26;color:#fff;font-weight:900
+}
+.multBtn.active{background:#a
