@@ -97,7 +97,16 @@ input[type="text"],input[type="number"],input[type="email"]{color:#fff}
 
 /* ===== LOBBY ===== */
 .lobbyWrap{display:flex;flex-direction:column;gap:8px;padding:8px;flex:1;min-height:0}
-.lobbyCard{flex:1 1 100%;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px}
+
+/* >>> ZMĚNA: karty už se neroztahují, výška = podle obsahu <<< */
+.lobbyCard{
+  flex:0 0 auto;              /* dříve: flex:1 1 100%; */
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:8px;
+}
+
 .lobbyControls{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .lobbyControls span{color:#fff;font-weight:800}
 
