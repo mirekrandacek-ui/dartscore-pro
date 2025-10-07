@@ -143,7 +143,7 @@ export default function App(){
   const [order,setOrder] = useState([]);             // pořadí hráčů (pole indexů hráčů)
   const [turnStart,setTurnStart] = useState(0);      // score na začátku tahu
   const [scores,setScores] = useState([]);           // aktuální skóre hráčů
-  const [darts,setDarts] = useState([]);             // hozené šipky v aktuálním tahu (např. [{v:20,m:3,score:60}, ...])
+  const [darts,setDarts] = useState([]);             // hozené šipky v aktuálním tahu
   const [currIdx,setCurrIdx] = useState(0);          // index v order (kdo je na řadě)
   const [mult,setMult] = useState(1);                // 1/2/3
   const [actions,setActions] = useState([]);         // pro undo (stack)
@@ -186,12 +186,10 @@ export default function App(){
     if(outMode==='single') return multiplier===1;
     if(outMode==='double') return multiplier===2;
     if(outMode==='triple') return multiplier===3;
-    // master: double nebo triple
-    return multiplier===2 || multiplier===3;
+    return multiplier===2 || multiplier===3; // master
   };
 
   const isBustLeavingOne = (newScore) => {
-    // v režimech, kde je nutné double/triple/master-out, 1 je neuzavíratelné → bust
     if(outMode==='single') return false;
     return newScore===1;
   };
@@ -205,26 +203,17 @@ export default function App(){
   const pushAction = (payload) => setActions(st=>[...st, payload]);
 
   const commitDart = (value) => {
-    // výpočet skóre zásahu
     let v=value, m=mult;
-    if(value===25 || value===50){ // bull/bulls-eye
-      // zachovej přesně hodnotu, mult ignoruj
-      m = 1;
-      v = value;
-    }
+    if(value===25 || value===50){ m=1; v=value; } // bull/bullseye ignoruje mult
     const hit = v*m;
     const pIdx = currentPlayerIndex;
     const prev = scores[pIdx];
     let tentative = prev - hit;
 
-    // bust pravidla
     if(tentative < 0 || isBustLeavingOne(tentative)){
-      // celý tah bez skóre; hlas "bez skóre"
       speak(lang, t(lang,'bust'), voiceOn);
       playHitSound();
-      // zapsat akci pro undo (typ: bust turn)
       pushAction({type:'bust', pIdx, prevScore:prev, dartsBefore:[...darts]});
-      // reset skóre hráče, přechod na dalšího
       setDarts([]);
       setLastTurn(ls=>ls.map((x,i)=> i===pIdx ? 0 : x));
       nextPlayer();
@@ -232,9 +221,7 @@ export default function App(){
     }
 
     if(tentative === 0){
-      // musí sedět poslední multiplikátor dle out režimu
       if(isFinishAllowed(m)){
-        // výhra
         playHitSound();
         speak(lang, t(lang,'youWin'), voiceOn);
         pushAction({type:'dart', pIdx, prevScore:prev, newScore:tentative, hit:{v,m,score:hit}});
@@ -245,7 +232,6 @@ export default function App(){
         setWinner(pIdx);
         return;
       } else {
-        // špatný out → bust
         speak(lang, t(lang,'bust'), voiceOn);
         pushAction({type:'bust', pIdx, prevScore:prev, dartsBefore:[...darts]});
         setDarts([]);
@@ -255,7 +241,6 @@ export default function App(){
       }
     }
 
-    // normální platný zásah
     playHitSound();
     pushAction({type:'dart', pIdx, prevScore:prev, newScore:tentative, hit:{v,m,score:hit}});
     setScores(sc=>sc.map((x,i)=> i===pIdx ? tentative : x));
@@ -263,7 +248,6 @@ export default function App(){
     setThrown(th=>th.map((x,i)=> i===pIdx ? x+1 : x));
     setLastTurn(ls=>ls.map((x,i)=> i===pIdx ? (sumScores([...darts,{v,m,score:hit}])) : x));
 
-    // auto next po 3. šipce
     setTimeout(()=>{
       setDarts(current=>{
         if(current.length>=3){
@@ -285,7 +269,6 @@ export default function App(){
   };
 
   useEffect(()=>{
-    // nastav start skóre tahu pro nového hráče
     const pIdx = order[currIdx];
     if (pIdx!=null) {
       setTurnStart(scores[pIdx] ?? startScore);
@@ -297,29 +280,23 @@ export default function App(){
       if(st.length===0) return st;
       const last = st[st.length-1];
       if(last.type==='dart'){
-        // vrátit skóre a poslední šipku
         const {pIdx, prevScore, hit} = last;
         setScores(sc=>sc.map((x,i)=> i===pIdx ? prevScore : x));
         setDarts(ds=>{
           const d=[...ds];
-          // když jsme mezitím přešli na dalšího hráče, vraťme mu tah
           if(order[currIdx]!==pIdx){
-            // vrátit se na hráče pIdx
             const pos = order.indexOf(pIdx);
             if(pos>=0) setCurrIdx(pos);
           }
-          // odstranit poslední lokální zápis (nebo přidat zpět, pokud jsme byli po auto-next)
           if(d.length>0) d.pop();
-          else d.push(hit); // edge: undo po auto-next – vrátíme poslední hit do vizuálu
+          else d.push(hit);
           return d;
         });
         setThrown(th=>th.map((x,i)=> i===pIdx ? Math.max(0,x-1) : x));
         setLastTurn(ls=>ls.map((x,i)=> i===pIdx ? Math.max(0, x - (hit?.score||0)) : x));
       } else if(last.type==='bust'){
-        // bust vrátíme na začátek tahu u daného hráče
         const {pIdx, prevScore} = last;
         setScores(sc=>sc.map((x,i)=> i===pIdx ? prevScore : x));
-        // a vrátíme se zpět na hráče, který bustnul
         const pos = order.indexOf(pIdx);
         if(pos>=0) setCurrIdx(pos);
         setDarts(last.dartsBefore || []);
@@ -329,7 +306,6 @@ export default function App(){
     });
   };
 
-  /* průměry */
   const averages = useMemo(()=>{
     return players.map((_,i)=>{
       const thrownDarts = thrown[i] || 0;
@@ -338,11 +314,10 @@ export default function App(){
     });
   },[players, thrown, scores, startScore]);
 
-  /* Pomocné handlery pro auto-select jména */
+  /* auto-select jména */
   const handleNameFocus = (e) => e.target.select();
   const handleNameMouseUp = (e) => e.preventDefault();
 
-  /* ==== RENDER ==== */
   return (
     <div className="container">
       {/* ====== HEADER ====== */}
@@ -437,7 +412,7 @@ function Lobby({
           <div className="lobbyControls">
             <span>{t(lang,'start')}</span>
             {[101,301,501,701,901].map(s=>(
-              <button key={s} className={`tab`} style={{padding:'4px 8px',lineHeight:1.1, background: startScore===s?'var(--green)':'#171a1f', borderColor: startScore===s?'#14532d':'var(--line)'}} onClick={()=>setStartScore(s)}>{s}</button>
+              <button key={s} className={`tab ${startScore===s?'active':''}`} style={{padding:'4px 8px',lineHeight:1.1}} onClick={()=>setStartScore(s)}>{s}</button>
             ))}
           </div>
         </div>
@@ -489,8 +464,8 @@ function Lobby({
                 className="input"
                 value={p.name}
                 onChange={e=>setPlayers(ps=>ps.map((x,ix)=>ix===i?{...x,name:e.target.value}:x))}
-                onFocus={handleNameFocus}
-                onMouseUp={handleNameMouseUp}
+                onFocus={(e)=>e.target.select()}
+                onMouseUp={(e)=>e.preventDefault()}
               />
             </div>
             <div className="playerActions">
@@ -504,6 +479,21 @@ function Lobby({
           </div>
         ))}
         <button className="btn" onClick={addPlayer}>+ {t(lang,'addPlayer')}</button>
+      </div>
+
+      {/* PRAVIDLA – vráceno */}
+      <div className="lobbyCard">
+        <details>
+          <summary className="btn ghost">📖 {t(lang,'rules')}</summary>
+          <dl className="rules">
+            <dt>{t(lang,'classic')}</dt>
+            <dd>Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Cíl: z počátečního skóre přesně na 0. <em>Single-out / Double-out / Triple-out / Master-out</em> určují typ poslední šipky. Přestřelení (nebo zbyde 1 u režimů D/T/M) = {t(lang,'bust')}.</dd>
+            <dt>{t(lang,'cricket')}</dt>
+            <dd>Čísla 15–20 a Bull. Single 1 bod, Double 2 body, Triple 3 body. Číslo se zavře po 3 bodech. Boduješ na otevřených číslech, která soupeř nemá. Vyhrává ten, kdo zavře všechna čísla a vede na body.</dd>
+            <dt>{t(lang,'around')}</dt>
+            <dd>Postupně tref 1 → 20 → Bull. Jakýkoli zásah požadovaného čísla se počítá. Vyhrává, kdo první dokončí Bull.</dd>
+          </dl>
+        </details>
       </div>
 
       {/* Start hry */}
@@ -531,7 +521,7 @@ function Game({
 
   return (
     <div className="gameWrap">
-      {/* horní polovina – hráči */}
+      {/* horní: hráči (scrollují), spodní: klávesnice (pevná výška) */}
       <div className="playersPane">
         {order.map((pIdx,i)=>{
           const p=players[pIdx];
@@ -559,7 +549,6 @@ function Game({
         })}
       </div>
 
-      {/* spodní polovina – klávesnice */}
       <div className="padPane">
         <div className="padRow">
           <button className={`multBtn ${mult===2?'active':''}`} onClick={()=>setMult(m=>m===2?1:2)}>DOUBLE</button>
