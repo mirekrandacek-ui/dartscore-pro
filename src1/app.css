@@ -158,4 +158,8 @@ input[type="text"],input[type="number"],input[type="email"]{color:#fff}
   flex:1 1 auto;min-width:120px;height:44px;border-radius:12px;border:1px solid var(--line);
   background:#1a1f26;color:#fff;font-weight:900
 }
-.multBtn.active{background:#a
+.multBtn.active{background:#a11d1d;border-color:#7a1616}
+.undoBtn{
+  width:64px;height:44px;border-radius:12px;border:1px solid var(--line);
+  background:#1a1f26;color:#fff;font-weight:900
+}
