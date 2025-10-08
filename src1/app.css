@@ -55,7 +55,8 @@ input[type="text"]{color:#fff}
 .lobbyCard{flex:0 0 auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px}
 .lobbyControls{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .lobbyControls span{color:#fff;font-weight:800}
-.tab{padding:4px 8px;border:1px solid var(--line);border-radius:10px;background:#171a1f;cursor:pointer;font-weight:800;color:#fff;line-height:1.1}
+.tab{padding:4px 8px;border:1px solid var(--line);border-radius:10px;background:#171a1f;cursor:pointer;font-weight:800;color:#fff;line-height:1.1;display:inline-flex;align-items:center}
+.tab input{accent-color:#16a34a}
 .tab.active{background:var(--green);border-color:#14532d}
 .playerRow{display:grid;grid-template-columns:1fr auto auto auto;gap:8px;align-items:center;padding:6px;border:1px solid var(--line);border-radius:10px;background:#1c2026}
 .playerName input{width:100%}
@@ -88,7 +89,18 @@ input[type="text"]{color:#fff}
 .dartBox{min-width:56px;height:40px;border-radius:10px;background:#171a1f;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:900}
 .lastTotal{margin-left:auto;color:#cbd5e1;font-weight:800}
 
-/* oslava – duhové blikání + konfety */
+/* oslava – hvězda + konfety, ~2s */
+.playerCard.winner .starburst{position:absolute;inset:0;display:block;pointer-events:none;animation:starfade 2s ease-out forwards}
+@keyframes starfade{0%{opacity:0}10%{opacity:1}100%{opacity:0}}
+.starburst span{
+  --k:0;
+  position:absolute;left:50%;top:50%;
+  width:2px;height:120%;background:linear-gradient(transparent,#fff,transparent);
+  transform-origin:center;
+  transform:translate(-50%,-50%) rotate(calc(var(--k)*30deg));
+  filter:drop-shadow(0 0 6px #fff);
+}
+.playerCard.winner{animation:rainbow 1s linear infinite}
 @keyframes rainbow {
   0%{box-shadow:0 0 0 3px #ff3b30}
   25%{box-shadow:0 0 0 3px #ffcc00}
@@ -96,8 +108,6 @@ input[type="text"]{color:#fff}
   75%{box-shadow:0 0 0 3px #007aff}
   100%{box-shadow:0 0 0 3px #af52de}
 }
-.playerCard.winner{animation:rainbow 1s linear infinite}
-
 .confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .confetti span{
   --i:0;
@@ -105,7 +115,7 @@ input[type="text"]{color:#fff}
   width:7px;height:14px;border-radius:2px;
   transform:rotate(calc(var(--i) * 9deg)) translate(-50%,-50%);
   background:hsl(calc(var(--i)*15), 90%, 55%);
-  animation:conf 900ms ease-out forwards;
+  animation:conf 1.2s ease-out forwards;
 }
 @keyframes conf{
   0%{transform:rotate(var(--r,0)) translate(0,0) scale(1);opacity:0}
@@ -119,7 +129,8 @@ input[type="text"]{color:#fff}
 .key{flex:1 1 auto;min-width:48px;height:56px;border-radius:12px;border:1px solid var(--line);background:#0f1318;color:#fff;font-weight:900;font-size:20px;box-shadow:inset 0 -2px 0 #0005;transition:transform .05s}
 .key:active{transform:translateY(1px)}
 .multBtn{flex:1 1 auto;min-width:120px;height:44px;border-radius:12px;border:1px solid var(--line);background:#1a1f26;color:#fff;font-weight:900}
-.multBtn.active{background:#a11d1d;border-color:#7a1616}
+.multBtn.mult-2.active{background:#a11d1d;border-color:#7a1616} /* DOUBLE = červená */
+.multBtn.mult-3.active{background:#157f3a;border-color:#0e5d2b} /* TRIPLE = zelená */
 
 /* backspace ikona */
 .backspace{display:flex;align-items:center;justify-content:center}
