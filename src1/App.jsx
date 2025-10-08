@@ -63,7 +63,7 @@ const T = {
       startGame:'▶ Empezar',continueGame:'Continuar partida',saveGame:'Guardar partida',restart:'Reiniciar',
       rules:'Reglas',addPlayer:'Añadir jugador',
       saved:'Partidas guardadas',share:'Compartir',clear:'Borrar todo',
-      player:'Jugador',game:'Juego',dardos:'dardos',avg:'prom/dardo',last:'Último tiro',
+      player:'Jugador',game:'Juego',darts:'dardos',avg:'prom/dardo',last:'Último tiro',
       undo:'Deshacer',next:'Siguiente',bust:'sin puntuación',checkout:'checkout',
       youWinPrefix:'Victoria', outLabel:'Finish', zeroWord:'cero',
       points:'Puntos', target:'Objetivo'},
@@ -113,6 +113,9 @@ function speak(lang, text, enabled){
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(u);
 }
+
+/* Mark symboly pro Cricket */
+const markSymbol = (n) => (n<=0?'':(n===1?'/':(n===2?'✕':'Ⓧ')));
 
 export default function App(){
   /* viewport fix */
@@ -213,7 +216,7 @@ export default function App(){
   /* ===== GAME STATE (společné) ===== */
   const [order,setOrder] = useState([]);
   const [scores,setScores] = useState([]);     // Classic skóre
-  const [darts,setDarts] = useState([]);       // 3 šipky v aktuálním tahu (Classic / vizualizace)
+  const [darts,setDarts] = useState([]);       // 3 šipky v aktuálním tahu (pro vizualizaci)
   const [currIdx,setCurrIdx] = useState(0);
   const [mult,setMult] = useState(1);
   const [actions,setActions] = useState([]);
@@ -454,7 +457,6 @@ export default function App(){
     if(target <= 20){
       if(v === target) hit = true;
     } else {
-      // Bull: v==25 (nebo 50->25)
       if(v===25) hit = true;
     }
 
@@ -590,17 +592,17 @@ export default function App(){
     });
   },[players, thrown, scores, startScore, mode]);
 
-  /* AUTO SCROLL na aktivního hráče */
+  /* AUTO SCROLL na aktivního hráče (sloupec u Cricket / karta jinde) */
   const cardRefs = useRef({});
   useEffect(()=>{
     const activeIdx = order[currIdx];
     const el = cardRefs.current[activeIdx];
     if(el && el.scrollIntoView){
-      el.scrollIntoView({behavior:'smooth', block:'nearest'});
+      el.scrollIntoView({behavior:'smooth', block: mode==='cricket' ? 'nearest' : 'nearest', inline:'center'});
     }
-  },[order, currIdx]);
+  },[order, currIdx, mode]);
 
-  /* BOT — sekvenční 3 hody s kontrolou řady */
+  /* BOT — sekvenční 3 hody s kontrolou řady (funguje ve všech režimech) */
   useEffect(()=>{
     const pIdx = order[currIdx];
     const p = players[pIdx];
@@ -639,7 +641,7 @@ export default function App(){
     const myIdx = pIdx;
     const throwOnce = (i) => {
       if(cancelled || winner!=null) return;
-      if(order[currIdx] !== myIdx) return;
+      if(order[currIdx] !== myIdx) return; // už není řada bota
       const th = pickThrow();
       if(!th) return;
       setTimeout(()=>{
@@ -923,7 +925,7 @@ function Lobby({
               <em> Double-out, Triple-out, Master-out</em>.  
               {t(lang,'anyOutHint')}. Přestřelení nebo zbyde 1 (pokud je aktivní některé out pravidlo) = {t(lang,'bust')}.</dd>
             <dt>{t(lang,'cricket')}</dt>
-            <dd>Hraje se čísly 15–20 a 25. Každý zásah: Single=1 značka, Double=2, Triple=3. Po 3 značkách je číslo „zavřené“. Přebytky skórují body, jen pokud soupeř(i) nemají číslo zavřené.</dd>
+            <dd>Hraje se čísly 15–20 a 25. Každý zásah: Single=1 značka „/“, Double=2 (✕), Triple=3 (Ⓧ). Po 3 značkách je číslo „zavřené“. Přebytky skórují body, jen pokud soupeř(i) nemají číslo zavřené.</dd>
             <dt>{t(lang,'around')}</dt>
             <dd>Postupně 1→20→Bull (25). Počítá se zásah aktuálního cíle. Double/Triple se počítají jako zásah (ne více zásahů). Vyhrává ten, kdo první trefí Bull.</dd>
           </dl>
@@ -996,6 +998,8 @@ function Game({
     [0,50]
   ];
 
+  const cricketTargets = ['20','19','18','17','16','15','bull']; // bull=25 viz UI
+
   return (
     <div className="gameWrap">
       {/* horní lišta */}
@@ -1014,92 +1018,112 @@ function Game({
         </div>
       </div>
 
-      <div className="playersPane">
-        {order.map((pIdx,i)=>{
-          const p=players[pIdx];
-          const active = i===currIdx && winner==null;
-          const currentDarts = active ? darts : [];
-          return (
-            <div
-              key={p.id}
-              ref={node=>{ if(node) cardRefs.current[pIdx]=node; }}
-              className={`playerCard ${active?'active':''} ${winner===pIdx?'winner':''}`}
-            >
-              {winner===pIdx && (
-                <>
-                  <div className="starburst" aria-hidden="true">
-                    {Array.from({length:12}).map((_,k)=><span key={k} style={{'--k':k}} />)}
-                  </div>
-                  <div className="confetti" aria-hidden="true">
-                    {Array.from({length:50}).map((_,k)=><span key={k} style={{'--i':k}}/>)}
-                  </div>
-                </>
-              )}
-              <div className="playerHeader">
-                <div className="playerNameText">{p.name}</div>
+      {/* PANE hráčů / skóre */}
+      {mode!=='cricket' ? (
+        <div className="playersPane">
+          {order.map((pIdx,i)=>{
+            const p=players[pIdx];
+            const active = i===currIdx && winner==null;
+            const currentDarts = active ? darts : [];
+            return (
+              <div
+                key={p.id}
+                ref={node=>{ if(node) cardRefs.current[pIdx]=node; }}
+                className={`playerCard ${active?'active':''} ${winner===pIdx?'winner':''}`}
+              >
+                {winner===pIdx && (
+                  <>
+                    <div className="starburst" aria-hidden="true">
+                      {Array.from({length:12}).map((_,k)=><span key={k} style={{'--k':k}} />)}
+                    </div>
+                    <div className="confetti" aria-hidden="true">
+                      {Array.from({length:50}).map((_,k)=><span key={k} style={{'--i':k}}/>)}
+                    </div>
+                  </>
+                )}
+                <div className="playerHeader">
+                  <div className="playerNameText">{p.name}</div>
+                  {mode==='classic' ? (
+                    <div className="playerStats">
+                      <span>{(thrown[pIdx]||0)} {t(lang,'darts')}</span>
+                      <span>•</span>
+                      <span>{t(lang,'avg')}: {formatAvg(averages[pIdx])}</span>
+                    </div>
+                  ) : (
+                    <div className="playerStats">
+                      <span>{t(lang,'target')}: {around?.[pIdx]?.next ?? 1}</span>
+                    </div>
+                  )}
+                </div>
+
                 {mode==='classic' ? (
-                  <div className="playerStats">
-                    <span>{(thrown[pIdx]||0)} {t(lang,'darts')}</span>
-                    <span>•</span>
-                    <span>{t(lang,'avg')}: {formatAvg(averages[pIdx])}</span>
-                  </div>
-                ) : mode==='cricket' ? (
-                  <div className="playerStats">
-                    <span>{t(lang,'points')}: {cricket?.[pIdx]?.points ?? 0}</span>
-                  </div>
+                  <>
+                    <div className="playerScore">{scores[pIdx] ?? 0}</div>
+                    <div className="playerTurn">
+                      {[0,1,2].map(ix=>{
+                        const d = currentDarts[ix];
+                        return <div key={ix} className="dartBox">{d? formatHit(d) : '-'}</div>;
+                      })}
+                      <div className="lastTotal">{t(lang,'last')}: {lastTurn[pIdx]||0}</div>
+                    </div>
+                  </>
                 ) : (
-                  <div className="playerStats">
-                    <span>{t(lang,'target')}: {around?.[pIdx]?.next ?? 1}</span>
-                  </div>
+                  <>
+                    <div className="playerTurn">
+                      <div className="dartBox">{around?.[pIdx]?.next ?? 1}</div>
+                      {[0,1,2].map(ix=>{
+                        const d = currentDarts[ix];
+                        return <div key={ix} className="dartBox">{d? (d.score? '✓' : '-') : '-'}</div>;
+                      })}
+                    </div>
+                  </>
                 )}
               </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* CRICKET – layout podle screenshotu */
+        <div className="cricketWrap">
+          <div className="targetsRail">
+            {cricketTargets.map(k=>{
+              const lbl = k==='bull' ? '25' : k;
+              return <div key={k} className="targetCell">{lbl}</div>;
+            })}
+          </div>
 
-              {mode==='classic' ? (
-                <>
-                  <div className="playerScore">{scores[pIdx] ?? 0}</div>
-                  <div className="playerTurn">
-                    {[0,1,2].map(ix=>{
-                      const d = currentDarts[ix];
-                      return <div key={ix} className="dartBox">{d? formatHit(d) : '-'}</div>;
-                    })}
-                    <div className="lastTotal">{t(lang,'last')}: {lastTurn[pIdx]||0}</div>
+          <div className="cricketScroll">
+            {order.map((pIdx,i)=>{
+              const p=players[pIdx];
+              const active = i===currIdx && winner==null;
+              return (
+                <div
+                  key={p.id}
+                  ref={node=>{ if(node) cardRefs.current[pIdx]=node; }}
+                  className={`playerCol ${active?'active':''} ${winner===pIdx?'winner':''}`}
+                >
+                  <div className="playerColHead">
+                    <div className="playerColName">{p.name}</div>
+                    <div className="playerColPts">{cricket?.[pIdx]?.points ?? 0}</div>
                   </div>
-                </>
-              ) : mode==='cricket' ? (
-                <>
-                  {/* Řádek 1: stav značek 20..15 a 25 */}
-                  <div className="playerTurn" style={{flexWrap:'wrap',gap:6}}>
-                    {['20','19','18','17','16','15','bull'].map(k=>{
+                  <div className="playerColMarks">
+                    {cricketTargets.map(k=>{
                       const mk = cricket?.[pIdx]?.marks?.[k] ?? 0;
-                      const label = k==='bull' ? '25' : k;
-                      return <div key={k} className="dartBox" title={label}>{label}:{mk}</div>;
-                    })}
-                    <div className="lastTotal">{t(lang,'last')}: {lastTurn[pIdx]||0}</div>
-                  </div>
-                  {/* Řádek 2: aktuální 3 zásahy (D/T + číslo) */}
-                  <div className="playerTurn" style={{marginTop:6}}>
-                    {[0,1,2].map(ix=>{
-                      const d = currentDarts[ix];
-                      return <div key={ix} className="dartBox">{d ? formatHitCricket(d) : '-'}</div>;
+                      return (
+                        <div key={k} className={`markCell ${mk>=3?'closed':''}`}>
+                          {markSymbol(mk)}
+                        </div>
+                      );
                     })}
                   </div>
-                </>
-              ) : (
-                <>
-                  <div className="playerTurn">
-                    <div className="dartBox">{around?.[pIdx]?.next ?? 1}</div>
-                    {[0,1,2].map(ix=>{
-                      const d = currentDarts[ix];
-                      return <div key={ix} className="dartBox">{d? (d.score? '✓' : '-') : '-'}</div>;
-                    })}
-                  </div>
-                </>
-              )}
-            </div>
-          );
-        })}
-      </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
+      {/* PAD */}
       <div className="padPane">
         <div className="padRow">
           <button type="button" className={`multBtn mult-2 ${mult===2?'active':''}`} onClick={()=>setMult(m=>m===2?1:2)}>DOUBLE</button>
@@ -1133,10 +1157,5 @@ function formatHit(d){
   if(!d) return '-';
   const prefix = d.m===2?'D':(d.m===3?'T':'');
   return `${prefix}${d.v}=${d.score}`;
-}
-function formatHitCricket(d){
-  if(!d) return '-';
-  const prefix = d.m===2?'D':(d.m===3?'T':'');
-  return `${prefix}${d.v===50 ? 25 : d.v}`;
 }
 function deepClone(x){ return JSON.parse(JSON.stringify(x)); }
