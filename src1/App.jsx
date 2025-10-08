@@ -413,14 +413,18 @@ export default function App(){
     const prevState = deepClone(cricket);
     const me = prevState[pIdx];
 
-    const before = me.marks[String(v)];
+   const key = (v===25 ? 'bull' : String(v));
+const before = me.marks[key];
+
     let add = m;
     const newMarks = Math.min(3, before + add);
     const overflow = Math.max(0, before + add - 3);
 
-    const opponentsOpen = prevState.some((pl,ix)=> ix!==pIdx && pl.marks[String(v)]<3);
+    const opponentsOpen = prevState.some((pl,ix)=> ix!==pIdx && pl.marks[key] < 3);
 
-    me.marks[String(v)] = newMarks;
+
+   me.marks[key] = newMarks;
+
     if(overflow>0 && opponentsOpen){
       const pointPerMark = (v===25?25:v);
       me.points += overflow * pointPerMark;
@@ -1014,7 +1018,7 @@ function Game({
     [0,50]
   ];
 
-  const cricketTargets = ['20','19','18','17','16','15','bull']; // bull=25 viz UI
+  const cricketTargets = ['20','19','18','17','16','15','bull'];
 
   return (
     <div className="gameWrap">
@@ -1119,9 +1123,9 @@ function Game({
                   className={`playerCol ${active?'active':''} ${winner===pIdx?'winner':''}`}
                 >
                   <div className="playerColHead">
-                    <div className="playerColName">{p.name}</div>
-                    <div className="playerColPts">{cricket?.[pIdx]?.points ?? 0}</div>
-                  </div>
+  <div className="playerColName">{p.name}</div>
+  <div className="playerColPts">{cricket?.[pIdx]?.points ?? 0}</div>
+</div>
                   <div className="playerColMarks">
                     {cricketTargets.map(k=>{
                       const mk = cricket?.[pIdx]?.marks?.[k] ?? 0;
