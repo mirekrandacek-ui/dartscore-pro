@@ -303,49 +303,61 @@ export default function App(){
 
   /* ====== CLASSIC commit ====== */
   const commitClassic = (value, mOverride) => {
-    let v=value; let m=(mOverride ?? mult);
-    if(isInvalidComboClassic(v,m)) return;
-    if(value===25 || value===50){ m=1; v=value; } // bull ignoruje mult
+    let v = value;
+    let m = (mOverride ?? mult);
 
-    const hit = v*m;
+    // neplatné kombinace (D/T na 0, 25, 50)
+    if (isInvalidComboClassic(v, m)) return;
+
+    // Bull ignoruje násobič; 50 bereme jako 50 (ne 25×2) v Classicu
+    if (v === 25 || v === 50) { m = 1; }
+
+    const hit = v * m;
     const pIdx = currentPlayerIndex;
     const prev = scores[pIdx];
-    let tentative = prev - hit;
+    const tentative = prev - hit;
 
     const resetMult = () => setMult(1);
 
-    if(tentative < 0 || isBustLeavingOne(tentative)){
-      speak(lang, t(lang,'bust'), voiceOn);
+    // bust: přestřelíš nebo zůstane 1 (pokud jsou aktivní out-pravidla)
+    if (tentative < 0 || isBustLeavingOne(tentative)) {
+      speak(lang, t(lang, 'bust'), voiceOn);
       playHitSound();
-      pushAction({type:'bust', mode:'classic', pIdx, prevScore:prev, dartsBefore:[...darts]});
+      pushAction({ type: 'bust', mode: 'classic', pIdx, prevScore: prev, dartsBefore: [...darts] });
       setDarts([]);
-      setLastTurn(ls=>ls.map((x,i)=> i===pIdx ? 0 : x));
+      setLastTurn(ls => ls.map((x, i) => i === pIdx ? 0 : x));
       resetMult();
       nextPlayer();
       return;
     }
 
-    const dartsUsed = darts.length+1;
-
-    if(tentative === 0){
-      if(isFinishAllowed(m)){
+    // přesně na 0 (finish)
+    if (tentative === 0) {
+      if (isFinishAllowed(m)) {
         playHitSound();
-        pushAction({type:'dart', mode:'classic', pIdx, prevScore:prev, newScore:tentative, hit:{v,m,score:hit}});
-        setScores(sc=>sc.map((x,i)=> i===pIdx ? 0 : x));
-        const newD = [...darts,{v,m,score:hit}];
-        setDarts(newD);
-        setThrown(th=>th.map((x,i)=> i===pIdx ? x+1 : x));
-        setLastTurn(ls=>ls.map((x,i)=> i===pIdx ? sumScores(newD) : x));
+        pushAction({ type: 'dart', mode: 'classic', pIdx, prevScore: prev, newScore: tentative, hit: { v, m, score: hit } });
+        setScores(sc => sc.map((x, i) => i === pIdx ? 0 : x));
 
-        if(!playThrough){
+        // 1) zapiš poslední šipku bezpečně (funkční zápis)
+        setDarts(prevD => {
+          const nd = [...prevD, { v, m, score: hit }];
+          const total = nd.reduce((s, a) => s + (a?.score || 0), 0);
+          setThrown(th => th.map((x, i) => i === pIdx ? x + 1 : x));
+          setLastTurn(ls => ls.map((x, i) => i === pIdx ? total : x));
+          return nd;
+        });
+
+        // 2) buď vyhraj hned, nebo v režimu playThrough jen poznač „kdo dohodil nejdřív“ a přepni
+        if (!playThrough) {
           const name = players[pIdx]?.name || '';
-          speak(lang, `${t(lang,'youWinPrefix')} ${name}`, voiceOn);
+          speak(lang, `${t(lang, 'youWinPrefix')} ${name}`, voiceOn);
           finalizeWin(pIdx);
           resetMult();
           return;
         } else {
-          setPendingWin(prevBest=>{
-            if(!prevBest || dartsUsed < prevBest.dartsUsed) return {pIdx, dartsUsed};
+          const dartsUsed = (darts?.length ?? 0) + 1; // počet šipek, které potřeboval v tomto kole
+          setPendingWin(prevBest => {
+            if (!prevBest || dartsUsed < prevBest.dartsUsed) return { pIdx, dartsUsed };
             return prevBest;
           });
           resetMult();
@@ -353,37 +365,41 @@ export default function App(){
           return;
         }
       } else {
-        speak(lang, t(lang,'bust'), voiceOn);
-        pushAction({type:'bust', mode:'classic', pIdx, prevScore:prev, dartsBefore:[...darts]});
+        // finish není dovolen podle out-pravidel => bust
+        speak(lang, t(lang, 'bust'), voiceOn);
+        pushAction({ type: 'bust', mode: 'classic', pIdx, prevScore: prev, dartsBefore: [...darts] });
         setDarts([]);
-        setLastTurn(ls=>ls.map((x,i)=> i===pIdx ? 0 : x));
+        setLastTurn(ls => ls.map((x, i) => i === pIdx ? 0 : x));
         resetMult();
         nextPlayer();
         return;
       }
     }
 
+    // běžný zásah (zůstává > 0)
     playHitSound();
-    pushAction({type:'dart', mode:'classic', pIdx, prevScore:prev, newScore:tentative, hit:{v,m,score:hit}});
-    setScores(sc=>sc.map((x,i)=> i===pIdx ? tentative : x));
-    const newD = [...darts,{v,m,score:hit}];
-    setDarts(newD);
-    setThrown(th=>th.map((x,i)=> i===pIdx ? x+1 : x));
-    setLastTurn(ls=>ls.map((x,i)=> i===pIdx ? sumScores(newD) : x));
-    resetMult();
+    pushAction({ type: 'dart', mode: 'classic', pIdx, prevScore: prev, newScore: tentative, hit: { v, m, score: hit } });
+    setScores(sc => sc.map((x, i) => i === pIdx ? tentative : x));
 
-    setTimeout(()=>{
-      setDarts(current=>{
-        if(current.length>=3){
-          const total = sumScores(current);
-          speak(lang, total===0 ? t(lang,'zeroWord') : total, voiceOn);
-          nextPlayer();
-          return [];
-        }
-        return current;
-      });
-    }, 30);
+    // Funkční zápis: přidej šipku; po 3. hned přepni hráče
+    setDarts(prevD => {
+      const nd = [...prevD, { v, m, score: hit }];
+      const total = nd.reduce((s, a) => s + (a?.score || 0), 0);
+
+      setThrown(th => th.map((x, i) => i === pIdx ? x + 1 : x));
+      setLastTurn(ls => ls.map((x, i) => i === pIdx ? total : x));
+
+      if (nd.length >= 3) {
+        speak(lang, total === 0 ? t(lang, 'zeroWord') : total, voiceOn);
+        nextPlayer();
+        return [];
+      }
+      return nd;
+    });
+
+    resetMult();
   };
+
 
   /* ====== CRICKET commit ====== */
   const commitCricket = (value, mOverride) => {
