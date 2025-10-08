@@ -13,9 +13,7 @@
 html,body,#root{height:100%}
 body{ margin:0;background:var(--bg);color:var(--text);
   font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;}
-.container{
-  height:calc(var(--vh,1vh)*100);display:flex;flex-direction:column;min-height:0;
-}
+.container{ height:calc(var(--vh,1vh)*100);display:flex;flex-direction:column;min-height:0; }
 
 /* HEADER */
 .header{display:flex;align-items:center;justify-content:space-between;
@@ -29,7 +27,7 @@ body{ margin:0;background:var(--bg);color:var(--text);
 
 /* ICONS */
 .iconBtn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;
-  border:1px solid var(--line);border-radius:10px;background:#171a1f;position:relative}
+  border:1px solid var(--line);border-radius:10px;background:#171a1f;position:relative;color:#cfd6df}
 .icon{width:22px;height:22px;fill:#bfc7d5}
 .iconHead{width:22px;height:22px;display:inline-block;background:#bfc7d5;
   -webkit-mask:url('/voice-head.png') center/contain no-repeat;mask:url('/voice-head.png') center/contain no-repeat}
@@ -66,14 +64,19 @@ input[type="text"]{color:#fff}
 .playerDelete{display:flex;justify-content:flex-end}
 .trash{width:40px;height:40px;border:1px solid var(--line);border-radius:10px;background:linear-gradient(#b91c1c,#7f1d1d);color:#fff;font-weight:900}
 
-/* RULES */
+/* RULES & SAVED */
 .rules dt{font-weight:900;margin-top:6px}
 .rules dd{margin:0 0 6px 0;color:var(--muted)}
+.savedList{display:flex;flex-direction:column;gap:8px}
+.savedRow{display:flex;justify-content:space-between;align-items:center;padding:6px;border:1px solid var(--line);border-radius:10px;background:#1c2026}
+.savedTitle{font-weight:900}
+.savedSub{color:#cbd5e1;font-size:12px}
 
 /* GAME */
 .gameWrap{display:flex;flex-direction:column;gap:8px;padding:8px;flex:1;min-height:0}
-.gameTopBar{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.gameTopBar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .badge{background:#0f1318;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-weight:800}
+.gameTopBtns{display:flex;gap:8px}
 .playersPane{flex:1 1 calc(100% - var(--padH));min-height:0;overflow:auto;display:flex;flex-direction:column;gap:8px}
 .playerCard{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px}
 .playerCard.active{outline:2px solid var(--green)}
@@ -83,9 +86,9 @@ input[type="text"]{color:#fff}
 .playerScore{font-size:40px;font-weight:900}
 .playerTurn{display:flex;align-items:center;gap:8px;margin-top:6px}
 .dartBox{min-width:56px;height:40px;border-radius:10px;background:#171a1f;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:900}
-.lastTotal{margin-left:auto;color:var(--muted);font-weight:800}
+.lastTotal{margin-left:auto;color:#cbd5e1;font-weight:800}
 
-/* vítěz – duhové blikání */
+/* oslava – duhové blikání + konfety */
 @keyframes rainbow {
   0%{box-shadow:0 0 0 3px #ff3b30}
   25%{box-shadow:0 0 0 3px #ffcc00}
@@ -95,21 +98,22 @@ input[type="text"]{color:#fff}
 }
 .playerCard.winner{animation:rainbow 1s linear infinite}
 
-/* jednoduchý ohňostroj */
-.fireworks{
-  position:absolute;inset:0;pointer-events:none;
-  background:
-    radial-gradient(circle at 30% 60%, rgba(255,255,255,.9) 0 2px, transparent 3px),
-    radial-gradient(circle at 60% 30%, rgba(255,0,100,.9) 0 2px, transparent 3px),
-    radial-gradient(circle at 70% 70%, rgba(0,200,255,.9) 0 2px, transparent 3px),
-    radial-gradient(circle at 40% 40%, rgba(0,255,150,.9) 0 2px, transparent 3px);
-  animation:boom 800ms ease-out forwards;
+.confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.confetti span{
+  --i:0;
+  position:absolute;left:50%;top:50%;
+  width:7px;height:14px;border-radius:2px;
+  transform:rotate(calc(var(--i) * 9deg)) translate(-50%,-50%);
+  background:hsl(calc(var(--i)*15), 90%, 55%);
+  animation:conf 900ms ease-out forwards;
 }
-@keyframes boom{
-  from{opacity:0;transform:scale(.6)}
-  to{opacity:1;transform:scale(1.1)}
+@keyframes conf{
+  0%{transform:rotate(var(--r,0)) translate(0,0) scale(1);opacity:0}
+  10%{opacity:1}
+  100%{transform:rotate(var(--r,0)) translate(calc((var(--i) - 20) * 6px), calc((var(--i) - 10) * -6px)) scale(1.1);opacity:0}
 }
 
+/* Pad */
 .padPane{flex:0 0 var(--padH);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px}
 .padRow{display:flex;gap:8px;justify-content:center;margin-bottom:8px}
 .key{flex:1 1 auto;min-width:48px;height:56px;border-radius:12px;border:1px solid var(--line);background:#0f1318;color:#fff;font-weight:900;font-size:20px;box-shadow:inset 0 -2px 0 #0005;transition:transform .05s}
@@ -117,6 +121,6 @@ input[type="text"]{color:#fff}
 .multBtn{flex:1 1 auto;min-width:120px;height:44px;border-radius:12px;border:1px solid var(--line);background:#1a1f26;color:#fff;font-weight:900}
 .multBtn.active{background:#a11d1d;border-color:#7a1616}
 
-/* backspace tlačítko ve stylu klávesnice */
+/* backspace ikona */
 .backspace{display:flex;align-items:center;justify-content:center}
-.iconBackspace{width:28px;height:28px;fill:#cfd6df}
+.iconBackspace{width:28px;height:28px}
