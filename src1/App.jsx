@@ -15,6 +15,7 @@ const T = {
       mode:'Režim',classic:'Klasická hra',cricket:'Cricket',around:'Around the Clock',
       start:'Start',closing:'Ukončení',
       doubleOut:'Double-out',tripleOut:'Triple-out',masterOut:'Master-out',
+      anyOutHint:'— pokud není vybráno nic, uzavírá se libovolně',
       order:'Pořadí',fixed:'Fixní',random:'Náhodné', playThrough:'Dohrávat kolo',
       robot:'Robot',off:'Vypn.',easy:'Snadná',medium:'Střední',hard:'Těžká',
       startGame:'▶ Start hry',continueGame:'Pokračovat ve hře',saveGame:'Uložit hru',restart:'Opakovat hru',
@@ -27,6 +28,7 @@ const T = {
       mode:'Mode',classic:'Classic',cricket:'Cricket',around:'Around the Clock',
       start:'Start',closing:'Finish',
       doubleOut:'Double-out',tripleOut:'Triple-out',masterOut:'Master-out',
+      anyOutHint:'— if none is selected, any-out is allowed',
       order:'Order',fixed:'Fixed',random:'Random', playThrough:'Play the round',
       robot:'Bot',off:'Off',easy:'Easy',medium:'Medium',hard:'Hard',
       startGame:'▶ Start Game',continueGame:'Continue game',saveGame:'Save game',restart:'Restart game',
@@ -39,6 +41,7 @@ const T = {
       mode:'Modus',classic:'Klassisch',cricket:'Cricket',around:'Rund um die Uhr',
       start:'Start',closing:'Beenden',
       doubleOut:'Double-out',tripleOut:'Triple-out',masterOut:'Master-out',
+      anyOutHint:'— wenn nichts gewählt ist, ist Any-out erlaubt',
       order:'Reihenfolge',fixed:'Fix',random:'Zufällig', playThrough:'Runde ausspielen',
       robot:'Roboter',off:'Aus',easy:'Leicht',medium:'Mittel',hard:'Schwer',
       startGame:'▶ Spiel starten',continueGame:'Spiel fortsetzen',saveGame:'Spiel speichern',restart:'Neu starten',
@@ -51,6 +54,7 @@ const T = {
       mode:'Modo',classic:'Clásico',cricket:'Cricket',around:'Alrededor del reloj',
       start:'Inicio',closing:'Cierre',
       doubleOut:'Double-out',tripleOut:'Triple-out',masterOut:'Master-out',
+      anyOutHint:'— si no se selecciona nada, se permite any-out',
       order:'Orden',fixed:'Fijo',random:'Aleatorio', playThrough:'Jugar la ronda',
       robot:'Robot',off:'Apag.',easy:'Fácil',medium:'Medio',hard:'Difícil',
       startGame:'▶ Empezar',continueGame:'Continuar partida',saveGame:'Guardar partida',restart:'Reiniciar',
@@ -63,6 +67,7 @@ const T = {
       mode:'Modus',classic:'Klassiek',cricket:'Cricket',around:'Rond de klok',
       start:'Start',closing:'Einde',
       doubleOut:'Double-out',tripleOut:'Triple-out',masterOut:'Master-out',
+      anyOutHint:'— als niets is gekozen, is any-out toegestaan',
       order:'Volgorde',fixed:'Vast',random:'Willekeurig', playThrough:'Ronde uitspelen',
       robot:'Robot',off:'Uit',easy:'Makkelijk',medium:'Gemiddeld',hard:'Moeilijk',
       startGame:'▶ Start spel',continueGame:'Doorgaan',saveGame:'Spel opslaan',restart:'Opnieuw',
@@ -75,6 +80,7 @@ const T = {
       mode:'Режим',classic:'Классика',cricket:'Крикет',around:'По кругу',
       start:'Старт',closing:'Завершение',
       doubleOut:'Double-out',tripleOut:'Triple-out',masterOut:'Master-out',
+      anyOutHint:'— если ничего не выбрано, разрешён любой финиш',
       order:'Порядок',fixed:'Фикс',random:'Случайно', playThrough:'Доиграть круг',
       robot:'Робот',off:'Выкл.',easy:'Лёгкий',medium:'Средний',hard:'Сложный',
       startGame:'▶ Начать игру',continueGame:'Продолжить',saveGame:'Сохранить игру',restart:'Перезапуск',
@@ -103,13 +109,14 @@ function speak(lang, text, enabled){
 }
 
 export default function App(){
-  /* viewport fix + perzistence obrazovky, ať to „neskáče do lobby“ */
+  /* viewport fix */
   useEffect(()=>{ 
     const setVh=()=>document.documentElement.style.setProperty('--vh',`${window.innerHeight*0.01}px`); 
     setVh(); window.addEventListener('resize',setVh); 
     return()=>window.removeEventListener('resize',setVh);
   },[]);
 
+  /* obrazovky + perzistence */
   const [screen,setScreen] = useState(()=>localStorage.getItem('screen')||'lobby');
   useEffect(()=>{ localStorage.setItem('screen', screen); },[screen]);
 
@@ -120,7 +127,7 @@ export default function App(){
   const [mode,setMode] = useState('classic');
   const [startScore,setStartScore] = useState(501);
 
-  /* NOVĚ: přepínače pro out pravidla */
+  /* out pravidla – přepínače */
   const [outDouble,setOutDouble] = useState(true);
   const [outTriple,setOutTriple] = useState(false);
   const [outMaster,setOutMaster] = useState(false);
@@ -169,7 +176,7 @@ export default function App(){
     }));
   },[lang]);
 
-  /* BOT v lobby */
+  /* BOT v lobby (přidat/odebrat) */
   useEffect(()=>{
     setPlayers(ps=>{
       const hasBot = ps.some(p=>p.bot);
@@ -202,7 +209,7 @@ export default function App(){
   const [scores,setScores] = useState([]);
   const [darts,setDarts] = useState([]);
   const [currIdx,setCurrIdx] = useState(0);
-  const [mult,setMult] = useState(1);          // 1/2/3
+  const [mult,setMult] = useState(1);
   const [actions,setActions] = useState([]);
   const [thrown,setThrown] = useState([]);
   const [lastTurn,setLastTurn] = useState([]);
@@ -240,7 +247,7 @@ export default function App(){
     return arr;
   }
 
-  /* ===== out pravidla ===== */
+  /* out pravidla */
   const anyOutSelected = outDouble || outTriple || outMaster;
   const isFinishAllowed = (m) => {
     if(!anyOutSelected) return true; // libovolné uzavření
@@ -258,20 +265,19 @@ export default function App(){
   };
   const pushAction = (payload) => setActions(st=>[...st, payload]);
 
-  // Zákaz D/T 0,25,50
   const isInvalidCombo = (v,m) => (m>1 && (v===0 || v===25 || v===50));
 
-  const commitDart = (value) => {
-    let v=value, m=mult;
+  // commit s volitelným mOverride (kvůli b otovi – nečekáme na setState)
+  const commitDart = (value, mOverride) => {
+    let v=value; let m=(mOverride ?? mult);
     if(isInvalidCombo(v,m)) return;
 
-    if(value===25 || value===50){ m=1; v=value; } // bull ignoruje mult
+    if(value===25 || value===50){ m=1; v=value; }
     const hit = v*m;
     const pIdx = currentPlayerIndex;
     const prev = scores[pIdx];
     let tentative = prev - hit;
 
-    // po každém hodu vypnout mult (požadavek)
     const resetMult = () => setMult(1);
 
     if(tentative < 0 || isBustLeavingOne(tentative)){
@@ -428,7 +434,7 @@ export default function App(){
     }
   },[order, currIdx]);
 
-  /* BOT—jednoduchá AI (háže sama) */
+  /* BOT—háže s mOverride (3 šipky) */
   useEffect(()=>{
     const pIdx = order[currIdx];
     const p = players[pIdx];
@@ -459,7 +465,9 @@ export default function App(){
       if(cancelled || winner!=null) return;
       const th = pickThrow();
       if(!th) return;
-      setTimeout(()=>{ if(!cancelled){ setMult(th.m); commitDart(th.v); } }, delays[i]);
+      setTimeout(()=>{
+        if(!cancelled){ commitDart(th.v, th.m); }
+      }, delays[i]);
     };
 
     fire(0); fire(1); fire(2);
@@ -467,15 +475,33 @@ export default function App(){
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },[currIdx, order, players, winner]);
 
-  /* map „Ukončení“ na popisek */
-  const outDesc = (() => {
-    const arr=[];
-    if(outDouble) arr.push('Double-out');
-    if(outTriple) arr.push('Triple-out');
-    if(outMaster) arr.push('Master-out');
-    if(arr.length===0) return 'Any-out';
-    return arr.join(' + ');
-  })();
+  /* Uložení snapshotu při návratu do lobby (aby šlo „Pokračovat“) */
+  const saveSnapshot = () => {
+    try{
+      const snapshot = {version:1, mode,startScore,
+        outDouble,outTriple,outMaster,
+        randomOrder,playThrough,players,order,scores,currIdx,thrown,lastTurn};
+      localStorage.setItem('savedGame', JSON.stringify(snapshot));
+    }catch{}
+  };
+  const continueSaved = () => {
+    try{
+      const s=JSON.parse(localStorage.getItem('savedGame')||'{}');
+      if(!s || !s.order) return alert('Nic k pokračování.');
+      setMode(s.mode||'classic');
+      setStartScore(s.startScore||501);
+      setPlayers(s.players||players);
+      setOrder(s.order||[]);
+      setScores(s.scores||[]);
+      setCurrIdx(s.currIdx||0);
+      setThrown(s.thrown||[]);
+      setLastTurn(s.lastTurn||[]);
+      setWinner(null);
+      setPendingWin(null);
+      setMult(1);
+      setScreen('game');
+    }catch{}
+  };
 
   return (
     <div className="container">
@@ -483,7 +509,7 @@ export default function App(){
       <div className="header">
         <div className="left">
           {screen==='game' && (
-            <button type="button" className="btn ghost" onClick={()=>setScreen('lobby')} title={t(lang,'back')}>←</button>
+            <button type="button" className="btn ghost" onClick={()=>{saveSnapshot(); setScreen('lobby')}} title={t(lang,'back')}>←</button>
           )}
           <div className="logo"><span className="dart"></span><span>{t(lang,'app')}</span></div>
         </div>
@@ -522,24 +548,26 @@ export default function App(){
           addPlayer={addPlayer} deletePlayer={deletePlayer}
           movePlayer={movePlayer}
           startGame={startGame}
+          continueSaved={continueSaved}
         />
       ) : (
         <Game
           lang={lang} t={t}
-          outDesc={outDesc}
+          outDesc={(() => {
+            const arr=[];
+            if(outDouble) arr.push('Double-out');
+            if(outTriple) arr.push('Triple-out');
+            if(outMaster) arr.push('Master-out');
+            if(arr.length===0) return 'Any-out';
+            return arr.join(' + ');
+          })()}
           players={players} order={order} currIdx={currIdx}
           scores={scores} thrown={thrown} lastTurn={lastTurn}
           averages={averages}
           darts={darts} mult={mult} setMult={setMult}
           commitDart={commitDart} undo={undo}
           winner={winner}
-          saveGame={()=>{ try{
-            const snapshot = {version:1, mode,startScore,
-              outDouble,outTriple,outMaster,
-              randomOrder,playThrough,players,order,scores,currIdx,thrown,lastTurn};
-            localStorage.setItem('savedGame', JSON.stringify(snapshot));
-            alert('Uloženo.');
-          }catch{} }}
+          saveGame={()=>{ saveSnapshot(); alert('Uloženo.'); }}
           restartGame={restartGame}
           cardRefs={cardRefs}
           setScreen={setScreen}
@@ -557,8 +585,9 @@ function Lobby({
   outDouble,setOutDouble, outTriple,setOutTriple, outMaster,setOutMaster,
   randomOrder,setRandomOrder, playThrough,setPlayThrough,
   ai,setAi, players,setPlayers, addPlayer,deletePlayer,movePlayer,
-  startGame
+  startGame, continueSaved
 }){
+  const hasSaved = !!localStorage.getItem('savedGame');
   return (
     <div className="lobbyWrap">
       {/* Režim */}
@@ -585,7 +614,7 @@ function Lobby({
         </div>
       )}
 
-      {/* Ukončení – tři přepínače */}
+      {/* Ukončení – tři přepínače (na jednom řádku) */}
       {mode==='classic' && (
         <div className="lobbyCard">
           <div className="lobbyControls">
@@ -602,7 +631,7 @@ function Lobby({
               <input type="checkbox" checked={outMaster} onChange={e=>setOutMaster(e.target.checked)} style={{marginRight:6}}/>
               {t(lang,'masterOut')}
             </label>
-            <div style={{opacity:.8,fontSize:12}}>— pokud není vybráno nic, uzavírá se libovolně</div>
+            <div style={{opacity:.8,fontSize:12}}>{t(lang,'anyOutHint')}</div>
           </div>
         </div>
       )}
@@ -635,11 +664,11 @@ function Lobby({
         </div>
       </div>
 
-      {/* Start hry – nad hráči */}
+      {/* Start & Pokračovat – nad hráči */}
       <div className="lobbyCard">
-        <div style={{display:'flex',gap:8,alignItems:'center',justifyContent:'flex-start',flexWrap:'wrap'}}>
+        <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
           <button type="button" className="btn green" onClick={startGame}>{t(lang,'startGame')}</button>
-          <ContinueSaved lang={lang} t={t}/>
+          {hasSaved && <button type="button" className="btn" onClick={continueSaved}>{t(lang,'continueGame')}</button>}
         </div>
       </div>
 
@@ -677,7 +706,7 @@ function Lobby({
             <dt>{t(lang,'classic')}</dt>
             <dd>Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Cíl: přesně na 0.
               <em> Double-out, Triple-out, Master-out</em>.  
-              Pokud **není vybráno nic**, je povoleno uzavření libovolným zásahem. Přestřelení nebo zbyde 1 (pokud je aktivní některé out pravidlo) = {t(lang,'bust')}.</dd>
+              {t(lang,'anyOutHint')}. Přestřelení nebo zbyde 1 (pokud je aktivní některé out pravidlo) = {t(lang,'bust')}.</dd>
             <dt>{t(lang,'cricket')}</dt>
             <dd>15–20 a Bull. Single 1 bod, Double 2, Triple 3. Otevři číslo (3 body), skóruj, zavírej. Vyhraješ, když zavřeš vše a vedeš na body.</dd>
             <dt>{t(lang,'around')}</dt>
@@ -690,21 +719,6 @@ function Lobby({
       <SavedGames lang={lang} t={t}/>
     </div>
   );
-}
-
-/* Pokračovat v uložené hře */
-function ContinueSaved({lang,t}){
-  const hasSaved = !!localStorage.getItem('savedGame');
-  if(!hasSaved) return null;
-  const onClick = ()=>{
-    try{
-      const s=JSON.parse(localStorage.getItem('savedGame')||'{}');
-      if(!s || !s.order) return alert('Nic k pokračování.');
-      sessionStorage.setItem('resumeGame', JSON.stringify(s));
-      location.reload();
-    }catch{}
-  };
-  return <button type="button" className="btn" onClick={onClick}>{t(lang,'continueGame')}</button>;
 }
 
 /* Uložené hry – seznam a sdílení */
@@ -786,6 +800,7 @@ function Game({
         {order.map((pIdx,i)=>{
           const p=players[pIdx];
           const active = i===currIdx && winner==null;
+          const currentDarts = active ? darts : [];
           return (
             <div
               key={p.id}
@@ -813,10 +828,10 @@ function Game({
               <div className="playerScore">{scores[pIdx] ?? 0}</div>
               <div className="playerTurn">
                 {[0,1,2].map(ix=>{
-                  const d = darts[ix];
+                  const d = currentDarts[ix];
                   return <div key={ix} className="dartBox">{d? formatHit(d) : '-'}</div>;
                 })}
-                <div className="lastTotal">{t(lang,'last')}: {sum(darts)}</div>
+                <div className="lastTotal">{t(lang,'last')}: {lastTurn[pIdx]||0}</div>
               </div>
             </div>
           );
@@ -858,4 +873,4 @@ function formatHit(d){
   const prefix = d.m===2?'D':(d.m===3?'T':'');
   return `${prefix}${d.v}=${d.score}`;
 }
-function sum(a){ return a.reduce((s,x)=>s+(x?.score||0),0); }
+function sumScores(a){ return a.reduce((s,x)=>s+(x?.score||0),0); }
