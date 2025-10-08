@@ -23,7 +23,8 @@ const T = {
       saved:'Uložené hry',share:'Sdílet',clear:'Smazat vše',
       player:'Hráč',game:'Hra',darts:'šipek',avg:'průměr/šipka',last:'Poslední hod',
       undo:'Zpět',next:'Další hráč',bust:'bez skóre',checkout:'checkout',
-      youWinPrefix:'Výhra', outLabel:'Ukončení', zeroWord:'nula'},
+      youWinPrefix:'Výhra', outLabel:'Ukončení', zeroWord:'nula',
+      points:'Body', target:'Cíl'},
   en:{app:'DartScore Pro',sound:'Sound',voice:'Voice',back:'Back',
       mode:'Mode',classic:'Classic',cricket:'Cricket',around:'Around the Clock',
       start:'Start',closing:'Finish',
@@ -36,7 +37,8 @@ const T = {
       saved:'Saved games',share:'Share',clear:'Clear all',
       player:'Player',game:'Game',darts:'darts',avg:'avg/dart',last:'Last throw',
       undo:'Undo',next:'Next player',bust:'bust',checkout:'checkout',
-      youWinPrefix:'Win', outLabel:'Finish', zeroWord:'zero'},
+      youWinPrefix:'Win', outLabel:'Finish', zeroWord:'zero',
+      points:'Points', target:'Target'},
   de:{app:'DartScore Pro',sound:'Ton',voice:'Stimme',back:'Zurück',
       mode:'Modus',classic:'Klassisch',cricket:'Cricket',around:'Rund um die Uhr',
       start:'Start',closing:'Beenden',
@@ -49,7 +51,8 @@ const T = {
       saved:'Gespeicherte Spiele',share:'Teilen',clear:'Alles löschen',
       player:'Spieler',game:'Spiel',darts:'Darts',avg:'Schnitt/Dart',last:'Letzter Wurf',
       undo:'Zurück',next:'Nächster',bust:'bust',checkout:'Checkout',
-      youWinPrefix:'Sieg', outLabel:'Finish', zeroWord:'null'},
+      youWinPrefix:'Sieg', outLabel:'Finish', zeroWord:'null',
+      points:'Punkte', target:'Ziel'},
   es:{app:'DartScore Pro',sound:'Sonido',voice:'Voz',back:'Atrás',
       mode:'Modo',classic:'Clásico',cricket:'Cricket',around:'Alrededor del reloj',
       start:'Inicio',closing:'Cierre',
@@ -62,7 +65,8 @@ const T = {
       saved:'Partidas guardadas',share:'Compartir',clear:'Borrar todo',
       player:'Jugador',game:'Juego',darts:'dardos',avg:'prom/dardo',last:'Último tiro',
       undo:'Deshacer',next:'Siguiente',bust:'sin puntuación',checkout:'checkout',
-      youWinPrefix:'Victoria', outLabel:'Finish', zeroWord:'cero'},
+      youWinPrefix:'Victoria', outLabel:'Finish', zeroWord:'cero',
+      points:'Puntos', target:'Objetivo'},
   nl:{app:'DartScore Pro',sound:'Geluid',voice:'Spraak',back:'Terug',
       mode:'Modus',classic:'Klassiek',cricket:'Cricket',around:'Rond de klok',
       start:'Start',closing:'Einde',
@@ -75,7 +79,8 @@ const T = {
       saved:'Opgeslagen spellen',share:'Delen',clear:'Alles wissen',
       player:'Speler',game:'Spel',darts:'darts',avg:'gem/dart',last:'Laatste worp',
       undo:'Ongedaan',next:'Volgende',bust:'bust',checkout:'checkout',
-      youWinPrefix:'Winst', outLabel:'Finish', zeroWord:'nul'},
+      youWinPrefix:'Winst', outLabel:'Finish', zeroWord:'nul',
+      points:'Punten', target:'Doel'},
   ru:{app:'DartScore Pro',sound:'Звук',voice:'Голос',back:'Назад',
       mode:'Режим',classic:'Классика',cricket:'Крикет',around:'По кругу',
       start:'Старт',closing:'Завершение',
@@ -88,7 +93,8 @@ const T = {
       saved:'Сохранённые игры',share:'Поделиться',clear:'Удалить всё',
       player:'Игрок',game:'Игра',darts:'дротиков',avg:'ср./дротик',last:'Последний бросок',
       undo:'Отмена',next:'Далее',bust:'без очков',checkout:'чекаут',
-      youWinPrefix:'Победа', outLabel:'Finish', zeroWord:'ноль'}
+      youWinPrefix:'Победа', outLabel:'Finish', zeroWord:'ноль',
+      points:'Очки', target:'Цель'}
 };
 const LANG_LABEL = {cs:'Čeština',en:'English',de:'Deutsch',es:'Español',nl:'Nederlands',ru:'Русский'};
 const t = (lang, key) => (T[lang] && T[lang][key]) || T.cs[key] || key;
@@ -127,7 +133,7 @@ export default function App(){
   const [mode,setMode] = useState('classic');
   const [startScore,setStartScore] = useState(501);
 
-  /* out pravidla – přepínače */
+  /* out pravidla – přepínače (jen pro Classic) */
   const [outDouble,setOutDouble] = useState(true);
   const [outTriple,setOutTriple] = useState(false);
   const [outMaster,setOutMaster] = useState(false);
@@ -204,10 +210,10 @@ export default function App(){
   };
   const addPlayer = () => setPlayers(ps=>[...ps,{id:uid(), name:defaultNameFor(lang, ps.length+1), color:colors[ps.length%colors.length], bot:false}]);
 
-  /* ===== GAME STATE ===== */
+  /* ===== GAME STATE (společné) ===== */
   const [order,setOrder] = useState([]);
-  const [scores,setScores] = useState([]);
-  const [darts,setDarts] = useState([]);
+  const [scores,setScores] = useState([]);     // Classic skóre
+  const [darts,setDarts] = useState([]);       // 3 šipky v aktuálním tahu (Classic i zobrazování)
   const [currIdx,setCurrIdx] = useState(0);
   const [mult,setMult] = useState(1);
   const [actions,setActions] = useState([]);
@@ -216,24 +222,52 @@ export default function App(){
   const [winner,setWinner] = useState(null);
   const [pendingWin,setPendingWin] = useState(null);
 
+  /* ===== GAME STATE – Cricket ===== */
+  // cricket: {marks: {15..20,bull}, points:number} pro každého hráče
+  const [cricket,setCricket] = useState(null);
+
+  /* ===== GAME STATE – Around the Clock ===== */
+  // around: {next:number} – další cíl (1..20, poté 25/50 jako Bull)
+  const [around,setAround] = useState(null);
+
   const currentPlayerIndex = order[currIdx] ?? 0;
 
   const startGame = () => {
     const baseOrder = players.map((_,i)=>i);
     const ord = randomOrder ? shuffle(baseOrder) : baseOrder;
-    const sc  = players.map(()=>startScore);
-    const dartsCnt = players.map(()=>0);
-    const last = players.map(()=>0);
+
     setOrder(ord);
-    setScores(sc);
-    setDarts([]);
     setCurrIdx(0);
     setActions([]);
-    setThrown(dartsCnt);
-    setLastTurn(last);
     setWinner(null);
     setPendingWin(null);
     setMult(1);
+    setDarts([]);
+
+    if(mode==='classic'){
+      const sc  = players.map(()=>startScore);
+      const dartsCnt = players.map(()=>0);
+      const last = players.map(()=>0);
+      setScores(sc);
+      setThrown(dartsCnt);
+      setLastTurn(last);
+      setCricket(null);
+      setAround(null);
+    } else if(mode==='cricket'){
+      const init = players.map(()=>({
+        marks:{15:0,16:0,17:0,18:0,19:0,20:0,bull:0},
+        points:0
+      }));
+      setCricket(init);
+      setAround(null);
+      setScores([]); setThrown(players.map(()=>0)); setLastTurn(players.map(()=>0));
+    } else { // around
+      const init = players.map(()=>({next:1}));
+      setAround(init);
+      setCricket(null);
+      setScores([]); setThrown(players.map(()=>0)); setLastTurn(players.map(()=>0));
+    }
+
     setScreen('game');
   };
   const restartGame = () => startGame();
@@ -247,7 +281,7 @@ export default function App(){
     return arr;
   }
 
-  /* out pravidla */
+  /* ===== Classic – out pravidla ===== */
   const anyOutSelected = outDouble || outTriple || outMaster;
   const isFinishAllowed = (m) => {
     if(!anyOutSelected) return true; // libovolné uzavření
@@ -264,15 +298,14 @@ export default function App(){
     }
   };
   const pushAction = (payload) => setActions(st=>[...st, payload]);
+  const isInvalidComboClassic = (v,m) => (m>1 && (v===0 || v===25 || v===50));
 
-  const isInvalidCombo = (v,m) => (m>1 && (v===0 || v===25 || v===50));
-
-  // commit s volitelným mOverride (kvůli b otovi – nečekáme na setState)
-  const commitDart = (value, mOverride) => {
+  /* ====== CLASSIC commit ====== */
+  const commitClassic = (value, mOverride) => {
     let v=value; let m=(mOverride ?? mult);
-    if(isInvalidCombo(v,m)) return;
+    if(isInvalidComboClassic(v,m)) return;
+    if(value===25 || value===50){ m=1; v=value; } // bull ignoruje mult
 
-    if(value===25 || value===50){ m=1; v=value; }
     const hit = v*m;
     const pIdx = currentPlayerIndex;
     const prev = scores[pIdx];
@@ -283,7 +316,7 @@ export default function App(){
     if(tentative < 0 || isBustLeavingOne(tentative)){
       speak(lang, t(lang,'bust'), voiceOn);
       playHitSound();
-      pushAction({type:'bust', pIdx, prevScore:prev, dartsBefore:[...darts]});
+      pushAction({type:'bust', mode:'classic', pIdx, prevScore:prev, dartsBefore:[...darts]});
       setDarts([]);
       setLastTurn(ls=>ls.map((x,i)=> i===pIdx ? 0 : x));
       resetMult();
@@ -296,7 +329,7 @@ export default function App(){
     if(tentative === 0){
       if(isFinishAllowed(m)){
         playHitSound();
-        pushAction({type:'dart', pIdx, prevScore:prev, newScore:tentative, hit:{v,m,score:hit}});
+        pushAction({type:'dart', mode:'classic', pIdx, prevScore:prev, newScore:tentative, hit:{v,m,score:hit}});
         setScores(sc=>sc.map((x,i)=> i===pIdx ? 0 : x));
         const newD = [...darts,{v,m,score:hit}];
         setDarts(newD);
@@ -320,7 +353,7 @@ export default function App(){
         }
       } else {
         speak(lang, t(lang,'bust'), voiceOn);
-        pushAction({type:'bust', pIdx, prevScore:prev, dartsBefore:[...darts]});
+        pushAction({type:'bust', mode:'classic', pIdx, prevScore:prev, dartsBefore:[...darts]});
         setDarts([]);
         setLastTurn(ls=>ls.map((x,i)=> i===pIdx ? 0 : x));
         resetMult();
@@ -330,7 +363,7 @@ export default function App(){
     }
 
     playHitSound();
-    pushAction({type:'dart', pIdx, prevScore:prev, newScore:tentative, hit:{v,m,score:hit}});
+    pushAction({type:'dart', mode:'classic', pIdx, prevScore:prev, newScore:tentative, hit:{v,m,score:hit}});
     setScores(sc=>sc.map((x,i)=> i===pIdx ? tentative : x));
     const newD = [...darts,{v,m,score:hit}];
     setDarts(newD);
@@ -338,7 +371,6 @@ export default function App(){
     setLastTurn(ls=>ls.map((x,i)=> i===pIdx ? sumScores(newD) : x));
     resetMult();
 
-    // po třetí šipce řekni součet (včetně 0)
     setTimeout(()=>{
       setDarts(current=>{
         if(current.length>=3){
@@ -350,6 +382,130 @@ export default function App(){
         return current;
       });
     }, 30);
+  };
+
+  /* ====== CRICKET commit ====== */
+  const commitCricket = (value, mOverride) => {
+    let v = value; let m = (mOverride ?? mult);
+    // platná čísla: 15..20, 25 (single bull), 50 (double bull)
+    if(![15,16,17,18,19,20,25,50].includes(v)) return;
+    if(v===50) { v=25; m=2; }      // double bull = 2 značky 25
+    if(v===25) { m = (m===3?2:m); } // bull nemá triple
+
+    const pIdx = currentPlayerIndex;
+    const prevState = deepClone(cricket);
+    const me = prevState[pIdx];
+
+    const before = me.marks[String(v)];
+    let add = m;
+    // kolik „značek“ se vejde do zavírání
+    const newMarks = Math.min(3, before + add);
+    const overflow = Math.max(0, before + add - 3);
+
+    // zjisti jestli někdo z protivníků NEMÁ zavřeno -> pak se dá skórovat overflow
+    const opponentsOpen = prevState.some((pl,ix)=> ix!==pIdx && pl.marks[String(v)]<3);
+
+    me.marks[String(v)] = newMarks;
+    if(overflow>0 && opponentsOpen){
+      const pointPerMark = (v===25?25:v);
+      me.points += overflow * pointPerMark;
+    }
+
+    // aktualizace počitadla šipek a „posledního hodu“ = součet připsaných bodů v tahu
+    const addedPoints = (overflow>0 && opponentsOpen) ? (overflow * (v===25?25:v)) : 0;
+    setThrown(th=>th.map((x,i)=> i===pIdx ? x+1 : x));
+    setLastTurn(ls=>ls.map((x,i)=> i===pIdx ? (x + addedPoints) : x));
+    setCricket(prevState);
+    playHitSound();
+    pushAction({type:'dart', mode:'cricket', pIdx, prev:cricket, delta:{v,add}}); // pro undo
+
+    // zkontroluj výhru: zavřel všechna čísla a má ≥ body než ostatní
+    const closedAll = Object.values(me.marks).every(n=>n>=3);
+    if(closedAll){
+      const myPts = me.points;
+      const lead = prevState.every((pl,ix)=> ix===pIdx || myPts>=pl.points);
+      if(lead){
+        const name = players[pIdx]?.name || '';
+        speak(lang, `${t(lang,'youWinPrefix')} ${name}`, voiceOn);
+        finalizeWin(pIdx);
+        return;
+      }
+    }
+
+    // po 3 šipkách další hráč, ať se chová stejně jako classic (hlasí součet bodů v tahu)
+    setDarts(cur=>{
+      const nd=[...cur,{v, m, score:addedPoints}];
+      if(nd.length>=3){
+        const total = sumScores(nd);
+        if(total===0) speak(lang, t(lang,'zeroWord'), voiceOn);
+        else speak(lang, total, voiceOn);
+        nextPlayer();
+        return [];
+      }
+      return nd;
+    });
+    setMult(1);
+  };
+
+  /* ====== AROUND commit ====== */
+  const commitAround = (value, mOverride) => {
+    let v = value; let m = (mOverride ?? mult);
+    if(v===50) v=25; // bull cílově přijímáme 25 i 50
+    const pIdx = currentPlayerIndex;
+    const st = deepClone(around);
+    const me = st[pIdx];
+    const target = me.next; // 1..20, poté 25 (Bull)
+
+    let hit = false;
+    if(target <= 20){
+      if(v === target) hit = true;
+    } else {
+      // Bull: v==25 (nebo 50->25)
+      if(v===25) hit = true;
+    }
+
+    setThrown(th=>th.map((x,i)=> i===pIdx ? x+1 : x));
+    if(hit){
+      me.next = (target<=20) ? target+1 : 999; // 999 = hotovo
+      playHitSound();
+      pushAction({type:'dart', mode:'around', pIdx, prev:around, hit:true});
+      // vyhrál?
+      if(me.next===1000 || target>20){
+        const name = players[pIdx]?.name || '';
+        speak(lang, `${t(lang,'youWinPrefix')} ${name}`, voiceOn);
+        finalizeWin(pIdx);
+        setAround(st);
+        setDarts(cur=>{
+          const nd=[...cur,{v, m, score:0}];
+          return nd.length>=3 ? [] : nd;
+        });
+        setMult(1);
+        return;
+      }
+    }else{
+      pushAction({type:'dart', mode:'around', pIdx, prev:around, hit:false});
+    }
+
+    setAround(st);
+    // „Last turn“ pro around bereme jako počet zásahů cíle v tahu (0/1), pro hlas po 3 šipkách oznámíme 0/1/2/3 (většinou 0–1)
+    setDarts(cur=>{
+      const nd=[...cur,{v, m, score: hit?1:0}];
+      if(nd.length>=3){
+        const total = sumScores(nd);
+        speak(lang, total===0 ? t(lang,'zeroWord') : total, voiceOn);
+        nextPlayer();
+        return [];
+      }
+      return nd;
+    });
+    setMult(1);
+  };
+
+  /* router commit */
+  const commitDart = (value, mOverride) => {
+    if(mode==='classic') return commitClassic(value, mOverride);
+    if(mode==='cricket') return commitCricket(value, mOverride);
+    return commitAround(value, mOverride);
   };
 
   const finalizeWin = (pIdx) => {
@@ -375,7 +531,7 @@ export default function App(){
   const nextPlayer = () => {
     setCurrIdx(i => {
       const next = (i+1) % order.length;
-      if(next===0 && playThrough && pendingWin && winner==null){
+      if(mode==='classic' && next===0 && playThrough && pendingWin && winner==null){
         finalizeWin(pendingWin.pIdx);
         setPendingWin(null);
       }
@@ -388,28 +544,43 @@ export default function App(){
     setActions(st=>{
       if(st.length===0) return st;
       const last = st[st.length-1];
-      if(last.type==='dart'){
-        const {pIdx, prevScore, hit} = last;
-        setScores(sc=>sc.map((x,i)=> i===pIdx ? prevScore : x));
+
+      if(last.mode==='classic'){
+        if(last.type==='dart'){
+          const {pIdx, prevScore, hit} = last;
+          setScores(sc=>sc.map((x,i)=> i===pIdx ? prevScore : x));
+          setDarts(ds=>{
+            const d=[...ds];
+            if(order[currIdx]!==pIdx){
+              const pos = order.indexOf(pIdx);
+              if(pos>=0) setCurrIdx(pos);
+            }
+            if(d.length>0) d.pop();
+            else d.push(hit);
+            return d;
+          });
+          setThrown(th=>th.map((x,i)=> i===pIdx ? Math.max(0,x-1) : x));
+          setLastTurn(ls=>ls.map((x,i)=> i===pIdx ? Math.max(0, x - (hit?.score||0)) : x));
+        } else if(last.type==='bust'){
+          const {pIdx, prevScore} = last;
+          setScores(sc=>sc.map((x,i)=> i===pIdx ? prevScore : x));
+          const pos = order.indexOf(pIdx);
+          if(pos>=0) setCurrIdx(pos);
+          setDarts(last.dartsBefore || []);
+          setLastTurn(ls=>ls.map((x,i)=> i===pIdx ? 0 : x));
+        }
+      } else if(last.mode==='cricket'){
+        setCricket(last.prev);
+        setThrown(th=>th.map((x,i)=> i===last.pIdx ? Math.max(0,x-1) : x));
         setDarts(ds=>{
-          const d=[...ds];
-          if(order[currIdx]!==pIdx){
-            const pos = order.indexOf(pIdx);
-            if(pos>=0) setCurrIdx(pos);
-          }
-          if(d.length>0) d.pop();
-          else d.push(hit);
-          return d;
+          const d=[...ds]; if(d.length>0) d.pop(); return d;
         });
-        setThrown(th=>th.map((x,i)=> i===pIdx ? Math.max(0,x-1) : x));
-        setLastTurn(ls=>ls.map((x,i)=> i===pIdx ? Math.max(0, x - (hit?.score||0)) : x));
-      } else if(last.type==='bust'){
-        const {pIdx, prevScore} = last;
-        setScores(sc=>sc.map((x,i)=> i===pIdx ? prevScore : x));
-        const pos = order.indexOf(pIdx);
-        if(pos>=0) setCurrIdx(pos);
-        setDarts(last.dartsBefore || []);
-        setLastTurn(ls=>ls.map((x,i)=> i===pIdx ? 0 : x));
+      } else if(last.mode==='around'){
+        setAround(last.prev);
+        setThrown(th=>th.map((x,i)=> i===last.pIdx ? Math.max(0,x-1) : x));
+        setDarts(ds=>{
+          const d=[...ds]; if(d.length>0) d.pop(); return d;
+        });
       }
       return st.slice(0,-1);
     });
@@ -417,12 +588,16 @@ export default function App(){
   };
 
   const averages = useMemo(()=>{
+    if(mode!=='classic'){
+      // pro Cricket/Around zobrazíme „avg“ jako info z classicu 0 (nepočítáme)
+      return players.map(()=>0);
+    }
     return players.map((_,i)=>{
       const thrownDarts = thrown[i] || 0;
       const done = startScore - (scores[i] ?? startScore);
       return thrownDarts>0 ? (done / thrownDarts) : 0;
     });
-  },[players, thrown, scores, startScore]);
+  },[players, thrown, scores, startScore, mode]);
 
   /* AUTO SCROLL na aktivního hráče */
   const cardRefs = useRef({});
@@ -449,15 +624,26 @@ export default function App(){
     };
     const tb = tables[p.level || 'easy'];
 
+    // pro zjednodušení používáme stejný „pool“, ale commit větví logiku dle režimu
+    const poolClassic = [20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,25,50];
+    const poolCricket = [20,19,18,17,16,15,25,50];
+    const poolAround  = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,25,50];
+
     const pickThrow = () => {
       const r = Math.random();
       let m = 1;
       if(r > 1 - tb.triple) m = 3;
       else if(r > 1 - (tb.triple + tb.double)) m = 2;
       else if(r <= tb.miss) return {v:0,m:1};
-      const pool = [20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,25,50];
-      let v = pool[Math.floor(Math.random()*pool.length)];
-      if(m>1 && (v===0 || v===25 || v===50)) m = 1;
+
+      let v;
+      if(mode==='classic') v = poolClassic[Math.floor(Math.random()*poolClassic.length)];
+      else if(mode==='cricket') v = poolCricket[Math.floor(Math.random()*poolCricket.length)];
+      else v = poolAround[Math.floor(Math.random()*poolAround.length)];
+
+      // validace speciálních režimů:
+      if(mode==='classic' && m>1 && (v===0||v===25||v===50)) m=1;
+      if(mode==='cricket' && v===50) m=1; // double bull řešíme převodem na 25×2 uvnitř commit
       return {v,m};
     };
 
@@ -473,14 +659,22 @@ export default function App(){
     fire(0); fire(1); fire(2);
     return ()=>{ cancelled=true };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[currIdx, order, players, winner]);
+  },[currIdx, order, players, winner, mode]);
 
-  /* Uložení snapshotu při návratu do lobby (aby šlo „Pokračovat“) */
+  /* ULOŽENÍ / OBNOVA – opravuje „Pokračovat ve hře“ */
   const saveSnapshot = () => {
     try{
-      const snapshot = {version:1, mode,startScore,
+      const snapshot = {
+        version:2, screen:'game',
+        lang, soundOn, voiceOn,
+        mode, startScore,
         outDouble,outTriple,outMaster,
-        randomOrder,playThrough,players,order,scores,currIdx,thrown,lastTurn};
+        randomOrder,playThrough,ai,
+        players, order, currIdx,
+        scores, darts, mult, actions, thrown, lastTurn,
+        winner, pendingWin,
+        cricket, around
+      };
       localStorage.setItem('savedGame', JSON.stringify(snapshot));
     }catch{}
   };
@@ -488,19 +682,27 @@ export default function App(){
     try{
       const s=JSON.parse(localStorage.getItem('savedGame')||'{}');
       if(!s || !s.order) return alert('Nic k pokračování.');
+      setLang(s.lang||lang);
       setMode(s.mode||'classic');
       setStartScore(s.startScore||501);
       setPlayers(s.players||players);
       setOrder(s.order||[]);
-      setScores(s.scores||[]);
       setCurrIdx(s.currIdx||0);
+      setScores(s.scores||[]);
+      setDarts(s.darts||[]);
+      setMult(s.mult||1);
+      setActions(s.actions||[]);
       setThrown(s.thrown||[]);
       setLastTurn(s.lastTurn||[]);
-      setWinner(null);
-      setPendingWin(null);
-      setMult(1);
+      setWinner(s.winner??null);
+      setPendingWin(s.pendingWin??null);
+      setCricket(s.cricket??null);
+      setAround(s.around??null);
       setScreen('game');
-    }catch{}
+    }catch(e){
+      console.error(e);
+      alert('Obnova selhala.');
+    }
   };
 
   return (
@@ -553,7 +755,9 @@ export default function App(){
       ) : (
         <Game
           lang={lang} t={t}
+          mode={mode}
           outDesc={(() => {
+            if(mode!=='classic') return mode==='cricket' ? 'Cricket' : 'Around the Clock';
             const arr=[];
             if(outDouble) arr.push('Double-out');
             if(outTriple) arr.push('Triple-out');
@@ -563,6 +767,7 @@ export default function App(){
           })()}
           players={players} order={order} currIdx={currIdx}
           scores={scores} thrown={thrown} lastTurn={lastTurn}
+          cricket={cricket} around={around}
           averages={averages}
           darts={darts} mult={mult} setMult={setMult}
           commitDart={commitDart} undo={undo}
@@ -602,7 +807,7 @@ function Lobby({
         </div>
       </div>
 
-      {/* Start (Classic) */}
+      {/* Start (Classic jen když classic) */}
       {mode==='classic' && (
         <div className="lobbyCard">
           <div className="lobbyControls">
@@ -614,7 +819,7 @@ function Lobby({
         </div>
       )}
 
-      {/* Ukončení – tři přepínače (na jednom řádku) */}
+      {/* Ukončení – tři přepínače (jen Classic) */}
       {mode==='classic' && (
         <div className="lobbyCard">
           <div className="lobbyControls">
@@ -644,10 +849,12 @@ function Lobby({
             <option value="fixed">{t(lang,'fixed')}</option>
             <option value="random">{t(lang,'random')}</option>
           </select>
-          <label style={{display:'inline-flex',alignItems:'center',gap:8,marginLeft:12}}>
-            <input type="checkbox" checked={playThrough} onChange={e=>setPlayThrough(e.target.checked)} />
-            {t(lang,'playThrough')}
-          </label>
+          {mode==='classic' && (
+            <label style={{display:'inline-flex',alignItems:'center',gap:8,marginLeft:12}}>
+              <input type="checkbox" checked={playThrough} onChange={e=>setPlayThrough(e.target.checked)} />
+              {t(lang,'playThrough')}
+            </label>
+          )}
         </div>
       </div>
 
@@ -689,7 +896,7 @@ function Lobby({
               <button type="button" className="btn ghost" onClick={()=>movePlayer(i,-1)} title="Up" style={{padding:'4px 8px',lineHeight:1.1}}>↑</button>
               <button type="button" className="btn ghost" onClick={()=>movePlayer(i,1)}  title="Down" style={{padding:'4px 8px',lineHeight:1.1}}>↓</button>
             </div>
-            <div><span className="score">{startScore}</span></div>
+            <div><span className="score">{mode==='classic' ? startScore : (mode==='cricket' ? t(lang,'points') : `${t(lang,'target')}`)}</span></div>
             <div className="playerDelete">
               <button type="button" className="trash" onClick={()=>deletePlayer(i)} title="Delete">🗑️</button>
             </div>
@@ -708,9 +915,9 @@ function Lobby({
               <em> Double-out, Triple-out, Master-out</em>.  
               {t(lang,'anyOutHint')}. Přestřelení nebo zbyde 1 (pokud je aktivní některé out pravidlo) = {t(lang,'bust')}.</dd>
             <dt>{t(lang,'cricket')}</dt>
-            <dd>15–20 a Bull. Single 1 bod, Double 2, Triple 3. Otevři číslo (3 body), skóruj, zavírej. Vyhraješ, když zavřeš vše a vedeš na body.</dd>
+            <dd>Hraje se čísly 15–20 a Bull. Každý zásah: Single=1 značka, Double=2, Triple=3. Po 3 značkách je číslo „zavřené“. Přebytky skórují body, jen pokud soupeř( i ) nemají číslo zavřené.</dd>
             <dt>{t(lang,'around')}</dt>
-            <dd>1→20→Bull. Jakýkoli zásah požadovaného čísla se počítá. Vyhrává kdo první dokončí Bull.</dd>
+            <dd>Postupně 1→20→Bull. Počítá se zásah aktuálního cíle. Double/Triple se počítají jako zásah (ne více zásahů). Vyhrává ten, kdo první trefí Bull.</dd>
           </dl>
         </details>
       </div>
@@ -727,9 +934,7 @@ function SavedGames({lang,t}){
     try{return JSON.parse(localStorage.getItem('finishedGames')||'[]')}catch{return []}
   });
   const shareItem = async (it)=>{
-    const text = `${t(lang,'saved')}: ${new Date(it.ts).toLocaleString()} — Classic ${it.startScore} (rules: ${[
-      it.outDouble?'D':'', it.outTriple?'T':'', it.outMaster?'M':''
-    ].filter(Boolean).join('+') || 'Any'})\n${it.players.join(', ')}\n${t(lang,'youWinPrefix')}: ${it.winner}`;
+    const text = `${t(lang,'saved')}: ${new Date(it.ts).toLocaleString()} — ${it.mode} ${it.startScore||''}\n${it.players.join(', ')}\n${t(lang,'youWinPrefix')}: ${it.winner}`;
     try{
       if(navigator.share){ await navigator.share({text}); }
       else {
@@ -757,9 +962,7 @@ function SavedGames({lang,t}){
           <div key={idx} className="savedRow">
             <div>
               <div className="savedTitle">{new Date(it.ts).toLocaleString()}</div>
-              <div className="savedSub">{`Classic ${it.startScore} (rules: ${[
-                it.outDouble?'D':'', it.outTriple?'T':'', it.outMaster?'M':''
-              ].filter(Boolean).join('+') || 'Any'}) • ${it.players.join(', ')}`}</div>
+              <div className="savedSub">{`${it.mode} ${it.startScore || ''} • ${it.players.join(', ')}`}</div>
               <div className="savedSub">{t(lang,'youWinPrefix')}: {it.winner}</div>
             </div>
             <button type="button" className="btn" onClick={()=>shareItem(it)}>{t(lang,'share')}</button>
@@ -772,8 +975,9 @@ function SavedGames({lang,t}){
 
 /* ===== GAME ===== */
 function Game({
-  lang,t,outDesc, players, order, currIdx,
+  lang,t,mode,outDesc, players, order, currIdx,
   scores, averages, thrown, lastTurn,
+  cricket, around,
   darts, mult, setMult, commitDart, undo, winner,
   saveGame, restartGame, cardRefs, setScreen
 }){
@@ -788,7 +992,7 @@ function Game({
     <div className="gameWrap">
       {/* horní lišta */}
       <div className="gameTopBar">
-        <span className="badge">{t(lang,'outLabel')}: {outDesc}</span>
+        <span className="badge">{mode==='classic' ? `${t(lang,'outLabel')}: ${outDesc}` : outDesc}</span>
         <div className="gameTopBtns">
           <button type="button" className="btn" onClick={restartGame}>{t(lang,'restart')}</button>
           <button type="button" className="btn" onClick={saveGame}>{t(lang,'saveGame')}</button>
@@ -819,20 +1023,56 @@ function Game({
               )}
               <div className="playerHeader">
                 <div className="playerNameText">{p.name}</div>
-                <div className="playerStats">
-                  <span>{(thrown[pIdx]||0)} {t(lang,'darts')}</span>
-                  <span>•</span>
-                  <span>{t(lang,'avg')}: {formatAvg(averages[pIdx])}</span>
-                </div>
+                {mode==='classic' ? (
+                  <div className="playerStats">
+                    <span>{(thrown[pIdx]||0)} {t(lang,'darts')}</span>
+                    <span>•</span>
+                    <span>{t(lang,'avg')}: {formatAvg(averages[pIdx])}</span>
+                  </div>
+                ) : mode==='cricket' ? (
+                  <div className="playerStats">
+                    <span>{t(lang,'points')}: {cricket?.[pIdx]?.points ?? 0}</span>
+                  </div>
+                ) : (
+                  <div className="playerStats">
+                    <span>{t(lang,'target')}: {around?.[pIdx]?.next ?? 1}</span>
+                  </div>
+                )}
               </div>
-              <div className="playerScore">{scores[pIdx] ?? 0}</div>
-              <div className="playerTurn">
-                {[0,1,2].map(ix=>{
-                  const d = currentDarts[ix];
-                  return <div key={ix} className="dartBox">{d? formatHit(d) : '-'}</div>;
-                })}
-                <div className="lastTotal">{t(lang,'last')}: {lastTurn[pIdx]||0}</div>
-              </div>
+
+              {mode==='classic' ? (
+                <>
+                  <div className="playerScore">{scores[pIdx] ?? 0}</div>
+                  <div className="playerTurn">
+                    {[0,1,2].map(ix=>{
+                      const d = currentDarts[ix];
+                      return <div key={ix} className="dartBox">{d? formatHit(d) : '-'}</div>;
+                    })}
+                    <div className="lastTotal">{t(lang,'last')}: {lastTurn[pIdx]||0}</div>
+                  </div>
+                </>
+              ) : mode==='cricket' ? (
+                <>
+                  <div className="playerTurn" style={{flexWrap:'wrap',gap:6}}>
+                    {['20','19','18','17','16','15','bull'].map(k=>{
+                      const mk = cricket?.[pIdx]?.marks?.[k] ?? 0;
+                      const label = k==='bull' ? 'B' : k;
+                      return <div key={k} className="dartBox" title={k}>{label}:{mk}</div>;
+                    })}
+                    <div className="lastTotal">{t(lang,'last')}: {lastTurn[pIdx]||0}</div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="playerTurn">
+                    <div className="dartBox">{around?.[pIdx]?.next ?? 1}</div>
+                    {[0,1,2].map(ix=>{
+                      const d = currentDarts[ix];
+                      return <div key={ix} className="dartBox">{d? (d.score? '✓' : '-') : '-'}</div>;
+                    })}
+                  </div>
+                </>
+              )}
             </div>
           );
         })}
@@ -842,7 +1082,6 @@ function Game({
         <div className="padRow">
           <button type="button" className={`multBtn mult-2 ${mult===2?'active':''}`} onClick={()=>setMult(m=>m===2?1:2)}>DOUBLE</button>
           <button type="button" className={`multBtn mult-3 ${mult===3?'active':''}`} onClick={()=>setMult(m=>m===3?1:3)}>TRIPLE</button>
-          {/* Backspace s křížkem doprostřed */}
           <button type="button" className="multBtn backspace" onClick={undo} title={t(lang,'undo')} aria-label={t(lang,'undo')}>
             <svg viewBox="0 0 24 24" className="iconBackspace" aria-hidden="true">
               <path d="M7 5L3 12l4 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H7z" fill="none" stroke="currentColor" strokeWidth="2"/>
@@ -874,3 +1113,4 @@ function formatHit(d){
   return `${prefix}${d.v}=${d.score}`;
 }
 function sumScores(a){ return a.reduce((s,x)=>s+(x?.score||0),0); }
+function deepClone(x){ return JSON.parse(JSON.stringify(x)); }
