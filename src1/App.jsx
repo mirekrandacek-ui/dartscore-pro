@@ -63,7 +63,7 @@ const T = {
       startGame:'▶ Empezar',continueGame:'Continuar partida',saveGame:'Guardar partida',restart:'Reiniciar',
       rules:'Reglas',addPlayer:'Añadir jugador',
       saved:'Partidas guardadas',share:'Compartir',clear:'Borrar todo',
-      player:'Jugador',game:'Juego',darts:'dardos',avg:'prom/dardo',last:'Último tiro',
+      player:'Jugador',game:'Juego',dardos:'dardos',avg:'prom/dardo',last:'Último tiro',
       undo:'Deshacer',next:'Siguiente',bust:'sin puntuación',checkout:'checkout',
       youWinPrefix:'Victoria', outLabel:'Finish', zeroWord:'cero',
       points:'Puntos', target:'Objetivo'},
@@ -213,7 +213,7 @@ export default function App(){
   /* ===== GAME STATE (společné) ===== */
   const [order,setOrder] = useState([]);
   const [scores,setScores] = useState([]);     // Classic skóre
-  const [darts,setDarts] = useState([]);       // 3 šipky v aktuálním tahu (Classic i zobrazování)
+  const [darts,setDarts] = useState([]);       // 3 šipky v aktuálním tahu (Classic / vizualizace)
   const [currIdx,setCurrIdx] = useState(0);
   const [mult,setMult] = useState(1);
   const [actions,setActions] = useState([]);
@@ -223,11 +223,9 @@ export default function App(){
   const [pendingWin,setPendingWin] = useState(null);
 
   /* ===== GAME STATE – Cricket ===== */
-  // cricket: {marks: {15..20,bull}, points:number} pro každého hráče
   const [cricket,setCricket] = useState(null);
 
   /* ===== GAME STATE – Around the Clock ===== */
-  // around: {next:number} – další cíl (1..20, poté 25/50 jako Bull)
   const [around,setAround] = useState(null);
 
   const currentPlayerIndex = order[currIdx] ?? 0;
@@ -398,11 +396,9 @@ export default function App(){
 
     const before = me.marks[String(v)];
     let add = m;
-    // kolik „značek“ se vejde do zavírání
     const newMarks = Math.min(3, before + add);
     const overflow = Math.max(0, before + add - 3);
 
-    // zjisti jestli někdo z protivníků NEMÁ zavřeno -> pak se dá skórovat overflow
     const opponentsOpen = prevState.some((pl,ix)=> ix!==pIdx && pl.marks[String(v)]<3);
 
     me.marks[String(v)] = newMarks;
@@ -411,7 +407,6 @@ export default function App(){
       me.points += overflow * pointPerMark;
     }
 
-    // aktualizace počitadla šipek a „posledního hodu“ = součet připsaných bodů v tahu
     const addedPoints = (overflow>0 && opponentsOpen) ? (overflow * (v===25?25:v)) : 0;
     setThrown(th=>th.map((x,i)=> i===pIdx ? x+1 : x));
     setLastTurn(ls=>ls.map((x,i)=> i===pIdx ? (x + addedPoints) : x));
@@ -419,7 +414,6 @@ export default function App(){
     playHitSound();
     pushAction({type:'dart', mode:'cricket', pIdx, prev:cricket, delta:{v,add}}); // pro undo
 
-    // zkontroluj výhru: zavřel všechna čísla a má ≥ body než ostatní
     const closedAll = Object.values(me.marks).every(n=>n>=3);
     if(closedAll){
       const myPts = me.points;
@@ -432,7 +426,7 @@ export default function App(){
       }
     }
 
-    // po 3 šipkách další hráč, ať se chová stejně jako classic (hlasí součet bodů v tahu)
+    // po 3 šipkách další hráč (hlasí součet „bodů“ v tahu)
     setDarts(cur=>{
       const nd=[...cur,{v, m, score:addedPoints}];
       if(nd.length>=3){
@@ -469,8 +463,7 @@ export default function App(){
       me.next = (target<=20) ? target+1 : 999; // 999 = hotovo
       playHitSound();
       pushAction({type:'dart', mode:'around', pIdx, prev:around, hit:true});
-      // vyhrál?
-      if(me.next===1000 || target>20){
+      if(me.next===999){
         const name = players[pIdx]?.name || '';
         speak(lang, `${t(lang,'youWinPrefix')} ${name}`, voiceOn);
         finalizeWin(pIdx);
@@ -487,7 +480,6 @@ export default function App(){
     }
 
     setAround(st);
-    // „Last turn“ pro around bereme jako počet zásahů cíle v tahu (0/1), pro hlas po 3 šipkách oznámíme 0/1/2/3 (většinou 0–1)
     setDarts(cur=>{
       const nd=[...cur,{v, m, score: hit?1:0}];
       if(nd.length>=3){
@@ -589,7 +581,6 @@ export default function App(){
 
   const averages = useMemo(()=>{
     if(mode!=='classic'){
-      // pro Cricket/Around zobrazíme „avg“ jako info z classicu 0 (nepočítáme)
       return players.map(()=>0);
     }
     return players.map((_,i)=>{
@@ -609,7 +600,7 @@ export default function App(){
     }
   },[order, currIdx]);
 
-  /* BOT—háže s mOverride (3 šipky) */
+  /* BOT — sekvenční 3 hody s kontrolou řady */
   useEffect(()=>{
     const pIdx = order[currIdx];
     const p = players[pIdx];
@@ -624,7 +615,6 @@ export default function App(){
     };
     const tb = tables[p.level || 'easy'];
 
-    // pro zjednodušení používáme stejný „pool“, ale commit větví logiku dle režimu
     const poolClassic = [20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,25,50];
     const poolCricket = [20,19,18,17,16,15,25,50];
     const poolAround  = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,25,50];
@@ -641,27 +631,37 @@ export default function App(){
       else if(mode==='cricket') v = poolCricket[Math.floor(Math.random()*poolCricket.length)];
       else v = poolAround[Math.floor(Math.random()*poolAround.length)];
 
-      // validace speciálních režimů:
       if(mode==='classic' && m>1 && (v===0||v===25||v===50)) m=1;
-      if(mode==='cricket' && v===50) m=1; // double bull řešíme převodem na 25×2 uvnitř commit
+      if(mode==='cricket' && v===50) m=1;
       return {v,m};
     };
 
-    const fire = (i) => {
+    const myIdx = pIdx;
+    const throwOnce = (i) => {
       if(cancelled || winner!=null) return;
+      if(order[currIdx] !== myIdx) return;
       const th = pickThrow();
       if(!th) return;
       setTimeout(()=>{
-        if(!cancelled){ commitDart(th.v, th.m); }
+        if(cancelled || winner!=null) return;
+        if(order[currIdx] !== myIdx) return;
+        commitDart(th.v, th.m);
+        if(i < 2){
+          setTimeout(()=>{
+            if(order[currIdx] === myIdx && winner==null){
+              throwOnce(i+1);
+            }
+          }, 120);
+        }
       }, delays[i]);
     };
 
-    fire(0); fire(1); fire(2);
+    throwOnce(0);
     return ()=>{ cancelled=true };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },[currIdx, order, players, winner, mode]);
 
-  /* ULOŽENÍ / OBNOVA – opravuje „Pokračovat ve hře“ */
+  /* ULOŽENÍ / OBNOVA – pro „Pokračovat ve hře“ */
   const saveSnapshot = () => {
     try{
       const snapshot = {
@@ -711,7 +711,14 @@ export default function App(){
       <div className="header">
         <div className="left">
           {screen==='game' && (
-            <button type="button" className="btn ghost" onClick={()=>{saveSnapshot(); setScreen('lobby')}} title={t(lang,'back')}>←</button>
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={()=>{saveSnapshot(); setScreen('lobby')}}
+              title={t(lang,'back')}
+            >
+              ←
+            </button>
           )}
           <div className="logo"><span className="dart"></span><span>{t(lang,'app')}</span></div>
         </div>
@@ -772,6 +779,7 @@ export default function App(){
           darts={darts} mult={mult} setMult={setMult}
           commitDart={commitDart} undo={undo}
           winner={winner}
+          saveSnapshot={saveSnapshot}
           saveGame={()=>{ saveSnapshot(); alert('Uloženo.'); }}
           restartGame={restartGame}
           cardRefs={cardRefs}
@@ -915,9 +923,9 @@ function Lobby({
               <em> Double-out, Triple-out, Master-out</em>.  
               {t(lang,'anyOutHint')}. Přestřelení nebo zbyde 1 (pokud je aktivní některé out pravidlo) = {t(lang,'bust')}.</dd>
             <dt>{t(lang,'cricket')}</dt>
-            <dd>Hraje se čísly 15–20 a Bull. Každý zásah: Single=1 značka, Double=2, Triple=3. Po 3 značkách je číslo „zavřené“. Přebytky skórují body, jen pokud soupeř( i ) nemají číslo zavřené.</dd>
+            <dd>Hraje se čísly 15–20 a 25. Každý zásah: Single=1 značka, Double=2, Triple=3. Po 3 značkách je číslo „zavřené“. Přebytky skórují body, jen pokud soupeř(i) nemají číslo zavřené.</dd>
             <dt>{t(lang,'around')}</dt>
-            <dd>Postupně 1→20→Bull. Počítá se zásah aktuálního cíle. Double/Triple se počítají jako zásah (ne více zásahů). Vyhrává ten, kdo první trefí Bull.</dd>
+            <dd>Postupně 1→20→Bull (25). Počítá se zásah aktuálního cíle. Double/Triple se počítají jako zásah (ne více zásahů). Vyhrává ten, kdo první trefí Bull.</dd>
           </dl>
         </details>
       </div>
@@ -979,7 +987,7 @@ function Game({
   scores, averages, thrown, lastTurn,
   cricket, around,
   darts, mult, setMult, commitDart, undo, winner,
-  saveGame, restartGame, cardRefs, setScreen
+  saveSnapshot, saveGame, restartGame, cardRefs, setScreen
 }){
   const keypad = [
     [1,2,3,4,5,6,7],
@@ -996,7 +1004,13 @@ function Game({
         <div className="gameTopBtns">
           <button type="button" className="btn" onClick={restartGame}>{t(lang,'restart')}</button>
           <button type="button" className="btn" onClick={saveGame}>{t(lang,'saveGame')}</button>
-          <button type="button" className="btn ghost" onClick={()=>setScreen('lobby')}>{t(lang,'back')}</button>
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={()=>{ saveSnapshot(); setScreen('lobby'); }}
+          >
+            {t(lang,'back')}
+          </button>
         </div>
       </div>
 
@@ -1053,13 +1067,21 @@ function Game({
                 </>
               ) : mode==='cricket' ? (
                 <>
+                  {/* Řádek 1: stav značek 20..15 a 25 */}
                   <div className="playerTurn" style={{flexWrap:'wrap',gap:6}}>
                     {['20','19','18','17','16','15','bull'].map(k=>{
                       const mk = cricket?.[pIdx]?.marks?.[k] ?? 0;
-                      const label = k==='bull' ? 'B' : k;
-                      return <div key={k} className="dartBox" title={k}>{label}:{mk}</div>;
+                      const label = k==='bull' ? '25' : k;
+                      return <div key={k} className="dartBox" title={label}>{label}:{mk}</div>;
                     })}
                     <div className="lastTotal">{t(lang,'last')}: {lastTurn[pIdx]||0}</div>
+                  </div>
+                  {/* Řádek 2: aktuální 3 zásahy (D/T + číslo) */}
+                  <div className="playerTurn" style={{marginTop:6}}>
+                    {[0,1,2].map(ix=>{
+                      const d = currentDarts[ix];
+                      return <div key={ix} className="dartBox">{d ? formatHitCricket(d) : '-'}</div>;
+                    })}
                   </div>
                 </>
               ) : (
@@ -1112,5 +1134,9 @@ function formatHit(d){
   const prefix = d.m===2?'D':(d.m===3?'T':'');
   return `${prefix}${d.v}=${d.score}`;
 }
-function sumScores(a){ return a.reduce((s,x)=>s+(x?.score||0),0); }
+function formatHitCricket(d){
+  if(!d) return '-';
+  const prefix = d.m===2?'D':(d.m===3?'T':'');
+  return `${prefix}${d.v===50 ? 25 : d.v}`;
+}
 function deepClone(x){ return JSON.parse(JSON.stringify(x)); }
