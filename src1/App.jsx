@@ -405,6 +405,7 @@ export default function App(){
     let v = value; let m = (mOverride ?? mult);
     // 0 = netrefil jsem validní cíl (jen přičti šipku a po 3. přepni)
 if (v === 0) {
+    playHitSound();
   const pIdx = currentPlayerIndex;
   setThrown(th => th.map((x,i) => i===pIdx ? x+1 : x));
   setDarts(cur => {
