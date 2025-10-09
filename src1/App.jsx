@@ -404,27 +404,39 @@ export default function App(){
   /* ====== CRICKET commit ====== */
   const commitCricket = (value, mOverride) => {
     let v = value; let m = (mOverride ?? mult);
+    // 0 = netrefil jsem validní cíl (jen přičti šipku a po 3. přepni)
+if (v === 0) {
+  const pIdx = currentPlayerIndex;
+  setThrown(th => th.map((x,i) => i===pIdx ? x+1 : x));
+  setDarts(cur => {
+    const nd = [...cur, { v:0, m:1, score:0 }];
+    if (nd.length >= 3) {
+      const total = sumScores(nd);
+      speak(lang, total===0 ? t(lang,'zeroWord') : total, voiceOn);
+      nextPlayer();
+      return [];
+    }
+    return nd;
+  });
+  setMult(1);
+  return;
+}
+
     // platná čísla: 15..20, 25 (single bull), 50 (double bull)
-    if(![15,16,17,18,19,20,25,50].includes(v)) return;
-    if(v===50) { v=25; m=2; }      // double bull = 2 značky 25
+    if(![15,16,17,18,19,20,25].includes(v)) return;
+if(![15,16,17,18,19,20,25].includes(v)) return;
     if(v===25) { m = (m===3?2:m); } // bull nemá triple
 
     const pIdx = currentPlayerIndex;
     const prevState = deepClone(cricket);
-    const me = prevState[pIdx];
-
-   const key = (v===25 ? 'bull' : String(v));
+const me = prevState[pIdx];
+const key = (v===25 ? 'bull' : String(v));
 const before = me.marks[key];
-
     let add = m;
     const newMarks = Math.min(3, before + add);
     const overflow = Math.max(0, before + add - 3);
-
     const opponentsOpen = prevState.some((pl,ix)=> ix!==pIdx && pl.marks[key] < 3);
-
-
    me.marks[key] = newMarks;
-
     if(overflow>0 && opponentsOpen){
       const pointPerMark = (v===25?25:v);
       me.points += overflow * pointPerMark;
@@ -638,7 +650,7 @@ const before = me.marks[key];
     const tb = tables[p.level || 'easy'];
 
     const poolClassic = [20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,25,50];
-    const poolCricket = [20,19,18,17,16,15,25,50];
+    const poolCricket = [20,19,18,17,16,15,25];
     const poolAround  = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,25,50];
 
     const pickThrow = () => {
@@ -1011,13 +1023,21 @@ function Game({
   darts, mult, setMult, commitDart, undo, winner,
   saveSnapshot, saveGame, restartGame, cardRefs, setScreen
 }){
-  const keypad = [
-    [1,2,3,4,5,6,7],
-    [8,9,10,11,12,13,14],
-    [15,16,17,18,19,20,25],
-    [0,50]
-  ];
-
+    // Keypad přepínám podle režimu – Cricket má jen 15–20, 25 a 0
+  const keypad = React.useMemo(() => {
+    if (mode === 'cricket') {
+      return [
+        [15,16,17,18,19,20,25],
+        [0]
+      ];
+    }
+    return [
+      [1,2,3,4,5,6,7],
+      [8,9,10,11,12,13,14],
+      [15,16,17,18,19,20,25],
+      [0,50]
+    ];
+  }, [mode]);
   const cricketTargets = ['20','19','18','17','16','15','bull'];
 
   return (
