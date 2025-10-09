@@ -494,9 +494,7 @@ const before = me.marks[key];
       playHitSound();
       pushAction({type:'dart', mode:'around', pIdx, prev:around, hit:true});
       if(me.next===999){
-        const name = players[pIdx]?.name || '';
-        speak(lang, `${t(lang,'youWinPrefix')} ${name}`, voiceOn);
-        finalizeWin(pIdx);
+                finalizeWin(pIdx, { silentVoice: true });
         setAround(st);
         setDarts(cur=>{
           const nd=[...cur,{v, m, score:0}];
@@ -512,12 +510,10 @@ const before = me.marks[key];
     setAround(st);
     setDarts(cur=>{
       const nd=[...cur,{v, m, score: hit?1:0}];
-      if(nd.length>=3){
-        const total = sumScores(nd);
-        speak(lang, total===0 ? t(lang,'zeroWord') : total, voiceOn);
-        nextPlayer();
-        return [];
-      }
+      if (nd.length >= 3) {
+  nextPlayer();
+  return [];
+}
       return nd;
     });
     setMult(1);
@@ -529,7 +525,6 @@ const before = me.marks[key];
     if(mode==='cricket') return commitCricket(value, mOverride);
     return commitAround(value, mOverride);
   };
-
     const finalizeWin = (pIdx, opts = {}) => {
     const name = players[pIdx]?.name || '';
     if(!opts.silentVoice){ speak(lang, `${t(lang,'youWinPrefix')} ${name}`, voiceOn); }
@@ -820,9 +815,9 @@ const before = me.marks[key];
       )}
 
       <audio ref={hitAudioRef} src="/dart-hit.mp3" preload="auto" />
+            <audio ref={winAudioRef} src="/fanfare.mp3" preload="auto" />
     </div>
-  );      <audio ref={winAudioRef} src="/fanfare.mp3" preload="auto" />
-
+  );     
 }
 
 /* ===== LOBBY ===== */
@@ -1176,23 +1171,24 @@ function Game({
         </div>
 
                 {keypad.map((row,ri)=>(
-          <div key={`row-${ri}`} className="padRow">
-            {row.map(n=>(
-              <button
-                type="button"
-                key={n}
-                className="key"
-                onPointerDown={(e)=>{ 
-                  e.currentTarget.classList.add('pressed');
-                  setTimeout(()=>e.currentTarget.classList.remove('pressed'), 120);
-                  commitDart(n);
-                }}
-              >
-                {n}
-              </button>
-            ))}
-          </div>
-        ))}
+  <div key={`row-${ri}`} className="padRow">
+    {row.map(n=>(
+      <button
+        type="button"
+        key={n}
+        className="key"
+        onPointerDown={(e)=>{ 
+          e.currentTarget.classList.add('pressed');
+          setTimeout(()=>e.currentTarget.classList.remove('pressed'), 140);
+          commitDart(n);
+          if(n===0) playHitSound(); // přidá i zvuk pro nulu
+        }}
+      >
+        {n}
+      </button>
+    ))}
+  </div>
+))}
 
 function formatAvg(v){ return (Math.round(v*100)/100).toFixed(2); }
 function formatHit(d){
