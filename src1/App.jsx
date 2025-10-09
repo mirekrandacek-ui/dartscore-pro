@@ -149,9 +149,8 @@ export default function App(){
     {id:uid(), name:defaultNameFor(lang,1), color:colors[0], bot:false},
     {id:uid(), name:defaultNameFor(lang,2), color:colors[1], bot:false}
   ]);
-
   const hitAudioRef = useRef(null);
-
+  const winAudioRef = useRef(null);
   /* load/save lobby */
   useEffect(()=>{ try{
     const s=JSON.parse(localStorage.getItem('lobby')||'{}');
@@ -454,9 +453,7 @@ const before = me.marks[key];
       const myPts = me.points;
       const lead = prevState.every((pl,ix)=> ix===pIdx || myPts>=pl.points);
       if(lead){
-        const name = players[pIdx]?.name || '';
-        speak(lang, `${t(lang,'youWinPrefix')} ${name}`, voiceOn);
-        finalizeWin(pIdx);
+                finalizeWin(pIdx, { silentVoice: true });
         return;
       }
     }
@@ -464,9 +461,7 @@ const before = me.marks[key];
     // po 3 šipkách další hráč (hlasí součet „bodů“ v tahu)
     setDarts(cur=>{
       const nd=[...cur,{v, m, score:addedPoints}];
-      if(nd.length>=3){
-        const total = sumScores(nd);
-        if(total===0) speak(lang, t(lang,'zeroWord'), voiceOn);
+            if(nd.length>=3){
         else speak(lang, total, voiceOn);
         nextPlayer();
         return [];
@@ -534,9 +529,11 @@ const before = me.marks[key];
     return commitAround(value, mOverride);
   };
 
-  const finalizeWin = (pIdx) => {
+    const finalizeWin = (pIdx, opts = {}) => {
     const name = players[pIdx]?.name || '';
-    speak(lang, `${t(lang,'youWinPrefix')} ${name}`, voiceOn);
+    if(!opts.silentVoice){ speak(lang, `${t(lang,'youWinPrefix')} ${name}`, voiceOn); }
+    try { if (winAudioRef.current) { winAudioRef.current.currentTime = 0; winAudioRef.current.play(); } } catch {}
+
     setWinner(pIdx);
     try{
       const list = JSON.parse(localStorage.getItem('finishedGames')||'[]');
@@ -823,7 +820,8 @@ const before = me.marks[key];
 
       <audio ref={hitAudioRef} src="/dart-hit.mp3" preload="auto" />
     </div>
-  );
+  );      <audio ref={winAudioRef} src="/fanfare.mp3" preload="auto" />
+
 }
 
 /* ===== LOBBY ===== */
@@ -1176,21 +1174,24 @@ function Game({
           </button>
         </div>
 
-        {keypad.slice(0,3).map((row,ri)=>(
-          <div key={ri} className="padRow">
+                {keypad.map((row,ri)=>(
+          <div key={`row-${ri}`} className="padRow">
             {row.map(n=>(
-              <button type="button" key={n} className="key" onClick={()=>commitDart(n)}>{n}</button>
+              <button
+                type="button"
+                key={n}
+                className="key"
+                onPointerDown={(e)=>{ 
+                  e.currentTarget.classList.add('pressed');
+                  setTimeout(()=>e.currentTarget.classList.remove('pressed'), 120);
+                  commitDart(n);
+                }}
+              >
+                {n}
+              </button>
             ))}
           </div>
         ))}
-        <div className="padRow">
-          <button type="button" className="key" onClick={()=>commitDart(0)}>0</button>
-          <button type="button" className="key" onClick={()=>commitDart(50)}>50</button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function formatAvg(v){ return (Math.round(v*100)/100).toFixed(2); }
 function formatHit(d){
