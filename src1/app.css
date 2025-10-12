@@ -155,6 +155,8 @@ input[type="text"]{color:#fff}
   border-color:#14532d;
 }
 .multBtn{flex:1 1 auto;min-width:120px;height:44px;border-radius:12px;border:1px solid var(--line);background:#1a1f26;color:#fff;font-weight:900}
+/* Cricket keypad větší */
+body[data-mode="cricket"] .key{ min-width:64px; height:64px; font-size:22px }
 .multBtn.mult-2.active{background:#a11d1d;border-color:#7a1616} /* DOUBLE = červená */
 .multBtn.mult-3.active{background:#157f3a;border-color:#0e5d2b} /* TRIPLE = zelená */
 
