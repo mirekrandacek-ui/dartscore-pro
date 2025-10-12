@@ -353,9 +353,7 @@ export default function App(){
 
         // 2) buď vyhraj hned, nebo v režimu playThrough jen poznač „kdo dohodil nejdřív“ a přepni
         if (!playThrough) {
-          const name = players[pIdx]?.name || '';
-          speak(lang, `${t(lang, 'youWinPrefix')} ${name}`, voiceOn);
-          finalizeWin(pIdx);
+                  finalizeWin(pIdx);
           resetMult();
           return;
         } else {
@@ -530,9 +528,12 @@ const before = me.marks[key];
     if(mode==='cricket') return commitCricket(value, mOverride);
     return commitAround(value, mOverride);
   };
-    const finalizeWin = (pIdx, opts = {}) => {
+      const finalizeWin = (pIdx, opts={}) => {
     const name = players[pIdx]?.name || '';
-    if(!opts.silentVoice){ speak(lang, `${t(lang,'youWinPrefix')} ${name}`, voiceOn); }
+    if(!opts.silentVoice){
+      speak(lang, `Vítěz! jupíííí.`, voiceOn);
+    }
+    try{ if(winAudioRef.current){ winAudioRef.current.currentTime=0; winAudioRef.current.play(); } }catch{}
     try { if (winAudioRef.current) { winAudioRef.current.currentTime = 0; winAudioRef.current.play(); } } catch {}
 
     setWinner(pIdx);
@@ -822,7 +823,7 @@ const before = me.marks[key];
 
       <audio ref={hitAudioRef} src="/dart-hit.mp3" preload="auto" />
       {toast && <div className="toast ok">✔️ {toast}</div>}
-      <audio ref={winAudioRef} src="/fanfare.mp3" preload="auto" />
+            <audio ref={winAudioRef} src="/fanfare.mp3" preload="auto" />
     </div>
   );     
 }
@@ -1017,20 +1018,20 @@ function SavedGames({lang,t}){
 }
 
 /* ===== GAME ===== */
-function Game({
-  lang,t,mode,outDesc, players, order, currIdx,
-  scores, averages, thrown, lastTurn,
-  cricket, around,
-  darts, mult, setMult, commitDart, undo, winner,
-  saveSnapshot, saveGame, restartGame, cardRefs, setScreen
-}){
-    // Keypad přepínám podle režimu – Cricket má jen 15–20, 25 a 0
-  const keypad = React.useMemo(() => {
-    if (mode === 'cricket') {
+  const keypad = React.useMemo(()=>{
+    if(mode==='cricket'){
       return [
         [15,16,17,18,19,20,25],
         [0]
       ];
+    }
+    return [
+      [1,2,3,4,5,6,7],
+      [8,9,10,11,12,13,14],
+      [15,16,17,18,19,20,25],
+      [0,50]
+    ];
+  },[mode]);
     }
     return [
       [1,2,3,4,5,6,7],
