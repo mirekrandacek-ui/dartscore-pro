@@ -157,6 +157,20 @@ export default function App(){
   const hitAudioRef = useRef(null);
   const winAudioRef = useRef(null);
   /* load/save lobby */
+    // při reloadu zkusti obnovit poslední rozehranou hru
+  useEffect(()=>{ try{
+    const s=JSON.parse(localStorage.getItem('savedGame')||localStorage.getItem('autosaveGame')||'{}');
+    if(s && s.order && s.screen==='game' && !winner){
+      // tichá obnova bez hlášky
+      setLang(s.lang||lang); setMode(s.mode||'classic'); setStartScore(s.startScore||501);
+      setPlayers(s.players||players); setOrder(s.order||[]); setCurrIdx(s.currIdx||0);
+      setScores(s.scores||[]); setDarts(s.darts||[]); setMult(s.mult||1);
+      setActions(s.actions||[]); setThrown(s.thrown||[]); setLastTurn(s.lastTurn||[]);
+      setWinner(s.winner??null); setPendingWin(s.pendingWin??null);
+      setCricket(s.cricket??null); setAround(s.around??null);
+      setScreen('game');
+    }
+  }catch{} },[]); 
   useEffect(()=>{ try{
     const s=JSON.parse(localStorage.getItem('lobby')||'{}');
     if(s.lang) setLang(s.lang);
@@ -414,11 +428,9 @@ if (v === 0) {
   setDarts(cur => {
     const nd = [...cur, { v:0, m:1, score:0 }];
     if (nd.length >= 3) {
-      const total = sumScores(nd);
-      speak(lang, total===0 ? t(lang,'zeroWord') : total, voiceOn);
-      nextPlayer();
-      return [];
-    }
+  nextPlayer();
+  return [];
+}
     return nd;
   });
   setMult(1);
@@ -712,6 +724,13 @@ const before = me.marks[key];
     }catch{}
   };
   const continueSaved = () => {
+      // AUTOSAVE při přechodu na pozadí/otočení
+  useEffect(()=>{
+    const handler = () => { try{ localStorage.setItem('autosaveGame', localStorage.getItem('savedGame') || ''); saveSnapshot(); }catch{} };
+    window.addEventListener('pagehide', handler);
+    document.addEventListener('visibilitychange', ()=>{ if(document.hidden) handler(); });
+    return ()=>{ window.removeEventListener('pagehide', handler); document.removeEventListener('visibilitychange', ()=>{}); };
+  },[]);
     try{
       const s=JSON.parse(localStorage.getItem('savedGame')||'{}');
       if(!s || !s.order) return alert('Nic k pokračování.');
@@ -739,7 +758,7 @@ const before = me.marks[key];
   };
 
   return (
-    <div className="container">
+        <div className="container" data-mode={mode}>
       {/* HEADER */}
       <div className="header">
         <div className="left">
