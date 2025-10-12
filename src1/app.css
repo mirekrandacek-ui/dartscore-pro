@@ -147,14 +147,51 @@ input[type="text"]{color:#fff}
 /* Pad */
 .padPane{flex:0 0 var(--padH);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px}
 .padRow{display:flex;gap:8px;justify-content:center;margin-bottom:8px}
-.key{flex:1 1 auto;min-width:48px;height:56px;border-radius:12px;border:1px solid var(--line);background:#0f1318;color:#fff;font-weight:900;font-size:20px;box-shadow:inset 0 -2px 0 #0005;transition:transform .05s}
-.key.pressed{
-  transform:translateY(1px) scale(0.98);
-  box-shadow:inset 0 -1px 0 #0008, 0 0 0 2px #22c55e55;
-  background:linear-gradient(#0f1b12,#0c1510);
-  border-color:#14532d;
+/* --- KEYPAD BUTTONS (nahraď celý původní blok) --- */
+.key{
+  flex:1 1 auto;
+  min-width:48px;
+  height:56px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:#0f1318;
+  color:#fff;
+  font-weight:900;
+  font-size:20px;
+  box-shadow:inset 0 -2px 0 #0005;
+  transition:transform .05s, background-color .08s, box-shadow .08s, border-color .08s;
 }
-.multBtn{flex:1 1 auto;min-width:120px;height:44px;border-radius:12px;border:1px solid var(--line);background:#1a1f26;color:#fff;font-weight:900}
+
+/* nativní press (myš/prst držený) – drobný posun */
+.key:active{
+  transform:translateY(1px) scale(.98);
+}
+
+/* náš výrazný vizuální stisk (přidává se v onPointerDown) */
+.key.pressed{
+  transform:translateY(1px) scale(.98);
+  background:#2a2f36;                 /* jasně šedé ztmavení */
+  border-color:#6b7280;                /* světlejší okraj */
+  box-shadow:inset 0 -1px 0 #0008, 0 0 0 2px #9aa3af66; /* světle šedý „ring“ */
+}
+
+.multBtn{
+  flex:1 1 auto;
+  min-width:120px;
+  height:44px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:#1a1f26;
+  color:#fff;
+  font-weight:900;
+}
+
+/* Cricket keypad větší */
+body[data-mode="cricket"] .key{
+  min-width:64px;
+  height:64px;
+  font-size:22px;
+}
 /* Cricket keypad větší */
 body[data-mode="cricket"] .key{ min-width:64px; height:64px; font-size:22px }
 .multBtn.mult-2.active{background:#a11d1d;border-color:#7a1616} /* DOUBLE = červená */
