@@ -992,10 +992,9 @@ function SavedGames({lang,t,showToast}){
     try{
       if(navigator.share){ await navigator.share({text}); }
       else {
-          await navigator.clipboard.writeText(text);
-  showToast && showToast('Zkopírováno');
-        alert('Zkopírováno do schránky.');
-      }
+  await navigator.clipboard.writeText(text);
+  try{ showToast && showToast('Zkopírováno'); }catch{}
+}
     }catch{}
   };
    const clearAll = ()=>{
