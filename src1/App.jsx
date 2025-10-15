@@ -1004,7 +1004,8 @@ function SavedGames({lang,t,showToast}){
     try{
       if(navigator.share){ await navigator.share({text}); }
       else {
-        await navigator.clipboard.writeText(text);
+          await navigator.clipboard.writeText(text);
+  showToast && showToast('Zkopírováno');
         alert('Zkopírováno do schránky.');
       }
     }catch{}
