@@ -132,13 +132,7 @@ export default function App(){
   const showToast = (msg) => {
     setToast(msg);
     setTimeout(()=>setToast(null), 1600);
-  };
-  const [toast,setToast] = useState(null);
-  const showToast = (msg) => {
-    setToast(msg);
-    setTimeout(()=>setToast(null), 1600);
-  };
-
+  };  
   const [lang,setLang]     = useState(((navigator.language||'cs').slice(0,2))||'cs');
   const [soundOn,setSoundOn] = useState(true);
   const [voiceOn,setVoiceOn] = useState(true);
@@ -482,16 +476,10 @@ const before = me.marks[key];
     // po 3 šipkách další hráč (hlasí součet „bodů“ v tahu)
     setDarts(cur=>{
       const nd=[...cur,{v, m, score:addedPoints}];
-            if(nd.length>=3){
-        else speak(lang, total, voiceOn);
-        nextPlayer();
-        return [];
-      }
-      return nd;
-    });
-    setMult(1);
-  };
-
+           if (nd.length >= 3) {
+  nextPlayer();
+  return [];
+} 
   /* ====== AROUND commit ====== */
   const commitAround = (value, mOverride) => {
     let v = value; let m = (mOverride ?? mult);
