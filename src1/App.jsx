@@ -133,6 +133,11 @@ export default function App(){
     setToast(msg);
     setTimeout(()=>setToast(null), 1600);
   };
+  const [toast,setToast] = useState(null);
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(()=>setToast(null), 1600);
+  };
 
   const [lang,setLang]     = useState(((navigator.language||'cs').slice(0,2))||'cs');
   const [soundOn,setSoundOn] = useState(true);
@@ -829,11 +834,9 @@ const before = me.marks[key];
           cricket={cricket} around={around}
           averages={averages}
           darts={darts} mult={mult} setMult={setMult}
-          commitDart={commitDart} undo={undo}
-          winner={winner}
-          saveSnapshot={saveSnapshot}
-          saveGame={()=>{ saveSnapshot(); alert('Uloženo.'); }}
-                    saveGame={()=>{ saveSnapshot(); showToast('Uloženo'); }}
+            commitDart={commitDart} undo={undo}
+  winner={winner}
+  saveGame={()=>{ saveSnapshot(); showToast('Uloženo'); }}
 
           cardRefs={cardRefs}
           setScreen={setScreen}
