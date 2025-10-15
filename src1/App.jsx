@@ -726,7 +726,7 @@ const before = me.marks[key];
   },[]);
     try{
       const s=JSON.parse(localStorage.getItem('savedGame')||'{}');
-      if(!s || !s.order) return alert('Nic k pokračování.');
+          if(!s || !s.order){ showToast('Nic k pokračování'); return; }
       setLang(s.lang||lang);
       setMode(s.mode||'classic');
       setStartScore(s.startScore||501);
@@ -746,7 +746,7 @@ const before = me.marks[key];
       setScreen('game');
     }catch(e){
       console.error(e);
-      alert('Obnova selhala.');
+        showToast('Obnova selhala');
     }
   };
 
