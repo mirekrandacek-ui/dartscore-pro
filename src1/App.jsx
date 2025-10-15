@@ -989,13 +989,13 @@ function Lobby({
       </div>
 
       {/* Uložené hry */}
-      <SavedGames lang={lang} t={t}/>
+            <SavedGames lang={lang} t={t} showToast={showToast}/>
     </div>
   );
 }
 
 /* Uložené hry – seznam a sdílení */
-function SavedGames({lang,t}){
+function SavedGames({lang,t,showToast}){
   const [list,setList]=useState(()=>{
     try{return JSON.parse(localStorage.getItem('finishedGames')||'[]')}catch{return []}
   });
@@ -1009,9 +1009,13 @@ function SavedGames({lang,t}){
       }
     }catch{}
   };
-  const clearAll = ()=>{
-    if(!confirm('Smazat všechny uložené hry?')) return;
-    localStorage.removeItem('finishedGames');
+   const clearAll = ()=>{
+    try{
+      localStorage.removeItem('finishedGames');
+      setList([]);
+      showToast && showToast('Vše smazáno');
+    }catch{}
+  };
     setList([]);
   };
   if(list.length===0) return (
