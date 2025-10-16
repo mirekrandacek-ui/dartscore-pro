@@ -1063,21 +1063,20 @@ function Game({
   saveGame, restartGame, cardRefs, setScreen
 }){
   // KEYBOARD LAYOUT (Cricket: jen [20..15,25] a [0])
-  const keypad = useMemo(()=>{
-    if(mode==='cricket'){
-      return [
-        [20,19,18,17,16,15,25],
-        [0]
-      ];
-    }
+ const keypad = React.useMemo(()=>{
+  if(mode==='cricket'){
     return [
-      [1,2,3,4,5,6,7],
-      [8,9,10,11,12,13,14],
       [15,16,17,18,19,20,25],
-      [0,50]
+      [0]
     ];
-  },[mode]);
-
+  }
+  return [
+    [1,2,3,4,5,6,7],
+    [8,9,10,11,12,13,14],
+    [15,16,17,18,19,20,25],
+    [0,50]
+  ];
+},[mode]);
   const cricketTargets = ['15','16','17','18','19','20','bull'];
 
   return (
@@ -1205,7 +1204,7 @@ function Game({
           <button type="button" className="multBtn backspace" onClick={undo} title={t(lang,'undo')} aria-label={t(lang,'undo')}>
             <svg viewBox="0 0 24 24" className="iconBackspace" aria-hidden="true">
               <path d="M7 5L3 12l4 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H7z" fill="none" stroke="currentColor" strokeWidth="2"/>
-              <path d="M12 9l4 4m0-4-4 4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+             <path d="M9 9 L15 15 M15 9 L9 15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/> 
             </svg>
           </button>
         </div>
@@ -1218,9 +1217,15 @@ function Game({
   key={n}
   className="key"
   onPointerDown={(e)=>{ 
-    e.currentTarget.classList.add('pressed');
+  e.currentTarget.classList.add('pressed');
+  // Cricket: triple 25 není povolen – když je aktivní TRIPLE a mačkám 25, přepni na DOUBLE a zapiš jako 25×2
+  if(mode==='cricket' && n===25 && mult===3){
+    setMult(2);
+    commitDart(25, 2);
+  } else {
     commitDart(n);
-  }}
+  }
+}}
   onPointerUp={(e)=>{ e.currentTarget.classList.remove('pressed'); }}
   onPointerLeave={(e)=>{ e.currentTarget.classList.remove('pressed'); }}
 >
