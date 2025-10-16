@@ -438,7 +438,7 @@ export default function App(){
       const myPts = me.points;
       const lead = prevState.every((pl,ix)=> ix===pIdx || myPts>=pl.points);
       if(lead){
-        finalizeWin(pIdx, { silentVoice: false }); // zazní „Vítěz! jupíííí.“
+        finalizeWin(pIdx, { silentVoice: false }); // zazní „Vítěz!“
         return;
       }
     }
@@ -503,7 +503,7 @@ export default function App(){
   const finalizeWin = (pIdx, opts={}) => {
     const name = players[pIdx]?.name || '';
     if(!opts.silentVoice){
-      speak(lang, `Vítěz! jupíííí.`, voiceOn);
+        speak(lang, 'Vítěz!', voiceOn);
     }
     try{ if(winAudioRef.current){ winAudioRef.current.currentTime=0; winAudioRef.current.play(); } }catch{}
 
@@ -781,7 +781,7 @@ export default function App(){
       )}
 
       <audio ref={hitAudioRef} src="/dart-hit.mp3" preload="auto" />
-      <audio ref={winAudioRef} src="/fanfare.mp3" preload="auto" />
+      <audio ref={winAudioRef} src="/tada-fanfare-a-6313.mp3" preload="auto" />
       {toast && <div className="toast ok">✔️ {toast}</div>}
     </div>
   );
@@ -998,7 +998,7 @@ function Game({
     ];
   },[mode]);
 
-  const cricketTargets = ['20','19','18','17','16','15','bull'];
+  const cricketTargets = ['15','16','17','18','19','20','bull'];
 
   return (
     <div className="gameWrap">
@@ -1134,18 +1134,18 @@ function Game({
           <div key={`row-${ri}`} className="padRow">
             {row.map(n=>(
               <button
-                type="button"
-                key={n}
-                className="key"
-                onPointerDown={(e)=>{ 
-                  e.currentTarget.classList.add('pressed');
-                  setTimeout(()=>e.currentTarget.classList.remove('pressed'), 140);
-                  commitDart(n);
-                  if(n===0) playHitSound();
-                }}
-              >
-                {n}
-              </button>
+  type="button"
+  key={n}
+  className="key"
+  onPointerDown={(e)=>{ 
+    e.currentTarget.classList.add('pressed');
+    commitDart(n);
+  }}
+  onPointerUp={(e)=>{ e.currentTarget.classList.remove('pressed'); }}
+  onPointerLeave={(e)=>{ e.currentTarget.classList.remove('pressed'); }}
+>
+  {n}
+</button>
             ))}
           </div>
         ))}
