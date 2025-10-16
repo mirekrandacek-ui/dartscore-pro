@@ -595,63 +595,143 @@ export default function App(){
       el.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
     }
   },[order, currIdx, mode]);
+/* BOT — sekvenční 3 hody s kontrolou řady (chytřejší cílení + lepší přesnost) */
+useEffect(()=>{
+  const pIdx = order[currIdx];
+  const p = players[pIdx];
+  if(!p || !p.bot || winner!=null) return;
 
-  /* BOT – 3 hody a přepnutí */
-  useEffect(()=>{
-    const pIdx = order[currIdx];
-    const p = players[pIdx];
-    if(!p || !p.bot || winner!=null) return;
+  let cancelled=false;
+  const delays = [350, 900, 1450];
 
-    let cancelled=false;
-    const delays = [350, 900, 1450];
-    const tables = {
-      easy:   { miss:0.25, single:0.6, double:0.12, triple:0.03 },
-      medium: { miss:0.15, single:0.6, double:0.18, triple:0.07 },
-      hard:   { miss:0.08, single:0.55, double:0.22, triple:0.15 }
+  // přesnosti podle úrovní – lehce posíleno, aby Medium/Hard reálně vyhrávaly
+  const tables = {
+    easy:   { miss:0.22, single:0.62, double:0.12, triple:0.04 },
+    medium: { miss:0.12, single:0.58, double:0.20, triple:0.10 },
+    hard:   { miss:0.06, single:0.50, double:0.26, triple:0.18 }
+  };
+  const tb = tables[p.level || 'easy'];
+
+  // helper: náhodně podle pravděpodobností vybere multiplikátor 1/2/3
+  const rollMult = () => {
+    const r = Math.random();
+    if(r < tb.miss) return {m:1, miss:true};
+    if(r < tb.miss + tb.triple) return {m:3, miss:false};
+    if(r < tb.miss + tb.triple + tb.double) return {m:2, miss:false};
+    return {m:1, miss:false};
+  };
+
+  // --- cílení podle režimu ---
+  const chooseTargetClassic = () => {
+    const myScore = scores[pIdx];
+    // zkus checkout (double-out/master-out/any-out) – jednoduché vzory
+    const finishAllowed = (m)=> {
+      if(!anyOutSelected) return true;
+      if(m===2 && outDouble) return true;
+      if(m===3 && outTriple) return true;
+      if((m===2||m===3) && outMaster) return true;
+      return false;
     };
-    const tb = tables[p.level || 'easy'];
+    // jednoduché checkouty do 60
+    const checkouts = [
+      {v:20,m:2,need:40},{v:10,m:2,need:20},{v:12,m:2,need:24},{v:16,m:2,need:32},
+      {v:8,m:2,need:16},{v:6,m:2,need:12},{v:4,m:2,need:8},{v:2,m:2,need:4}
+    ];
+    for(const co of checkouts){
+      if(myScore===co.need && finishAllowed(co.m)) return co;
+    }
+    // pokus o setup/finish: pokud <= 62, zkus D (když dovoleno), jinak S
+    if(myScore<=62){
+      if(finishAllowed(2) && myScore%2===0){
+        // zkuste vygenerovat double co je <= myScore
+        const d = Math.min(20, Math.max(2, myScore/2|0));
+        return {v:d, m:2};
+      }
+      // jinak setup – sniž si skóre rozumně singlem
+      const s = Math.min(20, Math.max(1, myScore-40));
+      return {v:s||1, m:1};
+    }
+    // standardní scoring: T20 → T19 → T18…
+    const prefs = [20,19,18,17,16,15];
+    return {v:prefs[0], m:3};
+  };
 
-    const poolClassic = [20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,25,50];
-    const poolCricket = [20,19,18,17,16,15,25];
-    const poolAround  = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,25,50];
-
-    const pickThrow = () => {
-      const r = Math.random();
-      let m = 1;
-      if(r > 1 - tb.triple) m = 3;
-      else if(r > 1 - (tb.triple + tb.double)) m = 2;
-      else if(r <= tb.miss) return {v:0,m:1};
-
-      let v;
-      if(mode==='classic') v = poolClassic[Math.floor(Math.random()*poolClassic.length)];
-      else if(mode==='cricket') v = poolCricket[Math.floor(Math.random()*poolCricket.length)];
-      else v = poolAround[Math.floor(Math.random()*poolAround.length)];
-
-      if(mode==='classic' && m>1 && (v===0||v===25||v===50)) m=1;
-      if(mode==='cricket' && v===50) m=1;
-      return {v,m};
+  const chooseTargetCricket = () => {
+    const me = cricket?.[pIdx];
+    if(!me) return {v:20,m:1};
+    // 1) dovřít neuzavřená čísla 15–20, bull; preferuj vyšší hodnoty pro scoring
+    const order = [20,19,18,17,16,15,25];
+    for(const v of order){
+      const key = v===25 ? 'bull' : String(v);
+      const marks = me.marks?.[key] ?? 0;
+      if(marks < 3){
+        // když nejsme „miss“, zkus triple/double, ať to rychleji zavřeš
+        const {m, miss} = rollMult();
+        const mAdj = (v===25 && m===3) ? 2 : m; // bull nemá triple
+        if(miss) return {v:0,m:1};
+        return {v, m:mAdj};
+      }
+    }
+    // 2) všude zavřeno – nabírej body na nejvyšším čísle, které soupeři nemají zavřené
+    const opponentsOpen = (v)=>{
+      const key = v===25 ? 'bull' : String(v);
+      return cricket?.some((pl,ix)=> ix!==pIdx && (pl.marks?.[key]??0) < 3);
     };
+    for(const v of [20,19,18,17,16,15,25]){
+      if(opponentsOpen(v)){
+        const {m, miss} = rollMult();
+        const mAdj = (v===25 && m===3) ? 2 : m;
+        if(miss) return {v:0,m:1};
+        return {v, m:mAdj};
+      }
+    }
+    // všichni vše zavřeli -> cokoliv (už hra skončí pravidly)
+    return {v:20,m:1};
+  };
 
-    const myIdx = pIdx;
-    const throwOnce = (i) => {
+  const chooseTargetAround = () => {
+    const me = around?.[pIdx];
+    const target = me?.next ?? 1;
+    if(target<=20) return {v:target, m:1};
+    return {v:25, m:1}; // bull
+  };
+
+  const pickThrow = () => {
+    if(mode==='classic') return chooseTargetClassic();
+    if(mode==='cricket') return chooseTargetCricket();
+    return chooseTargetAround();
+  };
+
+  const myIdx = pIdx;
+  const throwOnce = (i) => {
+    if(cancelled || winner!=null) return;
+    if(order[currIdx] !== myIdx) return; // už není řada bota
+
+    const shot = pickThrow();
+    // korekce neplatných komb v Classicu (D/T na 0/25/50)
+    let {v,m} = shot;
+    if(mode==='classic' && (v===0||v===25||v===50) && m>1) m=1;
+    if(mode==='cricket' && v===50) { v=25; if(m===3) m=2; }
+
+    setTimeout(()=>{
       if(cancelled || winner!=null) return;
       if(order[currIdx] !== myIdx) return;
-      const th = pickThrow();
-      if(!th) return;
-      setTimeout(()=>{
-        if(cancelled || winner!=null) return;
-        if(order[currIdx] !== myIdx) return;
-        commitDart(th.v, th.m);
-        if(i < 2){
-          setTimeout(()=>{ if(order[currIdx] === myIdx && winner==null){ throwOnce(i+1); } }, 120);
-        }
-      }, delays[i]);
-    };
+      commitDart(v, m);
 
-    throwOnce(0);
-    return ()=>{ cancelled=true };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[currIdx, order, players, winner, mode]);
+      if(i < 2){
+        setTimeout(()=>{
+          if(order[currIdx] === myIdx && winner==null){
+            throwOnce(i+1);
+          }
+        }, 120);
+      }
+    }, delays[i]);
+  };
+
+  throwOnce(0);
+  return ()=>{ cancelled=true };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+},[currIdx, order, players, winner, mode, scores, cricket, around, outDouble, outTriple, outMaster, anyOutSelected]);
 
   /* ULOŽENÍ / OBNOVA – snapshot + autosave (otočení/odchod) */
   const saveSnapshot = () => {
