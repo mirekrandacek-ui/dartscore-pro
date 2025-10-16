@@ -211,9 +211,10 @@ input[type="text"]{color:#fff}
 .backspace{display:flex;align-items:center;justify-content:center}
 .iconBackspace{width:28px;height:28px}
 
-/* Cricket keypad – větší klávesy (POZOR: selektor na .container s data-mode) */
+/* Cricket keypad – menší, aby se vešlo „25“ i „0“ */
 .container[data-mode="cricket"] .key{
-  min-width:64px;
-  height:64px;
-  font-size:22px;
+  min-width:56px;
+  height:56px;
+  font-size:20px;
 }
+
