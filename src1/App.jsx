@@ -1180,38 +1180,37 @@ function SavedGames({lang,t,showToast}){
       )}
 
       {/* PAD */}
-      <div className="padPane">
-        <div className="padRow">
-          <button type="button" className={`multBtn mult-2 ${mult===2?'active':''}`} onClick={()=>setMult(m=>m===2?1:2)}>DOUBLE</button>
-          <button type="button" className={`multBtn mult-3 ${mult===3?'active':''}`} onClick={()=>setMult(m=>m===3?1:3)}>TRIPLE</button>
-          <button type="button" className="multBtn backspace" onClick={undo} title={t(lang,'undo')} aria-label={t(lang,'undo')}>
-            <svg viewBox="0 0 24 24" className="iconBackspace" aria-hidden="true">
-              <path d="M7 5L3 12l4 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H7z" fill="none" stroke="currentColor" strokeWidth="2"/>
-              <path d="M12 9l4 4m0-4-4 4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-        </div>
-
-                {keypad.map((row,ri)=>(
-  <div key={`row-${ri}`} className="padRow">
-    {row.map(n=>(
-      <button
-        type="button"
-        key={n}
-        className="key"
-        onPointerDown={(e)=>{ 
-          e.currentTarget.classList.add('pressed');
-          setTimeout(()=>e.currentTarget.classList.remove('pressed'), 140);
-          commitDart(n);
-          if(n===0) playHitSound(); // přidá i zvuk pro nulu
-        }}
-      >
-        {n}
-      </button>
-    ))}
+     <div className="padPane">
+  <div className="padRow">
+    <button type="button" className={`multBtn mult-2 ${mult===2?'active':''}`} onClick={()=>setMult(m=>m===2?1:2)}>DOUBLE</button>
+    <button type="button" className={`multBtn mult-3 ${mult===3?'active':''}`} onClick={()=>setMult(m=>m===3?1:3)}>TRIPLE</button>
+    <button type="button" className="multBtn backspace" onClick={undo} title={t(lang,'undo')} aria-label={t(lang,'undo')}>
+      <svg viewBox="0 0 24 24" className="iconBackspace" aria-hidden="true">
+        <path d="M7 5L3 12l4 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H7z" fill="none" stroke="currentColor" strokeWidth="2"/>
+        <path d="M12 9l4 4m0-4-4 4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    </button>
   </div>
-))}
 
+  {keypad.map((row,ri)=>(
+    <div key={`row-${ri}`} className="padRow">
+      {row.map(n=>(
+        <button
+          type="button"
+          key={n}
+          className="key"
+          onPointerDown={(e)=>{ 
+            e.currentTarget.classList.add('pressed');
+            setTimeout(()=>e.currentTarget.classList.remove('pressed'), 140);
+            commitDart(n);
+          }}
+        >
+          {n}
+        </button>
+      ))}
+    </div>
+  ))}
+</div>
 function formatAvg(v){ return (Math.round(v*100)/100).toFixed(2); }
 function formatHit(d){
   if(!d) return '-';
