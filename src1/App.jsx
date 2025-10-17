@@ -611,13 +611,16 @@ useEffect(()=>{
   const delays = [350, 900, 1450];
 
   // přesnosti podle úrovní – lehce posíleno, aby Medium/Hard reálně vyhrávaly
-  const tables = {
-    easy:   { miss:0.22, single:0.62, double:0.12, triple:0.04 },
-    medium: { miss:0.12, single:0.58, double:0.20, triple:0.10 },
-    hard:   { miss:0.06, single:0.50, double:0.26, triple:0.18 }
-  };
+  
   const tb = tables[p.level || 'easy'];
-
+const tables = {
+  // Easy: vysoká šance minout, téměř žádné triplování
+  easy:   { miss:0.45, single:0.50, double:0.04, triple:0.01 },
+  // Medium: rozumné chyby, ale umí checkouty i dovírat v Cricketu
+  medium: { miss:0.18, single:0.58, double:0.16, triple:0.08 },
+  // Hard: málo chyb, reálně vyhrává, ale není robotický
+  hard:   { miss:0.09, single:0.50, double:0.24, triple:0.17 }
+};
   // helper: náhodně podle pravděpodobností vybere multiplikátor 1/2/3
   const rollMult = () => {
     const r = Math.random();
@@ -694,14 +697,16 @@ useEffect(()=>{
     // všichni vše zavřeli -> cokoliv (už hra skončí pravidly)
     return {v:20,m:1};
   };
-
   const chooseTargetAround = () => {
-    const me = around?.[pIdx];
-    const target = me?.next ?? 1;
-    if(target<=20) return {v:target, m:1};
-    return {v:25, m:1}; // bull
-  };
-
+  const me = around?.[pIdx];
+  const target = me?.next ?? 1;
+  // pravděpodobná „mimo“ podle úrovně – zejména Easy často mine
+  if(Math.random() < tb.miss){
+    return {v:0, m:1}; // jasná „mimo“
+  }
+  if(target<=20) return {v:target, m:1};
+  return {v:25, m:1}; // bull
+};
   const pickThrow = () => {
     if(mode==='classic') return chooseTargetClassic();
     if(mode==='cricket') return chooseTargetCricket();
@@ -1076,12 +1081,30 @@ function Game({
       [0]
     ];
   }
+  const keypad = React.useMemo(()=>{
+  if(mode==='cricket'){
+    return [
+      [15,16,17,18,19,20,25],
+      [0]
+    ];
+  }
+  if(mode==='around'){
+    // Around: bez 50, poslední řádek jen 0
+    return [
+      [1,2,3,4,5,6,7],
+      [8,9,10,11,12,13,14],
+      [15,16,17,18,19,20,25],
+      [0]
+    ];
+  }
+  // Classic (ponechává 50)
   return [
     [1,2,3,4,5,6,7],
     [8,9,10,11,12,13,14],
     [15,16,17,18,19,20,25],
     [0,50]
   ];
+},[mode]);
 },[mode]);
   const cricketTargets = ['15','16','17','18','19','20','bull'];
 
