@@ -273,4 +273,11 @@ input[type="text"]{color:#fff}
     font-size:18px;
   }
 }
+/* Around: zvýraznění cíle */
+.targetBox{
+  border-color:#14532d;
+  background:#0f1b12;
+  color:#16a34a;
+  font-weight:900;
+}
 
