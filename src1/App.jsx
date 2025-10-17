@@ -466,23 +466,29 @@ export default function App(){
 
     setThrown(th=>th.map((x,i)=> i===pIdx ? x+1 : x));
     if(hit){
-      me.next = (target<=20) ? target+1 : 999; // 999 = hotovo
-      playHitSound();
-      pushAction({type:'dart', mode:'around', pIdx, prev:around, hit:true});
-      if(me.next===999){
-        finalizeWin(pIdx);
-        setAround(st);
-        setDarts(cur=>{
-          const nd=[...cur,{v, m, score:0}];
-          return nd.length>=3 ? [] : nd;
-        });
-        setMult(1);
-        return;
-      }
-    }else{
-      pushAction({type:'dart', mode:'around', pIdx, prev:around, hit:false});
-    }
-
+  // po 20 se má zobrazit 25 jako další cíl
+  if(target < 20){
+    me.next = target + 1;
+  } else if (target === 20){
+    me.next = 25; // ukážeme 25
+  } else if (target === 25){
+    // trefil 25 => výhra
+    playHitSound();
+    pushAction({type:'dart', mode:'around', pIdx, prev:around, hit:true});
+    setAround(st);
+    setDarts(cur=>{
+      const nd=[...cur,{v, m, score:0}];
+      return nd.length>=3 ? [] : nd;
+    });
+    setMult(1);
+    finalizeWin(pIdx, { silentVoice: true });
+    return;
+  }
+  playHitSound();
+  pushAction({type:'dart', mode:'around', pIdx, prev:around, hit:true});
+} else {
+  pushAction({type:'dart', mode:'around', pIdx, prev:around, hit:false});
+}
     setAround(st);
     setDarts(cur=>{
       const nd=[...cur,{v, m, score: hit?1:0}];
@@ -1143,7 +1149,7 @@ function Game({
                 ) : (
                   <>
                     <div className="playerTurn">
-                      <div className="dartBox">{around?.[pIdx]?.next ?? 1}</div>
+                     <div className="dartBox targetBox">{around?.[pIdx]?.next ?? 1}</div>
                       {[0,1,2].map(ix=>{
                         const d = currentDarts[ix];
                         return <div key={ix} className="dartBox">{d? (d.score? '✓' : '-') : '-'}</div>;
