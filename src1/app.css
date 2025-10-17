@@ -230,30 +230,45 @@ input[type="text"]{color:#fff}
 /* backspace ikona */
 .backspace{display:flex;align-items:center;justify-content:center}
 .iconBackspace{width:28px;height:28px}
-/* Cricket keypad – pevná mřížka 7 sloupců, bez přetékání */
-.container[data-mode="cricket"] .padRow{
+/* Cricket keypad – pevná mřížka 7 sloupců, bez přetékání
+   Použij GRID jen na řádky s čísly, NE na první řádek s mult tlačítky */
+.container[data-mode="cricket"] .padPane > .padRow:not(:first-child){
   display:grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap:8px;                 /* stejná mezera jako jinde */
+  gap:8px;
   justify-items:stretch;
   align-items:stretch;
 }
 
-/* Tlačítka vyplní buňku mřížky */
-.container[data-mode="cricket"] .key{
+/* První řádek (DOUBLE / TRIPLE / Zpět) nech jako FLEX, ať se nepřekrývá */
+.container[data-mode="cricket"] .padPane > .padRow:first-child{
+  display:flex;
+  gap:8px;
+  justify-content:center;
+  align-items:center;
+}
+
+/* Tlačítka v grid řádcích vyplní buňku */
+.container[data-mode="cricket"] .padPane > .padRow:not(:first-child) .key{
   width:100%;
   height:56px;
   font-size:20px;
 }
 
-/* Řádek, kde je jen JEDNO tlačítko (nula), roztáhni přes všech 7 sloupců */
-.container[data-mode="cricket"] .padRow > .key:only-child{
+/* Řádek s jediným tlačítkem (0) roztáhni přes všech 7 sloupců */
+.container[data-mode="cricket"] .padPane > .padRow:not(:first-child) > .key:only-child{
   grid-column: 1 / -1;
 }
 
-/* Mikro-responzivita: extrémně úzké telefony */
+/* Bezpečná minimální šířka mult tlačítek, aby se nikdy nepřekrývala */
+.container[data-mode="cricket"] .multBtn{
+  min-width:110px;     /* můžeš doladit 100–120 podle vkusu */
+  height:44px;
+}
+
+/* Mikro-responzivita pro extra úzké telefony */
 @media (max-width: 360px){
-  .container[data-mode="cricket"] .key{
+  .container[data-mode="cricket"] .padPane > .padRow:not(:first-child) .key{
     height:52px;
     font-size:18px;
   }
