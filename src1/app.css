@@ -95,29 +95,29 @@ input[type="text"]{color:#fff}
 /* CRICKET */
 .cricketWrap{flex:1 1 calc(100% - var(--padH));min-height:0;display:flex;gap:8px;overflow:hidden}
 /* spacer nahoře, aby se první targetCell zarovnala s prvním markCell pod hlavičkou hráče */
+/* Levý sloupec cílů – přesné zarovnání s hráči */
 .targetsRail{
   flex:0 0 72px;
   background:#1c2026;
   border:1px solid var(--line);
   border-radius:12px;
   padding:6px;
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  align-items:center;
-  justify-content:flex-start;
-  position:relative;
+  display:grid;
+  grid-template-rows: var(--cricket-head-h) /* spacer jako hlavička */
+                      40px /* 15 */
+                      40px /* 16 */
+                      40px /* 17 */
+                      40px /* 18 */
+                      40px /* 19 */
+                      40px /* 20 */
+                      40px /* 25 */
+  ;
+  row-gap:6px;               /* stejná mezera jako .playerColMarks */
+  align-content:start;
 }
-/* „prázdná hlavička“ – přesně stejně vysoká jako hlavičky hráčů */
 .targetsRail::before{
   content:"";
-  display:block;
-  height: calc(var(--cricket-head-h));
-  width:100%;
-  flex:0 0 auto;
-  /* zarovnání s oddělovačem hlavičky hráčů */
-  box-shadow: inset 0 -1px 0 var(--line);
-  margin-bottom:6px; /* aby navazovalo na gap 6px */
+  display:block;             /* prázdná „hlavička“ */
 }
 .targetCell{
   width:100%;
