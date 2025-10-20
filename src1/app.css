@@ -7,7 +7,7 @@
   --green:#16a34a;
   --padH: 260px;
   /* výška hlavičky sloupce hráče v Cricketu – kvůli zarovnání targetsRail */
-  --cr-head-h: 44px;
+  --cricket-head-h: 44px;
 }
 @media (max-height: 720px){ :root{ --padH: 220px; } }
 
@@ -96,7 +96,7 @@ input[type="text"]{color:#fff}
 .cricketWrap{flex:1 1 calc(100% - var(--padH));min-height:0;display:flex;gap:8px;overflow:hidden}
 /* spacer nahoře, aby se první targetCell zarovnala s prvním markCell pod hlavičkou hráče */
 .targetsRail{
-  flex:0 0 72px;                 /* stejná „šířková jednotka“ jako dřív */
+  flex:0 0 72px;
   background:#1c2026;
   border:1px solid var(--line);
   border-radius:12px;
@@ -104,16 +104,20 @@ input[type="text"]{color:#fff}
   display:flex;
   flex-direction:column;
   gap:6px;
-  align-items:stretch;           /* DŮLEŽITÉ: ať targetCell vyplní šířku */
+  align-items:center;
   justify-content:flex-start;
-  position:sticky;               /* držet vlevo napevno */
-  left:0;
-  top:0;
-  z-index:2;
-  box-sizing:border-box;
+  position:relative;
 }
+/* „prázdná hlavička“ – přesně stejně vysoká jako hlavičky hráčů */
 .targetsRail::before{
-  content:"";display:block;height:var(--cr-head-h);width:100%;
+  content:"";
+  display:block;
+  height: calc(var(--cricket-head-h));
+  width:100%;
+  flex:0 0 auto;
+  /* zarovnání s oddělovačem hlavičky hráčů */
+  box-shadow: inset 0 -1px 0 var(--line);
+  margin-bottom:6px; /* aby navazovalo na gap 6px */
 }
 .targetCell{
   width:100%;
@@ -132,8 +136,12 @@ input[type="text"]{color:#fff}
 .playerCol{min-width:140px;background:var(--panel);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column}
 .playerCol.active{outline:2px solid var(--green)}
 .playerColHead{
-  display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-bottom:1px solid var(--line);
-  min-height:var(--cr-head-h);
+  height: var(--cricket-head-h);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 8px;
+  border-bottom:1px solid var(--line);
 }
 .playerColName{font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px}
 .playerColPts{font-variant-numeric:tabular-nums;font-weight:900}
