@@ -424,7 +424,6 @@ export default function App(){
     if(![15,16,17,18,19,20,25].includes(v)) return;
     if(v===25 && m===3) m=2; // bull nemá triple
 
-    const pIdx = currentPlayerIndex;
     const prevState = deepClone(cricket);
     const key = (v===25 ? 'bull' : String(v));
     const before = me.marks[key];
