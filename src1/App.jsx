@@ -1298,30 +1298,22 @@ function Game({
 
   commitDart(n);
 }}
-  onPointerUp={(e)=>{ e.currentTarget.classList.remove('pressed'); }}
-  onPointerLeave={(e)=>{ e.currentTarget.classList.remove('pressed'); }}
+ onPointerUp={(e)=>{ e.currentTarget.classList.remove('pressed'); }}
+onPointerLeave={(e)=>{ e.currentTarget.classList.remove('pressed'); }}
 >
   {n}
 </button>
-            ))}
-          </div>
-        ))}
-      </div>
-      {/* ===== END: KEYPAD BLOCK ===== */}
-    </div>
-  );
-  function saveSnapshotShim(){ /* jen kvůli back tlačítku nahoře v Game */
-    try{
-      const ev = new Event('save-snapshot');
-      window.dispatchEvent(ev);
-    }catch{}
-  }
+          ))}
+        </div>
+      ))}
+    </div> {/* end .padPane */}
+    {/* ===== END: KEYPAD BLOCK ===== */}
+  </div> {/* end .gameWrap */}
+);
+function saveSnapshotShim(){ /* jen kvůli back tlačítku nahoře v Game */
+  try{
+    const ev = new Event('save-snapshot');
+    window.dispatchEvent(ev);
+  }catch{}
 }
-
-function formatAvg(v){ return (Math.round(v*100)/100).toFixed(2); }
-function formatHit(d){
-  if(!d) return '-';
-  const prefix = d.m===2?'D':(d.m===3?'T':'');
-  return `${prefix}${d.v}=${d.score}`;
 }
-function deepClone(x){ return JSON.parse(JSON.stringify(x)); }
