@@ -389,7 +389,12 @@ export default function App(){
   /* ===== Cricket commit (bez hlasu mezi hody) ===== */
   const commitCricket = (value, mOverride) => {
     let v = value; let m = (mOverride ?? mult);
-
+  // 0 se nikdy nenásobí
+  if(v===0) m = 1;
+  // Bull (25) nemá triple – případný TRIPLE přepni na DOUBLE
+  if(v===25 && m===3) m = 2;
+  // (pro jistotu) bull netriflujeme
+  if(v===25 && m>3) m = 2;
     // 0 = minul; jen započítej šipku a po 3 přepni
     if (v === 0) {
       playHitSound();
@@ -1242,13 +1247,24 @@ function Game({
   className="key"
   onPointerDown={(e)=>{ 
   e.currentTarget.classList.add('pressed');
-  // Cricket: triple 25 není povolen – když je aktivní TRIPLE a mačkám 25, přepni na DOUBLE a zapiš jako 25×2
-  if(mode==='cricket' && n===25 && mult===3){
-    setMult(2);
-    commitDart(25, 2);
-  } else {
-    commitDart(n);
+
+  // Cricket: blokace neplatných kombinací
+  if(mode==='cricket'){
+    // TRIPLE 25 => přepni na DOUBLE 25
+    if(n===25 && mult===3){
+      setMult(2);
+      commitDart(25, 2);
+      return;
+    }
+    // DOUBLE/ TRIPLE na 0 => ignoruj násobič (vždy jen 0×1)
+    if(n===0 && mult>1){
+      setMult(1);
+      commitDart(0, 1);
+      return;
+    }
   }
+
+  commitDart(n);
 }}
   onPointerUp={(e)=>{ e.currentTarget.classList.remove('pressed'); }}
   onPointerLeave={(e)=>{ e.currentTarget.classList.remove('pressed'); }}
