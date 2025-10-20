@@ -1074,40 +1074,35 @@ function Game({
   saveGame, restartGame, cardRefs, setScreen
 }){
   // KEYBOARD LAYOUT (Cricket: jen [20..15,25] a [0])
- const keypad = React.useMemo(()=>{
-  if(mode==='cricket'){
-    return [
-      [15,16,17,18,19,20,25],
-      [0]
-    ];
-  }
+   // Keypad je HOOK a musí být uvnitř komponenty Game
   const keypad = React.useMemo(()=>{
-  if(mode==='cricket'){
-    return [
-      [15,16,17,18,19,20,25],
-      [0]
-    ];
-  }
-  if(mode==='around'){
-    // Around: bez 50, poslední řádek jen 0
+    if(mode==='cricket'){
+      // Jedna řádka: 15–20 a 25; druhá řádka: 0
+      return [
+        [15,16,17,18,19,20,25],
+        [0]
+      ];
+    }
+    if(mode==='around'){
+      // Bez 50, poslední řádek jen 0
+      return [
+        [1,2,3,4,5,6,7],
+        [8,9,10,11,12,13,14],
+        [15,16,17,18,19,20,25],
+        [0]
+      ];
+    }
+    // Classic (ponechává 50)
     return [
       [1,2,3,4,5,6,7],
       [8,9,10,11,12,13,14],
       [15,16,17,18,19,20,25],
-      [0]
+      [0,50]
     ];
-  }
-  // Classic (ponechává 50)
-  return [
-    [1,2,3,4,5,6,7],
-    [8,9,10,11,12,13,14],
-    [15,16,17,18,19,20,25],
-    [0,50]
-  ];
-},[mode]);
-},[mode]);
-  const cricketTargets = ['15','16','17','18','19','20','bull'];
+  },[mode]);
 
+  // statický levý sloupec Cricketu (shora dolů 15,16,17,18,19,20,25)
+  const cricketTargets = ['15','16','17','18','19','20','bull'];
   return (
     <div className="gameWrap">
       {/* horní lišta */}
