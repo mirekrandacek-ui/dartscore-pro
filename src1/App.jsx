@@ -389,6 +389,16 @@ export default function App(){
   /* ===== Cricket commit (bez hlasu mezi hody) ===== */
   const commitCricket = (value, mOverride) => {
     let v = value; let m = (mOverride ?? mult);
+      // Robustní pojistky
+  if(!cricket || !Array.isArray(cricket)) return;          // ochrana proti null
+  const pIdx = currentPlayerIndex;
+  if(pIdx==null || !cricket[pIdx]) return;                  // ochrana indexu
+
+  // 0 se nikdy nenásobí
+  if(v===0) m = 1;
+
+  // Bull (25) nemá triple – případný TRIPLE přepni na DOUBLE
+  if(v===25 && m===3) m = 2;
   // 0 se nikdy nenásobí
   if(v===0) m = 1;
   // Bull (25) nemá triple – případný TRIPLE přepni na DOUBLE
@@ -396,19 +406,20 @@ export default function App(){
   // (pro jistotu) bull netriflujeme
   if(v===25 && m>3) m = 2;
     // 0 = minul; jen započítej šipku a po 3 přepni
-    if (v === 0) {
-      playHitSound();
-      const pIdx = currentPlayerIndex;
-      setThrown(th => th.map((x,i) => i===pIdx ? x+1 : x));
-      setDarts(cur => {
-        const nd = [...cur, { v:0, m:1, score:0 }];
-        if (nd.length >= 3) { nextPlayer(); return []; }
-        return nd;
-      });
-      setMult(1);
-      return;
-    }
-
+      if (v === 0) {
+    playHitSound();
+    setThrown(th => th.map((x,i) => i===pIdx ? x+1 : x));
+    setDarts(cur => {
+      const nd = [...cur, { v:0, m:1, score:0 }];
+      if (nd.length >= 3) {
+        nextPlayer();
+        return [];
+      }
+      return nd;
+    });
+    setMult(1);
+    return;
+  }
     // validní cíle: 15..20 a 25 (bull). 50 v Cricketu nepoužíváme.
     if(![15,16,17,18,19,20,25].includes(v)) return;
     if(v===25 && m===3) m=2; // bull nemá triple
@@ -1247,19 +1258,20 @@ function Game({
   className="key"
   onPointerDown={(e)=>{ 
   e.currentTarget.classList.add('pressed');
+  setTimeout(()=>e.currentTarget.classList.remove('pressed'), 140);
 
-  // Cricket: blokace neplatných kombinací
+  // CRICKET – blokace neplatných kombinací
   if(mode==='cricket'){
-    // TRIPLE 25 => přepni na DOUBLE 25
-    if(n===25 && mult===3){
-      setMult(2);
-      commitDart(25, 2);
-      return;
-    }
-    // DOUBLE/ TRIPLE na 0 => ignoruj násobič (vždy jen 0×1)
+    // 0 se NIKDY nenásobí
     if(n===0 && mult>1){
       setMult(1);
       commitDart(0, 1);
+      return;
+    }
+    // 25 nemá TRIPLE – přepni automaticky na DOUBLE
+    if(n===25 && mult===3){
+      setMult(2);
+      commitDart(25, 2);
       return;
     }
   }
