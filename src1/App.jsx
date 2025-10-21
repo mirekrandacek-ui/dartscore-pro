@@ -1233,7 +1233,6 @@ function Game({
         </div>
       )}
 {/* >>> KEYPAD_BLOCK_CLEAN:START */}
-/* ===== BEGIN: KEYPAD BLOCK ===== */
 <div className="padPane">
   <div className="padRow">
     <button
