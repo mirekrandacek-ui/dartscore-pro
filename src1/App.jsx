@@ -100,6 +100,10 @@ const LANG_LABEL = {cs:'Čeština',en:'English',de:'Deutsch',es:'Español',nl:'N
 const t = (lang, key) => (T[lang] && T[lang][key]) || T.cs[key] || key;
 
 /* ===== Utils ===== */
+// >>> DEEP_CLONE_HELPER:START
+// Jednoduchý deep clone pro bezpečné kopie stavů (Cricket/Around)
+const deepClone = (o) => JSON.parse(JSON.stringify(o));
+// <<< DEEP_CLONE_HELPER:END
 const uid = () => Math.random().toString(36).slice(2,9);
 const colors = ['#16a34a','#3b82f6','#ef4444','#14b8a6','#8b5cf6','#e11d48','#f59e0b','#22c55e'];
 const defaultNameFor=(lang,n)=>({cs:`Hráč ${n}`,en:`Player ${n}`,de:`Spieler ${n}`,es:`Jugador ${n}`,nl:`Speler ${n}`,ru:`Игрок ${n}`}[lang]||`Player ${n}`);
@@ -385,32 +389,35 @@ export default function App(){
 
     resetMult();
   };
+// >>> CRICKET_COMMIT_FIXED:START
+/* ===== Cricket commit (bez hlasu mezi hody) ===== */
+const commitCricket = (value, mOverride) => {
+  let v = value;
+  let m = (mOverride ?? mult);
 
-  /* ===== Cricket commit (bez hlasu mezi hody) ===== */
-  const commitCricket = (value, mOverride) => {
-    let v = value; let m = (mOverride ?? mult);
-      // Robustní pojistky
-  if(!cricket || !Array.isArray(cricket)) return;          // ochrana proti null
+  // Ochrany proti null a mimo rozsah indexu
+  if (!cricket || !Array.isArray(cricket)) return;
   const pIdx = currentPlayerIndex;
-  if(pIdx==null || !cricket[pIdx]) return;                  // ochrana indexu
+  if (pIdx == null || !cricket[pIdx]) return;
 
-  // 0 se nikdy nenásobí
-  if(v===0) m = 1;
+  // normalizace násobičů: 0 se nikdy nenásobí; bull (25) nemá triple
+  if (v === 0) m = 1;
+  if (v === 25 && m === 3) m = 2;
 
-  // Bull (25) nemá triple – případný TRIPLE přepni na DOUBLE
-  if(v===25 && m===3) m = 2;
-  // 0 se nikdy nenásobí
-  if(v===0) m = 1;
-  // Bull (25) nemá triple – případný TRIPLE přepni na DOUBLE
-  if(v===25 && m===3) m = 2;
-  // (pro jistotu) bull netriflujeme
-  if(v===25 && m>3) m = 2;
-    // 0 = minul; jen započítej šipku a po 3 přepni
-      if (v === 0) {
+  // validní cíle: 15..20 a 25 (bull). 50 se v Cricketu nepoužívá
+  if (![0, 15, 16, 17, 18, 19, 20, 25].includes(v)) return;
+
+  // snapshot pro undo a pracovní kopie
+  const prevState = deepClone(cricket);
+  const st = deepClone(cricket);
+  const me = st[pIdx];
+
+  // MISS (0) – jen navýší počty šipek a po 3 přepne hráče
+  if (v === 0) {
     playHitSound();
-    setThrown(th => th.map((x,i) => i===pIdx ? x+1 : x));
+    setThrown(th => th.map((x, i) => (i === pIdx ? x + 1 : x)));
     setDarts(cur => {
-      const nd = [...cur, { v:0, m:1, score:0 }];
+      const nd = [...cur, { v: 0, m: 1, score: 0 }];
       if (nd.length >= 3) {
         nextPlayer();
         return [];
@@ -420,53 +427,56 @@ export default function App(){
     setMult(1);
     return;
   }
-    // validní cíle: 15..20 a 25 (bull). 50 v Cricketu nepoužíváme.
-    if(![15,16,17,18,19,20,25].includes(v)) return;
-    if(v===25 && m===3) m=2; // bull nemá triple
 
-    const prevState = deepClone(cricket);
-    const key = (v===25 ? 'bull' : String(v));
-    const before = me.marks[key];
+  // klíč cíle v datech
+  const key = v === 25 ? 'bull' : String(v);
+  const before = me.marks?.[key] ?? 0;
 
-    const add = m;
-    const newMarks = Math.min(3, before + add);
-    const overflow = Math.max(0, before + add - 3);
-    const opponentsOpen = prevState.some((pl,ix)=> ix!==pIdx && pl.marks[key] < 3);
+  // kolik přidat (Single=1, Double=2, Triple=3)
+  const add = Math.max(1, Math.min(3, m));
+  const newMarks = Math.min(3, before + add);
+  const overflow = Math.max(0, before + add - 3);
 
-    me.marks[key] = newMarks;
-    if(overflow>0 && opponentsOpen){
-      const pointPerMark = (v===25?25:v);
-      me.points += overflow * pointPerMark;
+  // Body za přebytky jen pokud soupeři NEMAJÍ číslo zavřené
+  const opponentsOpen = st.some((pl, ix) => ix !== pIdx && (pl.marks?.[key] ?? 0) < 3);
+  const pointsPerMark = v === 25 ? 25 : v;
+  const gained = overflow > 0 && opponentsOpen ? overflow * pointsPerMark : 0;
+
+  // zapiš změny do kopie
+  me.marks[key] = newMarks;
+  if (gained > 0) me.points = (me.points || 0) + gained;
+
+  // commit do stavu + bookkeeping
+  setCricket(st);
+  playHitSound();
+  pushAction({ type: 'dart', mode: 'cricket', pIdx, prev: prevState, delta: { v, add } });
+
+  setThrown(th => th.map((x, i) => (i === pIdx ? x + 1 : x)));
+  setLastTurn(ls => ls.map((x, i) => (i === pIdx ? (x + gained) : x)));
+
+  // výhra: všechna čísla zavřená + nesporné vedení v bodech
+  const closedAll = Object.values(me.marks || {}).every(n => n >= 3);
+  if (closedAll) {
+    const myPts = me.points || 0;
+    const lead = st.every((pl, ix) => ix === pIdx || myPts >= (pl.points || 0));
+    if (lead) {
+      finalizeWin(pIdx, { silentVoice: false });
+      return;
     }
+  }
 
-    const addedPoints = (overflow>0 && opponentsOpen) ? (overflow * (v===25?25:v)) : 0;
-    setThrown(th=>th.map((x,i)=> i===pIdx ? x+1 : x));
-    setLastTurn(ls=>ls.map((x,i)=> i===pIdx ? (x + addedPoints) : x));
-    setCricket(prevState);
-    playHitSound();
-    pushAction({type:'dart', mode:'cricket', pIdx, prev:cricket, delta:{v,add}});
+  // po 3 šipkách další hráč (bez hlasu součtu)
+  setDarts(cur => {
+    const nd = [...cur, { v, m: add, score: gained }];
+    if (nd.length >= 3) { nextPlayer(); return []; }
+    return nd;
+  });
+  setMult(1);
+};
+// <<< CRICKET_COMMIT_FIXED:END
 
-    // výhra: všechna čísla zavřená + body >= ostatní
-    const closedAll = Object.values(me.marks).every(n=>n>=3);
-    if(closedAll){
-      const myPts = me.points;
-      const lead = prevState.every((pl,ix)=> ix===pIdx || myPts>=pl.points);
-      if(lead){
-        finalizeWin(pIdx, { silentVoice: false }); // zazní „Vítěz!“
-        return;
-      }
-    }
-
-    // po 3 šipkách další hráč (žádné hlasové oznamování součtu v Cricketu)
-    setDarts(cur=>{
-      const nd=[...cur,{v, m, score:addedPoints}];
-      if (nd.length >= 3) { nextPlayer(); return []; }
-      return nd;
-    });
-    setMult(1);
-  };
-
-  /* ===== Around commit ===== */
+/* ===== Around commit ===== */
+ 
   const commitAround = (value, mOverride) => {
     let v = value; let m = (mOverride ?? mult);
     if(v===50) v=25; // bull = 25/50
@@ -616,6 +626,7 @@ export default function App(){
     }
   },[order, currIdx, mode]);
 // >>> BOT_TURN_EFFECT:START
+// >>> BOT_TURN_EFFECT:START
 /* BOT — sekvenční 3 hody s kontrolou řady (chytřejší cílení + lepší přesnost) */
 useEffect(()=>{
   const pIdx = order[currIdx];
@@ -744,6 +755,7 @@ useEffect(()=>{
   return ()=>{ cancelled=true };
   // eslint-disable-next-line react-hooks/exhaustive-deps
 },[currIdx, order, players, winner, mode, scores, cricket, around, outDouble, outTriple, outMaster, anyOutSelected]);
+
 // <<< BOT_TURN_EFFECT:END
   /* ULOŽENÍ / OBNOVA – snapshot + autosave (otočení/odchod) */
   const saveSnapshot = () => {
@@ -1220,79 +1232,8 @@ function Game({
           </div>
         </div>
       )}
-
-      {/* ===== BEGIN: KEYPAD BLOCK ===== */}
-      <div className="padRow">
-  <button
-    type="button"
-    className={`multBtn mult-2 ${mult===2?'active':''}`}
-    onClick={()=>setMult(m=>m===2?1:2)}
-  >
-    DOUBLE
-  </button>
-
-  <button
-    type="button"
-    className={`multBtn mult-3 ${mult===3?'active':''}`}
-    onClick={()=>{
-      // v Cricketu nechceme TRIPLE pro 0 ani 25 – zachováme logiku „stáhni na 1“
-      if(mode==='cricket' && mult===3){ setMult(1); return; }
-      setMult(m=>m===3?1:3);
-    }}
-  >
-    TRIPLE
-  </button>
-
-  <button
-    type="button"
-    className="multBtn backspace"
-    onClick={undo}
-    title={t(lang,'undo')}
-    aria-label={t(lang,'undo')}
-  >
-    <svg viewBox="0 0 24 24" className="iconBackspace" aria-hidden="true">
-      <path d="M7 5L3 12l4 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H7z" fill="none" stroke="currentColor" strokeWidth="2"/>
-      <path d="M12 9l4 4m0-4-4 4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  </button>
-</div>
-        {keypad.map((row,ri)=>(
-          <div key={`row-${ri}`} className="padRow">
-            {row.map(n=>(
-              <button
-  type="button"
-  key={n}
-  className="key"
-  onPointerDown={(e)=>{ 
-  e.currentTarget.classList.add('pressed');
-  setTimeout(()=>e.currentTarget.classList.remove('pressed'), 140);
-
-  // CRICKET – blokace neplatných kombinací
-  if(mode==='cricket'){
-    // 0 se NIKDY nenásobí
-    if(n===0 && mult>1){
-      setMult(1);
-      commitDart(0, 1);
-      return;
-    }
-    // 25 nemá TRIPLE – přepni automaticky na DOUBLE
-    if(n===25 && mult===3){
-      setMult(2);
-      commitDart(25, 2);
-      return;
-    }
-  }
-
-  commitDart(n);
-}}
- onPointerUp={(e)=>{ e.currentTarget.classList.remove('pressed'); }}
-onPointerLeave={(e)=>{ e.currentTarget.classList.remove('pressed'); }}
->
-  {n}
-</button>
-          ))}
-        </div>
-      ))}
+// >>> KEYPAD_BLOCK_CLEAN:START
+/* ===== BEGIN: KEYPAD BLOCK ===== */
 <div className="padPane">
   <div className="padRow">
     <button
@@ -1307,7 +1248,7 @@ onPointerLeave={(e)=>{ e.currentTarget.classList.remove('pressed'); }}
       type="button"
       className={`multBtn mult-3 ${mult===3?'active':''}`}
       onClick={()=>{
-        // (volitelné omezení pro Cricket řeší commit logika; tady jen přepínáme)
+        // Přepínáme jen UI; validace (Cricket: 25 nemá triple, 0 nemá násobič) se řeší v handleru níže.
         setMult(m=>m===3?1:3);
       }}
     >
@@ -1337,6 +1278,24 @@ onPointerLeave={(e)=>{ e.currentTarget.classList.remove('pressed'); }}
           className="key"
           onPointerDown={(e)=>{
             e.currentTarget.classList.add('pressed');
+
+            // CRICKET – neplatné kombinace řešíme tady, aby UI působilo „chytrým“ dojmem
+            if(mode==='cricket'){
+              // 0 se NIKDY nenásobí
+              if(n===0 && mult>1){
+                setMult(1);
+                commitDart(0, 1);
+                return;
+              }
+              // 25 nemá TRIPLE – automaticky přepni na DOUBLE
+              if(n===25 && mult===3){
+                setMult(2);
+                commitDart(25, 2);
+                return;
+              }
+            }
+
+            // Ostatní případy jdou do jednotného routeru
             commitDart(n);
           }}
           onPointerUp={(e)=>{ e.currentTarget.classList.remove('pressed'); }}
@@ -1348,6 +1307,8 @@ onPointerLeave={(e)=>{ e.currentTarget.classList.remove('pressed'); }}
     </div>
   ))}
 </div> {/* end .padPane */}
+// <<< KEYPAD_BLOCK_CLEAN:END
+
 </div> {/* end .gameWrap */}
 );
 function saveSnapshotShim(){ /* jen kvůli back tlačítku nahoře v Game */
