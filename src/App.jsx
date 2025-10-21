@@ -1308,7 +1308,6 @@ function Game({
 {/* <<< KEYPAD_BLOCK_CLEAN:END */}
 
 </div>{/* end .gameWrap */}
-
 );
 function saveSnapshotShim(){ /* jen kvůli back tlačítku nahoře v Game */
   try{
