@@ -1309,7 +1309,6 @@ function Game({
 
 </div>{/* end .gameWrap */}
 );
-
 function saveSnapshotShim(){ /* jen kvůli back tlačítku nahoře v Game */
   try{
     const ev = new Event('save-snapshot');
