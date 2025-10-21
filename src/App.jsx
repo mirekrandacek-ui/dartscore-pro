@@ -1247,7 +1247,7 @@ function Game({
       type="button"
       className={`multBtn mult-3 ${mult===3?'active':''}`}
       onClick={()=>{
-        // Přepínáme jen UI; validace (Cricket: 25 nemá triple, 0 nemá násobič) se řeší v handleru níže.
+        // Přepínáme jen UI; validace (Cricket: 25 nemá triple, 0 bez násobiče) řeší commitDart
         setMult(m=>m===3?1:3);
       }}
     >
@@ -1278,7 +1278,7 @@ function Game({
           onPointerDown={(e)=>{
             e.currentTarget.classList.add('pressed');
 
-            // CRICKET – neplatné kombinace řešíme tady, aby UI působilo „chytrým“ dojmem
+            // CRICKET – chytré omezení hned na vstupu
             if(mode==='cricket'){
               // 0 se NIKDY nenásobí
               if(n===0 && mult>1){
@@ -1286,7 +1286,7 @@ function Game({
                 commitDart(0, 1);
                 return;
               }
-              // 25 nemá TRIPLE – automaticky přepni na DOUBLE
+              // 25 nemá TRIPLE – automaticky přepnout na DOUBLE
               if(n===25 && mult===3){
                 setMult(2);
                 commitDart(25, 2);
@@ -1294,7 +1294,6 @@ function Game({
               }
             }
 
-            // Ostatní případy jdou do jednotného routeru
             commitDart(n);
           }}
           onPointerUp={(e)=>{ e.currentTarget.classList.remove('pressed'); }}
@@ -1305,10 +1304,11 @@ function Game({
       ))}
     </div>
   ))}
-</div> {/* end .padPane */}
+</div>{/* end .padPane */}
 {/* <<< KEYPAD_BLOCK_CLEAN:END */}
 
-</div> {/* end .gameWrap */}
+</div>{/* end .gameWrap */}
+
 );
 function saveSnapshotShim(){ /* jen kvůli back tlačítku nahoře v Game */
   try{
