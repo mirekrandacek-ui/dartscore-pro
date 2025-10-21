@@ -615,6 +615,7 @@ export default function App(){
       el.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
     }
   },[order, currIdx, mode]);
+// >>> BOT_TURN_EFFECT:START
 /* BOT — sekvenční 3 hody s kontrolou řady (chytřejší cílení + lepší přesnost) */
 useEffect(()=>{
   const pIdx = order[currIdx];
@@ -624,17 +625,14 @@ useEffect(()=>{
   let cancelled=false;
   const delays = [350, 900, 1450];
 
-  // přesnosti podle úrovní – lehce posíleno, aby Medium/Hard reálně vyhrávaly
-  
+  // ⛑️ DŮLEŽITÉ: nejdřív definuj tabulky, teprve pak z nich čti (jinak spadne v TDZ)
+  const tables = {
+    easy:   { miss:0.45, single:0.50, double:0.04, triple:0.01 },
+    medium: { miss:0.18, single:0.58, double:0.16, triple:0.08 },
+    hard:   { miss:0.09, single:0.50, double:0.24, triple:0.17 }
+  };
   const tb = tables[p.level || 'easy'];
-const tables = {
-  // Easy: vysoká šance minout, téměř žádné triplování
-  easy:   { miss:0.45, single:0.50, double:0.04, triple:0.01 },
-  // Medium: rozumné chyby, ale umí checkouty i dovírat v Cricketu
-  medium: { miss:0.18, single:0.58, double:0.16, triple:0.08 },
-  // Hard: málo chyb, reálně vyhrává, ale není robotický
-  hard:   { miss:0.09, single:0.50, double:0.24, triple:0.17 }
-};
+
   // helper: náhodně podle pravděpodobností vybere multiplikátor 1/2/3
   const rollMult = () => {
     const r = Math.random();
@@ -647,7 +645,6 @@ const tables = {
   // --- cílení podle režimu ---
   const chooseTargetClassic = () => {
     const myScore = scores[pIdx];
-    // zkus checkout (double-out/master-out/any-out) – jednoduché vzory
     const finishAllowed = (m)=> {
       if(!anyOutSelected) return true;
       if(m===2 && outDouble) return true;
@@ -655,7 +652,6 @@ const tables = {
       if((m===2||m===3) && outMaster) return true;
       return false;
     };
-    // jednoduché checkouty do 60
     const checkouts = [
       {v:20,m:2,need:40},{v:10,m:2,need:20},{v:12,m:2,need:24},{v:16,m:2,need:32},
       {v:8,m:2,need:16},{v:6,m:2,need:12},{v:4,m:2,need:8},{v:2,m:2,need:4}
@@ -663,44 +659,36 @@ const tables = {
     for(const co of checkouts){
       if(myScore===co.need && finishAllowed(co.m)) return co;
     }
-    // pokus o setup/finish: pokud <= 62, zkus D (když dovoleno), jinak S
     if(myScore<=62){
       if(finishAllowed(2) && myScore%2===0){
-        // zkuste vygenerovat double co je <= myScore
-        const d = Math.min(20, Math.max(2, myScore/2|0));
+        const d = Math.min(20, Math.max(2, (myScore/2)|0));
         return {v:d, m:2};
       }
-      // jinak setup – sniž si skóre rozumně singlem
       const s = Math.min(20, Math.max(1, myScore-40));
       return {v:s||1, m:1};
     }
-    // standardní scoring: T20 → T19 → T18…
-    const prefs = [20,19,18,17,16,15];
-    return {v:prefs[0], m:3};
+    return {v:20, m:3};
   };
 
   const chooseTargetCricket = () => {
     const me = cricket?.[pIdx];
     if(!me) return {v:20,m:1};
-    // 1) dovřít neuzavřená čísla 15–20, bull; preferuj vyšší hodnoty pro scoring
-    const order = [20,19,18,17,16,15,25];
-    for(const v of order){
+    const orderV = [20,19,18,17,16,15,25];
+    for(const v of orderV){
       const key = v===25 ? 'bull' : String(v);
       const marks = me.marks?.[key] ?? 0;
       if(marks < 3){
-        // když nejsme „miss“, zkus triple/double, ať to rychleji zavřeš
         const {m, miss} = rollMult();
-        const mAdj = (v===25 && m===3) ? 2 : m; // bull nemá triple
+        const mAdj = (v===25 && m===3) ? 2 : m;
         if(miss) return {v:0,m:1};
         return {v, m:mAdj};
       }
     }
-    // 2) všude zavřeno – nabírej body na nejvyšším čísle, které soupeři nemají zavřené
     const opponentsOpen = (v)=>{
       const key = v===25 ? 'bull' : String(v);
       return cricket?.some((pl,ix)=> ix!==pIdx && (pl.marks?.[key]??0) < 3);
     };
-    for(const v of [20,19,18,17,16,15,25]){
+    for(const v of orderV){
       if(opponentsOpen(v)){
         const {m, miss} = rollMult();
         const mAdj = (v===25 && m===3) ? 2 : m;
@@ -708,19 +696,17 @@ const tables = {
         return {v, m:mAdj};
       }
     }
-    // všichni vše zavřeli -> cokoliv (už hra skončí pravidly)
     return {v:20,m:1};
   };
+
   const chooseTargetAround = () => {
-  const me = around?.[pIdx];
-  const target = me?.next ?? 1;
-  // pravděpodobná „mimo“ podle úrovně – zejména Easy často mine
-  if(Math.random() < tb.miss){
-    return {v:0, m:1}; // jasná „mimo“
-  }
-  if(target<=20) return {v:target, m:1};
-  return {v:25, m:1}; // bull
-};
+    const me = around?.[pIdx];
+    const target = me?.next ?? 1;
+    if(Math.random() < tb.miss) return {v:0, m:1}; // „mimo“
+    if(target<=20) return {v:target, m:1};
+    return {v:25, m:1}; // bull
+  };
+
   const pickThrow = () => {
     if(mode==='classic') return chooseTargetClassic();
     if(mode==='cricket') return chooseTargetCricket();
@@ -733,8 +719,9 @@ const tables = {
     if(order[currIdx] !== myIdx) return; // už není řada bota
 
     const shot = pickThrow();
-    // korekce neplatných komb v Classicu (D/T na 0/25/50)
     let {v,m} = shot;
+
+    // korekce neplatných komb
     if(mode==='classic' && (v===0||v===25||v===50) && m>1) m=1;
     if(mode==='cricket' && v===50) { v=25; if(m===3) m=2; }
 
@@ -757,7 +744,7 @@ const tables = {
   return ()=>{ cancelled=true };
   // eslint-disable-next-line react-hooks/exhaustive-deps
 },[currIdx, order, players, winner, mode, scores, cricket, around, outDouble, outTriple, outMaster, anyOutSelected]);
-
+// <<< BOT_TURN_EFFECT:END
   /* ULOŽENÍ / OBNOVA – snapshot + autosave (otočení/odchod) */
   const saveSnapshot = () => {
     try{
