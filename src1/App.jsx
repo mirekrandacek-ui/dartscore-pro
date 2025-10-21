@@ -1232,7 +1232,7 @@ function Game({
           </div>
         </div>
       )}
-// >>> KEYPAD_BLOCK_CLEAN:START
+{/* >>> KEYPAD_BLOCK_CLEAN:START */}
 /* ===== BEGIN: KEYPAD BLOCK ===== */
 <div className="padPane">
   <div className="padRow">
@@ -1307,7 +1307,7 @@ function Game({
     </div>
   ))}
 </div> {/* end .padPane */}
-// <<< KEYPAD_BLOCK_CLEAN:END
+{/* <<< KEYPAD_BLOCK_CLEAN:END */}
 
 </div> {/* end .gameWrap */}
 );
