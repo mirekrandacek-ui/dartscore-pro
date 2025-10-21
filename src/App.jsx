@@ -1237,19 +1237,16 @@ function Game({
   <div className="padRow">
     <button
       type="button"
-      className={`multBtn mult-2 ${mult===2?'active':''}`}
-      onClick={()=>setMult(m=>m===2?1:2)}
+      className={`multBtn mult-2 ${mult===2 ? 'active' : ''}`}
+      onClick={() => setMult(m => (m === 2 ? 1 : 2))}
     >
       DOUBLE
     </button>
 
     <button
       type="button"
-      className={`multBtn mult-3 ${mult===3?'active':''}`}
-      onClick={()=>{
-        // UI přepínač; pravidla (Cricket: 25 nemá triple, 0 bez násobiče) řeší commitDart/commitCricket
-        setMult(m=>m===3?1:3);
-      }}
+      className={`multBtn mult-3 ${mult===3 ? 'active' : ''}`}
+      onClick={() => setMult(m => (m === 3 ? 1 : 3))}
     >
       TRIPLE
     </button>
@@ -1258,57 +1255,53 @@ function Game({
       type="button"
       className="multBtn backspace"
       onClick={undo}
-      title={t(lang,'undo')}
-      aria-label={t(lang,'undo')}
+      title={t(lang, 'undo')}
+      aria-label={t(lang, 'undo')}
     >
       <svg viewBox="0 0 24 24" className="iconBackspace" aria-hidden="true">
-        <path d="M7 5L3 12l4 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H7z" fill="none" stroke="currentColor" strokeWidth="2"/>
-        <path d="M12 9l4 4m0-4-4 4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M7 5L3 12l4 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H7z" fill="none" stroke="currentColor" strokeWidth="2" />
+        <path d="M12 9l4 4m0-4-4 4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </button>
   </div>
 
-  {keypad.map((row,ri)=>(
+  {keypad.map((row, ri) => (
     <div key={`row-${ri}`} className="padRow">
-      {row.map(n=>(
+      {row.map(n => (
         <button
           type="button"
           key={n}
           className="key"
-          onPointerDown={(e)=>{
+          onPointerDown={e => {
             e.currentTarget.classList.add('pressed');
-
-            // CRICKET – chytré omezení ihned na vstupu
-            if(mode==='cricket'){
-              // 0 se NIKDY nenásobí
-              if(n===0 && mult>1){
+            if (mode === 'cricket') {
+              if (n === 0 && mult > 1) {
                 setMult(1);
                 commitDart(0, 1);
                 return;
               }
-              // 25 nemá TRIPLE – přepni na DOUBLE a rovnou odešli
-              if(n===25 && mult===3){
+              if (n === 25 && mult === 3) {
                 setMult(2);
                 commitDart(25, 2);
                 return;
               }
             }
-
             commitDart(n);
           }}
-          onPointerUp={(e)=>{ e.currentTarget.classList.remove('pressed'); }}
-          onPointerLeave={(e)=>{ e.currentTarget.classList.remove('pressed'); }}
+          onPointerUp={e => e.currentTarget.classList.remove('pressed')}
+          onPointerLeave={e => e.currentTarget.classList.remove('pressed')}
         >
           {n}
         </button>
       ))}
     </div>
   ))}
-</div>{/* end .padPane */}
+</div>
 {/* <<< KEYPAD_BLOCK_CLEAN:END */}
-
-</div>{/* end .gameWrap */}
+</div>
+{/* end .gameWrap */}
 );
+
 function saveSnapshotShim(){ /* jen kvůli back tlačítku nahoře v Game */
   try{
     const ev = new Event('save-snapshot');
