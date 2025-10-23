@@ -106,9 +106,6 @@ const deepClone = (obj) => {
   catch { return JSON.parse(JSON.stringify(obj)); }
 };
 // <<< SAFE_DEEPCLONE:END
-// Jednoduchý deep clone pro bezpečné kopie stavů (Cricket/Around)
-const deepClone = (o) => JSON.parse(JSON.stringify(o));
-// <<< DEEP_CLONE_HELPER:END
 const uid = () => Math.random().toString(36).slice(2,9);
 const colors = ['#16a34a','#3b82f6','#ef4444','#14b8a6','#8b5cf6','#e11d48','#f59e0b','#22c55e'];
 const defaultNameFor=(lang,n)=>({cs:`Hráč ${n}`,en:`Player ${n}`,de:`Spieler ${n}`,es:`Jugador ${n}`,nl:`Speler ${n}`,ru:`Игрок ${n}`}[lang]||`Player ${n}`);
