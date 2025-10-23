@@ -100,7 +100,12 @@ const LANG_LABEL = {cs:'Čeština',en:'English',de:'Deutsch',es:'Español',nl:'N
 const t = (lang, key) => (T[lang] && T[lang][key]) || T.cs[key] || key;
 
 /* ===== Utils ===== */
-// >>> DEEP_CLONE_HELPER:START
+// >>> SAFE_DEEPCLONE:START
+const deepClone = (obj) => {
+  try { return structuredClone ? structuredClone(obj) : JSON.parse(JSON.stringify(obj)); }
+  catch { return JSON.parse(JSON.stringify(obj)); }
+};
+// <<< SAFE_DEEPCLONE:END
 // Jednoduchý deep clone pro bezpečné kopie stavů (Cricket/Around)
 const deepClone = (o) => JSON.parse(JSON.stringify(o));
 // <<< DEEP_CLONE_HELPER:END
@@ -120,6 +125,27 @@ function speak(lang, text, enabled){
 
 /* Mark symboly pro Cricket */
 const markSymbol = (n) => (n<=0?'':(n===1?'/':(n===2?'✕':'Ⓧ')));
+// >>> ERROR_BOUNDARY:START
+class ErrorBoundary extends React.Component {
+  constructor(props){ super(props); this.state = { hasError:false, info:'' }; }
+  static getDerivedStateFromError(err){ return { hasError:true, info:String(err) }; }
+  componentDidCatch(err, info){ console.error('App crashed:', err, info); }
+  render(){
+    if(this.state.hasError){
+      return (
+        <div style={{padding:16,color:'#fff',background:'#111',minHeight:'100vh'}}>
+          <h2>Ups, něco se pokazilo.</h2>
+          <div style={{opacity:.8,whiteSpace:'pre-wrap',fontFamily:'monospace',fontSize:12,marginTop:12}}>
+            {this.state.info}
+          </div>
+          <button onClick={()=>location.reload()} style={{marginTop:16}}>Zkusit znovu načíst</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+// <<< ERROR_BOUNDARY:END
 
 export default function App(){
   /* viewport fix */
@@ -810,7 +836,8 @@ useEffect(()=>{
     return ()=>{ window.removeEventListener('pagehide', handler); };
   },[]);
 
-  return (
+ return (
+  <ErrorBoundary>
     <div className="container" data-mode={mode}>
       {/* HEADER */}
       <div className="header">
@@ -820,6 +847,8 @@ useEffect(()=>{
           )}
           <div className="logo"><span className="dart"></span><span>{t(lang,'app')}</span></div>
         </div>
+         </ErrorBoundary>
+);
         <div className="controls">
           <button type="button" className={`iconBtn ${!soundOn?'muted':''}`} onClick={()=>setSoundOn(v=>!v)} aria-label={t(lang,'sound')}>
             <IconSpeaker/>
