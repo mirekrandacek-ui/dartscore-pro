@@ -119,6 +119,22 @@ function speak(lang, text, enabled){
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(u);
 }
+// >>> FORMAT_HELPERS:START
+const formatAvg = (n) => {
+  if (!isFinite(n)) return '0.0';
+  const v = Math.round(n * 10) / 10;
+  return v.toFixed(1);
+};
+const formatHit = (d) => {
+  if (!d) return '-';
+  const { v, m } = d;
+  if (v === 0) return '–';
+  if (v === 25) return m === 2 ? 'D-BULL' : 'BULL';
+  if (m === 3) return `T${v}`;
+  if (m === 2) return `D${v}`;
+  return String(v);
+};
+// <<< FORMAT_HELPERS:END
 
 /* Mark symboly pro Cricket */
 const markSymbol = (n) => (n<=0?'':(n===1?'/':(n===2?'✕':'Ⓧ')));
@@ -142,15 +158,112 @@ class ErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
-// <<< ERROR_BOUNDARY:END
+// >>> APP_RETURN_BLOCK:START
+return (
+  <ErrorBoundary>
+    <div className="container" data-mode={mode}>
+      {/* HEADER */}
+      <div className="header">
+        <div className="left">
+          {screen==='game' && (
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={()=>{saveSnapshot(); setScreen('lobby')}}
+              title={t(lang,'back')}
+            >
+              ←
+            </button>
+          )}
+          <div className="logo">
+            <span className="dart"></span>
+            <span>{t(lang,'app')}</span>
+          </div>
+        </div>
 
-export default function App(){
-  /* viewport fix */
-  useEffect(()=>{ 
-    const setVh=()=>document.documentElement.style.setProperty('--vh',`${window.innerHeight*0.01}px`); 
-    setVh(); window.addEventListener('resize',setVh); 
-    return()=>window.removeEventListener('resize',setVh);
-  },[]);
+        <div className="controls">
+          <button
+            type="button"
+            className={`iconBtn ${!soundOn?'muted':''}`}
+            onClick={()=>setSoundOn(v=>!v)}
+            aria-label={t(lang,'sound')}
+          >
+            <IconSpeaker/>
+          </button>
+          <button
+            type="button"
+            className={`iconBtn ${!voiceOn?'muted':''}`}
+            onClick={()=>setVoiceOn(v=>!v)}
+            aria-label={t(lang,'voice')}
+          >
+            <span className="iconHead" aria-hidden="true"></span>
+          </button>
+          <select className="input" value={lang} onChange={e=>setLang(e.target.value)}>
+            {['cs','en','de','es','nl','ru'].map(code=>(
+              <option key={code} value={code}>{LANG_LABEL[code]}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* ADS */}
+      <div className="adstrip">
+        <div className="adcard">AdMob</div><div className="adcard">Ad</div><div className="adcard">Ad</div>
+      </div>
+
+      {screen==='lobby' ? (
+        <Lobby
+          lang={lang} t={t}
+          mode={mode} setMode={setMode}
+          startScore={startScore} setStartScore={setStartScore}
+          outDouble={outDouble} setOutDouble={setOutDouble}
+          outTriple={outTriple} setOutTriple={setOutTriple}
+          outMaster={outMaster} setOutMaster={setOutMaster}
+          randomOrder={randomOrder} setRandomOrder={setRandomOrder}
+          playThrough={playThrough} setPlayThrough={setPlayThrough}
+          ai={ai} setAi={setAi}
+          players={players} setPlayers={setPlayers}
+          addPlayer={addPlayer} deletePlayer={deletePlayer}
+          movePlayer={movePlayer}
+          startGame={startGame}
+          continueSaved={continueSaved}
+          showToast={showToast}
+        />
+      ) : (
+        <Game
+          lang={lang} t={t}
+          mode={mode}
+          outDesc={(() => {
+            if(mode!=='classic') return mode==='cricket' ? 'Cricket' : 'Around the Clock';
+            const arr=[];
+            if(outDouble) arr.push('Double-out');
+            if(outTriple) arr.push('Triple-out');
+            if(outMaster) arr.push('Master-out');
+            if(arr.length===0) return 'Any-out';
+            return arr.join(' + ');
+          })()}
+          players={players} order={order} currIdx={currIdx}
+          scores={scores} thrown={thrown} lastTurn={lastTurn}
+          cricket={cricket} around={around}
+          averages={averages}
+          darts={darts} mult={mult} setMult={setMult}
+          commitDart={commitDart} undo={undo}
+          winner={winner}
+          saveGame={()=>{ saveSnapshot(); showToast('Uloženo'); }}
+          restartGame={restartGame}
+          cardRefs={cardRefs}
+          setScreen={setScreen}
+        />
+      )}
+
+      <audio ref={hitAudioRef} src="/dart-hit.mp3" preload="auto" />
+      <audio ref={winAudioRef} src="/tada-fanfare-a-6313.mp3" preload="auto" />
+      {toast && <div className="toast ok">✔️ {toast}</div>}
+    </div>
+  </ErrorBoundary>
+);
+// <<< APP_RETURN_BLOCK:END
+
 
   /* obrazovky + perzistence */
   const [screen,setScreen] = useState(()=>localStorage.getItem('screen')||'lobby');
