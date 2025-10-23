@@ -626,31 +626,36 @@ const commitCricket = (value, mOverride) => {
     }
   },[order, currIdx, mode]);
 // >>> BOT_TURN_EFFECT:START
-// >>> BOT_TURN_EFFECT:START
 /* BOT — sekvenční 3 hody s kontrolou řady (chytřejší cílení + lepší přesnost) */
 useEffect(()=>{
+  // bezpečně zjistíme, kdo je na řadě
   const pIdx = order[currIdx];
   const p = players[pIdx];
-  if(!p || !p.bot || winner!=null) return;
 
-  let cancelled=false;
-  const delays = [350, 900, 1450];
+  // Když není hráč, není bot, nebo už je vítěz → nic nedělej
+  if (!p || !p.bot || winner != null) return;
 
-  // ⛑️ DŮLEŽITÉ: nejdřív definuj tabulky, teprve pak z nich čti (jinak spadne v TDZ)
+  // definice tabulek MUSÍ být dřív, než z nich čteme!
   const tables = {
+    // Easy: vysoká šance minout, téměř žádné triplování
     easy:   { miss:0.45, single:0.50, double:0.04, triple:0.01 },
+    // Medium: rozumné chyby, ale umí checkouty i dovírat v Cricketu
     medium: { miss:0.18, single:0.58, double:0.16, triple:0.08 },
+    // Hard: málo chyb, reálně vyhrává, ale není robotický
     hard:   { miss:0.09, single:0.50, double:0.24, triple:0.17 }
   };
   const tb = tables[p.level || 'easy'];
 
+  let cancelled = false;
+  const delays = [350, 900, 1450];
+
   // helper: náhodně podle pravděpodobností vybere multiplikátor 1/2/3
   const rollMult = () => {
     const r = Math.random();
-    if(r < tb.miss) return {m:1, miss:true};
-    if(r < tb.miss + tb.triple) return {m:3, miss:false};
-    if(r < tb.miss + tb.triple + tb.double) return {m:2, miss:false};
-    return {m:1, miss:false};
+    if (r < tb.miss) return { m:1, miss:true };
+    if (r < tb.miss + tb.triple) return { m:3, miss:false };
+    if (r < tb.miss + tb.triple + tb.double) return { m:2, miss:false };
+    return { m:1, miss:false };
   };
 
   // --- cílení podle režimu ---
@@ -667,83 +672,78 @@ useEffect(()=>{
       {v:20,m:2,need:40},{v:10,m:2,need:20},{v:12,m:2,need:24},{v:16,m:2,need:32},
       {v:8,m:2,need:16},{v:6,m:2,need:12},{v:4,m:2,need:8},{v:2,m:2,need:4}
     ];
-    for(const co of checkouts){
-      if(myScore===co.need && finishAllowed(co.m)) return co;
+    for (const co of checkouts) {
+      if (myScore === co.need && finishAllowed(co.m)) return co;
     }
-    if(myScore<=62){
-      if(finishAllowed(2) && myScore%2===0){
+    if (myScore <= 62) {
+      if (finishAllowed(2) && myScore % 2 === 0) {
         const d = Math.min(20, Math.max(2, (myScore/2)|0));
-        return {v:d, m:2};
+        return { v:d, m:2 };
       }
       const s = Math.min(20, Math.max(1, myScore-40));
-      return {v:s||1, m:1};
+      return { v:s||1, m:1 };
     }
-    return {v:20, m:3};
+    return { v:20, m:3 };
   };
 
   const chooseTargetCricket = () => {
     const me = cricket?.[pIdx];
-    if(!me) return {v:20,m:1};
-    const orderV = [20,19,18,17,16,15,25];
-    for(const v of orderV){
+    if (!me) return { v:20, m:1 };
+    const orderArr = [20,19,18,17,16,15,25];
+    for (const v of orderArr) {
       const key = v===25 ? 'bull' : String(v);
       const marks = me.marks?.[key] ?? 0;
-      if(marks < 3){
+      if (marks < 3) {
         const {m, miss} = rollMult();
         const mAdj = (v===25 && m===3) ? 2 : m;
-        if(miss) return {v:0,m:1};
-        return {v, m:mAdj};
+        if (miss) return { v:0, m:1 };
+        return { v, m:mAdj };
       }
     }
     const opponentsOpen = (v)=>{
       const key = v===25 ? 'bull' : String(v);
       return cricket?.some((pl,ix)=> ix!==pIdx && (pl.marks?.[key]??0) < 3);
     };
-    for(const v of orderV){
-      if(opponentsOpen(v)){
+    for (const v of [20,19,18,17,16,15,25]) {
+      if (opponentsOpen(v)) {
         const {m, miss} = rollMult();
         const mAdj = (v===25 && m===3) ? 2 : m;
-        if(miss) return {v:0,m:1};
-        return {v, m:mAdj};
+        if (miss) return { v:0, m:1 };
+        return { v, m:mAdj };
       }
     }
-    return {v:20,m:1};
+    return { v:20, m:1 };
   };
 
   const chooseTargetAround = () => {
     const me = around?.[pIdx];
     const target = me?.next ?? 1;
-    if(Math.random() < tb.miss) return {v:0, m:1}; // „mimo“
-    if(target<=20) return {v:target, m:1};
-    return {v:25, m:1}; // bull
+    if (Math.random() < tb.miss) return { v:0, m:1 };
+    if (target <= 20) return { v:target, m:1 };
+    return { v:25, m:1 };
   };
 
   const pickThrow = () => {
-    if(mode==='classic') return chooseTargetClassic();
-    if(mode==='cricket') return chooseTargetCricket();
+    if (mode==='classic') return chooseTargetClassic();
+    if (mode==='cricket') return chooseTargetCricket();
     return chooseTargetAround();
   };
 
   const myIdx = pIdx;
   const throwOnce = (i) => {
-    if(cancelled || winner!=null) return;
-    if(order[currIdx] !== myIdx) return; // už není řada bota
-
-    const shot = pickThrow();
-    let {v,m} = shot;
-
-    // korekce neplatných komb
-    if(mode==='classic' && (v===0||v===25||v===50) && m>1) m=1;
-    if(mode==='cricket' && v===50) { v=25; if(m===3) m=2; }
+    if (cancelled || winner!=null) return;
+    if (order[currIdx] !== myIdx) return;
+    let {v, m} = pickThrow();
+    if (mode==='classic' && (v===0 || v===25 || v===50) && m>1) m=1;
+    if (mode==='cricket' && v===50) { v=25; if (m===3) m=2; }
 
     setTimeout(()=>{
-      if(cancelled || winner!=null) return;
-      if(order[currIdx] !== myIdx) return;
+      if (cancelled || winner!=null) return;
+      if (order[currIdx] !== myIdx) return;
       commitDart(v, m);
-
-      if(i < 2){
+      if (i < 2) {
         setTimeout(()=>{
-          if(order[currIdx] === myIdx && winner==null){
+          if (order[currIdx] === myIdx && winner==null) {
             throwOnce(i+1);
           }
         }, 120);
@@ -752,10 +752,11 @@ useEffect(()=>{
   };
 
   throwOnce(0);
-  return ()=>{ cancelled=true };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-},[currIdx, order, players, winner, mode, scores, cricket, around, outDouble, outTriple, outMaster, anyOutSelected]);
-
+  return ()=>{ cancelled = true; };
+},[
+  currIdx, order, players, winner, mode, scores, cricket, around,
+  outDouble, outTriple, outMaster, anyOutSelected
+]);
 // <<< BOT_TURN_EFFECT:END
   /* ULOŽENÍ / OBNOVA – snapshot + autosave (otočení/odchod) */
   const saveSnapshot = () => {
