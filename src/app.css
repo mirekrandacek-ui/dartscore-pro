@@ -94,7 +94,7 @@ input[type="text"]{color:#fff}
 
 /* CRICKET */
 .cricketWrap{flex:1 1 calc(100% - var(--padH));min-height:0;display:flex;gap:8px;overflow:hidden}
-/* spacer nahoře, aby se první targetCell zarovnala s prvním markCell pod hlavičkou hráče */
+
 /* Levý sloupec cílů – přesné zarovnání s hráči */
 .targetsRail{
   flex:0 0 72px;
@@ -212,12 +212,10 @@ input[type="text"]{color:#fff}
   box-shadow:inset 0 -2px 0 #0005;
   transition:transform .05s, background-color .08s, box-shadow .08s, border-color .08s;
 }
-/* nativní press */
 .key:active{ transform:translateY(1px) scale(.98); }
-/* náš výrazný press (přidáno JSem) */
 .key.pressed{
   transform:translateY(1px) scale(.98);
-  background:#2a2f36;            /* zřetelné zešednutí */
+  background:#2a2f36;
   border-color:#6b7280;
   box-shadow:inset 0 -1px 0 #0008, 0 0 0 2px #9aa3af66;
 }
@@ -232,14 +230,13 @@ input[type="text"]{color:#fff}
   color:#fff;
   font-weight:900;
 }
-.multBtn.mult-2.active{background:#a11d1d;border-color:#7a1616} /* DOUBLE = červená */
-.multBtn.mult-3.active{background:#157f3a;border-color:#0e5d2b} /* TRIPLE = zelená */
+.multBtn.mult-2.active{background:#a11d1d;border-color:#7a1616}
+.multBtn.mult-3.active{background:#157f3a;border-color:#0e5d2b}
 
-/* backspace ikona */
 .backspace{display:flex;align-items:center;justify-content:center}
 .iconBackspace{width:28px;height:28px}
-/* Cricket keypad – pevná mřížka 7 sloupců, bez přetékání
-   Použij GRID jen na řádky s čísly, NE na první řádek s mult tlačítky */
+
+/* Cricket keypad grid (jen čísla, ne první řádek s mult tlačítky) */
 .container[data-mode="cricket"] .padPane > .padRow:not(:first-child){
   display:grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -247,40 +244,34 @@ input[type="text"]{color:#fff}
   justify-items:stretch;
   align-items:stretch;
 }
-
-/* První řádek (DOUBLE / TRIPLE / Zpět) nech jako FLEX, ať se nepřekrývá */
 .container[data-mode="cricket"] .padPane > .padRow:first-child{
   display:flex;
   gap:8px;
   justify-content:center;
   align-items:center;
 }
-
-/* Tlačítka v grid řádcích vyplní buňku */
 .container[data-mode="cricket"] .padPane > .padRow:not(:first-child) .key{
   width:100%;
   height:56px;
   font-size:20px;
 }
-
-/* Řádek s jediným tlačítkem (0) roztáhni přes všech 7 sloupců */
 .container[data-mode="cricket"] .padPane > .padRow:not(:first-child) > .key:only-child{
   grid-column: 1 / -1;
 }
 
-/* Bezpečná minimální šířka mult tlačítek, aby se nikdy nepřekrývala */
+/* Bezpečná min. šířka mult tlačítek */
 .container[data-mode="cricket"] .multBtn{
-  min-width:110px;     /* můžeš doladit 100–120 podle vkusu */
+  min-width:110px;
   height:44px;
 }
 
-/* Mikro-responzivita pro extra úzké telefony */
 @media (max-width: 360px){
   .container[data-mode="cricket"] .padPane > .padRow:not(:first-child) .key{
     height:52px;
     font-size:18px;
   }
 }
+
 /* Around: zvýraznění cíle */
 .targetBox{
   border-color:#14532d;
@@ -288,4 +279,3 @@ input[type="text"]{color:#fff}
   color:#16a34a;
   font-weight:900;
 }
-
