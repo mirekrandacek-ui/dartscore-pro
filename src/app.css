@@ -230,10 +230,12 @@ input[type="text"]{color:#fff}
 }
 .playerColName{
   font-weight:900;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  max-width:90px
+  white-space:normal;        /* bylo nowrap */
+  overflow:visible;          /* bylo hidden */
+  text-overflow:clip;        /* bylo ellipsis */
+  max-width:none;            /* bylo ~90px */
+  line-height:1.2;
+  word-break:break-word;
 }
 .playerColPts{
   font-variant-numeric:tabular-nums;
