@@ -1217,82 +1217,14 @@ export default function App(){
 
   const hasSaved = !!localStorage.getItem('savedGame');
 
-  /* ===== RENDER APP ===== */
+    /* ===== RENDER APP ===== */
   return (
     <ErrorBoundary>
       <div className="container" data-mode={mode}>
         {/* HEADER */}
-        <div className="header">
-          <div className="left">
-            {screen==='game' && (
-              <button
-                type="button"
-                className="btn ghost"
-                onClick={()=>{
-                  saveSnapshot();
-                  setScreen('lobby');
-                }}
-                title={t(lang,'back')}
-              >
-                ←
-              </button>
-            )}
-                        {/* >>> HEADER LOGO WITH PREMIUM BELOW <<< */}
-            <div
-              className="logo"
-              style={{
-                flexDirection:'column',
-                alignItems:'flex-start',
-                gap:'2px'
-              }}
-            >
-              <div style={{display:'flex',alignItems:'center',gap:'8px',fontWeight:900,whiteSpace:'nowrap'}}>
-                <span className="dart"></span>
-                <span>{t(lang,'app')}</span>
-              </div>
-              {isPremium && (
-                <span
-                  className="badge"
-                  style={{
-                    fontSize:12,
-                    lineHeight:1,
-                    padding:'4px 8px'
-                  }}
-                >
-                  {t(lang,'premium')}
-                </span>
-              )}
-            </div>
-          <div className="controls">
-            <button
-              type="button"
-              className={`iconBtn ${!soundOn?'muted':''}`}
-              onClick={()=>setSoundOn(v=>!v)}
-              aria-label={t(lang,'sound')}
-            >
-              <IconSpeaker/>
-            </button>
-            <button
-              type="button"
-              className={`iconBtn ${!voiceOn?'muted':''}`}
-              onClick={()=>setVoiceOn(v=>!v)}
-              aria-label={t(lang,'voice')}
-            >
-              <span className="iconHead" aria-hidden="true"></span>
-            </button>
-            <select
-              className="input"
-              value={lang}
-              onChange={e=>setLang(e.target.value)}
-            >
-              {Object.keys(LANG_LABEL).map(code=>(
-                <option key={code} value={code}>{LANG_LABEL[code]}</option>
-              ))}
-            </select>
-          </div>
-        </div>
+        {/* … tady necháváš svůj aktuální header, controls, premium badge atd. nic na něm neměň … */}
 
-        {/* ADS STRIP (jen pokud není premium) */}
+        {/* ADS (jen pokud není premium) */}
         {!isPremium && (
           <div className="adstrip">
             <div className="adcard">AdMob</div>
@@ -1320,7 +1252,7 @@ export default function App(){
             showToast={showToast}
             hasSaved={hasSaved}
             isPremium={isPremium} setIsPremium={setIsPremium}
-            themeColor={themeColor} setThemeColor={setThemeColor}   // <<< PŘIDÁNO
+            themeColor={themeColor} setThemeColor={setThemeColor}
           />
         ) : (
           <Game
@@ -1354,32 +1286,16 @@ export default function App(){
               if(scr==='lobby') saveSnapshot();
               setScreen(scr);
             }}
-            isPremium={isPremium}
-            langFull={lang}
-            adSecondsLeft={adSecondsLeft}
-            showAd={showAd}
-            closeAdNow={closeAdNow}
           />
         )}
 
         <audio ref={hitAudioRef} src="/dart-hit.mp3" preload="auto" />
         <audio ref={winAudioRef} src="/tada-fanfare-a-6313.mp3" preload="auto" />
         {toast && <div className="toast ok">✔️ {toast}</div>}
-
-        {/* Interstitial reklama po výhře */}
-        {showAd && !isPremium && (
-          <AdInterstitial
-            lang={lang}
-            t={t}
-            secondsLeft={adSecondsLeft}
-            onForceClose={closeAdNow}
-            isPremium={isPremium}
-          />
-        )}
       </div>
     </ErrorBoundary>
   );
-}
+} // <<<<<<<<<<<<<<<<<<<<<<<<<< KONEC FUNKCE App !!!
 
 /* ===== LOBBY ===== */
 function Lobby({
@@ -1397,11 +1313,12 @@ function Lobby({
   startGame, continueSaved,
   showToast,
   hasSaved,
-  isPremium,setIsPremium,
-  themeColor,setThemeColor    // <<< NOVÉ
+  isPremium, setIsPremium,
+  themeColor, setThemeColor
 }){
   return (
     <div className="lobbyWrap">
+     
       {/* Režim */}
       <div className="lobbyCard">
         <div className="lobbyControls">
