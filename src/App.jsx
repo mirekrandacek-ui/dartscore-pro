@@ -301,7 +301,20 @@ export default function App(){
     window.addEventListener('resize',setVh);
     return()=>window.removeEventListener('resize',setVh);
   },[]);
-
+  // >>> APPLY THEME COLOR <<<
+  useEffect(()=>{
+    // Přepíšeme akcentní barvu (var(--green)) podle výběru uživatele
+    const root = document.documentElement;
+    if(themeColor==='blue'){
+      root.style.setProperty('--green', '#3b82f6'); // modrá
+    } else if(themeColor==='red'){
+      root.style.setProperty('--green', '#ef4444'); // červená
+    } else if(themeColor==='purple'){
+      root.style.setProperty('--green', '#8b5cf6'); // fialová
+    } else {
+      root.style.setProperty('--green', '#16a34a'); // default zelená
+    }
+  },[themeColor]);
   /* obrazovky + perzistence lobby */
   const [screen,setScreen] = useState(()=>localStorage.getItem('screen')||'lobby');
   useEffect(()=>{ localStorage.setItem('screen', screen); },[screen]);
@@ -1214,17 +1227,32 @@ const [themeColor, setThemeColor] = useState('default');
                 ←
               </button>
             )}
-            <div className="logo">
-              <span className="dart"></span>
-              <span>{t(lang,'app')}</span>
+                        {/* >>> HEADER LOGO WITH PREMIUM BELOW <<< */}
+            <div
+              className="logo"
+              style={{
+                flexDirection:'column',
+                alignItems:'flex-start',
+                gap:'2px'
+              }}
+            >
+              <div style={{display:'flex',alignItems:'center',gap:'8px',fontWeight:900,whiteSpace:'nowrap'}}>
+                <span className="dart"></span>
+                <span>{t(lang,'app')}</span>
+              </div>
               {isPremium && (
-                <span className="badge" style={{marginLeft:6}}>
+                <span
+                  className="badge"
+                  style={{
+                    fontSize:12,
+                    lineHeight:1,
+                    padding:'4px 8px'
+                  }}
+                >
                   {t(lang,'premium')}
                 </span>
               )}
             </div>
-          </div>
-
           <div className="controls">
             <button
               type="button"
@@ -1282,6 +1310,7 @@ const [themeColor, setThemeColor] = useState('default');
             showToast={showToast}
             hasSaved={hasSaved}
             isPremium={isPremium} setIsPremium={setIsPremium}
+            themeColor={themeColor} setThemeColor={setThemeColor}   // <<< PŘIDÁNO
           />
         ) : (
           <Game
@@ -1358,7 +1387,8 @@ function Lobby({
   startGame, continueSaved,
   showToast,
   hasSaved,
-  isPremium,setIsPremium
+  isPremium,setIsPremium,
+  themeColor,setThemeColor    // <<< NOVÉ
 }){
   return (
     <div className="lobbyWrap">
@@ -1531,7 +1561,53 @@ function Lobby({
               }}
             >
               <div style={{opacity:.8}}>{t(lang,'appearance')}:</div>
-              <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                 {/* >>> THEME PICKER CLICKABLE <<< */}
+    <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+      <button
+        type="button"
+        onClick={()=>setThemeColor('default')}
+        style={{
+          width:24,height:24,borderRadius:4,
+          border:'2px solid #fff',
+          boxShadow: themeColor==='default' ? '0 0 6px #fff' : 'none',
+          background:'#16a34a',
+          cursor:'pointer'
+        }}
+      />
+      <button
+        type="button"
+        onClick={()=>setThemeColor('blue')}
+        style={{
+          width:24,height:24,borderRadius:4,
+          border:'2px solid #1e3a8a',
+          boxShadow: themeColor==='blue' ? '0 0 6px #fff' : 'none',
+          background:'#3b82f6',
+          cursor:'pointer'
+        }}
+      />
+      <button
+        type="button"
+        onClick={()=>setThemeColor('red')}
+        style={{
+          width:24,height:24,borderRadius:4,
+          border:'2px solid #7f1d1d',
+          boxShadow: themeColor==='red' ? '0 0 6px #fff' : 'none',
+          background:'#ef4444',
+          cursor:'pointer'
+        }}
+      />
+      <button
+        type="button"
+        onClick={()=>setThemeColor('purple')}
+        style={{
+          width:24,height:24,borderRadius:4,
+          border:'2px solid #4c1d95',
+          boxShadow: themeColor==='purple' ? '0 0 6px #fff' : 'none',
+          background:'#8b5cf6',
+          cursor:'pointer'
+        }}
+      />
+    </div>
                 <div style={{
                   width:20,height:20,borderRadius:4,background:'#16a34a',border:'1px solid #14532d'
                 }}/>
