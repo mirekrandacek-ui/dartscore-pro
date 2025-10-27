@@ -1440,67 +1440,70 @@ function Lobby({
           </div>
         </div>
       )}
-
-      {/* >>> REPLACE: Pořadí & Dohrávat + Robot do jedné karty <<< */}
-<div className="lobbyCard">
-  <div
-    className="lobbyControls"
-    style={{
-      flexWrap:'wrap',
-      justifyContent:'space-between',
-      rowGap:'8px',
-      columnGap:'12px',
-      width:'100%'
-    }}
-  >
-    {/* blok Pořadí / Dohrávat */}
-    <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:8}}>
-      <span>{t(lang,'order')}</span>
-      <select
-        className="input"
-        value={randomOrder?'random':'fixed'}
-        onChange={e=>setRandomOrder(e.target.value==='random')}
-        style={{height:34}}
-      >
-        <option value="fixed">{t(lang,'fixed')}</option>
-        <option value="random">{t(lang,'random')}</option>
-      </select>
-
-      {mode==='classic' && (
-        <label
+      {/* Pořadí & Robot (vedle sebe v jedné kartě) */}
+      <div className="lobbyCard">
+        <div
+          className="lobbyControls"
           style={{
-            display:'inline-flex',
-            alignItems:'center',
-            gap:8
+            flexWrap:'wrap',
+            justifyContent:'space-between',
+            rowGap:'8px',
+            columnGap:'12px',
+            width:'100%'
           }}
         >
-          <input
-            type="checkbox"
-            checked={playThrough}
-            onChange={e=>setPlayThrough(e.target.checked)}
-          />
-          {t(lang,'playThrough')}
-        </label>
-      )}
-    </div>
 
-    {/* blok Robot */}
-    <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:8}}>
-      <span>{t(lang,'robot')}</span>
-      <select
-        className="input"
-        value={ai}
-        onChange={e=>setAi(e.target.value)}
-        style={{height:34}}
-      >
-        <option value="off">{t(lang,'off')}</option>
-        <option value="easy">{t(lang,'easy')}</option>
-        <option value="medium">{t(lang,'medium')}</option>
-        <option value="hard">{t(lang,'hard')}</option>
-      </select>
-    </div>
-  </div>
-</div>
+          {/* část Pořadí / Dohrávat */}
+          <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:8}}>
+            <span>{t(lang,'order')}</span>
+
+            <select
+              className="input"
+              value={randomOrder ? 'random' : 'fixed'}
+              onChange={e=>setRandomOrder(e.target.value==='random')}
+              style={{height:34}}
+            >
+              <option value="fixed">{t(lang,'fixed')}</option>
+              <option value="random">{t(lang,'random')}</option>
+            </select>
+
+            {mode==='classic' && (
+              <label
+                style={{
+                  display:'inline-flex',
+                  alignItems:'center',
+                  gap:8
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={playThrough}
+                  onChange={e=>setPlayThrough(e.target.checked)}
+                />
+                {t(lang,'playThrough')}
+              </label>
+            )}
+          </div>
+
+          {/* blok Robot */}
+          <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:8}}>
+            <span>{t(lang,'robot')}</span>
+            <select
+              className="input"
+              value={ai}
+              onChange={e=>setAi(e.target.value)}
+              style={{height:34}}
+            >
+              <option value="off">{t(lang,'off')}</option>
+              <option value="easy">{t(lang,'easy')}</option>
+              <option value="medium">{t(lang,'medium')}</option>
+              <option value="hard">{t(lang,'hard')}</option>
+            </select>
+          </div>
+
+        </div>
+      </div>
+    
       {/* Premium toggle + Appearance sekce */}
       <div className="lobbyCard">
         <div className="lobbyControls" style={{flexWrap:'wrap'}}>
