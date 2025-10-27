@@ -1601,7 +1601,6 @@ function Lobby({
               }}
               title="zelená"
             />
-
             {/* MODRÁ */}
             <button
               type="button"
