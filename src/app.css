@@ -4,7 +4,13 @@
   --text:#fff;
   --muted:#cfd6df;
   --line:#2d3239;
+
+  /* původní "zelená", necháme ji kvůli starým stylům */
   --green:#16a34a;
+
+  /* >>> nová aktivní accent barva, kterou přepisujeme z Reactu <<< */
+  --accent:#16a34a;
+
   --padH: 260px;
   /* výška hlavičky sloupce hráče v Cricketu – kvůli zarovnání */
   --cricket-head-h: 44px;
@@ -140,9 +146,14 @@ input[type="text"]{color:#fff}
 .gameTopBar{
   display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap
 }
+/* >>> badge border uses accent color <<< */
 .badge{
-  background:#0f1318;border:1px solid var(--line);border-radius:999px;
-  padding:6px 10px;font-weight:800
+  background:#0f1318;
+  border:1px solid var(--accent);
+  border-radius:999px;
+  padding:6px 10px;
+  font-weight:800;
+  color:var(--accent);
 }
 .gameTopBtns{display:flex;gap:8px}
 .playersPane{
@@ -219,7 +230,9 @@ input[type="text"]{color:#fff}
   display:flex;
   flex-direction:column
 }
-.playerCol.active{outline:2px solid var(--green)}
+/* >>> active highlight uses accent color <<< */
+.playerCol.active{outline:2px solid var(--accent)}
+.playerCard.active{outline:2px solid var(--accent)}
 .playerColHead{
   height: var(--cricket-head-h);
   display:flex;
@@ -461,10 +474,11 @@ input[type="text"]{color:#fff}
   }
 }
 
-/* Around: zvýraznění cíle */
+/* >>> target box uses accent color <<< */
 .targetBox{
-  border-color:#14532d;
-  background:#0f1b12;
-  color:#16a34a;
+  border-color:var(--accent);
+  background:rgba(0,0,0,0.4);
+  color:var(--accent);
   font-weight:900;
 }
+
