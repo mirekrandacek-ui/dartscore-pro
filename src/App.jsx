@@ -318,6 +318,8 @@ export default function App(){
 
   /* premium režim (bez reklam + vzhled appky odemčený) */
   const [isPremium,setIsPremium] = useState(false);
+// >>> THEME STATE (premium skin) <<<
+const [themeColor, setThemeColor] = useState('default');
 
   /* reklama po výhře */
   const [showAd,setShowAd] = useState(false);
@@ -1396,7 +1398,6 @@ function Lobby({
           </div>
         </div>
       )}
-
       {/* Out pravidla pro Classic */}
       {mode==='classic' && (
         <div className="lobbyCard">
@@ -1440,58 +1441,66 @@ function Lobby({
         </div>
       )}
 
-      {/* Pořadí & Dohrávat */}
-      <div className="lobbyCard">
-        <div className="lobbyControls">
-          <span>{t(lang,'order')}</span>
-          <select
-            className="input"
-            value={randomOrder?'random':'fixed'}
-            onChange={e=>setRandomOrder(e.target.value==='random')}
-            style={{height:34}}
-          >
-            <option value="fixed">{t(lang,'fixed')}</option>
-            <option value="random">{t(lang,'random')}</option>
-          </select>
+      {/* >>> REPLACE: Pořadí & Dohrávat + Robot do jedné karty <<< */}
+<div className="lobbyCard">
+  <div
+    className="lobbyControls"
+    style={{
+      flexWrap:'wrap',
+      justifyContent:'space-between',
+      rowGap:'8px',
+      columnGap:'12px',
+      width:'100%'
+    }}
+  >
+    {/* blok Pořadí / Dohrávat */}
+    <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:8}}>
+      <span>{t(lang,'order')}</span>
+      <select
+        className="input"
+        value={randomOrder?'random':'fixed'}
+        onChange={e=>setRandomOrder(e.target.value==='random')}
+        style={{height:34}}
+      >
+        <option value="fixed">{t(lang,'fixed')}</option>
+        <option value="random">{t(lang,'random')}</option>
+      </select>
 
-          {mode==='classic' && (
-            <label
-              style={{
-                display:'inline-flex',
-                alignItems:'center',
-                gap:8,
-                marginLeft:12
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={playThrough}
-                onChange={e=>setPlayThrough(e.target.checked)}
-              />
-              {t(lang,'playThrough')}
-            </label>
-          )}
-        </div>
-      </div>
+      {mode==='classic' && (
+        <label
+          style={{
+            display:'inline-flex',
+            alignItems:'center',
+            gap:8
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={playThrough}
+            onChange={e=>setPlayThrough(e.target.checked)}
+          />
+          {t(lang,'playThrough')}
+        </label>
+      )}
+    </div>
 
-      {/* Robot */}
-      <div className="lobbyCard">
-        <div className="lobbyControls">
-          <span>{t(lang,'robot')}</span>
-          <select
-            className="input"
-            value={ai}
-            onChange={e=>setAi(e.target.value)}
-            style={{height:34}}
-          >
-            <option value="off">{t(lang,'off')}</option>
-            <option value="easy">{t(lang,'easy')}</option>
-            <option value="medium">{t(lang,'medium')}</option>
-            <option value="hard">{t(lang,'hard')}</option>
-          </select>
-        </div>
-      </div>
-
+    {/* blok Robot */}
+    <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:8}}>
+      <span>{t(lang,'robot')}</span>
+      <select
+        className="input"
+        value={ai}
+        onChange={e=>setAi(e.target.value)}
+        style={{height:34}}
+      >
+        <option value="off">{t(lang,'off')}</option>
+        <option value="easy">{t(lang,'easy')}</option>
+        <option value="medium">{t(lang,'medium')}</option>
+        <option value="hard">{t(lang,'hard')}</option>
+      </select>
+    </div>
+  </div>
+</div>
       {/* Premium toggle + Appearance sekce */}
       <div className="lobbyCard">
         <div className="lobbyControls" style={{flexWrap:'wrap'}}>
