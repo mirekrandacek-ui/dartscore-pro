@@ -301,30 +301,16 @@ export default function App(){
     window.addEventListener('resize',setVh);
     return()=>window.removeEventListener('resize',setVh);
   },[]);
-   // >>> APPLY THEME COLOR <<<
-  useEffect(()=>{
-    // cíl: změnit accent barvu celé aplikace
-    const root = document.documentElement;
 
-    if(themeColor === 'blue'){
-      root.style.setProperty('--accent', '#3b82f6');
-    } else if(themeColor === 'red'){
-      root.style.setProperty('--accent', '#ef4444');
-    } else if(themeColor === 'purple'){
-      root.style.setProperty('--accent', '#8b5cf6');
-    } else {
-      // default
-      root.style.setProperty('--accent', '#16a34a');
-    }
-  },[themeColor]);
+  /* === STATE === */
+
   /* obrazovky + perzistence lobby */
   const [screen,setScreen] = useState(()=>localStorage.getItem('screen')||'lobby');
-  useEffect(()=>{ localStorage.setItem('screen', screen); },[screen]);
 
   const [toast,setToast] = useState(null);
   const showToast = (msg) => { setToast(msg); setTimeout(()=>setToast(null), 1600); };
 
-  const [lang,setLang]     = useState(((navigator.language||'cs').slice(0,2))||'cs');
+  const [lang,setLang]       = useState(((navigator.language||'cs').slice(0,2))||'cs');
   const [soundOn,setSoundOn] = useState(true);
   const [voiceOn,setVoiceOn] = useState(true);
 
@@ -333,8 +319,9 @@ export default function App(){
 
   /* premium režim (bez reklam + vzhled appky odemčený) */
   const [isPremium,setIsPremium] = useState(false);
-// >>> THEME STATE (premium skin) <<<
-const [themeColor, setThemeColor] = useState('default');
+
+  /* THEME STATE (premium skin) */
+  const [themeColor, setThemeColor] = useState('default');
 
   /* reklama po výhře */
   const [showAd,setShowAd] = useState(false);
@@ -359,6 +346,9 @@ const [themeColor, setThemeColor] = useState('default');
   const hitAudioRef = useRef(null);
   const winAudioRef = useRef(null);
 
+  /* persist screen */
+  useEffect(()=>{ localStorage.setItem('screen', screen); },[screen]);
+
   /* načti lobby z localStorage */
   useEffect(()=>{ try{
     const s=JSON.parse(localStorage.getItem('lobby')||'{}');
@@ -373,6 +363,7 @@ const [themeColor, setThemeColor] = useState('default');
     if(s.ai) setAi(s.ai);
     if(s.players) setPlayers(s.players);
     if(typeof s.isPremium==='boolean') setIsPremium(s.isPremium);
+    // (zatím themeColor z localStorage nečteme, to doladíme později)
   }catch{} },[]);
 
   /* ukládej lobby */
@@ -382,6 +373,7 @@ const [themeColor, setThemeColor] = useState('default');
       outDouble,outTriple,outMaster,
       randomOrder,playThrough,ai,players,
       isPremium
+      // themeColor uložíme až v dalším kroku
     }));
   }catch{} },[
     lang,mode,startScore,
@@ -430,6 +422,20 @@ const [themeColor, setThemeColor] = useState('default');
     });
   },[ai,lang]);
 
+  /* >>> APPLY THEME COLOR <<< */
+  useEffect(()=>{
+    const root = document.documentElement;
+    if(themeColor === 'blue'){
+      root.style.setProperty('--accent', '#3b82f6');
+    } else if(themeColor === 'red'){
+      root.style.setProperty('--accent', '#ef4444');
+    } else if(themeColor === 'purple'){
+      root.style.setProperty('--accent', '#8b5cf6');
+    } else {
+      root.style.setProperty('--accent', '#16a34a'); // default
+    }
+  },[themeColor]);
+
   const movePlayer = (i,dir) => setPlayers(ps=>{
     const a=[...ps];
     const j=i+dir;
@@ -437,6 +443,7 @@ const [themeColor, setThemeColor] = useState('default');
     [a[i],a[j]]=[a[j],a[i]];
     return a;
   });
+
   const deletePlayer = (i) => {
     setPlayers(ps=>{
       const toDelete = ps[i];
@@ -444,6 +451,7 @@ const [themeColor, setThemeColor] = useState('default');
       return ps.filter((_,ix)=>ix!==i);
     });
   };
+
   const addPlayer = () => setPlayers(ps=>[
     ...ps,
     {
