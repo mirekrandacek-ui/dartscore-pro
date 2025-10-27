@@ -1566,27 +1566,33 @@ function Lobby({
                  {/* >>> THEME PICKER CLICKABLE <<< */}
     <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
       <button
-        type="button"
-        onClick={()=>setThemeColor('default')}
-        style={{
-          width:24,height:24,borderRadius:4,
-          border:'2px solid #fff',
-          boxShadow: themeColor==='default' ? '0 0 6px #fff' : 'none',
-          background:'#16a34a',
-          cursor:'pointer'
-        }}
-      />
-      <button
-        type="button"
-        onClick={()=>setThemeColor('blue')}
-        style={{
-          width:24,height:24,borderRadius:4,
-          border:'2px solid #1e3a8a',
-          boxShadow: themeColor==='blue' ? '0 0 6px #fff' : 'none',
-          background:'#3b82f6',
-          cursor:'pointer'
-        }}
-      />
+  type="button"
+  onClick={()=>{
+    console.log('CLICK theme = default');
+    setThemeColor('default');
+  }}
+  style={{
+    width:24,height:24,borderRadius:4,
+    border:'2px solid #fff',
+    boxShadow: themeColor==='default' ? '0 0 6px #fff' : 'none',
+    background:'#16a34a',
+    cursor:'pointer'
+  }}
+/>
+     <button
+  type="button"
+  onClick={()=>{
+    console.log('CLICK theme = blue');
+    setThemeColor('blue');
+  }}
+  style={{
+    width:24,height:24,borderRadius:4,
+    border:'2px solid #1e3a8a',
+    boxShadow: themeColor==='blue' ? '0 0 6px #fff' : 'none',
+    background:'#3b82f6',
+    cursor:'pointer'
+  }}
+/>
       <button
         type="button"
         onClick={()=>setThemeColor('red')}
