@@ -301,18 +301,20 @@ export default function App(){
     window.addEventListener('resize',setVh);
     return()=>window.removeEventListener('resize',setVh);
   },[]);
-  // >>> APPLY THEME COLOR <<<
+   // >>> APPLY THEME COLOR <<<
   useEffect(()=>{
-    // Přepíšeme akcentní barvu (var(--green)) podle výběru uživatele
+    // cíl: změnit accent barvu celé aplikace
     const root = document.documentElement;
-    if(themeColor==='blue'){
-      root.style.setProperty('--green', '#3b82f6'); // modrá
-    } else if(themeColor==='red'){
-      root.style.setProperty('--green', '#ef4444'); // červená
-    } else if(themeColor==='purple'){
-      root.style.setProperty('--green', '#8b5cf6'); // fialová
+
+    if(themeColor === 'blue'){
+      root.style.setProperty('--accent', '#3b82f6');
+    } else if(themeColor === 'red'){
+      root.style.setProperty('--accent', '#ef4444');
+    } else if(themeColor === 'purple'){
+      root.style.setProperty('--accent', '#8b5cf6');
     } else {
-      root.style.setProperty('--green', '#16a34a'); // default zelená
+      // default
+      root.style.setProperty('--accent', '#16a34a');
     }
   },[themeColor]);
   /* obrazovky + perzistence lobby */
