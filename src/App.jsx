@@ -1543,104 +1543,125 @@ function Lobby({
 
         </div>
       </div>
-    
-      {/* Premium toggle + Appearance sekce */}
+          {/* Premium + vzhled */}
       <div className="lobbyCard">
-        <div className="lobbyControls" style={{flexWrap:'wrap'}}>
-          <span>{t(lang,'premium')}</span>
-          <button
-            type="button"
-            className={`btn ${isPremium?'green':''}`}
-            onClick={()=>setIsPremium(v=>!v)}
-          >
-            {isPremium ? t(lang,'premium') : t(lang,'premium')+' ?'}
-          </button>
-
-          {isPremium && (
-            <div
-              style={{
-                display:'flex',
-                flexDirection:'column',
-                gap:4,
-                fontSize:12,
-                background:'#1c2026',
-                border:'1px solid var(--line)',
-                borderRadius:10,
-                padding:'6px 8px',
-                fontWeight:600
-              }}
+        {/* horní řada: toggle Premium + label */}
+        <div
+          style={{
+            display:'flex',
+            flexWrap:'wrap',
+            alignItems:'center',
+            gap:'8px',
+            justifyContent:'space-between',
+            marginBottom:8
+          }}
+        >
+          <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+            <span style={{fontWeight:800,fontSize:14,color:'#fff'}}>Premium</span>
+            <button
+              type="button"
+              className="btn"
+              onClick={()=>setIsPremium(p=>!p)}
+              style={{minWidth:90,fontWeight:800}}
             >
-              <div style={{opacity:.8}}>{t(lang,'appearance')}:</div>
-                 {/* >>> THEME PICKER CLICKABLE <<< */}
-    <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-      <button
-  type="button"
-  onClick={()=>{
-    console.log('CLICK theme = default');
-    setThemeColor('default');
-  }}
-  style={{
-    width:24,height:24,borderRadius:4,
-    border:'2px solid #fff',
-    boxShadow: themeColor==='default' ? '0 0 6px #fff' : 'none',
-    background:'#16a34a',
-    cursor:'pointer'
-  }}
-/>
-     <button
-  type="button"
-  onClick={()=>{
-    console.log('CLICK theme = blue');
-    setThemeColor('blue');
-  }}
-  style={{
-    width:24,height:24,borderRadius:4,
-    border:'2px solid #1e3a8a',
-    boxShadow: themeColor==='blue' ? '0 0 6px #fff' : 'none',
-    background:'#3b82f6',
-    cursor:'pointer'
-  }}
-/>
-      <button
-        type="button"
-        onClick={()=>setThemeColor('red')}
-        style={{
-          width:24,height:24,borderRadius:4,
-          border:'2px solid #7f1d1d',
-          boxShadow: themeColor==='red' ? '0 0 6px #fff' : 'none',
-          background:'#ef4444',
-          cursor:'pointer'
-        }}
-      />
-      <button
-        type="button"
-        onClick={()=>setThemeColor('purple')}
-        style={{
-          width:24,height:24,borderRadius:4,
-          border:'2px solid #4c1d95',
-          boxShadow: themeColor==='purple' ? '0 0 6px #fff' : 'none',
-          background:'#8b5cf6',
-          cursor:'pointer'
-        }}
-      />
-    </div>
-                <div style={{
-                  width:20,height:20,borderRadius:4,background:'#16a34a',border:'1px solid #14532d'
-                }}/>
-                <div style={{
-                  width:20,height:20,borderRadius:4,background:'#3b82f6',border:'1px solid #1e3a8a'
-                }}/>
-                <div style={{
-                  width:20,height:20,borderRadius:4,background:'#ef4444',border:'1px solid #7f1d1d'
-                }}/>
-                <div style={{
-                  width:20,height:20,borderRadius:4,background:'#8b5cf6',border:'1px solid #4c1d95'
-                }}/>
-              </div>
-            </div>
-          )}
+              {isPremium ? 'Premium' : 'Free'}
+            </button>
+          </div>
+
+          <div style={{fontSize:12,color:'#fff',opacity:.8,fontWeight:600}}>
+            Vzhled aplikace:
+          </div>
         </div>
-      </div>
+
+        {/* paleta barev – jen pokud je Premium zapnuté */}
+        {isPremium && (
+          <div
+            style={{
+              display:'flex',
+              flexWrap:'wrap',
+              gap:'8px'
+            }}
+          >
+
+            {/* ZELENÁ / DEFAULT */}
+            <button
+              type="button"
+              onClick={()=>{
+                console.log('CLICK theme = default');
+                setThemeColor('default');
+              }}
+              style={{
+                width:24,
+                height:24,
+                borderRadius:4,
+                border:'2px solid #fff',
+                background:'#16a34a',
+                cursor:'pointer',
+                boxShadow: themeColor==='default' ? '0 0 6px #fff' : 'none'
+              }}
+              title="zelená"
+            />
+
+            {/* MODRÁ */}
+            <button
+              type="button"
+              onClick={()=>{
+                console.log('CLICK theme = blue');
+                setThemeColor('blue');
+              }}
+              style={{
+                width:24,
+                height:24,
+                borderRadius:4,
+                border:'2px solid #1e3a8a',
+                background:'#3b82f6',
+                cursor:'pointer',
+                boxShadow: themeColor==='blue' ? '0 0 6px #fff' : 'none'
+              }}
+              title="modrá"
+            />
+
+            {/* ČERVENÁ */}
+            <button
+              type="button"
+              onClick={()=>{
+                console.log('CLICK theme = red');
+                setThemeColor('red');
+              }}
+              style={{
+                width:24,
+                height:24,
+                borderRadius:4,
+                border:'2px solid #7f1d1d',
+                background:'#ef4444',
+                cursor:'pointer',
+                boxShadow: themeColor==='red' ? '0 0 6px #fff' : 'none'
+              }}
+              title="červená"
+            />
+
+            {/* FIALOVÁ */}
+            <button
+              type="button"
+              onClick={()=>{
+                console.log('CLICK theme = purple');
+                setThemeColor('purple');
+              }}
+              style={{
+                width:24,
+                height:24,
+                borderRadius:4,
+                border:'2px solid #4c1d95',
+                background:'#8b5cf6',
+                cursor:'pointer',
+                boxShadow: themeColor==='purple' ? '0 0 6px #fff' : 'none'
+              }}
+              title="fialová"
+            />
+
+          </div>
+        )}
+      </div>    
 
       {/* Start & Pokračovat */}
       <div className="lobbyCard">
