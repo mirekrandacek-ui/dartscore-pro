@@ -199,7 +199,6 @@ class ErrorBoundary extends React.Component {
 /* ===== Helpers ===== */
 function formatHit(d){
   if(!d) return '-';
-  // nula = "0", ne "-"
   const base = d.v === 0 ? '0' : d.v;
   if(d.m===2) return `D${base}`;
   if(d.m===3) return `T${base}`;
@@ -209,14 +208,13 @@ function formatAvg(a){
   if(!a && a!==0) return '0.0';
   return a.toFixed(1);
 }
-// --- ADMANAGER IMPORT START ---
+
+/* ===== AdMob interstitial handler ===== */
 import { AdMobInterstitial } from "expo-ads-admob";
-import { useEffect } from "react";
 
-// TEST ID (funguje univerzálně pro vývoj)
-const ADMOB_INTERSTITIAL_ID = "ca-app-pub-3940256099942544/1033173712";
+const ADMOB_INTERSTITIAL_ID = "ca-app-pub-3940256099942544/1033173712"; // test ID od Googlu
 
-async function showAd() {
+async function showInterstitialAd() {
   try {
     await AdMobInterstitial.setAdUnitID(ADMOB_INTERSTITIAL_ID);
     await AdMobInterstitial.requestAdAsync({ servePersonalizedAds: true });
@@ -225,6 +223,7 @@ async function showAd() {
     console.warn("Interstitial Ad failed:", err);
   }
 }
+
 /* ===== MAIN APP ===== */
 export default function App(){
 
@@ -256,12 +255,13 @@ export default function App(){
 
   /* THEME STATE (premium skin) */
   const [themeColor, setThemeColor] = useState('default');
-// fullscreen reklama po výhře
-const [showAd, setShowAd] = useState(false);        // jestli je overlay vidět
-const [adSecondsLeft, setAdSecondsLeft] = useState(20); // kolik zbývá sekund
-const adTimerRef = useRef(null); // timer držíme tady, ať to umíme čistit
 
-   /* out pravidla – jen pro Classic */
+  /* stav pro náš vlastní overlay po výhře */
+  const [showAd, setShowAd] = useState(false);        // jestli je overlay vidět
+  const [adSecondsLeft, setAdSecondsLeft] = useState(20); // zbývající sekundy
+  const adTimerRef = useRef(null); // timer intervalu
+
+  /* out pravidla – jen pro Classic */
   const [outDouble,setOutDouble] = useState(true);
   const [outTriple,setOutTriple] = useState(false);
   const [outMaster,setOutMaster] = useState(false);
@@ -296,7 +296,6 @@ const adTimerRef = useRef(null); // timer držíme tady, ať to umíme čistit
     if(s.ai) setAi(s.ai);
     if(s.players) setPlayers(s.players);
     if(typeof s.isPremium==='boolean') setIsPremium(s.isPremium);
-    // (zatím themeColor z localStorage nečteme, to doladíme později)
   }catch{} },[]);
 
   /* ukládej lobby */
@@ -306,7 +305,6 @@ const adTimerRef = useRef(null); // timer držíme tady, ať to umíme čistit
       outDouble,outTriple,outMaster,
       randomOrder,playThrough,ai,players,
       isPremium
-      // themeColor uložíme až v dalším kroku
     }));
   }catch{} },[
     lang,mode,startScore,
@@ -354,44 +352,45 @@ const adTimerRef = useRef(null); // timer držíme tady, ať to umíme čistit
       );
     });
   },[ai,lang]);
-// >>> APPLY FULL THEME (bg / panel / line / accent) <<<
-useEffect(()=>{
-  const root = document.documentElement;
 
-  // výchozí tmavý skin (Free verze)
-  let bg     = '#0e0e0e';  // temná černá
-  let panel  = '#181a1f';  // tmavě šedý panel
-  let line   = '#2b2f36';  // šedý rámeček
-  let accent = '#16a34a';  // zelený akcent
+  /* Dynamická barevná hlavička / skin */
+  useEffect(()=>{
+    const root = document.documentElement;
 
-  if (isPremium) {
-    if (themeColor === 'blue') {
-      bg     = '#0c1a36'; // sytě modrá
-      panel  = '#12284a';
-      line   = '#27406a';
-      accent = '#3b82f6';
-    } else if (themeColor === 'red') {
-      bg     = '#3b0d0d'; // sytě červená
-      panel  = '#551414';
-      line   = '#752222';
-      accent = '#ef4444';
-    } else if (themeColor === 'purple') {
-      bg     = '#28104d'; // plná fialová (jako tlačítko Start hry)
-      panel  = '#3b176f';
-      line   = '#5b2aa3';
-      accent = '#8b5cf6';
-    } else if (themeColor === 'green') {
-      bg     = '#0e2d17'; // hluboká zelená
-      panel  = '#154220';
-      line   = '#236633';
-      accent = '#16a34a';
+    // výchozí free skin (tmavý)
+    let bg     = '#0e0e0e';
+    let panel  = '#181a1f';
+    let line   = '#2b2f36';
+    let accent = '#16a34a';
+
+    if (isPremium) {
+      if (themeColor === 'blue') {
+        bg     = '#0c1a36';
+        panel  = '#12284a';
+        line   = '#27406a';
+        accent = '#3b82f6';
+      } else if (themeColor === 'red') {
+        bg     = '#3b0d0d';
+        panel  = '#551414';
+        line   = '#752222';
+        accent = '#ef4444';
+      } else if (themeColor === 'purple') {
+        bg     = '#28104d';
+        panel  = '#3b176f';
+        line   = '#5b2aa3';
+        accent = '#8b5cf6';
+      } else if (themeColor === 'green') {
+        bg     = '#0e2d17';
+        panel  = '#154220';
+        line   = '#236633';
+        accent = '#16a34a';
+      }
     }
-  }
-  root.style.setProperty('--bg', bg);
-  root.style.setProperty('--panel', panel);
-  root.style.setProperty('--line', line);
-  root.style.setProperty('--accent', accent);
-}, [themeColor, isPremium]);
+    root.style.setProperty('--bg', bg);
+    root.style.setProperty('--panel', panel);
+    root.style.setProperty('--line', line);
+    root.style.setProperty('--accent', accent);
+  }, [themeColor, isPremium]);
 
   const movePlayer = (i,dir) => setPlayers(ps=>{
     const a=[...ps];
@@ -477,7 +476,7 @@ useEffect(()=>{
       setLastTurn(players.map(()=>0));
     }
 
-    // při nové hře reklama není puštěná
+    // reset stavu reklamy
     setShowAd(false);
     setAdSecondsLeft(20);
 
@@ -524,11 +523,14 @@ useEffect(()=>{
     let v = value;
     let m = (mOverride ?? mult);
 
+    // guard proti pádům při nekonzistenci order/scores
+    const pIdx = currentPlayerIndex;
+    if (pIdx == null || scores[pIdx] == null) return;
+
     if (isInvalidComboClassic(v, m)) return;
     if (v === 25 || v === 50) { m = 1; }
 
     const hit = v * m;
-    const pIdx = currentPlayerIndex;
     const prev = scores[pIdx];
     const tentative = prev - hit;
 
@@ -648,7 +650,6 @@ useEffect(()=>{
     const pIdx = currentPlayerIndex;
     if (pIdx == null || !cricket[pIdx]) return;
 
-    // Cricket povolené cíle
     if (v === 0) m = 1;
     if (v === 25) m = 1;
     if (![0,15,16,17,18,19,20,25].includes(v)) return;
@@ -737,6 +738,9 @@ useEffect(()=>{
     if(v===50) v=25; // bull = 25
 
     const pIdx = currentPlayerIndex;
+    if (!around || !Array.isArray(around)) return;
+    if (pIdx == null || !around[pIdx]) return;
+
     const st = deepClone(around);
     const me = st[pIdx];
     const target = me.next;
@@ -789,7 +793,7 @@ useEffect(()=>{
 
   /* router commit */
   const commitDart = (value, mOverride) => {
-    if(winner!=null) return; // po výhře už nesbíráme další hody
+    if(winner!=null) return;
     if(mode==='classic') return commitClassic(value, mOverride);
     if(mode==='cricket') return commitCricket(value, mOverride);
     return commitAround(value, mOverride);
@@ -808,28 +812,13 @@ useEffect(()=>{
     }catch{}
 
     setWinner(pIdx);
-// pokud nejsem Premium, ukaž fullscreen reklamu po výhře
-if (!isPremium) {
-  setAdSecondsLeft(20);
-  setShowAd(true);
 
-  // bezpečně zrušit případný starý timer
-  if (adTimerRef.current) {
-    clearInterval(adTimerRef.current);
-  }
-
-  // spustíme odpočet 20 → 19 → ... → 0
-  adTimerRef.current = setInterval(()=>{
-    setAdSecondsLeft(prev => {
-      if (prev <= 1) {
-        clearInterval(adTimerRef.current);
-        adTimerRef.current = null;
-        return 0;
-      }
-      return prev - 1;
-    });
-  }, 1000);
-}
+    // FREE verze: po výhře zobrazíme interstitial + náš overlay s odpočtem
+    if (!isPremium) {
+      showInterstitialAd();      // AdMob interstitial
+      setAdSecondsLeft(20);      // resetovat overlay countdown
+      setShowAd(true);           // ukázat overlay
+    }
 
     // ulož do historie
     try{
@@ -859,7 +848,7 @@ if (!isPremium) {
   };
 
   const undo = () => {
-    if(winner!=null) return; // po výhře už nevracíme
+    if(winner!=null) return;
     setActions(st=>{
       if(st.length===0) return st;
       const last = st[st.length-1];
@@ -1085,7 +1074,7 @@ if (!isPremium) {
     outDouble, outTriple, outMaster, anyOutSelected
   ]);
 
-  /* ===== reklama odpočet ===== */
+  /* ===== reklama odpočet (overlay po výhře) ===== */
   useEffect(()=>{
     if(!showAd){
       if(adTimerRef.current){
@@ -1104,6 +1093,7 @@ if (!isPremium) {
         return s-1;
       });
     },1000);
+
     return ()=>{
       if(adTimerRef.current){
         clearInterval(adTimerRef.current);
@@ -1161,8 +1151,10 @@ if (!isPremium) {
       setCricket(s.cricket??null);
       setAround(s.around??null);
       setIsPremium(!!s.isPremium);
+
       setShowAd(false);
       setAdSecondsLeft(20);
+
       setScreen('game');
     }catch(e){
       console.error(e);
@@ -1189,129 +1181,131 @@ if (!isPremium) {
   },[]);
 
   const hasSaved = !!localStorage.getItem('savedGame');
+
   /* ===== RENDER APP ===== */
   return (
     <ErrorBoundary>
-        <div className="container" data-mode={mode}>
+      <div className="container" data-mode={mode}>
 
-      {/* HEADER */}
-   <div className="header" style={{flexWrap:'wrap'}}>
-  {/* LEVÁ STRANA: logo + Premium badge */}
-  <div
-    className="left"
-    style={{
-      display:'flex',
-      alignItems:'center',
-      gap:'8px',
-      minWidth:0,
-      flexWrap:'wrap'
-    }}
-  >
-    {screen === 'game' && (
-      <button
-        type="button"
-        className="btn ghost"
-        onClick={()=>{
-          saveSnapshot();
-          setScreen('lobby');
-        }}
-        title={t(lang,'back')}
-        style={{flexShrink:0}}
-      >
-        ←
-      </button>
-    )}
+        {/* HEADER */}
+        <div className="header" style={{flexWrap:'wrap'}}>
+          {/* LEVÁ STRANA: logo + Premium badge */}
+          <div
+            className="left"
+            style={{
+              display:'flex',
+              alignItems:'center',
+              gap:'8px',
+              minWidth:0,
+              flexWrap:'wrap'
+            }}
+          >
+            {screen === 'game' && (
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={()=>{
+                  saveSnapshot();
+                  setScreen('lobby');
+                }}
+                title={t(lang,'back')}
+                style={{flexShrink:0}}
+              >
+                ←
+              </button>
+            )}
 
-    {/* logo + název aplikace */}
-    <div
-      className="logo"
-      style={{
-        display:'flex',
-        alignItems:'center',
-        gap:'8px',
-        flexShrink:0,
-        minWidth:0,
-        fontWeight:900,
-        whiteSpace:'nowrap'
-      }}
-    >
-      <span className="dart"></span>
-      <span style={{fontWeight:900,whiteSpace:'nowrap'}}>{t(lang,'app')}</span>
-    </div>
+            {/* logo + název aplikace */}
+            <div
+              className="logo"
+              style={{
+                display:'flex',
+                alignItems:'center',
+                gap:'8px',
+                flexShrink:0,
+                minWidth:0,
+                fontWeight:900,
+                whiteSpace:'nowrap'
+              }}
+            >
+              <span className="dart"></span>
+              <span style={{fontWeight:900,whiteSpace:'nowrap'}}>{t(lang,'app')}</span>
+            </div>
 
-    {/* badge Premium – viditelná i na mobilu */}
-    {isPremium && (
-      <span
-        style={{
-          fontSize:12,
-          fontWeight:800,
-          lineHeight:1.2,
-          background:'#0f1318',
-          border:'1px solid var(--accent)',
-          color:'var(--accent)',
-          padding:'4px 8px',
-          borderRadius:'999px',
-          flexShrink:0,
-          display:'inline-flex',
-          alignItems:'center',
-          justifyContent:'center'
-        }}
-      >
-        Premium
-      </span>
-    )}
-  </div>
+            {/* badge Premium */}
+            {isPremium && (
+              <span
+                style={{
+                  fontSize:12,
+                  fontWeight:800,
+                  lineHeight:1.2,
+                  background:'#0f1318',
+                  border:'1px solid var(--accent)',
+                  color:'var(--accent)',
+                  padding:'4px 8px',
+                  borderRadius:'999px',
+                  flexShrink:0,
+                  display:'inline-flex',
+                  alignItems:'center',
+                  justifyContent:'center'
+                }}
+              >
+                Premium
+              </span>
+            )}
+          </div>
 
-  {/* PRAVÁ STRANA: zvuk / hlas / jazyk */}
-  <div
-    className="controls"
-    style={{
-      display:'flex',
-      alignItems:'center',
-      gap:'6px',
-      flexShrink:0,
-      flexWrap:'wrap'
-    }}
-  >
-    <button
-      type="button"
-      className={`iconBtn ${!soundOn?'muted':''}`}
-      onClick={()=>setSoundOn(v=>!v)}
-      aria-label={t(lang,'sound')}
-    >
-      <IconSpeaker/>
-    </button>
+          {/* PRAVÁ STRANA: zvuk / hlas / jazyk */}
+          <div
+            className="controls"
+            style={{
+              display:'flex',
+              alignItems:'center',
+              gap:'6px',
+              flexShrink:0,
+              flexWrap:'wrap'
+            }}
+          >
+            <button
+              type="button"
+              className={`iconBtn ${!soundOn?'muted':''}`}
+              onClick={()=>setSoundOn(v=>!v)}
+              aria-label={t(lang,'sound')}
+            >
+              <IconSpeaker/>
+            </button>
 
-    <button
-      type="button"
-      className={`iconBtn ${!voiceOn?'muted':''}`}
-      onClick={()=>setVoiceOn(v=>!v)}
-      aria-label={t(lang,'voice')}
-    >
-      <span className="iconHead" aria-hidden="true"></span>
-    </button>
+            <button
+              type="button"
+              className={`iconBtn ${!voiceOn?'muted':''}`}
+              onClick={()=>setVoiceOn(v=>!v)}
+              aria-label={t(lang,'voice')}
+            >
+              <span className="iconHead" aria-hidden="true"></span>
+            </button>
 
-    <select
-      className="input"
-      value={lang}
-      onChange={e=>setLang(e.target.value)}
-      style={{height:34}}
-    >
-      {['cs','en','de','es','nl','ru','zh'].map(code=>(
-        <option key={code} value={code}>{LANG_LABEL[code]}</option>
-      ))}
-    </select>
-  </div>
-</div>
-      {/* ADS */}
-{screen === 'lobby' && !isPremium && (
-  <div className="adstrip">
-    {/* Tohle je placeholder banner slot = tady ve finální mobilní appce poběží AdMob */}
-    <div className="adcard">AdMob banner</div>
-    <div className="adcard">Ad</div>
-    <div className="adcard">Ad</div>
-  </div>
-)}
+            <select
+              className="input"
+              value={lang}
+              onChange={e=>setLang(e.target.value)}
+              style={{height:34}}
+            >
+              {['cs','en','de','es','nl','ru','zh'].map(code=>(
+                <option key={code} value={code}>{LANG_LABEL[code]}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* ADS banner strip in lobby */}
+        {screen === 'lobby' && !isPremium && (
+          <div className="adstrip">
+            <div className="adcard">Reklamní pauza</div>
+            <div className="adcard">Podporuje vývoj hry</div>
+            <div className="adcard">Díky ❤️</div>
+          </div>
+        )}
+
         {screen === 'lobby' ? (
           <Lobby
             lang={lang} t={t}
@@ -1370,102 +1364,96 @@ if (!isPremium) {
 
         <audio ref={hitAudioRef} src="/dart-hit.mp3" preload="auto" />
         <audio ref={winAudioRef} src="/tada-fanfare-a-6313.mp3" preload="auto" />
-{/* FULLSCREEN REKLAMA PO VÝHŘE */}
-{showAd && (
-  <div
-    style={{
-      position:'fixed',
-      inset:0,
-      background:'rgba(0,0,0,0.9)',
-      color:'#fff',
-      zIndex:9998,
-      display:'flex',
-      flexDirection:'column',
-      alignItems:'center',
-      justifyContent:'center',
-      padding:'16px',
-      textAlign:'center'
-    }}
-  >
-    {/* simulace reklamního obsahu */}
-    <div
-      style={{
-        background:'#111',
-        border:'2px solid var(--accent)',
-        borderRadius:'12px',
-        width:'100%',
-        maxWidth:'320px',
-        minHeight:'180px',
-        display:'flex',
-        alignItems:'center',
-        justifyContent:'center',
-        fontWeight:'900',
-        fontSize:'20px',
-        boxShadow:'0 20px 40px #000'
-      }}
-    >
-      Reklama • AdMob interstitial
-    </div>
 
-    {/* odpočet */}
-    <div style={{marginTop:'16px',fontSize:'14px',opacity:.8,fontWeight:600}}>
-      Pokračovat za {adSecondsLeft}s
-    </div>
+        {/* FULLSCREEN OVERLAY PO VÝHŘE */}
+        {showAd && (
+          <div
+            style={{
+              position:'fixed',
+              inset:0,
+              background:'rgba(0,0,0,0.9)',
+              color:'#fff',
+              zIndex:9998,
+              display:'flex',
+              flexDirection:'column',
+              alignItems:'center',
+              justifyContent:'center',
+              padding:'16px',
+              textAlign:'center'
+            }}
+          >
+            {/* obsah reklamní pauzy / upsell */}
+            <div
+              style={{
+                background:'#111',
+                border:'2px solid var(--accent)',
+                borderRadius:'12px',
+                width:'100%',
+                maxWidth:'320px',
+                minHeight:'180px',
+                display:'flex',
+                alignItems:'center',
+                justifyContent:'center',
+                fontWeight:'900',
+                fontSize:'20px',
+                boxShadow:'0 20px 40px #000',
+                textAlign:'center'
+              }}
+            >
+              Reklamní pauza – děkujeme za podporu hry
+            </div>
 
-    {/* tlačítko pokračovat */}
-    <button
-      type="button"
-      disabled={adSecondsLeft > 0}
-      onClick={()=>{
-        // zavřít reklamu
-        setShowAd(false);
-        // safety: stop timer pokud ještě běží
-        if (adTimerRef.current){
-          clearInterval(adTimerRef.current);
-          adTimerRef.current = null;
-        }
-      }}
-      style={{
-        marginTop:'20px',
-        minWidth:'160px',
-        minHeight:'44px',
-        borderRadius:'10px',
-        fontWeight:'800',
-        fontSize:'16px',
-        background: adSecondsLeft > 0 ? '#444' : 'var(--accent)',
-        border: '2px solid var(--line)',
-        color:'#fff',
-        opacity: adSecondsLeft > 0 ? 0.5 : 1,
-        boxShadow: adSecondsLeft > 0 ? 'none' : '0 0 12px var(--accent)',
-        cursor: adSecondsLeft > 0 ? 'default' : 'pointer'
-      }}
-    >
-      Pokračovat
-    </button>
+            <div style={{marginTop:'16px',fontSize:'14px',opacity:.8,fontWeight:600}}>
+              Pokračovat za {adSecondsLeft}s
+            </div>
 
-    {/* premium upsell */}
-    {!isPremium && (
-      <div
-        style={{
-          marginTop:'16px',
-          fontSize:'12px',
-          lineHeight:1.4,
-          maxWidth:'260px',
-          opacity:.8
-        }}
-      >
-        Žádné reklamy a extra vzhledy?
-        <br/>
-        Odemkni Premium.
-      </div>
-    )}
-  </div>
-)}
-          {toast && <div className="toast ok">✔️ {toast}</div>}
+            <button
+              type="button"
+              disabled={adSecondsLeft > 0}
+              onClick={()=>{
+                closeAdNow();
+              }}
+              style={{
+                marginTop:'20px',
+                minWidth:'160px',
+                minHeight:'44px',
+                borderRadius:'10px',
+                fontWeight:'800',
+                fontSize:'16px',
+                background: adSecondsLeft > 0 ? '#444' : 'var(--accent)',
+                border: '2px solid var(--line)',
+                color:'#fff',
+                opacity: adSecondsLeft > 0 ? 0.5 : 1,
+                boxShadow: adSecondsLeft > 0 ? 'none' : '0 0 12px var(--accent)',
+                cursor: adSecondsLeft > 0 ? 'default' : 'pointer'
+              }}
+            >
+              Pokračovat
+            </button>
+
+            {!isPremium && (
+              <div
+                style={{
+                  marginTop:'16px',
+                  fontSize:'12px',
+                  lineHeight:1.4,
+                  maxWidth:'260px',
+                  opacity:.8
+                }}
+              >
+                Žádné pauzy a vlastní vzhled?
+                <br/>
+                Odemkni Premium.
+              </div>
+            )}
+          </div>
+        )}
+
+        {toast && <div className="toast ok">✔️ {toast}</div>}
       </div>
     </ErrorBoundary>
   );
-} // ←←← TADY JE KONEC App KOMPONENTY. MUSÍ TAM BÝT TAHLE ZAVÍRACÍ ZÁVORKA A STŘEDNÍK NENÍ POTŘEBA.
+} // konec App komponenty
 
 /* ===== LOBBY ===== */
 function Lobby({
@@ -1489,7 +1477,6 @@ function Lobby({
   return (
     <div className="lobbyWrap">
 
-     
       {/* Režim */}
       <div className="lobbyCard">
         <div className="lobbyControls">
@@ -1526,6 +1513,7 @@ function Lobby({
           </div>
         </div>
       )}
+
       {/* Out pravidla pro Classic */}
       {mode==='classic' && (
         <div className="lobbyCard">
@@ -1568,7 +1556,8 @@ function Lobby({
           </div>
         </div>
       )}
-      {/* Pořadí & Robot (vedle sebe v jedné kartě) */}
+
+      {/* Pořadí & Robot */}
       <div className="lobbyCard">
         <div
           className="lobbyControls"
@@ -1631,9 +1620,9 @@ function Lobby({
 
         </div>
       </div>
-              {/* Premium + vzhled */}        
+
+      {/* Premium + vzhled */}
       <div className="lobbyCard">
-        {/* Přepínač režimu */}
         <div
           style={{
             display:'flex',
@@ -1659,17 +1648,17 @@ function Lobby({
             type="button"
             className="btn"
             onClick={()=>{
-  setIsPremium(prev=>{
-    const next = !prev;
-    try{
-      const raw = localStorage.getItem('lobby');
-      const parsed = raw ? JSON.parse(raw) : {};
-      parsed.isPremium = next;
-      localStorage.setItem('lobby', JSON.stringify(parsed));
-    }catch{}
-    return next;
-  });
-}}
+              setIsPremium(prev=>{
+                const next = !prev;
+                try{
+                  const raw = localStorage.getItem('lobby');
+                  const parsed = raw ? JSON.parse(raw) : {};
+                  parsed.isPremium = next;
+                  localStorage.setItem('lobby', JSON.stringify(parsed));
+                }catch{}
+                return next;
+              });
+            }}
             style={{
               minWidth:90,
               fontWeight:800,
@@ -1681,120 +1670,115 @@ function Lobby({
           </button>
         </div>
 
-       {/* Vzhled aplikace */}
-{isPremium && (
-  <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
-    <div
-      style={{
-        fontSize:12,
-        color:'#fff',
-        opacity:.8,
-        fontWeight:600
-      }}
-    >
-      Vzhled aplikace:
-    </div>
+        {isPremium && (
+          <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
+            <div
+              style={{
+                fontSize:12,
+                color:'#fff',
+                opacity:.8,
+                fontWeight:600
+              }}
+            >
+              Vzhled aplikace:
+            </div>
 
-    <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
+            <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
 
-      {/* ČERNÝ (základní) */}
-      <button
-        type="button"
-        onClick={()=>{
-          console.log('CLICK theme = black');
-          setThemeColor('black');
-        }}
-        style={{
-          width:24,
-          height:24,
-          borderRadius:4,
-          border:'2px solid #fff',
-          background:'#0e0e0e',
-          cursor:'pointer',
-          boxShadow: themeColor==='black' ? '0 0 6px #fff' : 'none'
-        }}
-        title="černá"
-      />
+              {/* ČERNÝ */}
+              <button
+                type="button"
+                onClick={()=>{
+                  setThemeColor('black');
+                }}
+                style={{
+                  width:24,
+                  height:24,
+                  borderRadius:4,
+                  border:'2px solid #fff',
+                  background:'#0e0e0e',
+                  cursor:'pointer',
+                  boxShadow: themeColor==='black' ? '0 0 6px #fff' : 'none'
+                }}
+                title="černá"
+              />
 
-      {/* ZELENÝ */}
-      <button
-        type="button"
-        onClick={()=>{
-          console.log('CLICK theme = green');
-          setThemeColor('green');
-        }}
-        style={{
-          width:24,
-          height:24,
-          borderRadius:4,
-          border:'2px solid #14532d',
-          background:'#16a34a',
-          cursor:'pointer',
-          boxShadow: themeColor==='green' ? '0 0 6px #fff' : 'none'
-        }}
-        title="zelená"
-      />
+              {/* ZELENÝ */}
+              <button
+                type="button"
+                onClick={()=>{
+                  setThemeColor('green');
+                }}
+                style={{
+                  width:24,
+                  height:24,
+                  borderRadius:4,
+                  border:'2px solid #14532d',
+                  background:'#16a34a',
+                  cursor:'pointer',
+                  boxShadow: themeColor==='green' ? '0 0 6px #fff' : 'none'
+                }}
+                title="zelená"
+              />
 
-      {/* MODRÝ */}
-      <button
-        type="button"
-        onClick={()=>{
-          console.log('CLICK theme = blue');
-          setThemeColor('blue');
-        }}
-        style={{
-          width:24,
-          height:24,
-          borderRadius:4,
-          border:'2px solid #1e3a8a',
-          background:'#3b82f6',
-          cursor:'pointer',
-          boxShadow: themeColor==='blue' ? '0 0 6px #fff' : 'none'
-        }}
-        title="modrá"
-      />
+              {/* MODRÝ */}
+              <button
+                type="button"
+                onClick={()=>{
+                  setThemeColor('blue');
+                }}
+                style={{
+                  width:24,
+                  height:24,
+                  borderRadius:4,
+                  border:'2px solid #1e3a8a',
+                  background:'#3b82f6',
+                  cursor:'pointer',
+                  boxShadow: themeColor==='blue' ? '0 0 6px #fff' : 'none'
+                }}
+                title="modrá"
+              />
 
-      {/* ČERVENÝ */}
-      <button
-        type="button"
-        onClick={()=>{
-          console.log('CLICK theme = red');
-          setThemeColor('red');
-        }}
-        style={{
-          width:24,
-          height:24,
-          borderRadius:4,
-          border:'2px solid #7f1d1d',
-          background:'#ef4444',
-          cursor:'pointer',
-          boxShadow: themeColor==='red' ? '0 0 6px #fff' : 'none'
-        }}
-        title="červená"
-      />
+              {/* ČERVENÝ */}
+              <button
+                type="button"
+                onClick={()=>{
+                  setThemeColor('red');
+                }}
+                style={{
+                  width:24,
+                  height:24,
+                  borderRadius:4,
+                  border:'2px solid #7f1d1d',
+                  background:'#ef4444',
+                  cursor:'pointer',
+                  boxShadow: themeColor==='red' ? '0 0 6px #fff' : 'none'
+                }}
+                title="červená"
+              />
 
-      {/* FIALOVÝ */}
-      <button
-        type="button"
-        onClick={()=>{
-          console.log('CLICK theme = purple');
-          setThemeColor('purple');
-        }}
-        style={{
-          width:24,
-          height:24,
-          borderRadius:4,
-          border:'2px solid #4c1d95',
-          background:'#8b5cf6',
-          cursor:'pointer',
-          boxShadow: themeColor==='purple' ? '0 0 6px #fff' : 'none'
-        }}
-        title="fialová"
-      />
-    </div>
-  </div>
-)}
-</div>
+              {/* FIALOVÝ */}
+              <button
+                type="button"
+                onClick={()=>{
+                  setThemeColor('purple');
+                }}
+                style={{
+                  width:24,
+                  height:24,
+                  borderRadius:4,
+                  border:'2px solid #4c1d95',
+                  background:'#8b5cf6',
+                  cursor:'pointer',
+                  boxShadow: themeColor==='purple' ? '0 0 6px #fff' : 'none'
+                }}
+                title="fialová"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Start & Pokračovat */}
       <div className="lobbyCard">
         <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
@@ -2015,12 +1999,7 @@ function Game({
   scores, averages, thrown, lastTurn,
   cricket, around,
   darts, mult, setMult, commitDart, undo, winner,
-  saveGame, restartGame, cardRefs, setScreen,
-  isPremium,
-  langFull,
-  adSecondsLeft,
-  showAd,
-  closeAdNow
+  saveGame, restartGame, cardRefs, setScreen
 }){
 
   // keypad layout
@@ -2048,10 +2027,7 @@ function Game({
     ];
   },[mode]);
 
-  // cricket vlevo
   const cricketTargets = ['15','16','17','18','19','20','bull'];
-
-  const showPostWinPanel = winner!=null && !showAd; // po výhře, když reklama už skončila / žádná není
 
   return (
     <div className="gameWrap">
@@ -2080,7 +2056,10 @@ function Game({
           <button
             type="button"
             className="btn ghost"
-            onClick={()=>{ saveGame(); setScreen('lobby'); }}
+            onClick={()=>{
+              saveGame();
+              setScreen('lobby');
+            }}
           >
             {t(lang,'back')}
           </button>
@@ -2178,7 +2157,7 @@ function Game({
           })}
         </div>
       ) : (
-        /* CRICKET layout: vlevo pevný sloupec + scroll hráčů vpravo */
+        /* CRICKET layout */
         <div className="cricketWrap">
           <div className="targetsRail">
             <div className="targetsRailHead"></div>
@@ -2231,12 +2210,9 @@ function Game({
         </div>
       )}
 
-      {/* PAD / KEYPAD - schovám po výhře a po dobu reklamy */}
+      {/* PAD / KEYPAD - schovám po výhře */}
       {winner==null && (
         <div className="padPane">
-          {/* --- REKLAMA PO VÝHŘE START --- */}
-{gameState === "win" && showAd()}
-{/* --- REKLAMA PO VÝHŘE END --- */}
           {/* první řádek: DOUBLE / TRIPLE / undo */}
           <div className="padRow">
             <button
@@ -2327,70 +2303,6 @@ function Game({
         </div>
       )}
 
-      {/* Po výhře: panel s pokračováním (po reklamě nebo pokud premium) */}
-      {showPostWinPanel && (
-        <div className="padPane">
-          <div
-            style={{
-              fontWeight:900,
-              fontSize:20,
-              textAlign:'center',
-              marginBottom:8
-            }}
-          >
-            {t(lang,'youWinPrefix')}: {players[winner]?.name ?? ''}
-          </div>
-
-          <div className="padRow" style={{flexWrap:'wrap'}}>
-            <button
-              type="button"
-              className="key"
-              style={{height:56,fontSize:16,minWidth:120,flex:'1 1 auto'}}
-              onClick={restartGame}
-            >
-              {t(lang,'continueGame')}
-            </button>
-
-            <button
-              type="button"
-              className="key"
-              style={{height:56,fontSize:16,minWidth:120,flex:'1 1 auto'}}
-              onClick={()=>{
-                saveGame();
-                setScreen('lobby');
-              }}
-            >
-              {t(lang,'back')}
-            </button>
-
-            {!isPremium && (
-              <button
-                type="button"
-                className="key"
-                style={{height:56,fontSize:16,minWidth:120,flex:'1 1 auto'}}
-                onClick={closeAdNow}
-                disabled={showAd}
-              >
-                {t(lang,'ad_continue')}
-              </button>
-            )}
-          </div>
-
-          {!isPremium && (
-            <div
-              style={{
-                fontSize:12,
-                color:'var(--muted)',
-                textAlign:'center',
-                width:'100%',
-                marginTop:4
-              }}
-            >
-              {t(lang,'premium')}: {t(lang,'appearance')}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
