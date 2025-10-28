@@ -126,6 +126,7 @@ const LANG_LABEL = {
   ru:'Русский',
   zh:'中文'
 };
+
 const t = (lang, key) => (T[lang] && T[lang][key]) || T.cs[key] || key;
 
 /* ===== Utils ===== */
@@ -139,22 +140,17 @@ const deepClone = (obj) => {
 
 const uid = () => Math.random().toString(36).slice(2,9);
 const colors = ['#16a34a','#3b82f6','#ef4444','#14b8a6','#8b5cf6','#e11d48','#f59e0b','#22c55e'];
-const defaultNameFor=(lang,n)=>({
-  cs:`Hráč ${n}`,en:`Player ${n}`,de:`Spieler ${n}`,
-  es:`Jugador ${n}`,nl:`Speler ${n}`,ru:`Игрок ${n}`,zh:`玩家 ${n}`
-}[lang]||`Player ${n}`);
-const autoNameRx = [
-  /^Hráč (\d+)$/, /^Player (\d+)$/, /^Spieler (\d+)$/,
-  /^Jugador (\d+)$/, /^Speler (\d+)$/, /^Игрок (\d+)$/, /^玩家 (\d+)$/
-];
+const defaultNameFor=(lang,n)=>({cs:`Hráč ${n}`,en:`Player ${n}`,de:`Spieler ${n}`,es:`Jugador ${n}`,nl:`Speler ${n}`,ru:`Игрок ${n}`,zh:`玩家 ${n}`}[lang]||`Player ${n}`);
+const autoNameRx = [/^Hráč (\d+)$/, /^Player (\d+)$/, /^Spieler (\d+)$/, /^Jugador (\d+)$/, /^Speler (\d+)$/, /^Игрок (\d+)$/, /^玩家 (\d+)$/];
 
 function speak(lang, text, enabled){
   if(!enabled || !window.speechSynthesis) return;
   const u = new SpeechSynthesisUtterance(text.toString());
-  const map = {
-    cs:'cs-CZ', en:'en-US', de:'de-DE', es:'es-ES',
-    nl:'nl-NL', ru:'ru-RU', zh:'zh-CN'
-  };
+  const map = { cs:'cs-CZ', en:'en-US', de:'de-DE', es:'es-ES', nl:'nl-NL', ru:'ru-RU', zh:'zh-CN' };
+  u.lang = map[lang] || 'en-US';
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
+}
   u.lang = map[lang] || 'en-US';
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(u);
