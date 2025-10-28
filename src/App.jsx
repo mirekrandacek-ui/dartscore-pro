@@ -341,19 +341,50 @@ export default function App(){
     });
   },[ai,lang]);
 
-  /* >>> APPLY THEME COLOR <<< */
-  useEffect(()=>{
-    const root = document.documentElement;
-    if(themeColor === 'blue'){
-      root.style.setProperty('--accent', '#3b82f6');
-    } else if(themeColor === 'red'){
-      root.style.setProperty('--accent', '#ef4444');
-    } else if(themeColor === 'purple'){
-      root.style.setProperty('--accent', '#8b5cf6');
-    } else {
-      root.style.setProperty('--accent', '#16a34a'); // default
-    }
-  },[themeColor]);
+  // >>> APPLY THEME (bg / panel / line / accent) <<<
+useEffect(()=>{
+  const root = document.documentElement;
+
+  // default = zelená
+  let bg     = '#1f2227'; // pozadí celé appky
+  let panel  = '#24282e'; // boxy, karty, scoreboard
+  let line   = '#2d3239'; // rámečky, border
+  let accent = '#16a34a'; // zvýraznění (aktivní hráč, buttony, badge Premium)
+
+  if (themeColor === 'blue') {
+    // modrý skin
+    bg     = '#0f172a'; // hodně tmavě námořnická
+    panel  = '#1e293b'; // tmavě modrošedá
+    line   = '#334155'; // studená šedá linka
+    accent = '#3b82f6'; // modrý akcent (stejný jako čtvereček)
+  } else if (themeColor === 'red') {
+    // červený skin
+    bg     = '#1a0b0b'; // hodně tmavá vínová
+    panel  = '#2a1414'; // panel do tmavě červenohnědé
+    line   = '#472222';
+    accent = '#ef4444'; // červená
+  } else if (themeColor === 'purple') {
+    // fialový skin
+    bg     = '#170f2a'; // temně fialová
+    panel  = '#241b3d'; // panel fialovější
+    line   = '#3b2a5c';
+    accent = '#8b5cf6'; // fialový akcent
+  } else if (themeColor === 'default') {
+    // explicitně stejné jako výchozí zelený
+    bg     = '#1f2227';
+    panel  = '#24282e';
+    line   = '#2d3239';
+    accent = '#16a34a';
+  }
+
+  // propsat CSS proměnné
+  root.style.setProperty('--bg', bg);
+  root.style.setProperty('--panel', panel);
+  root.style.setProperty('--line', line);
+  root.style.setProperty('--accent', accent);
+
+  // texty atd. necháváme stejné (bílé), takže --text, --muted nesaháme
+}, [themeColor]);
 
   const movePlayer = (i,dir) => setPlayers(ps=>{
     const a=[...ps];
