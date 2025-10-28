@@ -1216,15 +1216,17 @@ export default function App(){
   },[]);
 
   const hasSaved = !!localStorage.getItem('savedGame');
-
-    /* ===== RENDER APP ===== */
+  /* ===== RENDER APP ===== */
   return (
     <ErrorBoundary>
       <div className="container" data-mode={mode}>
-        {/* HEADER */}
-        {/* … tady necháváš svůj aktuální header, controls, premium badge atd. nic na něm neměň … */}
 
-        {/* ADS (jen pokud není premium) */}
+        {/* HEADER ▸ (ponecháváš svůj obsah headeru tady, neměním ti nic uvnitř) */}
+        {/* !!! DŮLEŽITÉ: pokud jsi měl v App.jsx už hotový header a adstrip,
+             nech jeho obsah stejný. Tady jde jen o správné uzavření komponent.
+        */}
+
+        {/* ADS jen pokud není premium */}
         {!isPremium && (
           <div className="adstrip">
             <div className="adcard">AdMob</div>
@@ -1233,7 +1235,7 @@ export default function App(){
           </div>
         )}
 
-        {screen==='lobby' ? (
+        {screen === 'lobby' ? (
           <Lobby
             lang={lang} t={t}
             mode={mode} setMode={setMode}
@@ -1259,14 +1261,14 @@ export default function App(){
             lang={lang} t={t}
             mode={mode}
             outDesc={(() => {
-              if(mode!=='classic'){
-                return mode==='cricket' ? 'Cricket' : 'Around the Clock';
+              if (mode !== 'classic') {
+                return mode === 'cricket' ? 'Cricket' : 'Around the Clock';
               }
-              const arr=[];
-              if(outDouble) arr.push('Double-out');
-              if(outTriple) arr.push('Triple-out');
-              if(outMaster) arr.push('Master-out');
-              if(arr.length===0) return 'Any-out';
+              const arr = [];
+              if (outDouble) arr.push('Double-out');
+              if (outTriple) arr.push('Triple-out');
+              if (outMaster) arr.push('Master-out');
+              if (arr.length === 0) return 'Any-out';
               return arr.join(' + ');
             })()}
             players={players} order={order} currIdx={currIdx}
@@ -1276,14 +1278,14 @@ export default function App(){
             darts={darts} mult={mult} setMult={setMult}
             commitDart={commitDart} undo={undo}
             winner={winner}
-            saveGame={()=>{
+            saveGame={() => {
               saveSnapshot();
               showToast('Uloženo');
             }}
             restartGame={restartGame}
             cardRefs={cardRefs}
-            setScreen={(scr)=>{
-              if(scr==='lobby') saveSnapshot();
+            setScreen={(scr) => {
+              if (scr === 'lobby') saveSnapshot();
               setScreen(scr);
             }}
           />
@@ -1295,7 +1297,7 @@ export default function App(){
       </div>
     </ErrorBoundary>
   );
-} // <<<<<<<<<<<<<<<<<<<<<<<<<< KONEC FUNKCE App !!!
+} // ←←← TADY JE KONEC App KOMPONENTY. MUSÍ TAM BÝT TAHLE ZAVÍRACÍ ZÁVORKA A STŘEDNÍK NENÍ POTŘEBA.
 
 /* ===== LOBBY ===== */
 function Lobby({
@@ -1318,6 +1320,7 @@ function Lobby({
 }){
   return (
     <div className="lobbyWrap">
+
      
       {/* Režim */}
       <div className="lobbyCard">
