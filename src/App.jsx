@@ -1219,22 +1219,83 @@ export default function App(){
   /* ===== RENDER APP ===== */
   return (
     <ErrorBoundary>
-      <div className="container" data-mode={mode}>
+        <div className="container" data-mode={mode}>
 
-        {/* HEADER ▸ (ponecháváš svůj obsah headeru tady, neměním ti nic uvnitř) */}
-        {/* !!! DŮLEŽITÉ: pokud jsi měl v App.jsx už hotový header a adstrip,
-             nech jeho obsah stejný. Tady jde jen o správné uzavření komponent.
-        */}
+      {/* HEADER */}
+      <div className="header">
+        <div className="left">
+          {screen==='game' && (
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={()=>{
+                saveSnapshot();
+                setScreen('lobby');
+              }}
+              title={t(lang,'back')}
+            >
+              ←
+            </button>
+          )}
 
-        {/* ADS jen pokud není premium */}
-        {!isPremium && (
-          <div className="adstrip">
-            <div className="adcard">AdMob</div>
-            <div className="adcard">Ad</div>
-            <div className="adcard">Ad</div>
+          <div className="logo">
+            <span className="dart"></span>
+            <span>{t(lang,'app')}</span>
           </div>
-        )}
 
+          {isPremium && (
+            <span
+              className="badge"
+              style={{
+                fontSize:12,
+                fontWeight:800,
+                whiteSpace:'nowrap'
+              }}
+            >
+              Premium
+            </span>
+          )}
+        </div>
+
+        <div className="controls">
+          <button
+            type="button"
+            className={`iconBtn ${!soundOn?'muted':''}`}
+            onClick={()=>setSoundOn(v=>!v)}
+            aria-label={t(lang,'sound')}
+          >
+            <IconSpeaker/>
+          </button>
+
+          <button
+            type="button"
+            className={`iconBtn ${!voiceOn?'muted':''}`}
+            onClick={()=>setVoiceOn(v=>!v)}
+            aria-label={t(lang,'voice')}
+          >
+            <span className="iconHead" aria-hidden="true"></span>
+          </button>
+
+          <select
+            className="input"
+            value={lang}
+            onChange={e=>setLang(e.target.value)}
+          >
+            {['cs','en','de','es','nl','ru'].map(code=>(
+              <option key={code} value={code}>{LANG_LABEL[code]}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* ADS jen pokud není premium */}
+      {!isPremium && (
+        <div className="adstrip">
+          <div className="adcard">AdMob</div>
+          <div className="adcard">Ad</div>
+          <div className="adcard">Ad</div>
+        </div>
+      )}
         {screen === 'lobby' ? (
           <Lobby
             lang={lang} t={t}
