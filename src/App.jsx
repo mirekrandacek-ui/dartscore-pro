@@ -24,10 +24,8 @@ const T = {
       player:'Hráč',game:'Hra',darts:'šipek',avg:'průměr/šipka',last:'Poslední hod',
       undo:'Zpět',next:'Další hráč',bust:'bez skóre',checkout:'checkout',
       youWinPrefix:'Výhra', outLabel:'Ukončení', zeroWord:'nula',
-      points:'Body', target:'Cíl',
-      premium:'Premium',appearance:'Vzhled aplikace',
-      ad_wait:'Reklama – počkej',ad_continue:'Pokračovat',ad_seconds:'s'
-  },
+      points:'Body', target:'Cíl'},
+
   en:{app:'DartScore Pro',sound:'Sound',voice:'Voice',back:'Back',
       mode:'Mode',classic:'Classic',cricket:'Cricket',around:'Around the Clock',
       start:'Start',closing:'Finish',
@@ -41,15 +39,13 @@ const T = {
       player:'Player',game:'Game',darts:'darts',avg:'avg/dart',last:'Last throw',
       undo:'Undo',next:'Next player',bust:'bust',checkout:'checkout',
       youWinPrefix:'Win', outLabel:'Finish', zeroWord:'zero',
-      points:'Points', target:'Target',
-      premium:'Premium',appearance:'App appearance',
-      ad_wait:'Ad - please wait',ad_continue:'Continue',ad_seconds:'s'
-  },
+      points:'Points', target:'Target'},
+
   de:{app:'DartScore Pro',sound:'Ton',voice:'Stimme',back:'Zurück',
       mode:'Modus',classic:'Klassisch',cricket:'Cricket',around:'Rund um die Uhr',
       start:'Start',closing:'Beenden',
       doubleOut:'Double-out',tripleOut:'Triple-out',masterOut:'Master-out',
-      anyOutHint:'— wenn nichts gewählt ist, ist any-out erlaubt',
+      anyOutHint:'— wenn nichts gewählt ist, ist Any-out erlaubt',
       order:'Reihenfolge',fixed:'Fix',random:'Zufällig', playThrough:'Runde ausspielen',
       robot:'Roboter',off:'Aus',easy:'Leicht',medium:'Mittel',hard:'Schwer',
       startGame:'▶ Spiel starten',continueGame:'Spiel fortsetzen',saveGame:'Spiel speichern',restart:'Neu starten',
@@ -58,10 +54,8 @@ const T = {
       player:'Spieler',game:'Spiel',darts:'Darts',avg:'Schnitt/Dart',last:'Letzter Wurf',
       undo:'Zurück',next:'Nächster',bust:'bust',checkout:'Checkout',
       youWinPrefix:'Sieg', outLabel:'Finish', zeroWord:'null',
-      points:'Punkte', target:'Ziel',
-      premium:'Premium',appearance:'App-Design',
-      ad_wait:'Werbung – bitte warten',ad_continue:'Weiter',ad_seconds:'s'
-  },
+      points:'Punkte', target:'Ziel'},
+
   es:{app:'DartScore Pro',sound:'Sonido',voice:'Voz',back:'Atrás',
       mode:'Modo',classic:'Clásico',cricket:'Cricket',around:'Alrededor del reloj',
       start:'Inicio',closing:'Cierre',
@@ -75,10 +69,8 @@ const T = {
       player:'Jugador',game:'Juego',darts:'dardos',avg:'prom/dardo',last:'Último tiro',
       undo:'Deshacer',next:'Siguiente',bust:'sin puntuación',checkout:'checkout',
       youWinPrefix:'Victoria', outLabel:'Finish', zeroWord:'cero',
-      points:'Puntos', target:'Objetivo',
-      premium:'Premium',appearance:'Apariencia de la app',
-      ad_wait:'Anuncio – espera',ad_continue:'Continuar',ad_seconds:'s'
-  },
+      points:'Puntos', target:'Objetivo'},
+
   nl:{app:'DartScore Pro',sound:'Geluid',voice:'Spraak',back:'Terug',
       mode:'Modus',classic:'Klassiek',cricket:'Cricket',around:'Rond de klok',
       start:'Start',closing:'Einde',
@@ -92,10 +84,8 @@ const T = {
       player:'Speler',game:'Spel',darts:'darts',avg:'gem/dart',last:'Laatste worp',
       undo:'Ongedaan',next:'Volgende',bust:'bust',checkout:'checkout',
       youWinPrefix:'Winst', outLabel:'Finish', zeroWord:'nul',
-      points:'Punten', target:'Doel',
-      premium:'Premium',appearance:'App-weergave',
-      ad_wait:'Advertentie – wacht',ad_continue:'Verder',ad_seconds:'s'
-  },
+      points:'Punten', target:'Doel'},
+
   ru:{app:'DartScore Pro',sound:'Звук',voice:'Голос',back:'Назад',
       mode:'Режим',classic:'Классика',cricket:'Крикет',around:'По кругу',
       start:'Старт',closing:'Завершение',
@@ -109,28 +99,34 @@ const T = {
       player:'Игрок',game:'Игра',darts:'дротиков',avg:'ср./дротик',last:'Последний бросок',
       undo:'Отмена',next:'Далее',bust:'без очков',checkout:'чекаут',
       youWinPrefix:'Победа', outLabel:'Finish', zeroWord:'ноль',
-      points:'Очки', target:'Цель',
-      premium:'Премиум',appearance:'Внешний вид',
-      ad_wait:'Реклама – подождите',ad_continue:'Продолжить',ad_seconds:'с'
-  },
+      points:'Очки', target:'Цель'},
+
   zh:{app:'DartScore Pro',sound:'声音',voice:'语音',back:'返回',
-      mode:'模式',classic:'标准玩法',cricket:'板球',around:'时钟环投',
+      mode:'模式',classic:'经典',cricket:'Cricket',around:'顺时靶位',
       start:'开始',closing:'收尾',
       doubleOut:'双倍出',tripleOut:'三倍出',masterOut:'大师出',
-      anyOutHint:'— 未选择时，允许任意收尾',
-      order:'顺序',fixed:'固定',random:'随机', playThrough:'打完整轮',
+      anyOutHint:'— 如果没有选择限制，可以任意收尾',
+      order:'顺序',fixed:'固定',random:'随机', playThrough:'打完本轮',
       robot:'机器人',off:'关',easy:'简单',medium:'中等',hard:'困难',
       startGame:'▶ 开始游戏',continueGame:'继续游戏',saveGame:'保存对局',restart:'重新开始',
       rules:'规则',addPlayer:'添加玩家',
-      saved:'已保存的对局',share:'分享',clear:'全部删除',
-      player:'玩家',game:'对局',darts:'镖',avg:'均分/镖',last:'上回合',
-      undo:'撤销',next:'下一个',bust:'爆掉',checkout:'收尾',
-      youWinPrefix:'胜者', outLabel:'收尾', zeroWord:'零',
-      points:'分数', target:'目标',
-      premium:'高级版',appearance:'界面外观',
-      ad_wait:'广告 - 请稍等',ad_continue:'继续',ad_seconds:'秒'
-  }
+      saved:'已保存的对局',share:'分享',clear:'全部清除',
+      player:'玩家',game:'对局',darts:'镖',avg:'均分/镖',last:'上轮合计',
+      undo:'撤销',next:'下一位',bust:'爆掉',checkout:'收尾',
+      youWinPrefix:'胜利', outLabel:'收尾', zeroWord:'零',
+      points:'分数', target:'目标'}
 };
+
+const LANG_LABEL = {
+  cs:'Čeština',
+  en:'English',
+  de:'Deutsch',
+  es:'Español',
+  nl:'Nederlands',
+  ru:'Русский',
+  zh:'中文'
+};
+
 const LANG_LABEL = {
   cs:'Čeština',en:'English',de:'Deutsch',es:'Español',nl:'Nederlands',ru:'Русский',zh:'中文'
 };
@@ -1222,79 +1218,114 @@ export default function App(){
         <div className="container" data-mode={mode}>
 
       {/* HEADER */}
-      <div className="header">
-       <div className="left" style={{display:'flex',alignItems:'center',gap:'8px',minWidth:0}}>
-  {screen==='game' && (
-    <button
-      type="button"
-      className="btn ghost"
-      onClick={()=>{
-        saveSnapshot();
-        setScreen('lobby');
-      }}
-      title={t(lang,'back')}
-      style={{flexShrink:0}}
-    >
-      ←
-    </button>
-  )}
+   <div className="header" style={{flexWrap:'wrap'}}>
+  {/* LEVÁ STRANA: logo + Premium badge */}
+  <div
+    className="left"
+    style={{
+      display:'flex',
+      alignItems:'center',
+      gap:'8px',
+      minWidth:0,
+      flexWrap:'wrap'
+    }}
+  >
+    {screen === 'game' && (
+      <button
+        type="button"
+        className="btn ghost"
+        onClick={()=>{
+          saveSnapshot();
+          setScreen('lobby');
+        }}
+        title={t(lang,'back')}
+        style={{flexShrink:0}}
+      >
+        ←
+      </button>
+    )}
 
-  <div style={{display:'flex',alignItems:'center',gap:'8px',minWidth:0}}>
-    <div className="logo" style={{flexShrink:0,display:'flex',alignItems:'center',gap:'8px'}}>
+    {/* logo + název aplikace */}
+    <div
+      className="logo"
+      style={{
+        display:'flex',
+        alignItems:'center',
+        gap:'8px',
+        flexShrink:0,
+        minWidth:0,
+        fontWeight:900,
+        whiteSpace:'nowrap'
+      }}
+    >
       <span className="dart"></span>
       <span style={{fontWeight:900,whiteSpace:'nowrap'}}>{t(lang,'app')}</span>
     </div>
 
+    {/* badge Premium – viditelná i na mobilu */}
     {isPremium && (
       <span
-        className="badge"
         style={{
           fontSize:12,
           fontWeight:800,
-          whiteSpace:'nowrap',
           lineHeight:1.2,
           background:'#0f1318',
           border:'1px solid var(--accent)',
           color:'var(--accent)',
           padding:'4px 8px',
-          borderRadius:'999px'
+          borderRadius:'999px',
+          flexShrink:0,
+          display:'inline-flex',
+          alignItems:'center',
+          justifyContent:'center'
         }}
       >
         Premium
       </span>
     )}
   </div>
+
+  {/* PRAVÁ STRANA: zvuk / hlas / jazyk */}
+  <div
+    className="controls"
+    style={{
+      display:'flex',
+      alignItems:'center',
+      gap:'6px',
+      flexShrink:0,
+      flexWrap:'wrap'
+    }}
+  >
+    <button
+      type="button"
+      className={`iconBtn ${!soundOn?'muted':''}`}
+      onClick={()=>setSoundOn(v=>!v)}
+      aria-label={t(lang,'sound')}
+    >
+      <IconSpeaker/>
+    </button>
+
+    <button
+      type="button"
+      className={`iconBtn ${!voiceOn?'muted':''}`}
+      onClick={()=>setVoiceOn(v=>!v)}
+      aria-label={t(lang,'voice')}
+    >
+      <span className="iconHead" aria-hidden="true"></span>
+    </button>
+
+    <select
+      className="input"
+      value={lang}
+      onChange={e=>setLang(e.target.value)}
+      style={{height:34}}
+    >
+      {['cs','en','de','es','nl','ru','zh'].map(code=>(
+        <option key={code} value={code}>{LANG_LABEL[code]}</option>
+      ))}
+    </select>
+  </div>
 </div>
-        <div className="controls">
-          <button
-            type="button"
-            className={`iconBtn ${!soundOn?'muted':''}`}
-            onClick={()=>setSoundOn(v=>!v)}
-            aria-label={t(lang,'sound')}
-          >
-            <IconSpeaker/>
-          </button>
-
-          <button
-            type="button"
-            className={`iconBtn ${!voiceOn?'muted':''}`}
-            onClick={()=>setVoiceOn(v=>!v)}
-            aria-label={t(lang,'voice')}
-          >
-            <span className="iconHead" aria-hidden="true"></span>
-          </button>
-
-          <select
-            className="input"
-            value={lang}
-            onChange={e=>setLang(e.target.value)}
-          >
-            {['cs','en','de','es','nl','ru'].map(code=>(
-              <option key={code} value={code}>{LANG_LABEL[code]}</option>
-            ))}
-          </select>
-        </div>
-      </div>
 
       {/* ADS jen pokud není premium */}
       {!isPremium && (
@@ -1532,45 +1563,46 @@ function Lobby({
 
         </div>
       </div>
-              {/* Premium + vzhled */}
+              {/* Premium + vzhled */}        
       <div className="lobbyCard">
-        {/* horní řada: přepínač režimu */}
-          <div
-    style={{
-      display:'flex',
-      flexWrap:'wrap',
-      alignItems:'center',
-      justifyContent:'space-between',
-      gap:'8px',
-      marginBottom:8
-    }}
-  >
-    <span
-      style={{
-        fontWeight:800,
-        fontSize:14,
-        color:'#fff',
-        lineHeight:1.2
-      }}
-    >
-      Premium režim
-    </span>
+        {/* Přepínač režimu */}
+        <div
+          style={{
+            display:'flex',
+            flexWrap:'wrap',
+            alignItems:'center',
+            justifyContent:'space-between',
+            gap:'8px',
+            marginBottom:8
+          }}
+        >
+          <span
+            style={{
+              fontWeight:800,
+              fontSize:14,
+              color:'#fff',
+              lineHeight:1.2
+            }}
+          >
+            Premium režim
+          </span>
 
-    <button
-      type="button"
-      className="btn"
-      onClick={()=>setIsPremium(p=>!p)}
-      style={{
-        minWidth:90,
-        fontWeight:800,
-        borderColor:'var(--accent)',
-        boxShadow: isPremium ? '0 0 6px var(--accent)' : 'none'
-      }}
-    >
-      {isPremium ? 'Premium' : 'Free'}
-    </button>
-  </div>
-        {/* vzhled aplikace */}
+          <button
+            type="button"
+            className="btn"
+            onClick={()=>setIsPremium(p=>!p)}
+            style={{
+              minWidth:90,
+              fontWeight:800,
+              borderColor:'var(--accent)',
+              boxShadow: isPremium ? '0 0 6px var(--accent)' : 'none'
+            }}
+          >
+            {isPremium ? 'Premium' : 'Free'}
+          </button>
+        </div>
+
+        {/* Vzhled aplikace */}
         {isPremium && (
           <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
             <div
@@ -1585,7 +1617,7 @@ function Lobby({
             </div>
 
             <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
-              {/* ZELENÁ / DEFAULT */}
+
               <button
                 type="button"
                 onClick={()=>{
@@ -1604,7 +1636,6 @@ function Lobby({
                 title="zelená"
               />
 
-              {/* MODRÁ */}
               <button
                 type="button"
                 onClick={()=>{
@@ -1623,7 +1654,6 @@ function Lobby({
                 title="modrá"
               />
 
-              {/* ČERVENÁ */}
               <button
                 type="button"
                 onClick={()=>{
@@ -1642,7 +1672,6 @@ function Lobby({
                 title="červená"
               />
 
-              {/* FIALOVÁ */}
               <button
                 type="button"
                 onClick={()=>{
@@ -1664,6 +1693,7 @@ function Lobby({
           </div>
         )}
       </div>
+
       {/* Start & Pokračovat */}
       <div className="lobbyCard">
         <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
