@@ -241,13 +241,12 @@ export default function App(){
 
   /* THEME STATE (premium skin) */
   const [themeColor, setThemeColor] = useState('default');
+// fullscreen reklama po výhře
+const [showAd, setShowAd] = useState(false);        // jestli je overlay vidět
+const [adSecondsLeft, setAdSecondsLeft] = useState(20); // kolik zbývá sekund
+const adTimerRef = useRef(null); // timer držíme tady, ať to umíme čistit
 
-  /* reklama po výhře */
-  const [showAd,setShowAd] = useState(false);
-  const [adSecondsLeft,setAdSecondsLeft] = useState(20);
-  const adTimerRef = useRef(null);
-
-  /* out pravidla – jen pro Classic */
+   /* out pravidla – jen pro Classic */
   const [outDouble,setOutDouble] = useState(true);
   const [outTriple,setOutTriple] = useState(false);
   const [outMaster,setOutMaster] = useState(false);
@@ -794,12 +793,28 @@ useEffect(()=>{
     }catch{}
 
     setWinner(pIdx);
+// pokud nejsem Premium, ukaž fullscreen reklamu po výhře
+if (!isPremium) {
+  setAdSecondsLeft(20);
+  setShowAd(true);
 
-    // reklama po výhře jen pokud není premium
-    if(!isPremium){
-      setShowAd(true);
-      setAdSecondsLeft(20);
-    }
+  // bezpečně zrušit případný starý timer
+  if (adTimerRef.current) {
+    clearInterval(adTimerRef.current);
+  }
+
+  // spustíme odpočet 20 → 19 → ... → 0
+  adTimerRef.current = setInterval(()=>{
+    setAdSecondsLeft(prev => {
+      if (prev <= 1) {
+        clearInterval(adTimerRef.current);
+        adTimerRef.current = null;
+        return 0;
+      }
+      return prev - 1;
+    });
+  }, 1000);
+}
 
     // ulož do historie
     try{
@@ -1340,7 +1355,98 @@ useEffect(()=>{
 
         <audio ref={hitAudioRef} src="/dart-hit.mp3" preload="auto" />
         <audio ref={winAudioRef} src="/tada-fanfare-a-6313.mp3" preload="auto" />
-        {toast && <div className="toast ok">✔️ {toast}</div>}
+{/* FULLSCREEN REKLAMA PO VÝHŘE */}
+{showAd && (
+  <div
+    style={{
+      position:'fixed',
+      inset:0,
+      background:'rgba(0,0,0,0.9)',
+      color:'#fff',
+      zIndex:9998,
+      display:'flex',
+      flexDirection:'column',
+      alignItems:'center',
+      justifyContent:'center',
+      padding:'16px',
+      textAlign:'center'
+    }}
+  >
+    {/* simulace reklamního obsahu */}
+    <div
+      style={{
+        background:'#111',
+        border:'2px solid var(--accent)',
+        borderRadius:'12px',
+        width:'100%',
+        maxWidth:'320px',
+        minHeight:'180px',
+        display:'flex',
+        alignItems:'center',
+        justifyContent:'center',
+        fontWeight:'900',
+        fontSize:'20px',
+        boxShadow:'0 20px 40px #000'
+      }}
+    >
+      Reklama • AdMob interstitial
+    </div>
+
+    {/* odpočet */}
+    <div style={{marginTop:'16px',fontSize:'14px',opacity:.8,fontWeight:600}}>
+      Pokračovat za {adSecondsLeft}s
+    </div>
+
+    {/* tlačítko pokračovat */}
+    <button
+      type="button"
+      disabled={adSecondsLeft > 0}
+      onClick={()=>{
+        // zavřít reklamu
+        setShowAd(false);
+        // safety: stop timer pokud ještě běží
+        if (adTimerRef.current){
+          clearInterval(adTimerRef.current);
+          adTimerRef.current = null;
+        }
+      }}
+      style={{
+        marginTop:'20px',
+        minWidth:'160px',
+        minHeight:'44px',
+        borderRadius:'10px',
+        fontWeight:'800',
+        fontSize:'16px',
+        background: adSecondsLeft > 0 ? '#444' : 'var(--accent)',
+        border: '2px solid var(--line)',
+        color:'#fff',
+        opacity: adSecondsLeft > 0 ? 0.5 : 1,
+        boxShadow: adSecondsLeft > 0 ? 'none' : '0 0 12px var(--accent)',
+        cursor: adSecondsLeft > 0 ? 'default' : 'pointer'
+      }}
+    >
+      Pokračovat
+    </button>
+
+    {/* premium upsell */}
+    {!isPremium && (
+      <div
+        style={{
+          marginTop:'16px',
+          fontSize:'12px',
+          lineHeight:1.4,
+          maxWidth:'260px',
+          opacity:.8
+        }}
+      >
+        Žádné reklamy a extra vzhledy?
+        <br/>
+        Odemkni Premium.
+      </div>
+    )}
+  </div>
+)}
+          {toast && <div className="toast ok">✔️ {toast}</div>}
       </div>
     </ErrorBoundary>
   );
