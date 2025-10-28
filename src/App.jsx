@@ -1537,7 +1537,18 @@ function Lobby({
           <button
             type="button"
             className="btn"
-            onClick={()=>setIsPremium(p=>!p)}
+            onClick={()=>{
+  setIsPremium(prev=>{
+    const next = !prev;
+    try{
+      const raw = localStorage.getItem('lobby');
+      const parsed = raw ? JSON.parse(raw) : {};
+      parsed.isPremium = next;
+      localStorage.setItem('lobby', JSON.stringify(parsed));
+    }catch{}
+    return next;
+  });
+}}
             style={{
               minWidth:90,
               fontWeight:800,
