@@ -340,51 +340,44 @@ export default function App(){
       );
     });
   },[ai,lang]);
-
-  // >>> APPLY THEME (bg / panel / line / accent) <<<
+// >>> APPLY FULL THEME (bg / panel / line / accent) <<<
 useEffect(()=>{
   const root = document.documentElement;
 
-  // default = zelená
-  let bg     = '#1f2227'; // pozadí celé appky
-  let panel  = '#24282e'; // boxy, karty, scoreboard
-  let line   = '#2d3239'; // rámečky, border
-  let accent = '#16a34a'; // zvýraznění (aktivní hráč, buttony, badge Premium)
+  // výchozí tmavý skin (Free verze)
+  let bg     = '#0e0e0e';  // temná černá
+  let panel  = '#181a1f';  // tmavě šedý panel
+  let line   = '#2b2f36';  // šedý rámeček
+  let accent = '#16a34a';  // zelený akcent
 
-  if (themeColor === 'blue') {
-    // modrý skin
-    bg     = '#0f172a'; // hodně tmavě námořnická
-    panel  = '#1e293b'; // tmavě modrošedá
-    line   = '#334155'; // studená šedá linka
-    accent = '#3b82f6'; // modrý akcent (stejný jako čtvereček)
-  } else if (themeColor === 'red') {
-    // červený skin
-    bg     = '#1a0b0b'; // hodně tmavá vínová
-    panel  = '#2a1414'; // panel do tmavě červenohnědé
-    line   = '#472222';
-    accent = '#ef4444'; // červená
-  } else if (themeColor === 'purple') {
-    // fialový skin
-    bg     = '#170f2a'; // temně fialová
-    panel  = '#241b3d'; // panel fialovější
-    line   = '#3b2a5c';
-    accent = '#8b5cf6'; // fialový akcent
-  } else if (themeColor === 'default') {
-    // explicitně stejné jako výchozí zelený
-    bg     = '#1f2227';
-    panel  = '#24282e';
-    line   = '#2d3239';
-    accent = '#16a34a';
+  if (isPremium) {
+    if (themeColor === 'blue') {
+      bg     = '#0c1a36'; // sytě modrá
+      panel  = '#12284a';
+      line   = '#27406a';
+      accent = '#3b82f6';
+    } else if (themeColor === 'red') {
+      bg     = '#3b0d0d'; // sytě červená
+      panel  = '#551414';
+      line   = '#752222';
+      accent = '#ef4444';
+    } else if (themeColor === 'purple') {
+      bg     = '#28104d'; // plná fialová (jako tlačítko Start hry)
+      panel  = '#3b176f';
+      line   = '#5b2aa3';
+      accent = '#8b5cf6';
+    } else if (themeColor === 'green') {
+      bg     = '#0e2d17'; // hluboká zelená
+      panel  = '#154220';
+      line   = '#236633';
+      accent = '#16a34a';
+    }
   }
-
-  // propsat CSS proměnné
   root.style.setProperty('--bg', bg);
   root.style.setProperty('--panel', panel);
   root.style.setProperty('--line', line);
   root.style.setProperty('--accent', accent);
-
-  // texty atd. necháváme stejné (bílé), takže --text, --muted nesaháme
-}, [themeColor]);
+}, [themeColor, isPremium]);
 
   const movePlayer = (i,dir) => setPlayers(ps=>{
     const a=[...ps];
