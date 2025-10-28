@@ -92,7 +92,18 @@ input[type="text"]{color:#fff}
 }
 /* ADS */
 .adstrip{
-  display:flex;gap:6px;overflow:auto;padding:6px 8px;background:#171a1f;border-bottom:1px solid var(--line)
+  display:flex;
+  gap:6px;
+  padding:6px 8px;
+  background:#171a1f;
+  border-bottom:1px solid var(--line);
+  overflow-x:auto;
+  overflow-y:hidden;
+  scroll-snap-type:x mandatory;
+}
+
+.adstrip::-webkit-scrollbar{
+  display:none;
 }
 .adcard{
   min-width:140px;height:44px;background:#fff;color:#111;border-radius:8px;
