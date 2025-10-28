@@ -1273,15 +1273,15 @@ useEffect(()=>{
     </select>
   </div>
 </div>
-
-      {/* ADS jen pokud není premium */}
-      {!isPremium && (
-        <div className="adstrip">
-          <div className="adcard">AdMob</div>
-          <div className="adcard">Ad</div>
-          <div className="adcard">Ad</div>
-        </div>
-      )}
+      {/* ADS */}
+{screen === 'lobby' && !isPremium && (
+  <div className="adstrip">
+    {/* Tohle je placeholder banner slot = tady ve finální mobilní appce poběží AdMob */}
+    <div className="adcard">AdMob banner</div>
+    <div className="adcard">Ad</div>
+    <div className="adcard">Ad</div>
+  </div>
+)}
         {screen === 'lobby' ? (
           <Lobby
             lang={lang} t={t}
