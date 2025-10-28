@@ -85,8 +85,10 @@ input[type="text"]{color:#fff}
 }
 .btn.ghost{background:transparent}
 .btn.green{
-  background:linear-gradient(var(--accent), color-mix(in srgb, var(--accent) 70%, #000));
-  border-color:color-mix(in srgb, var(--accent) 60%, #000);
+  background: linear-gradient(var(--accent), #00000055);
+  border: 2px solid var(--line);
+  color: #fff;
+  font-weight: 900;
 }
 /* ADS */
 .adstrip{
