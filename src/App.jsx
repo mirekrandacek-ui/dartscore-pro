@@ -146,11 +146,15 @@ const autoNameRx = [/^Hráč (\d+)$/, /^Player (\d+)$/, /^Spieler (\d+)$/, /^Jug
 function speak(lang, text, enabled){
   if(!enabled || !window.speechSynthesis) return;
   const u = new SpeechSynthesisUtterance(text.toString());
-  const map = { cs:'cs-CZ', en:'en-US', de:'de-DE', es:'es-ES', nl:'nl-NL', ru:'ru-RU', zh:'zh-CN' };
-  u.lang = map[lang] || 'en-US';
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(u);
-}
+  const map = {
+    cs:'cs-CZ',
+    en:'en-US',
+    de:'de-DE',
+    es:'es-ES',
+    nl:'nl-NL',
+    ru:'ru-RU',
+    zh:'zh-CN'
+  };
   u.lang = map[lang] || 'en-US';
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(u);
@@ -159,77 +163,37 @@ function speak(lang, text, enabled){
 /* Cricket značky */
 const markSymbol = (n) => (n<=0?'':(n===1?'/':(n===2?'✕':'Ⓧ')));
 
-/* ===== Interstitial reklama po výhře ===== */
-function AdInterstitial({lang,t,secondsLeft,onForceClose,isPremium}){
-  if(isPremium) return null;
-  return (
-    <div
-      className="toast ok"
-      style={{
-        position:'fixed',
-        left:'50%',
-        top:'50%',
-        bottom:'auto',
-        transform:'translate(-50%, -50%)',
-        width:'90%',
-        maxWidth:360,
-        background:'#0f1318',
-        borderRadius:16,
-        border:'1px solid #2d3239',
-        boxShadow:'0 20px 60px #000c',
-        textAlign:'center',
-        padding:'16px 16px 12px',
-        color:'#fff',
-        zIndex:9999
-      }}
-    >
-      <div
-        style={{
-          background:'#22262d',
-          border:'1px solid #000',
-          borderRadius:12,
-          width:'100%',
-          height:180,
-          marginBottom:12,
-          boxShadow:'inset 0 0 20px #000a',
-          display:'flex',
-          alignItems:'center',
-          justifyContent:'center',
-          fontWeight:800,
-          fontSize:18,
-          color:'#cbd5e1'
-        }}
-      >
-        {t(lang,'ad_wait')} {secondsLeft}{t(lang,'ad_seconds')}
-      </div>
-
-      <div
-        style={{
-          fontSize:13,
-          lineHeight:1.4,
-          color:'#cfd6df',
-          marginBottom:12
-        }}
-      >
-        Simulace interstitial reklamy jako v AdMob. Ve finální aplikaci to obstará SDK (výběr reklamy, měření zhlédnutí, kdy je možné zavřít).
-      </div>
-
-      <button
-        className="btn green"
-        style={{
-          width:'100%',
-          justifyContent:'center',
-          fontSize:16,
-          height:44,
-          borderRadius:12
-        }}
-        disabled={secondsLeft>0}
-        onClick={onForceClose}
-      >
-        {t(lang,'ad_continue')}
-      </button>
-    </div>
-  );
+/* ===== ErrorBoundary ===== */
+class ErrorBoundary extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = { hasError:false, info:'' };
+  }
+  static getDerivedStateFromError(err){
+    return { hasError:true, info:String(err) };
+  }
+  componentDidCatch(err, info){
+    console.error('App crashed:', err, info);
+  }
+  render(){
+    if(this.state.hasError){
+      return (
+        <div style={{padding:16,color:'#fff',background:'#111',minHeight:'100vh'}}>
+          <h2>Ups, něco se pokazilo.</h2>
+          <div style={{opacity:.8,whiteSpace:'pre-wrap',fontFamily:'monospace',fontSize:12,marginTop:12}}>
+            {this.state.info}
+          </div>
+          <button
+            onClick={()=>location.reload()}
+            style={{marginTop:16}}
+          >
+            Zkusit znovu načíst
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 /* ===== ErrorBoundary ===== */
