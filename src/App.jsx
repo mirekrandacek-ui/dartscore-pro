@@ -196,39 +196,6 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-/* ===== ErrorBoundary ===== */
-class ErrorBoundary extends React.Component {
-  constructor(props){
-    super(props);
-    this.state = { hasError:false, info:'' };
-  }
-  static getDerivedStateFromError(err){
-    return { hasError:true, info:String(err) };
-  }
-  componentDidCatch(err, info){
-    console.error('App crashed:', err, info);
-  }
-  render(){
-    if(this.state.hasError){
-      return (
-        <div style={{padding:16,color:'#fff',background:'#111',minHeight:'100vh'}}>
-          <h2>Ups, něco se pokazilo.</h2>
-          <div style={{opacity:.8,whiteSpace:'pre-wrap',fontFamily:'monospace',fontSize:12,marginTop:12}}>
-            {this.state.info}
-          </div>
-          <button
-            onClick={()=>location.reload()}
-            style={{marginTop:16}}
-          >
-            Zkusit znovu načíst
-          </button>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
-
 /* ===== Helpers ===== */
 function formatHit(d){
   if(!d) return '-';
