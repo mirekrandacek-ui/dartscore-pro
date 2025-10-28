@@ -1535,27 +1535,41 @@ function Lobby({
               {/* Premium + vzhled */}
       <div className="lobbyCard">
         {/* horní řada: přepínač režimu */}
-        <div
-          style={{
-            display:'flex',
-            flexWrap:'wrap',
-            alignItems:'center',
-            gap:'8px',
-            marginBottom:8
-          }}
-        >
-          <span style={{fontWeight:800,fontSize:14,color:'#fff'}}>Premium</span>
+          <div
+    style={{
+      display:'flex',
+      flexWrap:'wrap',
+      alignItems:'center',
+      justifyContent:'space-between',
+      gap:'8px',
+      marginBottom:8
+    }}
+  >
+    <span
+      style={{
+        fontWeight:800,
+        fontSize:14,
+        color:'#fff',
+        lineHeight:1.2
+      }}
+    >
+      Premium režim
+    </span>
 
-          <button
-            type="button"
-            className="btn"
-            onClick={()=>setIsPremium(p=>!p)}
-            style={{minWidth:90,fontWeight:800}}
-          >
-            {isPremium ? 'Premium' : 'Free'}
-          </button>
-        </div>
-
+    <button
+      type="button"
+      className="btn"
+      onClick={()=>setIsPremium(p=>!p)}
+      style={{
+        minWidth:90,
+        fontWeight:800,
+        borderColor:'var(--accent)',
+        boxShadow: isPremium ? '0 0 6px var(--accent)' : 'none'
+      }}
+    >
+      {isPremium ? 'Premium' : 'Free'}
+    </button>
+  </div>
         {/* vzhled aplikace */}
         {isPremium && (
           <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
