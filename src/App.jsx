@@ -213,17 +213,18 @@ function formatAvg(a){
 const ADMOB_INTERSTITIAL_ID = "ca-app-pub-3940256099942544/1033173712"; // test ID od Googlu
 
 async function showInterstitialAd() {
-  // lazy import, aby web build nespadl
   try {
-    const mod = await import("expo-ads-admob");
+    // dynamické volání modulu – Vite to vůbec nevidí
+    const importer = new Function("modulePath", "return import(modulePath);");
+    const mod = await importer("expo-ads-admob");
     const { AdMobInterstitial } = mod;
 
     await AdMobInterstitial.setAdUnitID(ADMOB_INTERSTITIAL_ID);
     await AdMobInterstitial.requestAdAsync({ servePersonalizedAds: true });
     await AdMobInterstitial.showAdAsync();
   } catch (err) {
-    // Na webu to skončí tady (expo-ads-admob není dostupné) -> to je v pohodě.
-    console.warn("Interstitial Ad skipped / failed:", err);
+    // Web (Vercel) tu skončí – žádná chyba, jen reklama se nespustí
+    console.warn("AdMob interstitial skipped on web:", err?.message || err);
   }
 }
 
