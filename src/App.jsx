@@ -209,7 +209,22 @@ function formatAvg(a){
   if(!a && a!==0) return '0.0';
   return a.toFixed(1);
 }
+// --- ADMANAGER IMPORT START ---
+import { AdMobInterstitial } from "expo-ads-admob";
+import { useEffect } from "react";
 
+// TEST ID (funguje univerzálně pro vývoj)
+const ADMOB_INTERSTITIAL_ID = "ca-app-pub-3940256099942544/1033173712";
+
+async function showAd() {
+  try {
+    await AdMobInterstitial.setAdUnitID(ADMOB_INTERSTITIAL_ID);
+    await AdMobInterstitial.requestAdAsync({ servePersonalizedAds: true });
+    await AdMobInterstitial.showAdAsync();
+  } catch (err) {
+    console.warn("Interstitial Ad failed:", err);
+  }
+}
 /* ===== MAIN APP ===== */
 export default function App(){
 
@@ -2219,6 +2234,9 @@ function Game({
       {/* PAD / KEYPAD - schovám po výhře a po dobu reklamy */}
       {winner==null && (
         <div className="padPane">
+          {/* --- REKLAMA PO VÝHŘE START --- */}
+{gameState === "win" && showAd()}
+{/* --- REKLAMA PO VÝHŘE END --- */}
           {/* první řádek: DOUBLE / TRIPLE / undo */}
           <div className="padRow">
             <button
