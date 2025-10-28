@@ -126,10 +126,6 @@ const LANG_LABEL = {
   ru:'Русский',
   zh:'中文'
 };
-
-const LANG_LABEL = {
-  cs:'Čeština',en:'English',de:'Deutsch',es:'Español',nl:'Nederlands',ru:'Русский',zh:'中文'
-};
 const t = (lang, key) => (T[lang] && T[lang][key]) || T.cs[key] || key;
 
 /* ===== Utils ===== */
