@@ -1223,40 +1223,48 @@ export default function App(){
 
       {/* HEADER */}
       <div className="header">
-        <div className="left">
-          {screen==='game' && (
-            <button
-              type="button"
-              className="btn ghost"
-              onClick={()=>{
-                saveSnapshot();
-                setScreen('lobby');
-              }}
-              title={t(lang,'back')}
-            >
-              ←
-            </button>
-          )}
+       <div className="left" style={{display:'flex',alignItems:'center',gap:'8px',minWidth:0}}>
+  {screen==='game' && (
+    <button
+      type="button"
+      className="btn ghost"
+      onClick={()=>{
+        saveSnapshot();
+        setScreen('lobby');
+      }}
+      title={t(lang,'back')}
+      style={{flexShrink:0}}
+    >
+      ←
+    </button>
+  )}
 
-          <div className="logo">
-            <span className="dart"></span>
-            <span>{t(lang,'app')}</span>
-          </div>
+  <div style={{display:'flex',alignItems:'center',gap:'8px',minWidth:0}}>
+    <div className="logo" style={{flexShrink:0,display:'flex',alignItems:'center',gap:'8px'}}>
+      <span className="dart"></span>
+      <span style={{fontWeight:900,whiteSpace:'nowrap'}}>{t(lang,'app')}</span>
+    </div>
 
-          {isPremium && (
-            <span
-              className="badge"
-              style={{
-                fontSize:12,
-                fontWeight:800,
-                whiteSpace:'nowrap'
-              }}
-            >
-              Premium
-            </span>
-          )}
-        </div>
-
+    {isPremium && (
+      <span
+        className="badge"
+        style={{
+          fontSize:12,
+          fontWeight:800,
+          whiteSpace:'nowrap',
+          lineHeight:1.2,
+          background:'#0f1318',
+          border:'1px solid var(--accent)',
+          color:'var(--accent)',
+          padding:'4px 8px',
+          borderRadius:'999px'
+        }}
+      >
+        Premium
+      </span>
+    )}
+  </div>
+</div>
         <div className="controls">
           <button
             type="button"
