@@ -477,44 +477,55 @@ input[type="text"]{color:#fff}
   color:var(--accent);
   font-weight:900;
 }
-/* ===== RESPONSIVE KEYPAD (Classic & Around) – FITS SCREEN, NO OVERFLOW ===== */
-html, body { overflow-x: hidden; }
+/* ======= RESPONSIVE KEYPAD (Classic & Around) – vše uvnitř rámečku, žádné přetoky ======= */
+.container:not([data-mode="cricket"]) .padPane{
+  /* rámeček drží obsah */
+  overflow:hidden;
+  max-width:100vw;
+  padding:8px;
+  box-sizing:border-box;
 
-/* Obecně drž rámeček, žádné přetoky */
-.container:not([data-mode="cricket"]) .padPane {
-  max-width: 100vw;
-  overflow: hidden;
-  padding: 8px;
-  box-sizing: border-box;
+  /* z padPane uděláme dvouřádkovou mřížku:
+     1) nahoře auto (DOUBLE/TRIPLE/backspace)
+     2) dole zbytek prostoru pro čísla */
+  display:grid;
+  grid-template-rows:auto 1fr;
+  grid-template-columns:repeat(5, 1fr);
+  grid-auto-rows:1fr;   /* řádky s čísly se rozdělí rovnoměrně do dostupné výšky */
+  gap:8px;
 }
 
-/* 1. řádek: DOUBLE / TRIPLE / backspace – volně ve flexu, zalamuje se */
-.container:not([data-mode="cricket"]) .padPane > .padRow:first-child {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
+/* 1) horní řádek (DOUBLE / TRIPLE / backspace) přes celou šířku */
+.container:not([data-mode="cricket"]) .padPane > .padRow:first-child{
+  grid-column:1 / -1;   /* přes všech 5 sloupců */
+  grid-row:1;           /* první (auto) řádek */
+  display:grid;
+  grid-auto-flow:column;
+  grid-auto-columns:1fr;
+  gap:8px;
 }
 
-/* Ostatní řádky: čísla v pevné mřížce 5 sloupců */
-.container:not([data-mode="cricket"]) .padPane > .padRow:not(:first-child) {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 8px;
+/* 2) všechny následující .padRow "rozpustíme", aby jejich tlačítka šla přímo do gridu padPane */
+.container:not([data-mode="cricket"]) .padPane > .padRow:not(:first-child){
+  display:contents;     /* děti (tlačítka) se stanou přímo grid-prvky padPane */
 }
 
-/* Tlačítka se automaticky “scalují” podle výšky obrazovky (žádné scrollování) */
-.container:not([data-mode="cricket"]) .padPane .key,
-.container:not([data-mode="cricket"]) .padPane .multBtn {
-  height: clamp(44px, 7vh, 56px);
-  font-size: clamp(16px, 2.8vh, 20px);
-  width: 100%;
+/* ČÍSLA: každé číslo je grid item, zaplní buňku, výška se odvodí z 1fr řádku */
+.container:not([data-mode="cricket"]) .padPane > .padRow:not(:first-child) .key{
+  width:100%;
+  height:100%;
+  min-width:0;
+  align-self:stretch;
+  justify-self:stretch;
+  font-size:clamp(14px, 2.5vh, 20px);  /* adaptivní typografie, aby se vše vešlo */
 }
 
-/* Řádek s jediným tlačítkem (např. 0) přes celou šířku */
-.container:not([data-mode="cricket"]) .padPane > .padRow:not(:first-child) .key:only-child {
-  grid-column: 1 / -1;
+/* Mult tlačítka – ponecháme jejich výšku z původních stylů (44px), jen šířka do sloupce */
+.container:not([data-mode="cricket"]) .padPane .multBtn{
+  width:100%;
+  min-width:0;
 }
 
+/* Bezpečně vypneme horizontální posuv celé stránky */
+html, body{ overflow-x:hidden; }
 
