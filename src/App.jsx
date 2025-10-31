@@ -856,7 +856,6 @@ if (!game?.history?.length) return;
 // vyjmi poslední hod z historie
 const last = game.history.pop();
 const { player, value, prevScore } = last;
-
 // vrať hráči původní skóre
 game.scores[player] = prevScore;
 
@@ -865,20 +864,19 @@ game.active = player;
 
 // přepiš stav (aby se překreslil UI)
 setGame({ ...game });
+
+// aktualizuj data po vrácení hodu
 setDarts(d => {
-  if (d.length > 0) d.pop();
-  else d.push(hit);
-  return d;
+  const copy = [...d];
+  if (copy.length > 0) copy.pop();
+  return copy;
 });
-setDarts(d => {
-  if (d.length > 0) d.pop();
-  else d.push(hit);
-  return d;
-});
+
 setThrown(th => th.map((x, i) => i === pIdx ? Math.max(0, x - 1) : x));
 setLastTurn(ls => ls.map((x, i) => i === pIdx ? Math.max(0, x - (hit?.score || 0)) : x));
 
 } else if (last.type === 'bust') {
+
   const { pIdx, prevScore } = last;
   setScores(sc => sc.map((x, i) => i === pIdx ? prevScore : x));
   const pos = order.indexOf(pIdx);
