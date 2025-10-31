@@ -477,15 +477,44 @@ input[type="text"]{color:#fff}
   color:var(--accent);
   font-weight:900;
 }
-
-/* ============ MOBILE FIX: čísla přesně do rámečku (Classic/Around) ============ */
+/* ===== RESPONSIVE KEYPAD (Classic & Around) – FITS SCREEN, NO OVERFLOW ===== */
 html, body { overflow-x: hidden; }
 
-/* klávesnice zůstává v rámečku; jednotlivé řádky se mohou zalomit */
-.padPane .padRow { flex-wrap: wrap; }
-
-/* čísla: 5 na řádek, nepřetékají; neovlivní Cricket grid */
-.padPane .key {
-  flex: 1 0 20%;
-  max-width: 20%;
+/* Obecně drž rámeček, žádné přetoky */
+.container:not([data-mode="cricket"]) .padPane {
+  max-width: 100vw;
+  overflow: hidden;
+  padding: 8px;
+  box-sizing: border-box;
 }
+
+/* 1. řádek: DOUBLE / TRIPLE / backspace – volně ve flexu, zalamuje se */
+.container:not([data-mode="cricket"]) .padPane > .padRow:first-child {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Ostatní řádky: čísla v pevné mřížce 5 sloupců */
+.container:not([data-mode="cricket"]) .padPane > .padRow:not(:first-child) {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+/* Tlačítka se automaticky “scalují” podle výšky obrazovky (žádné scrollování) */
+.container:not([data-mode="cricket"]) .padPane .key,
+.container:not([data-mode="cricket"]) .padPane .multBtn {
+  height: clamp(44px, 7vh, 56px);
+  font-size: clamp(16px, 2.8vh, 20px);
+  width: 100%;
+}
+
+/* Řádek s jediným tlačítkem (např. 0) přes celou šířku */
+.container:not([data-mode="cricket"]) .padPane > .padRow:not(:first-child) .key:only-child {
+  grid-column: 1 / -1;
+}
+
+
