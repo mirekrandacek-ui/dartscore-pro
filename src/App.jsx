@@ -875,7 +875,9 @@ setDarts(d => {
 setThrown(th => th.map((x, i) => i === pIdx ? Math.max(0, x - 1) : x));
 setLastTurn(ls => ls.map((x, i) => i === pIdx ? Math.max(0, x - (hit?.score || 0)) : x));
 
-} else if (last.type === 'bust') {
+}
+// --- next branch ---
+if (last.type === 'bust') {
 
   const { pIdx, prevScore } = last;
   setScores(sc => sc.map((x, i) => i === pIdx ? prevScore : x));
