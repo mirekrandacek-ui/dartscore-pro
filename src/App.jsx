@@ -878,19 +878,13 @@ setLastTurn(ls => ls.map((x, i) => i === pIdx ? Math.max(0, x - (hit?.score || 0
 }
 // --- next branch ---
 if (last.type === 'bust') {
+  const { pIdx, prevScore } = last;
+  setScores(sc => sc.map((x, i) => i === pIdx ? prevScore : x));
+  const pos = order.indexOf(pIdx);
+  if (pos >= 0) setCurrIdx(pos);
+  setDarts(last.dartsBefore || []);
+  setLastTurn(ls => ls.map((x, i) => i === pIdx ? 0 : x));
 
-  const { pIdx, prevScore } = last;
-  setScores(sc => sc.map((x, i) => i === pIdx ? prevScore : x));
-  const pos = order.indexOf(pIdx);
-  if (pos >= 0) setCurrIdx(pos);
-  setDarts(last.dartsBefore || []);
-  setLastTurn(ls => ls.map((x, i) => i === pIdx ? 0 : x));
-  const { pIdx, prevScore } = last;
-  setScores(sc => sc.map((x, i) => i === pIdx ? prevScore : x));
-  const pos = order.indexOf(pIdx);
-  if (pos >= 0) setCurrIdx(pos);
-  setDarts(last.dartsBefore || []);
-  setLastTurn(ls => ls.map((x, i) => i === pIdx ? 0 : x));
 } else if (last.mode === 'cricket') {
   setCricket(last.prev);
   setThrown(th => th.map((x, i) => i === last.pIdx ? Math.max(0, x - 1) : x));
@@ -899,20 +893,21 @@ if (last.type === 'bust') {
     if (d.length > 0) d.pop();
     return d;
   });
-      } else if(last.mode==='around'){
-        setAround(last.prev);
-        setThrown(th=>th.map((x,i)=> i===last.pIdx ? Math.max(0,x-1) : x));
-        setDarts(ds=>{
-          const d=[...ds];
-          if(d.length>0) d.pop();
-          return d;
-        });
-      }
 
-      return st.slice(0,-1);
-    });
-    setMult(1);
-  };
+} else if (last.mode === 'around') {
+  setAround(last.prev);
+  setThrown(th => th.map((x, i) => i === last.pIdx ? Math.max(0, x - 1) : x));
+  setDarts(ds => {
+    const d = [...ds];
+    if (d.length > 0) d.pop();
+    return d;
+  });
+}
+
+return st.slice(0, -1);
+});
+setMult(1);
+};
 
   const averages = useMemo(()=>{
     if(mode!=='classic'){ return players.map(()=>0); }
