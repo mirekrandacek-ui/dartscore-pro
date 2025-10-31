@@ -870,9 +870,21 @@ setDarts(d => {
   else d.push(hit);
   return d;
 });
+setDarts(d => {
+  if (d.length > 0) d.pop();
+  else d.push(hit);
+  return d;
+});
 setThrown(th => th.map((x, i) => i === pIdx ? Math.max(0, x - 1) : x));
 setLastTurn(ls => ls.map((x, i) => i === pIdx ? Math.max(0, x - (hit?.score || 0)) : x));
+
 } else if (last.type === 'bust') {
+  const { pIdx, prevScore } = last;
+  setScores(sc => sc.map((x, i) => i === pIdx ? prevScore : x));
+  const pos = order.indexOf(pIdx);
+  if (pos >= 0) setCurrIdx(pos);
+  setDarts(last.dartsBefore || []);
+  setLastTurn(ls => ls.map((x, i) => i === pIdx ? 0 : x));
   const { pIdx, prevScore } = last;
   setScores(sc => sc.map((x, i) => i === pIdx ? prevScore : x));
   const pos = order.indexOf(pIdx);
