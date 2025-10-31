@@ -1207,7 +1207,7 @@ setMult(1);
   },[]);
 
   const hasSaved = !!localStorage.getItem('savedGame');
-{
+
   /* ===== RENDER APP ===== */
   return (
     <ErrorBoundary>
@@ -2329,6 +2329,7 @@ function Game({
       )}
 
     </div>
+    </ErrorBoundary>
   );
 }
 export default App;
