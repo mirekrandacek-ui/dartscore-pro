@@ -1479,7 +1479,6 @@ setMult(1);
       </div>
     </ErrorBoundary>
   );
-} // konec App komponenty
 
 /* ===== LOBBY ===== */
 function Lobby({
