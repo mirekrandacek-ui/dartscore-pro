@@ -850,22 +850,21 @@ export default function App(){
     });
     setDarts([]);
   };
+// pokud není co vracet, konec
+if (!game?.history?.length) return;
 
-  const undo = () => {
-    if(winner!=null) return;
-    setActions(st=>{
-      if(st.length===0) return st;
-      const last = st[st.length-1];
+// vyjmi poslední hod z historie
+const last = game.history.pop();
+const { player, value, prevScore } = last;
 
-      if(last.mode==='classic'){
-        if(last.type==='dart'){
-          const {pIdx, prevScore, hit} = last;
-          setScores(sc=>sc.map((x,i)=> i===pIdx ? prevScore : x));
-          setDarts(ds=>{
-            const d=[...ds];
-            if(order[currIdx]!==pIdx){
-              const pos = order.indexOf(pIdx);
-              if(pos>=0) setCurrIdx(pos);
+// vrať hráči původní skóre
+game.scores[player] = prevScore;
+
+// aktivuj toho hráče znovu
+game.active = player;
+
+// přepiš stav (aby se překreslil UI)
+setGame({ ...game });
             }
             if(d.length>0) d.pop();
             else d.push(hit);
