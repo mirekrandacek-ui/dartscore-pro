@@ -101,10 +101,7 @@ input[type="text"]{color:#fff}
   overflow-y:hidden;
   scroll-snap-type:x mandatory;
 }
-
-.adstrip::-webkit-scrollbar{
-  display:none;
-}
+.adstrip::-webkit-scrollbar{ display:none; }
 .adcard{
   min-width:140px;height:44px;background:#fff;color:#111;border-radius:8px;
   display:flex;align-items:center;justify-content:center;font-weight:800
@@ -133,9 +130,7 @@ input[type="text"]{color:#fff}
   padding:6px;border:1px solid var(--line);border-radius:10px;background:#1c2026
 }
 .playerName input{width:100%}
-.score{
-  font-variant-numeric:tabular-nums;font-size:28px;font-weight:900
-}
+.score{ font-variant-numeric:tabular-nums;font-size:28px;font-weight:900 }
 .playerActions{display:flex;gap:6px}
 .playerDelete{display:flex;justify-content:flex-end}
 .trash{
@@ -185,14 +180,7 @@ input[type="text"]{color:#fff}
   overflow:hidden;
 }
 
-/* Levý pevný sloupec s cíli (15..bull)
-   Nový markup:
-   <div class="targetsRail">
-     <div class="targetsRailHead"></div>
-     <div class="targetsRailMarks"> ... targetCell ... </div>
-   </div>
-   Tohle zarovnává úplně stejně jako playerColHead + playerColMarks
-*/
+/* Levý pevný sloupec s cíli (15..bull) */
 .targetsRail{
   flex:0 0 72px;
   background:var(--panel);
@@ -224,9 +212,7 @@ input[type="text"]{color:#fff}
   font-weight:900;
   line-height:1;
 }
-.targetsRailMarks .targetCell:last-child{
-  background:#7f1d1d;
-}
+.targetsRailMarks .targetCell:last-child{ background:#7f1d1d; }
 
 .cricketScroll{
   flex:1 1 auto;
@@ -258,10 +244,10 @@ input[type="text"]{color:#fff}
 }
 .playerColName{
   font-weight:900;
-  white-space:normal;        /* bylo nowrap */
-  overflow:visible;          /* bylo hidden */
-  text-overflow:clip;        /* bylo ellipsis */
-  max-width:none;            /* bylo ~90px */
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+  max-width:none;
   line-height:1.2;
   word-break:break-word;
 }
@@ -286,9 +272,7 @@ input[type="text"]{color:#fff}
   font-size:20px;
   font-weight:900
 }
-.markCell.closed{
-  box-shadow:inset 0 0 0 2px #16a34a
-}
+.markCell.closed{ box-shadow:inset 0 0 0 2px #16a34a }
 
 /* Player card (Classic/Around) */
 .playerCard{
@@ -344,9 +328,7 @@ input[type="text"]{color:#fff}
   transform:translate(-50%,-50%) rotate(calc(var(--k)*30deg));
   filter:drop-shadow(0 0 6px #fff);
 }
-.playerCard.winner{
-  animation:rainbow 1s linear infinite
-}
+.playerCard.winner{ animation:rainbow 1s linear infinite }
 @keyframes rainbow {
   0%{box-shadow:0 0 0 3px #ff3b30}
   25%{box-shadow:0 0 0 3px #ffcc00}
@@ -354,9 +336,7 @@ input[type="text"]{color:#fff}
   75%{box-shadow:0 0 0 3px #007aff}
   100%{box-shadow:0 0 0 3px #af52de}
 }
-.confetti{
-  position:absolute;inset:0;pointer-events:none;overflow:hidden
-}
+.confetti{ position:absolute;inset:0;pointer-events:none;overflow:hidden }
 .confetti span{
   --i:0;
   position:absolute;left:50%;top:50%;
@@ -377,7 +357,10 @@ input[type="text"]{color:#fff}
   background:var(--panel);
   border:1px solid var(--line);
   border-radius:14px;
-  padding:8px
+  padding:8px;
+  /* nové: rám zachytí přetok */
+  overflow:hidden;
+  max-width:100vw;
 }
 .padRow{
   display:flex;
@@ -401,9 +384,7 @@ input[type="text"]{color:#fff}
   transition:transform .05s, background-color .08s, box-shadow .08s, border-color .08s
 }
 /* nativní press */
-.key:active{
-  transform:translateY(1px) scale(.98);
-}
+.key:active{ transform:translateY(1px) scale(.98); }
 /* JS press */
 .key.pressed{
   transform:translateY(1px) scale(.98);
@@ -496,47 +477,15 @@ input[type="text"]{color:#fff}
   color:var(--accent);
   font-weight:900;
 }
-/* Fix pro přetékající klávesnici v mobilním zobrazení */
-.keypad {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  max-width: 100vw;
-  overflow-x: hidden;
-  box-sizing: border-box;
-}
-.keypad button {
+
+/* ============ MOBILE FIX: čísla přesně do rámečku (Classic/Around) ============ */
+html, body { overflow-x: hidden; }
+
+/* klávesnice zůstává v rámečku; jednotlivé řádky se mohou zalomit */
+.padPane .padRow { flex-wrap: wrap; }
+
+/* čísla: 5 na řádek, nepřetékají; neovlivní Cricket grid */
+.padPane .key {
   flex: 1 0 20%;
   max-width: 20%;
-  box-sizing: border-box;
-}
-/* === MOBILE FIX: keypad fits exactly to screen === */
-.padPane {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  max-width: 100vw;
-  overflow: hidden;
-  padding: 8px;
-  box-sizing: border-box;
-}
-
-.padPane button {
-  flex: 1 0 20%;
-  max-width: 20%;
-  text-align: center;
-  box-sizing: border-box;
-}
-
-/* jistota že se nic neposune mimo */
-html, body {
-  overflow-x: hidden;
-}
-
-  max-width: 100vw;
-  overflow: hidden;
-  box-sizing: border-box;
 }
