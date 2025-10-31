@@ -2324,5 +2324,3 @@ function Game({
 </div>
 );
 }
-
-export default App;
