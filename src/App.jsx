@@ -261,9 +261,9 @@ export default function App(){
   const [themeColor, setThemeColor] = useState('default');
 
   /* stav pro náš vlastní overlay po výhře */
-  const [showAd, setShowAd] = useState(false);        // jestli je overlay vidět
-  const [adSecondsLeft, setAdSecondsLeft] = useState(20); // zbývající sekundy
-  const adTimerRef = useRef(null); // timer intervalu
+  const [showAd, setShowAd] = useState(false);
+  const [adSecondsLeft, setAdSecondsLeft] = useState(20);
+  const adTimerRef = useRef(null);
 
   /* out pravidla – jen pro Classic */
   const [outDouble,setOutDouble] = useState(true);
@@ -819,9 +819,9 @@ export default function App(){
 
     // FREE verze: po výhře zobrazíme interstitial + náš overlay s odpočtem
     if (!isPremium) {
-      showInterstitialAd();      // AdMob interstitial
-      setAdSecondsLeft(20);      // resetovat overlay countdown
-      setShowAd(true);           // ukázat overlay
+      showInterstitialAd();
+      setAdSecondsLeft(20);
+      setShowAd(true);
     }
 
     // ulož do historie
@@ -850,82 +850,75 @@ export default function App(){
     });
     setDarts([]);
   };
-// pokud není co vracet, konec
-if (!game?.history?.length) return;
 
-// vyjmi poslední hod z historie
-const last = game.history.pop();
-const { player, value, prevScore } = last;
-// vrať hráči původní skóre
-game.scores[player] = prevScore;
+  /* ===== UNDO ===== */
+  const undo = () => {
+    setActions(st => {
+      const last = st[st.length - 1];
+      if (!last) return st;
 
-// aktivuj toho hráče znovu
-game.active = player;
+      // zruš potenciální výhry
+      setWinner(null);
+      setPendingWin(null);
 
-// přepiš stav (aby se překreslil UI)
-setGame({ ...game });
+      if (last.mode === 'classic') {
+        const { pIdx, prevScore, hit } = last;
 
-// aktualizuj data po vrácení hodu
-setDarts(d => {
-  const copy = [...d];
-  if (copy.length > 0) copy.pop();
-  return copy;
-});
+        // obnov skóre (u bustu je prevScore stejné jako před bustem; skóre se neměnilo)
+        if (typeof prevScore === 'number') {
+          setScores(sc => sc.map((x, i) => (i === pIdx ? prevScore : x)));
+        }
 
-setThrown(th => th.map((x, i) => i === pIdx ? Math.max(0, x - 1) : x));
-setLastTurn(ls => ls.map((x, i) => i === pIdx ? Math.max(0, x - (hit?.score || 0)) : x));
+        // vrácení šipek/posledního kola
+        if (last.type === 'bust') {
+          // v commit bust jsme smazali šipky a lastTurn nastavili na 0 – vrať zpátky
+          const before = last.dartsBefore || [];
+          setDarts(before);
+          const total = before.reduce((s,a)=> s + (a?.score || 0), 0);
+          setLastTurn(ls => ls.map((x,i)=> i===pIdx ? total : x));
+        } else {
+          // vrácení jedné šipky
+          setDarts(ds => {
+            const d = [...ds];
+            if (d.length > 0) d.pop();
+            return d;
+          });
+          setLastTurn(ls =>
+            ls.map((x,i)=> i===pIdx ? Math.max(0, x - (hit?.score || 0)) : x)
+          );
+        }
 
-}
-// --- next branch ---
-setHistory(st => {
-  const last = st[st.length - 1];
-  if (!last) return st;
+        // odečíst hozenou šipku
+        setThrown(th => th.map((x,i)=> i===pIdx ? Math.max(0, x-1) : x));
 
-  if (last.type === 'bust') {
-    const { pIdx, prevScore } = last;
-    setScores(sc => sc.map((x, i) => (i === pIdx ? prevScore : x)));
-    const pos = order.indexOf(pIdx);
-    if (pos >= 0) setCurrIdx(pos);
-    setDarts(last.dartsBefore || []);
-    setLastTurn(ls => ls.map((x, i) => (i === pIdx ? 0 : x)));
+        // vrátit na hráče, který ten tah dělal
+        const pos = order.indexOf(pIdx);
+        if (pos >= 0) setCurrIdx(pos);
 
-  } else if (last.mode === 'cricket') {
-    setCricket(last.prev);
-    setThrown(th => th.map((x, i) => (i === last.pIdx ? Math.max(0, x - 1) : x)));
-    setDarts(ds => {
-      const d = [...ds];
-      if (d.length > 0) d.pop();
-      return d;
+      } else if (last.mode === 'cricket') {
+        setCricket(last.prev);
+        setThrown(th => th.map((x,i)=> i===last.pIdx ? Math.max(0, x-1) : x));
+        setDarts(ds => {
+          const d = [...ds];
+          if (d.length > 0) d.pop();
+          return d;
+        });
+
+      } else if (last.mode === 'around') {
+        setAround(last.prev);
+        setThrown(th => th.map((x,i)=> i===last.pIdx ? Math.max(0, x-1) : x));
+        setDarts(ds => {
+          const d = [...ds];
+          if (d.length > 0) d.pop();
+          return d;
+        });
+      }
+
+      return st.slice(0, -1);
     });
+    setMult(1);
+  };
 
-  } else if (last.mode === 'around') {
-    setAround(last.prev);
-    setThrown(th => th.map((x, i) => (i === last.pIdx ? Math.max(0, x - 1) : x)));
-    setDarts(ds => {
-      const d = [...ds];
-      if (d.length > 0) d.pop();
-      return d;
-    });
-
-  } else if (last.mode === 'classic') {
-    const { pIdx, prevScore, hit } = last;
-    setScores(sc => sc.map((x, i) => (i === pIdx ? prevScore : x)));
-    setThrown(th => th.map((x, i) => (i === pIdx ? Math.max(0, x - 1) : x)));
-    setLastTurn(ls =>
-      ls.map((x, i) => (i === pIdx ? Math.max(0, x - (hit?.score || 0)) : x))
-    );
-    setDarts(d => {
-      const copy = [...d];
-      if (copy.length > 0) copy.pop();
-      return copy;
-    });
-    const pos = order.indexOf(pIdx);
-    if (pos >= 0) setCurrIdx(pos);
-  }
-
-  return st.slice(0, -1);
-});
-setMult(1);
   const averages = useMemo(()=>{
     if(mode!=='classic'){ return players.map(()=>0); }
     return players.map((_,i)=>{
@@ -1207,7 +1200,7 @@ setMult(1);
   },[]);
 
   const hasSaved = !!localStorage.getItem('savedGame');
-}
+
   /* ===== RENDER APP ===== */
   return (
     <ErrorBoundary>
@@ -1479,6 +1472,7 @@ setMult(1);
       </div>
     </ErrorBoundary>
   );
+}
 
 /* ===== LOBBY ===== */
 function Lobby({
@@ -2317,18 +2311,18 @@ function Game({
                     e.currentTarget.classList.remove('pressed');
                   }}
                   onPointerLeave={e => {
-  e.currentTarget.classList.remove('pressed');
-}}
->
-  {n}
-</button>
-))}
-</div>
-))}
-</div>
-)}
+                    e.currentTarget.classList.remove('pressed');
+                  }}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
 
-</div>
+    </div>
   );
 }
 
