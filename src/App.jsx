@@ -923,11 +923,9 @@ setHistory(st => {
     if (pos >= 0) setCurrIdx(pos);
   }
 
-  // odstraň poslední záznam z historie (jednokrokové undo)
   return st.slice(0, -1);
 });
 setMult(1);
-};
   const averages = useMemo(()=>{
     if(mode!=='classic'){ return players.map(()=>0); }
     return players.map((_,i)=>{
