@@ -2317,19 +2317,19 @@ function Game({
                     e.currentTarget.classList.remove('pressed');
                   }}
                   onPointerLeave={e => {
-                    e.currentTarget.classList.remove('pressed');
-                  }}
-                >
-                  {n}
-                </button>
-              ))}
-            </div>
-          ))}
-        </div>
-      )}
+  e.currentTarget.classList.remove('pressed');
+}}
+>
+  {n}
+</button>
+))}
+</div>
+))}
+</div>
+)}
 
-    </div>
-    </ErrorBoundary>
+</div>
   );
 }
+
 export default App;
