@@ -510,74 +510,32 @@ input[type="text"]{color:#fff}
   max-width: 20%;
   box-sizing: border-box;
 }
-/* === FIX: keypad width lock & overflow === */
-:root {
-  --kp-gap: 8px;
-}
-
-/* použij existující třídu – pokud máš .padPane, zůstane; .keypad můžeš smazat, když ji nemáš */
-.keypad, .padPane {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr)); /* přesně 5 sloupců */
-  gap: var(--kp-gap);
-  padding: var(--kp-gap);
-  max-width: 100vw;       /* nikdy širší než obrazovka */
-  box-sizing: border-box;
-  overflow: hidden;       /* nepřeteče přes rámeček */
-  border-radius: 12px;
-}
-
-/* každé tlačítko má přesně 1/5 šířky */
-.keypad button, .padPane button {
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-}
-
-/* jistota proti horizontálnímu posuvu */
-html, body {
-  overflow-x: hidden;
-}
-
-/* vnější rámeček (pokud nějaký máš kolem celé klávesnice) */
-.keypad-outer, .padPane-outer {
+/* === MOBILE FIX: keypad fits exactly to screen === */
+.padPane {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
   width: 100%;
   max-width: 100vw;
   overflow: hidden;
-  box-sizing: border-box;
-}
-/* === FIX: keypad width lock & overflow === */
-:root {
-  --kp-gap: 8px;
-}
-
-/* použij existující třídu – pokud máš .padPane, zůstane; .keypad můžeš smazat, když ji nemáš */
-.keypad, .padPane {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr)); /* přesně 5 sloupců */
-  gap: var(--kp-gap);
-  padding: var(--kp-gap);
-  max-width: 100vw;       /* nikdy širší než obrazovka */
-  box-sizing: border-box;
-  overflow: hidden;       /* nepřeteče přes rámeček */
-  border-radius: 12px;
-}
-
-/* každé tlačítko má přesně 1/5 šířky */
-.keypad button, .padPane button {
-  width: 100%;
-  min-width: 0;
+  padding: 8px;
   box-sizing: border-box;
 }
 
-/* jistota proti horizontálnímu posuvu */
+.padPane button {
+  flex: 1 0 20%;
+  max-width: 20%;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+/* jistota že se nic neposune mimo */
 html, body {
   overflow-x: hidden;
 }
 
-/* vnější rámeček (pokud nějaký máš kolem celé klávesnice) */
-.keypad-outer, .padPane-outer {
-  width: 100%;
   max-width: 100vw;
   overflow: hidden;
   box-sizing: border-box;
