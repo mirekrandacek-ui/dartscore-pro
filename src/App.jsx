@@ -866,11 +866,11 @@ game.active = player;
 // přepiš stav (aby se překreslil UI)
 setGame({ ...game });
             }
-            if(d.length>0) d.pop();
-            else d.push(hit);
-            return d;
-          );
-          setThrown(th=>th.map((x,i)=> i===pIdx ? Math.max(0,x-1) : x));
+           if(d.length>0) d.pop();
+else d.push(hit);
+return d;
+});
+setThrown(th => th.map((x, i) => i === pIdx ? Math.max(0, x - 1) : x));
           setLastTurn(ls=>ls.map((x,i)=> i===pIdx ? Math.max(0, x - (hit?.score||0)) : x));
         } else if(last.type==='bust'){
           const {pIdx, prevScore} = last;
