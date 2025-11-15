@@ -148,14 +148,26 @@ input[type="text"]{color:#fff}
 }
 .savedTitle{font-weight:900}
 .savedSub{color:#cbd5e1;font-size:12px}
-
 /* GAME WRAP */
 .gameWrap{
-  display:flex;flex-direction:column;gap:8px;padding:8px;flex:1;min-height:0
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding:8px;
+  flex:1;
+  /* aby hra využila celý displej */
+  min-height:calc(var(--vh,1vh)*100);
 }
+
+/* horní lišta – jeden pevný řádek */
 .gameTopBar{
-  display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  flex-wrap:nowrap;
 }
+
 /* >>> badge border uses accent color <<< */
 .badge{
   background:#0f1318;
@@ -165,19 +177,38 @@ input[type="text"]{color:#fff}
   font-weight:800;
   color:var(--accent);
 }
-.gameTopBtns{display:flex;gap:8px}
+
+/* tlačítka nahoře – nezalamovat, radši zmenšit text */
+.gameTopBtns{
+  display:flex;
+  gap:6px;
+  flex-wrap:nowrap;
+}
+.gameTopBtns .btn{
+  flex:1 1 0;
+  min-width:0;
+  white-space:nowrap;
+  font-size:clamp(10px,2.3vw,14px);
+  padding-inline:8px;
+}
+
 .playersPane{
-  flex:1 1 calc(100% - var(--padH));min-height:0;overflow:auto;
-  display:flex;flex-direction:column;gap:8px
+  flex:1 1 calc(100% - var(--padH));
+  min-height:0;
+  overflow:auto;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
 }
 
 /* CRICKET LAYOUT */
 .cricketWrap{
-  flex:1 1 calc(100% - var(--padH));
+  flex:1;
   min-height:0;
   display:flex;
   gap:8px;
   overflow:hidden;
+  align-items:stretch;
 }
 
 /* Levý pevný sloupec s cíli (15..bull) */
@@ -191,18 +222,18 @@ input[type="text"]{color:#fff}
   overflow:hidden;
 }
 .targetsRailHead{
-  height: var(--cricket-head-h);
+  height:32px; /* menší hlavička */
   border-bottom:1px solid var(--line);
 }
 .targetsRailMarks{
   display:flex;
   flex-direction:column;
-  gap:6px;
-  padding:6px;
+  gap:0;       /* žádné mezery mezi řádky */
+  padding:0;
 }
 .targetCell{
   width:100%;
-  height:40px;
+  height:48px; /* menší, ale jednotná výška řádků 15–20–25 */
   display:flex;
   align-items:center;
   justify-content:center;
@@ -212,7 +243,9 @@ input[type="text"]{color:#fff}
   font-weight:900;
   line-height:1;
 }
-.targetsRailMarks .targetCell:last-child{ background:#7f1d1d; }
+.targetsRailMarks .targetCell:last-child{
+  background:#7f1d1d;
+}
 
 .cricketScroll{
   flex:1 1 auto;
@@ -220,7 +253,8 @@ input[type="text"]{color:#fff}
   overflow-x:auto;
   display:flex;
   gap:8px;
-  padding-bottom:2px
+  /* menší, ale pevná rezerva pro keypad dole */
+  padding-bottom:140px;
 }
 
 .playerCol{
@@ -229,7 +263,7 @@ input[type="text"]{color:#fff}
   border:1px solid var(--line);
   border-radius:12px;
   display:flex;
-  flex-direction:column
+  flex-direction:column;
 }
 /* >>> active highlight uses accent color <<< */
 .playerCol.active{outline:2px solid var(--accent)}
