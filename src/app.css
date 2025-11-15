@@ -528,4 +528,44 @@ input[type="text"]{color:#fff}
 
 /* Bezpečně vypneme horizontální posuv celé stránky */
 html, body{ overflow-x:hidden; }
+/* === CRICKET FIX – zarovnání levého sloupce a hráčů === */
+
+.cricketWrap {
+  display: flex;
+  align-items: flex-start;
+}
+
+/* sloupec 15–25 vlevo + značky u hráčů = stejné řádky */
+.targetsRailMarks,
+.playerColMarks {
+  display: flex;
+  flex-direction: column;
+  gap: 0;                    /* žádné mezery mezi řádky */
+}
+
+.targetCell,
+.markCell {
+  box-sizing: border-box;
+  height: 64px;              /* musí sedět na ROW_H v App.jsx */
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* hlavičky (prázdná vlevo vs jméno hráče) */
+.targetsRailHead,
+.playerColHead {
+  box-sizing: border-box;
+  height: 40px;              /* HEAD_H v App.jsx */
+  margin: 0;
+  padding: 0 8px;
+}
+
+/* scrollovací část s hráči – bez extra paddingu nahoře */
+.cricketScroll {
+  overflow-y: auto;
+  padding-top: 0;
+}
 
