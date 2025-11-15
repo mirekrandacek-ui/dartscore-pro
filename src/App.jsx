@@ -2235,9 +2235,9 @@ function Game({
 }) {
 
   // fixní rozměry pro Cricket (zarovnání i při dlouhých textech)
-  const HEAD_H = 40;
-  const ROW_H  = 64;
-  const PAD_H  = 220;
+  const HEAD_H = 32;
+  const ROW_H  = 48;
+  const PAD_H  = 140;
 
   const keypad = React.useMemo(() => {
     if (mode === 'cricket') return [[15,16,17,18,19,20,25],[0]];
