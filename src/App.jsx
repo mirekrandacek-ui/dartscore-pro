@@ -2227,116 +2227,163 @@ function Game({
   saveGame, restartGame, cardRefs, setScreen
 }) {
 
-  // fixní rozměry pro Cricket (zarovnání i při dlouhých textech)
-  const HEAD_H = 32;
-  const ROW_H  = 48;
-  const PAD_H  = 140;
+  // pevné rozměry pro layout (hlavička/řádky/spodní spacer)
+  const HEAD_H = 40;      // výška hlavičky sloupce
+  const ROW_H  = 64;      // jednotná výška každého řádku 15..20..25
+  const PAD_H  = 220;     // výška dolního keypad panelu (rezerva)
 
+  // keypad layout
   const keypad = React.useMemo(() => {
-    if (mode === 'cricket') return [[15,16,17,18,19,20,25],[0]];
-    if (mode === 'around')  return [[1,2,3,4,5,6,7],[8,9,10,11,12,13,14],[15,16,17,18,19,20,25],[0]];
-    return [[1,2,3,4,5,6,7],[8,9,10,11,12,13,14],[15,16,17,18,19,20,25],[0,50]];
+    if (mode === 'cricket') {
+      return [
+        [15, 16, 17, 18, 19, 20, 25],
+        [0]
+      ];
+    }
+    if (mode === 'around') {
+      return [
+        [1, 2, 3, 4, 5, 6, 7],
+        [8, 9, 10, 11, 12, 13, 14],
+        [15, 16, 17, 18, 19, 20, 25],
+        [0]
+      ];
+    }
+    // classic
+    return [
+      [1, 2, 3, 4, 5, 6, 7],
+      [8, 9, 10, 11, 12, 13, 14],
+      [15, 16, 17, 18, 19, 20, 25],
+      [0, 50]
+    ];
   }, [mode]);
 
-  const cricketTargets = ['15','16','17','18','19','20','bull'];
+  const cricketTargets = ['15', '16', '17', '18', '19', '20', 'bull'];
 
   return (
     <div className="gameWrap">
+      {/* horní lišta */}
+      <div className="gameTopBar">
+        <span className="badge">
+          {mode === 'classic'
+            ? `${t(lang, 'outLabel')}: ${outDesc}`
+            : outDesc}
+        </span>
 
-     <div className="gameTopBar">
+        <div
+          className="gameTopBtns"
+          style={{ display: 'flex', gap: 8, flexWrap: 'nowrap' }}
+        >
+          <button
+            type="button"
+            className="btn"
+            onClick={restartGame}
+            style={{ whiteSpace: 'nowrap', minWidth: 80 }}
+          >
+            {t(lang, 'restart') ?? 'Restart'}
+          </button>
 
-  {/* VLEVO: prázdno – necháme zde místo pro jazyk a ikony */}
-  <div style={{ flex:1 }} />
+          {isPremium && (
+            <button
+              type="button"
+              className="btn"
+              onClick={saveGame}
+              style={{ whiteSpace: 'nowrap', minWidth: 80 }}
+            >
+              {t(lang, 'saveGame') ?? 'Uložit hru'}
+            </button>
+          )}
 
-  {/* VPRAVO: název režimu (Cricket / Classic / Around) */}
-  <div
-  style={{
-    marginLeft: 'auto',
-    fontWeight: 900,
-    fontSize: 20,
-    color: 'var(--accent)',
-    whiteSpace: 'nowrap',
-    paddingLeft: 12
-  }}
->
-  {mode === 'cricket'
-    ? 'Cricket'
-    : mode === 'classic'
-      ? 'Classic'
-      : 'Around'}
-</div>
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() => setScreen('lobby')}
+            style={{ whiteSpace: 'nowrap', minWidth: 80 }}
+          >
+            {t(lang, 'back') ?? 'Zpět'}
+          </button>
+        </div>
+      </div>
 
-{/* DRUHÝ ŘÁDEK: tlačítka */}
-<div className="gameTopBtns"
-     style={{ display:'flex', gap:6, marginTop:6, flexWrap:'nowrap' }}>
-  <button className="btn" onClick={restartGame}> {t(lang,'restart')} </button>
-
-  {isPremium && (
-    <button className="btn" onClick={saveGame}> {t(lang,'saveGame')} </button>
-  )}
-
-  <button className="btn ghost" onClick={()=>setScreen('lobby')}>
-    {t(lang,'back')}
-  </button>
-</div>
-
-      {/* scoreboard */}
+      {/* SCOREBOARD / CRICKET */}
       {mode !== 'cricket' ? (
         <div className="playersPane">
-          {order.map((pIdx,i) => {
+          {order.map((pIdx, i) => {
             const p = players[pIdx];
-            const active = i===currIdx && winner==null;
+            const active = i === currIdx && winner == null;
             const currentDarts = active ? darts : [];
             return (
-              <div key={p.id}
-                   ref={node => { if (node) cardRefs.current[pIdx]=node; }}
-                   className={`playerCard ${active?'active':''} ${winner===pIdx?'winner':''}`}>
-                {winner===pIdx && (
+              <div
+                key={p.id}
+                ref={node => { if (node) cardRefs.current[pIdx] = node; }}
+                className={`playerCard ${active ? 'active' : ''} ${winner === pIdx ? 'winner' : ''}`}
+              >
+                {winner === pIdx && (
                   <>
                     <div className="starburst" aria-hidden="true">
-                      {Array.from({length:12}).map((_,k)=><span key={k} style={{'--k':k}} />)}
+                      {Array.from({ length: 12 }).map((_, k) =>
+                        <span key={k} style={{ '--k': k }} />
+                      )}
                     </div>
                     <div className="confetti" aria-hidden="true">
-                      {Array.from({length:50}).map((_,k)=><span key={k} style={{'--i':k}} />)}
+                      {Array.from({ length: 50 }).map((_, k) =>
+                        <span key={k} style={{ '--i': k }} />
+                      )}
                     </div>
                   </>
                 )}
 
                 <div className="playerHeader">
                   <div className="playerNameText">{p.name}</div>
-                  {mode==='classic' ? (
+
+                  {mode === 'classic' ? (
                     <div className="playerStats">
-                      <span>{(thrown[pIdx]||0)} {t(lang,'darts')}</span>
+                      <span>{(thrown[pIdx] || 0)} {t(lang, 'darts')}</span>
                       <span>•</span>
-                      <span>{t(lang,'avg')}: {formatAvg(averages[pIdx])}</span>
+                      <span>{t(lang, 'avg')}: {formatAvg(averages[pIdx])}</span>
                     </div>
                   ) : (
                     <div className="playerStats">
-                      <span>{t(lang,'target')}: {around?.[pIdx]?.next ?? 1}</span>
+                      <span>
+                        {t(lang, 'target')}: {around?.[pIdx]?.next ?? 1}
+                      </span>
                     </div>
                   )}
                 </div>
 
-                {mode==='classic' ? (
+                {mode === 'classic' ? (
                   <>
-                    <div className="playerScore">{scores[pIdx] ?? 0}</div>
+                    <div className="playerScore">
+                      {scores[pIdx] ?? 0}
+                    </div>
                     <div className="playerTurn">
-                      {[0,1,2].map(ix=>{
-                        const d=currentDarts[ix];
-                        return <div key={ix} className="dartBox">{d?formatHit(d):'-'}</div>;
+                      {[0, 1, 2].map(ix => {
+                        const d = currentDarts[ix];
+                        return (
+                          <div key={ix} className="dartBox">
+                            {d ? formatHit(d) : '-'}
+                          </div>
+                        );
                       })}
-                      <div className="lastTotal">{t(lang,'last')}: {lastTurn[pIdx]||0}</div>
+                      <div className="lastTotal">
+                        {t(lang, 'last')}: {lastTurn[pIdx] || 0}
+                      </div>
                     </div>
                   </>
                 ) : (
                   <>
                     <div className="playerTurn">
-                      <div className="dartBox targetBox">{around?.[pIdx]?.next ?? 1}</div>
-                      {[0,1,2].map(ix=>{
-                        const d=currentDarts[ix];
+                      <div className="dartBox targetBox">
+                        {around?.[pIdx]?.next ?? 1}
+                      </div>
+                      {[0, 1, 2].map(ix => {
+                        const d = currentDarts[ix];
                         return (
                           <div key={ix} className="dartBox">
-                            {d ? (d.score ? '✓' : (d.v===0?'0':'-')) : '-'}
+                            {d
+                              ? (d.score
+                                ? '✓'
+                                : (d.v === 0 ? '0' : '-'))
+                              : '-'}
                           </div>
                         );
                       })}
@@ -2350,15 +2397,24 @@ function Game({
       ) : (
         /* CRICKET layout – pevné řádkování + spodní spacer */
         <div className="cricketWrap">
-          <div className="targetsRail" style={{display:'flex',flexDirection:'column'}}>
-            <div className="targetsRailHead" style={{height:HEAD_H}} />
-            <div className="targetsRailMarks" style={{display:'flex',flexDirection:'column'}}>
-              {cricketTargets.map(k=>{
-                const lbl = k==='bull' ? '25' : k;
+          {/* LEVÝ SLOUPEC 15–25 – pevný, bez scrollu */}
+          <div className="targetsRail" style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className="targetsRailHead" style={{ height: HEAD_H }} />
+            <div className="targetsRailMarks" style={{ display: 'flex', flexDirection: 'column' }}>
+              {cricketTargets.map(k => {
+                const lbl = k === 'bull' ? '25' : k;
                 return (
-                  <div key={k} className="targetCell"
-                       style={{height:ROW_H,display:'flex',alignItems:'center',
-                               justifyContent:'center',whiteSpace:'nowrap'}}>
+                  <div
+                    key={k}
+                    className="targetCell"
+                    style={{
+                      height: ROW_H,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
                     {lbl}
                   </div>
                 );
@@ -2366,20 +2422,36 @@ function Game({
             </div>
           </div>
 
-          <div className="cricketScroll" style={{overflowY:'auto',paddingBottom:PAD_H}}>
-            {order.map((pIdx,i)=>{
-              const p=players[pIdx];
-              const active = i===currIdx && winner==null;
+          {/* SLUPCE HRÁČŮ – scrollují jen do strany / dolů */}
+          <div className="cricketScroll" style={{ overflowY: 'auto', paddingBottom: PAD_H }}>
+            {order.map((pIdx, i) => {
+              const p = players[pIdx];
+              const active = i === currIdx && winner == null;
               return (
-                <div key={p.id}
-                     ref={node => { if (node) cardRefs.current[pIdx]=node; }}
-                     className={`playerCol ${active?'active':''} ${winner===pIdx?'winner':''}`}
-                     style={{display:'flex',flexDirection:'column'}}>
-                  <div className="playerColHead"
-                       style={{height:HEAD_H,display:'flex',alignItems:'center',
-                               justifyContent:'space-between',gap:8,padding:'0 8px',
-                               whiteSpace:'nowrap',textOverflow:'ellipsis',overflow:'hidden'}}>
-                    <div className="playerColName" style={{fontWeight:800,overflow:'hidden',textOverflow:'ellipsis'}}>
+                <div
+                  key={p.id}
+                  ref={node => { if (node) cardRefs.current[pIdx] = node; }}
+                  className={`playerCol ${active ? 'active' : ''} ${winner === pIdx ? 'winner' : ''}`}
+                  style={{ display: 'flex', flexDirection: 'column' }}
+                >
+                  <div
+                    className="playerColHead"
+                    style={{
+                      height: HEAD_H,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 8,
+                      padding: '0 8px',
+                      whiteSpace: 'nowrap',
+                      textOverflow: 'ellipsis',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <div
+                      className="playerColName"
+                      style={{ fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis' }}
+                    >
                       {p.name}
                     </div>
                     <div className="playerColPts">
@@ -2387,13 +2459,23 @@ function Game({
                     </div>
                   </div>
 
-                  <div className="playerColMarks" style={{display:'flex',flexDirection:'column'}}>
-                    {cricketTargets.map(k=>{
+                  <div
+                    className="playerColMarks"
+                    style={{ display: 'flex', flexDirection: 'column' }}
+                  >
+                    {cricketTargets.map(k => {
                       const mk = cricket?.[pIdx]?.marks?.[k] ?? 0;
                       return (
-                        <div key={k}
-                             className={`markCell ${mk>=3?'closed':''}`}
-                             style={{height:ROW_H,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                        <div
+                          key={k}
+                          className={`markCell ${mk >= 3 ? 'closed' : ''}`}
+                          style={{
+                            height: ROW_H,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
                           {markSymbol(mk)}
                         </div>
                       );
@@ -2404,47 +2486,93 @@ function Game({
             })}
           </div>
         </div>
-      )} {/* ← TADY je uzavření ternáru (to chybělo) */}
+      )}
 
-      {/* PAD / KEYPAD – skryj po výhře */}
+      {/* PAD / KEYPAD - schovám po výhře */}
       {winner == null && (
         <div className="padPane">
+          {/* první řádek: DOUBLE / TRIPLE / undo */}
           <div className="padRow">
-            <button type="button"
-                    className={`multBtn mult-2 ${mult===2?'active':''}`}
-                    onClick={()=>setMult(m=>m===2?1:2)}>
+            <button
+              type="button"
+              className={`multBtn mult-2 ${mult === 2 ? 'active' : ''}`}
+              onClick={() => setMult(m => (m === 2 ? 1 : 2))}
+            >
               DOUBLE
             </button>
-            <button type="button"
-                    className={`multBtn mult-3 ${mult===3?'active':''}`}
-                    onClick={()=>setMult(m=>m===3?1:3)}>
+
+            <button
+              type="button"
+              className={`multBtn mult-3 ${mult === 3 ? 'active' : ''}`}
+              onClick={() => setMult(m => (m === 3 ? 1 : 3))}
+            >
               TRIPLE
             </button>
-            <button type="button" className="multBtn backspace"
-                    onClick={undo} title={t(lang,'undo')} aria-label={t(lang,'undo')}>
-              <svg viewBox="0 0 24 24" className="iconBackspace" aria-hidden="true">
-                <path d="M7 5L3 12l4 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H7z"
-                      fill="none" stroke="currentColor" strokeWidth="2"/>
-                <path d="M12 9l4 4m0-4-4 4" fill="none" stroke="currentColor"
-                      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+
+            <button
+              type="button"
+              className="multBtn backspace"
+              onClick={undo}
+              title={t(lang, 'undo')}
+              aria-label={t(lang, 'undo')}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="iconBackspace"
+                aria-hidden="true"
+              >
+                <path
+                  d="M7 5L3 12l4 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H7z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M12 9l4 4m0-4-4 4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </button>
           </div>
 
-          {keypad.map((row,ri)=>(
+          {/* čísla */}
+          {keypad.map((row, ri) => (
             <div key={`row-${ri}`} className="padRow">
-              {row.map(n=>(
-                <button key={n} type="button" className="key"
-                        onPointerDown={e=>{
-                          e.currentTarget.classList.add('pressed');
-                          if (mode==='cricket') {
-                            if (n===0){ setMult(1); commitDart(0,1); return; }
-                            if (n===25){ setMult(1); commitDart(25,1); return; }
-                          }
-                          commitDart(n);
-                        }}
-                        onPointerUp={e=>e.currentTarget.classList.remove('pressed')}
-                        onPointerLeave={e=>e.currentTarget.classList.remove('pressed')}>
+              {row.map(n => (
+                <button
+                  type="button"
+                  key={n}
+                  className="key"
+                  onPointerDown={e => {
+                    e.currentTarget.classList.add('pressed');
+
+                    // Cricket speciály:
+                    if (mode === 'cricket') {
+                      if (n === 0) {
+                        setMult(1);
+                        commitDart(0, 1);
+                        return;
+                      }
+                      if (n === 25) {
+                        setMult(1);
+                        commitDart(25, 1);
+                        return;
+                      }
+                    }
+
+                    commitDart(n);
+                  }}
+                  onPointerUp={e => {
+                    e.currentTarget.classList.remove('pressed');
+                  }}
+                  onPointerLeave={e => {
+                    e.currentTarget.classList.remove('pressed');
+                  }}
+                >
                   {n}
                 </button>
               ))}
@@ -2455,4 +2583,3 @@ function Game({
     </div>
   );
 }
-
