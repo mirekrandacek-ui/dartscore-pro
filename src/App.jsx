@@ -1304,306 +1304,282 @@ export default function App() {
 
   const hasSaved = !!localStorage.getItem('savedGame');
 
-  /* ===== RENDER APP ===== */
+    /* ===== RENDER APP ===== */
   return (
-    <ErrorBoundary>
-      <div className="container" data-mode={mode}>
+    <div className="container" data-mode={mode}>
+      {/* HEADER */}
+      <div className="header" style={{ flexWrap: 'wrap' }}>
+        {/* LEVÁ STRANA: logo + Premium badge */}
+        <div
+          className="left"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            minWidth: 0,
+            flexWrap: 'wrap'
+          }}
+        >
+          {screen === 'game' && (
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={() => {
+                saveSnapshot();
+                setScreen('lobby');
+              }}
+              title={t(lang, 'back')}
+              style={{ flexShrink: 0 }}
+            >
+              ←
+            </button>
+          )}
 
-        {/* HEADER */}
-        <div className="header" style={{ flexWrap: 'wrap' }}>
-          {/* LEVÁ STRANA: logo + Premium badge */}
+          {/* logo + název aplikace */}
           <div
-            className="left"
+            className="logo"
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
+              flexShrink: 0,
               minWidth: 0,
-              flexWrap: 'wrap'
+              fontWeight: 900,
+              whiteSpace: 'nowrap'
             }}
           >
-            {screen === 'game' && (
-              <button
-                type="button"
-                className="btn ghost"
-                onClick={() => {
-                  saveSnapshot();
-                  setScreen('lobby');
-                }}
-                title={t(lang, 'back')}
-                style={{ flexShrink: 0 }}
-              >
-                ←
-              </button>
-            )}
+            <span className="dart"></span>
+            <span style={{ fontWeight: 900, whiteSpace: 'nowrap' }}>{t(lang, 'app')}</span>
+          </div>
 
-            {/* logo + název aplikace */}
-            <div
-              className="logo"
+          {/* badge Premium */}
+          {isPremium && (
+            <span
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
+                fontSize: 12,
+                fontWeight: 800,
+                lineHeight: 1.2,
+                background: '#0f1318',
+                border: '1px solid var(--accent)',
+                color: 'var(--accent)',
+                padding: '4px 8px',
+                borderRadius: '999px',
                 flexShrink: 0,
-                minWidth: 0,
-                fontWeight: 900,
-                whiteSpace: 'nowrap'
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
             >
-              <span className="dart"></span>
-              <span style={{ fontWeight: 900, whiteSpace: 'nowrap' }}>{t(lang, 'app')}</span>
-            </div>
+              Premium
+            </span>
+          )}
+        </div>
 
-            {/* badge Premium */}
-            {isPremium && (
-              <span
-                style={{
-                  fontSize: 12,
-                  fontWeight: 800,
-                  lineHeight: 1.2,
-                  background: '#0f1318',
-                  border: '1px solid var(--accent)',
-                  color: 'var(--accent)',
-                  padding: '4px 8px',
-                  borderRadius: '999px',
-                  flexShrink: 0,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                Premium
-              </span>
-            )}
-          </div>
-
-          {/* PRAVÁ STRANA: zvuk / hlas / jazyk + název módu */}
-          <div
-            className="controls"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              flexShrink: 0,
-              flexWrap: 'wrap'
-            }}
+        {/* PRAVÁ STRANA: zvuk / hlas / jazyk */}
+        <div
+          className="controls"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            flexShrink: 0,
+            flexWrap: 'wrap'
+          }}
+        >
+          <button
+            type="button"
+            className={`iconBtn ${!soundOn ? 'muted' : ''}`}
+            onClick={() => setSoundOn(v => !v)}
+            aria-label={t(lang, 'sound')}
           >
-            <button
-              type="button"
-              className={`iconBtn ${!soundOn ? 'muted' : ''}`}
-              onClick={() => setSoundOn(v => !v)}
-              aria-label={t(lang, 'sound')}
-            >
-              <IconSpeaker />
-            </button>
+            <IconSpeaker />
+          </button>
 
-            <button
-              type="button"
-              className={`iconBtn ${!voiceOn ? 'muted' : ''}`}
-              onClick={() => setVoiceOn(v => !v)}
-              aria-label={t(lang, 'voice')}
-            >
-              <span className="iconHead" aria-hidden="true"></span>
-            </button>
+          <button
+            type="button"
+            className={`iconBtn ${!voiceOn ? 'muted' : ''}`}
+            onClick={() => setVoiceOn(v => !v)}
+            aria-label={t(lang, 'voice')}
+          >
+            <span className="iconHead" aria-hidden="true"></span>
+          </button>
 
-            <select
-              className="input"
-              value={lang}
-              onChange={e => setLang(e.target.value)}
-              style={{ height: 34 }}
-            >
-              {['cs', 'en', 'de', 'es', 'nl', 'ru', 'zh'].map(code => (
-                <option key={code} value={code}>{LANG_LABEL[code]}</option>
-              ))}
-            </select>
+          <select
+            className="input"
+            value={lang}
+            onChange={e => setLang(e.target.value)}
+            style={{ height: 34 }}
+          >
+            {['cs', 'en', 'de', 'es', 'nl', 'ru', 'zh'].map(code => (
+              <option key={code} value={code}>{LANG_LABEL[code]}</option>
+            ))}
+          </select>
+        </div>
+      </div>
 
-            {/* název aktuální hry v jednom řádku s jazykem */}
-            {screen === 'game' && (
-              <div
-                style={{
-                  marginLeft: 8,
-                  fontWeight: 900,
-                  fontSize: 20,
-                  color: 'var(--accent)',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {mode === 'cricket'
-                  ? t(lang, 'cricket')
-                  : mode === 'classic'
-                    ? t(lang, 'classic')
-                    : t(lang, 'around')}
-              </div>
-            )}
-          </div>
+      {/* ADS banner strip in lobby */}
+      {screen === 'lobby' && !isPremium && (
+        <div className="adstrip">
+          <div className="adcard">Reklamní pauza</div>
+          <div className="adcard">Podporuje vývoj hry</div>
+          <div className="adcard">Díky ❤️</div>
+        </div>
+      )}
 
-        {/* ADS banner strip in lobby */}
-        {screen === 'lobby' && !isPremium && (
-          <div className="adstrip">
-            <div className="adcard">Reklamní pauza</div>
-            <div className="adcard">Podporuje vývoj hry</div>
-            <div className="adcard">Díky ❤️</div>
-          </div>
-        )}
+      {screen === 'lobby' ? (
+        <Lobby
+          lang={lang} t={t}
+          mode={mode} setMode={setMode}
+          startScore={startScore} setStartScore={setStartScore}
+          outDouble={outDouble} setOutDouble={setOutDouble}
+          outTriple={outTriple} setOutTriple={setOutTriple}
+          outMaster={outMaster} setOutMaster={setOutMaster}
+          randomOrder={randomOrder} setRandomOrder={setRandomOrder}
+          playThrough={playThrough} setPlayThrough={setPlayThrough}
+          ai={ai} setAi={setAi}
+          players={players} setPlayers={setPlayers}
+          addPlayer={addPlayer} deletePlayer={deletePlayer}
+          movePlayer={movePlayer}
+          startGame={startGame}
+          continueSaved={continueSaved}
+          showToast={showToast}
+          hasSaved={hasSaved}
+          isPremium={isPremium} setIsPremium={setIsPremium}
+          themeColor={themeColor} setThemeColor={setThemeColor}
+        />
+      ) : (
+        <Game
+          lang={lang} t={t}
+          mode={mode}
+          isPremium={isPremium}
+          outDesc={(() => {
+            if (mode !== 'classic') {
+              return mode === 'cricket' ? 'Cricket' : 'Around the Clock';
+            }
+            const arr = [];
+            if (outDouble) arr.push('Double-out');
+            if (outTriple) arr.push('Triple-out');
+            if (outMaster) arr.push('Master-out');
+            if (arr.length === 0) return 'Any-out';
+            return arr.join(' + ');
+          })()}
+          players={players} order={order} currIdx={currIdx}
+          scores={scores} thrown={thrown} lastTurn={lastTurn}
+          cricket={cricket} around={around}
+          averages={averages}
+          darts={darts} mult={mult} setMult={setMult}
+          commitDart={commitDart} undo={undo}
+          winner={winner}
+          saveGame={() => {
+            try {
+              const list = JSON.parse(localStorage.getItem('finishedGames') || '[]');
+              list.unshift({
+                ts: Date.now(),
+                mode, startScore,
+                outDouble, outTriple, outMaster,
+                randomOrder, playThrough,
+                players: players.map(p => p.name),
+                winner: players[order[currIdx]]?.name || ''
+              });
+              localStorage.setItem('finishedGames', JSON.stringify(list.slice(0, 200)));
+            } catch { }
+            showToast('Uloženo');
+          }}
+          restartGame={restartGame}
+          cardRefs={cardRefs}
+          setScreen={(scr) => {
+            if (scr === 'lobby') saveSnapshot();
+            setScreen(scr);
+          }}
+        />
+      )}
 
-        {screen === 'lobby' ? (
-          <Lobby
-            lang={lang} t={t}
-            mode={mode} setMode={setMode}
-            startScore={startScore} setStartScore={setStartScore}
-            outDouble={outDouble} setOutDouble={setOutDouble}
-            outTriple={outTriple} setOutTriple={setOutTriple}
-            outMaster={outMaster} setOutMaster={setOutMaster}
-            randomOrder={randomOrder} setRandomOrder={setRandomOrder}
-            playThrough={playThrough} setPlayThrough={setPlayThrough}
-            ai={ai} setAi={setAi}
-            players={players} setPlayers={setPlayers}
-            addPlayer={addPlayer} deletePlayer={deletePlayer}
-            movePlayer={movePlayer}
-            startGame={startGame}
-            continueSaved={continueSaved}
-            showToast={showToast}
-            hasSaved={hasSaved}
-            isPremium={isPremium} setIsPremium={setIsPremium}
-            themeColor={themeColor} setThemeColor={setThemeColor}
-          />
-        ) : (
-          <Game
-            lang={lang} t={t}
-            mode={mode}
-            isPremium={isPremium}
-            outDesc={(() => {
-              if (mode !== 'classic') {
-                return mode === 'cricket' ? 'Cricket' : 'Around the Clock';
-              }
-              const arr = [];
-              if (outDouble) arr.push('Double-out');
-              if (outTriple) arr.push('Triple-out');
-              if (outMaster) arr.push('Master-out');
-              if (arr.length === 0) return 'Any-out';
-              return arr.join(' + ');
-            })()}
-            players={players} order={order} currIdx={currIdx}
-            scores={scores} thrown={thrown} lastTurn={lastTurn}
-            cricket={cricket} around={around}
-            averages={averages}
-            darts={darts} mult={mult} setMult={setMult}
-            commitDart={commitDart} undo={undo}
-            winner={winner}
-            saveGame={() => {
-              // tlačítko je vidět jen v Premium, ale dál nic neměníme
-              try {
-                const list = JSON.parse(localStorage.getItem('finishedGames') || '[]');
-                list.unshift({
-                  ts: Date.now(),
-                  mode, startScore,
-                  outDouble, outTriple, outMaster,
-                  randomOrder, playThrough,
-                  players: players.map(p => p.name),
-                  winner: players[order[currIdx]]?.name || ''
-                });
-                localStorage.setItem('finishedGames', JSON.stringify(list.slice(0, 200)));
-              } catch { }
-              showToast('Uloženo');
-            }}
-            restartGame={restartGame}
-            cardRefs={cardRefs}
-            setScreen={(scr) => {
-              if (scr === 'lobby') saveSnapshot();
-              setScreen(scr);
-            }}
-          />
-        )}
+      <audio ref={hitAudioRef} src="/dart-hit.mp3" preload="auto" />
+      <audio ref={winAudioRef} src="/tada-fanfare-a-6313.mp3" preload="auto" />
 
-        <audio ref={hitAudioRef} src="/dart-hit.mp3" preload="auto" />
-        <audio ref={winAudioRef} src="/tada-fanfare-a-6313.mp3" preload="auto" />
-
-        {/* FULLSCREEN OVERLAY PO VÝHŘE */}
-        {showAd && (
+      {/* FULLSCREEN OVERLAY PO VÝHŘE */}
+      {showAd && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.9)',
+            color: '#fff',
+            zIndex: 9998,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            textAlign: 'center'
+          }}
+        >
           <div
             style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0,0,0,0.9)',
-              color: '#fff',
-              zIndex: 9998,
+              background: '#111',
+              border: '2px solid var(--accent)',
+              borderRadius: '12px',
+              width: '100%',
+              maxWidth: '320px',
+              minHeight: '180px',
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '16px',
+              fontWeight: '900',
+              fontSize: '20px',
+              boxShadow: '0 20px 40px #000',
               textAlign: 'center'
             }}
           >
-            {/* obsah reklamní pauzy / upsell */}
+            Reklamní pauza – děkujeme za podporu hry
+          </div>
+
+          <div style={{ marginTop: '16px', fontSize: '14px', opacity: .8, fontWeight: 600 }}>
+            Pokračovat za {adSecondsLeft}s
+          </div>
+
+          <button
+            type="button"
+            disabled={adSecondsLeft > 0}
+            onClick={closeAdNow}
+            style={{
+              marginTop: '20px',
+              minWidth: '160px',
+              minHeight: '44px',
+              borderRadius: '10px',
+              fontWeight: '800',
+              fontSize: '16px',
+              background: adSecondsLeft > 0 ? '#444' : 'var(--accent)',
+              border: '2px solid var(--line)',
+              color: '#fff',
+              opacity: adSecondsLeft > 0 ? 0.5 : 1,
+              boxShadow: adSecondsLeft > 0 ? 'none' : '0 0 12px var(--accent)',
+              cursor: adSecondsLeft > 0 ? 'default' : 'pointer'
+            }}
+          >
+            Pokračovat
+          </button>
+
+          {!isPremium && (
             <div
               style={{
-                background: '#111',
-                border: '2px solid var(--accent)',
-                borderRadius: '12px',
-                width: '100%',
-                maxWidth: '320px',
-                minHeight: '180px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: '900',
-                fontSize: '20px',
-                boxShadow: '0 20px 40px #000',
-                textAlign: 'center'
+                marginTop: '16px',
+                fontSize: '12px',
+                lineHeight: 1.4,
+                maxWidth: '260px',
+                opacity: .8
               }}
             >
-              Reklamní pauza – děkujeme za podporu hry
+              Žádné pauzy a vlastní vzhled?
+              <br />
+              Odemkni Premium.
             </div>
+          )}
+        </div>
+      )}
 
-            <div style={{ marginTop: '16px', fontSize: '14px', opacity: .8, fontWeight: 600 }}>
-              Pokračovat za {adSecondsLeft}s
-            </div>
-
-            <button
-              type="button"
-              disabled={adSecondsLeft > 0}
-              onClick={() => {
-                closeAdNow();
-              }}
-              style={{
-                marginTop: '20px',
-                minWidth: '160px',
-                minHeight: '44px',
-                borderRadius: '10px',
-                fontWeight: '800',
-                fontSize: '16px',
-                background: adSecondsLeft > 0 ? '#444' : 'var(--accent)',
-                border: '2px solid var(--line)',
-                color: '#fff',
-                opacity: adSecondsLeft > 0 ? 0.5 : 1,
-                boxShadow: adSecondsLeft > 0 ? 'none' : '0 0 12px var(--accent)',
-                cursor: adSecondsLeft > 0 ? 'default' : 'pointer'
-              }}
-            >
-              Pokračovat
-            </button>
-
-            {!isPremium && (
-              <div
-                style={{
-                  marginTop: '16px',
-                  fontSize: '12px',
-                  lineHeight: 1.4,
-                  maxWidth: '260px',
-                  opacity: .8
-                }}
-              >
-                Žádné pauzy a vlastní vzhled?
-                <br />
-                Odemkni Premium.
-              </div>
-            )}
-          </div>
-        )}
-
-        {toast && <div className="toast ok">✔️ {toast}</div>}
-      </div>
+      {toast && <div className="toast ok">✔️ {toast}</div>}
+    </div>
   );
 } // konec App komponenty
 
