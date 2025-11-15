@@ -591,9 +591,9 @@ input[type="text"]{color:#fff}
   width:100%;
   min-width:0;
 }
-
 /* Bezpečně vypneme horizontální posuv celé stránky */
 html, body{ overflow-x:hidden; }
+
 /* === CRICKET FIX – zarovnání levého sloupce a hráčů === */
 
 .cricketWrap {
@@ -609,15 +609,41 @@ html, body{ overflow-x:hidden; }
   gap: 0;                    /* žádné mezery mezi řádky */
 }
 
-.targetCell,
-.markCell {
+/* ---- ŘÁDKY V CRICKETU (úprava levého sloupce) ---- */
+.targetCell {
   box-sizing: border-box;
-  height: 64px;              /* musí sedět na ROW_H v App.jsx */
+  height: 64px;              /* odpovídá ROW_H */
   margin: 0;
   padding: 0;
+
+  /* perfektní střed */
   display: flex;
   align-items: center;
   justify-content: center;
+
+  /* stejný styl jako čísla na keypad */
+  font-weight: 900;
+  font-size: 20px;
+  line-height: 1;
+  white-space: nowrap;
+
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #171a1f;
+}
+
+/* řádky hráčů */
+.markCell {
+  box-sizing: border-box;
+  height: 64px;              /* stejné jako targetCell */
+  margin: 0;
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-top: 1px solid var(--line);
 }
 
 /* hlavičky (prázdná vlevo vs jméno hráče) */
