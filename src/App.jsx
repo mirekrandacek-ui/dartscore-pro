@@ -1377,7 +1377,7 @@ export default function App() {
             )}
           </div>
 
-          {/* PRAVÁ STRANA: zvuk / hlas / jazyk */}
+          {/* PRAVÁ STRANA: zvuk / hlas / jazyk + název módu */}
           <div
             className="controls"
             style={{
@@ -1416,8 +1416,26 @@ export default function App() {
                 <option key={code} value={code}>{LANG_LABEL[code]}</option>
               ))}
             </select>
+
+            {/* název aktuální hry v jednom řádku s jazykem */}
+            {screen === 'game' && (
+              <div
+                style={{
+                  marginLeft: 8,
+                  fontWeight: 900,
+                  fontSize: 20,
+                  color: 'var(--accent)',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {mode === 'cricket'
+                  ? t(lang, 'cricket')
+                  : mode === 'classic'
+                    ? t(lang, 'classic')
+                    : t(lang, 'around')}
+              </div>
+            )}
           </div>
-        </div>
 
         {/* ADS banner strip in lobby */}
         {screen === 'lobby' && !isPremium && (
