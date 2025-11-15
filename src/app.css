@@ -211,15 +211,33 @@ input[type="text"]{color:#fff}
   align-items:stretch;
 }
 
-/* Levý pevný sloupec s cíli (15..bull) */
+/* Levý sloupec – stejná celková výška jako sloupce hráčů */
 .targetsRail{
-  flex:0 0 72px;
+  flex:1 0 72px;       /* ← původně 0 0 72px → teď stejné natažení jako playerCol */
   background:var(--panel);
   border:1px solid var(--line);
   border-radius:12px;
   display:flex;
   flex-direction:column;
   overflow:hidden;
+  min-height:0;        /* aby se výška chovala jako hráčské sloupce */
+}
+
+/* horní hlavička (15..20..25 mají stejný start) */
+.targetsRailHead{
+  height:32px;
+  border-bottom:1px solid var(--line);
+  flex-shrink:0;
+}
+
+/* samotné řádky 15–25 */
+.targetsRailMarks{
+  display:flex;
+  flex-direction:column;
+  gap:0;
+  padding:0;
+  flex:1;             /* ← zásadní, aby se řádky rozdělily stejně jako hráči */
+  justify-content:flex-start;
 }
 .targetsRailHead{
   height:32px; /* menší hlavička */
