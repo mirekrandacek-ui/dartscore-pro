@@ -2257,17 +2257,20 @@ function Game({
 
   {/* VPRAVO: název režimu (Cricket / Classic / Around) */}
   <div
-    style={{
-      fontWeight:900,
-      fontSize:20,
-      whiteSpace:'nowrap',
-      color:'var(--accent)',
-      marginRight:8
-    }}
-  >
-    {mode === 'classic' ? 'Classic' :
-     mode === 'cricket' ? 'Cricket' : 'Around'}
-  </div>
+  style={{
+    marginLeft: 'auto',
+    fontWeight: 900,
+    fontSize: 20,
+    color: 'var(--accent)',
+    whiteSpace: 'nowrap',
+    paddingLeft: 12
+  }}
+>
+  {mode === 'cricket'
+    ? 'Cricket'
+    : mode === 'classic'
+      ? 'Classic'
+      : 'Around'}
 </div>
 
 {/* DRUHÝ ŘÁDEK: tlačítka */}
