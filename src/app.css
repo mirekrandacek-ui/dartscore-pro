@@ -283,6 +283,17 @@ input[type="text"]{color:#fff}
   display:flex;
   flex-direction:column;
 }
+/* Cricket – všechny sloupce stejně vysoké */
+.cricketWrap{
+  align-items: stretch;
+}
+
+/* Levý sloupec a hráčské sloupce stejné natažení */
+.cricketWrap > .targetsRail,
+.cricketWrap > .playerCol{
+  height: 100%;
+  align-self: stretch;
+}
 /* >>> active highlight uses accent color <<< */
 .playerCol.active{outline:2px solid var(--accent)}
 .playerCard.active{outline:2px solid var(--accent)}
