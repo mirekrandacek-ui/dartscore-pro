@@ -1604,7 +1604,6 @@ export default function App() {
 
         {toast && <div className="toast ok">✔️ {toast}</div>}
       </div>
-    </ErrorBoundary>
   );
 } // konec App komponenty
 
