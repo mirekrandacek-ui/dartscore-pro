@@ -216,9 +216,12 @@ const defaultNameFor = (lang, n) => ({ cs: `Hráč ${n}`, en: `Player ${n}`, de:
 const autoNameRx = [/^Hráč (\d+)$/, /^Player (\d+)$/, /^Spieler (\d+)$/, /^Jugador (\d+)$/, /^Speler (\d+)$/, /^Игрок (\d+)$/, /^玩家 (\d+)$/];
 
 function speak(lang, text, enabled) {
-  if (!enabled || !window.speechSynthesis) return;
-  const u = new SpeechSynthesisUtterance(text.toString());
-  const map = {
+  if (!enabled || typeof window === 'undefined' || !window.speechSynthesis) return;
+
+  const synth = window.speechSynthesis;
+  const utter = new SpeechSynthesisUtterance(String(text));
+
+  const langMap = {
     cs: 'cs-CZ',
     en: 'en-US',
     de: 'de-DE',
@@ -227,9 +230,32 @@ function speak(lang, text, enabled) {
     ru: 'ru-RU',
     zh: 'zh-CN'
   };
-  u.lang = map[lang] || 'en-US';
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(u);
+
+  const targetLang = langMap[lang] || 'en-US';
+  utter.lang = targetLang;
+
+  // pokus o výběr ženského hlasu pro daný jazyk
+  const pickVoice = () => {
+    const voices = synth.getVoices() || [];
+    if (!voices.length) return null;
+
+    const sameLang = voices.filter(v =>
+      v.lang && v.lang.toLowerCase().startsWith(targetLang.slice(0, 2).toLowerCase())
+    );
+
+    // preferuj ženské hlasy podle názvu
+    const female = sameLang.find(v =>
+      /female|frau|woman|frau|frauensprache|žena/i.test(v.name)
+    );
+
+    return female || sameLang[0] || voices[0] || null;
+  };
+
+  const voice = pickVoice();
+  if (voice) utter.voice = voice;
+
+  synth.cancel();
+  synth.speak(utter);
 }
 
 /* Cricket značky */
@@ -880,18 +906,19 @@ export default function App() {
   };
 
   /* výhra */
-  const finalizeWin = (pIdx, opts = {}) => {
-    if (!opts.silentVoice) {
-      speak(lang, 'Vítěz!', voiceOn);
+ const finalizeWin = (pIdx, opts = {}) => {
+  if (!opts.silentVoice) {
+    const winText = t(lang, 'youWinPrefix'); // Win / Sieg / Victoria / …
+    speak(lang, winText, voiceOn);
+  }
+  try {
+    if (winAudioRef.current) {
+      winAudioRef.current.currentTime = 0;
+      winAudioRef.current.play();
     }
-    try {
-      if (winAudioRef.current) {
-        winAudioRef.current.currentTime = 0;
-        winAudioRef.current.play();
-      }
-    } catch { }
+  } catch { }
 
-    setWinner(pIdx);
+  setWinner(pIdx);
 
     // FREE verze: po výhře zobrazíme interstitial + overlay
     if (!isPremium) {
