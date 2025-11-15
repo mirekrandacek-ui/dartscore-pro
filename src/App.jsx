@@ -2250,31 +2250,39 @@ function Game({
   return (
     <div className="gameWrap">
 
-      {/* horní lišta */}
-      <div className="gameTopBar">
-        <span className="badge">
-          {mode === 'classic' ? `${t(lang,'outLabel')}: ${outDesc}` : outDesc}
-        </span>
+     <div className="gameTopBar">
 
-        <div className="gameTopBtns" style={{display:'flex',gap:8,flexWrap:'nowrap'}}>
-          <button type="button" className="btn" onClick={restartGame}
-            style={{whiteSpace:'nowrap',minWidth:80}}>
-            {t(lang,'restart') ?? 'Restart'}
-          </button>
+  {/* VLEVO: prázdno – necháme zde místo pro jazyk a ikony */}
+  <div style={{ flex:1 }} />
 
-          {isPremium && (
-            <button type="button" className="btn" onClick={saveGame}
-              style={{whiteSpace:'nowrap',minWidth:80}}>
-              {t(lang,'saveGame') ?? 'Uložit hru'}
-            </button>
-          )}
+  {/* VPRAVO: název režimu (Cricket / Classic / Around) */}
+  <div
+    style={{
+      fontWeight:900,
+      fontSize:20,
+      whiteSpace:'nowrap',
+      color:'var(--accent)',
+      marginRight:8
+    }}
+  >
+    {mode === 'classic' ? 'Classic' :
+     mode === 'cricket' ? 'Cricket' : 'Around'}
+  </div>
+</div>
 
-          <button type="button" className="btn ghost" onClick={()=>setScreen('lobby')}
-            style={{whiteSpace:'nowrap',minWidth:80}}>
-            {t(lang,'back') ?? 'Zpět'}
-          </button>
-        </div>
-      </div>
+{/* DRUHÝ ŘÁDEK: tlačítka */}
+<div className="gameTopBtns"
+     style={{ display:'flex', gap:6, marginTop:6, flexWrap:'nowrap' }}>
+  <button className="btn" onClick={restartGame}> {t(lang,'restart')} </button>
+
+  {isPremium && (
+    <button className="btn" onClick={saveGame}> {t(lang,'saveGame')} </button>
+  )}
+
+  <button className="btn ghost" onClick={()=>setScreen('lobby')}>
+    {t(lang,'back')}
+  </button>
+</div>
 
       {/* scoreboard */}
       {mode !== 'cricket' ? (
