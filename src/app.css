@@ -165,7 +165,8 @@ input[type="text"]{color:#fff}
   align-items:center;
   justify-content:space-between;
   gap:8px;
-  flex-wrap:nowrap;
+  flex-wrap:wrap;
+  margin-bottom:12px;  /* nový odstup pod tlačítky */
 }
 
 /* >>> badge border uses accent color <<< */
@@ -616,10 +617,11 @@ html, body{ overflow-x:hidden; }
   margin: 0;
   padding: 0;
 
-  /* perfektní střed */
+  /* perfektní střed, ale kousek dolů */
   display: flex;
   align-items: center;
   justify-content: center;
+  transform: translateY(2px);
 
   /* stejný styl jako čísla na keypad */
   font-weight: 900;
@@ -659,5 +661,9 @@ html, body{ overflow-x:hidden; }
 .cricketScroll {
   overflow-y: auto;
   padding-top: 0;
+  /* Zmenšíme mezeru mezi tabulkou a keypadem */
+.padPane{
+  margin-top:4px;
 }
+
 
