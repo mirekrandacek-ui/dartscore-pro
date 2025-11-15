@@ -179,21 +179,21 @@ input[type="text"]{color:#fff}
   color:var(--accent);
 }
 
-/* tlačítka nahoře – větší, čitelná, nezalamovat */
+/* tlačítka nahoře – čitelná, kompaktní, vždy na 1 řádku */
 .gameTopBtns{
   display:flex;
-  gap:8px;
+  gap:4px;                /* menší mezery mezi tlačítky */
   flex-wrap:nowrap;
 }
 
 .gameTopBtns .btn{
   white-space:nowrap;
-  font-size:16px;          /* větší čitelné písmo */
-  padding:10px 18px;       /* větší klikací plocha */
+  font-size:15px;         /* pořád dobře čitelné */
+  padding:6px 10px;       /* malé rámečky → vleze se to */
   font-weight:700;
-  border-radius:10px;
-  flex:0 0 auto;           /* NEROZTAHUJE se do šířky */
-  min-width:max-content;   /* drží šířku textu */
+  border-radius:6px;      /* menší zaoblení = menší šířka */
+  flex:0 0 auto;          /* NEROSTE */
+  min-width:max-content;  /* drží text, ale úsporně */
 }
 
 .playersPane{
