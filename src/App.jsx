@@ -2241,13 +2241,20 @@ function Game({
 
   return (
     <div className="gameWrap">
-      {/* horní lišta */}
+           {/* horní lišta */}
       <div className="gameTopBar">
-        <span className="badge">
-          {mode === 'classic'
-            ? `${t(lang, 'outLabel')}: ${outDesc}`
-            : outDesc}
-        </span>
+        {/* badge jen pro Classic a Around, ne pro Cricket */}
+        {mode === 'classic' && (
+          <span className="badge">
+            {`${t(lang, 'outLabel')}: ${outDesc}`}
+          </span>
+        )}
+
+        {mode === 'around' && (
+          <span className="badge">
+            {outDesc}
+          </span>
+        )}
 
         <div
           className="gameTopBtns"
