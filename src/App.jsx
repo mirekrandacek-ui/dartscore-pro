@@ -2286,7 +2286,6 @@ function Game({
     className="gameTopBtns"
     style={{ display: 'flex', gap: 8, flexWrap: 'nowrap' }}
   >
-    ...
           <button
             type="button"
             className="btn"
