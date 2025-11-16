@@ -1375,47 +1375,60 @@ export default function App() {
           )}
         </div>
 
-        {/* PRAVÁ STRANA: zvuk / hlas / jazyk */}
-        <div
-          className="controls"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            flexShrink: 0,
-            flexWrap: 'wrap'
-          }}
-        >
-          <button
-            type="button"
-            className={`iconBtn ${!soundOn ? 'muted' : ''}`}
-            onClick={() => setSoundOn(v => !v)}
-            aria-label={t(lang, 'sound')}
-          >
-            <IconSpeaker />
-          </button>
+ {/* PRAVÁ STRANA: zvuk / hlas / jazyk + název hry */}
+<div
+  className="controls"
+  style={{
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    flexShrink: 0,
+    flexWrap: 'wrap'
+  }}
+>
+  <button
+    type="button"
+    className={`iconBtn ${!soundOn ? 'muted' : ''}`}
+    onClick={() => setSoundOn(v => !v)}
+    aria-label={t(lang, 'sound')}
+  >
+    <IconSpeaker />
+  </button>
 
-          <button
-            type="button"
-            className={`iconBtn ${!voiceOn ? 'muted' : ''}`}
-            onClick={() => setVoiceOn(v => !v)}
-            aria-label={t(lang, 'voice')}
-          >
-            <span className="iconHead" aria-hidden="true"></span>
-          </button>
+  <button
+    type="button"
+    className={`iconBtn ${!voiceOn ? 'muted' : ''}`}
+    onClick={() => setVoiceOn(v => !v)}
+    aria-label={t(lang, 'voice')}
+  >
+    <span className="iconHead" aria-hidden="true"></span>
+  </button>
 
-          <select
-            className="input"
-            value={lang}
-            onChange={e => setLang(e.target.value)}
-            style={{ height: 34 }}
-          >
-            {['cs', 'en', 'de', 'es', 'nl', 'ru', 'zh'].map(code => (
-              <option key={code} value={code}>{LANG_LABEL[code]}</option>
-            ))}
-          </select>
-        </div>
-      </div>
+  <select
+    className="input"
+    value={lang}
+    onChange={e => setLang(e.target.value)}
+    style={{ height: 34 }}
+  >
+    {['cs', 'en', 'de', 'es', 'nl', 'ru', 'zh'].map(code => (
+      <option key={code} value={code}>{LANG_LABEL[code]}</option>
+    ))}
+  </select>
+
+  {/* OVÁLNÝ ŠTÍTEK S NÁZVEM HRY V HEADERU */}
+  {screen === 'game' && (
+    <span
+      className="badge"
+      style={{ marginLeft: 4 }}
+    >
+      {mode === 'classic'
+        ? t(lang, 'classic')
+        : mode === 'cricket'
+        ? t(lang, 'cricket')
+        : t(lang, 'around')}
+    </span>
+  )}
+</div>
 
       {/* ADS banner strip in lobby */}
       {screen === 'lobby' && !isPremium && (
@@ -2262,17 +2275,18 @@ function Game({
   return (
     <div className="gameWrap">
       {/* horní lišta */}
-      <div className="gameTopBar">
-        <span className="badge">
-          {mode === 'classic'
-            ? `${t(lang, 'outLabel')}: ${outDesc}`
-            : outDesc}
-        </span>
+     <div className="gameTopBar">
+  {mode === 'classic' && (
+    <span className="badge">
+      {`${t(lang, 'outLabel')}: ${outDesc}`}
+    </span>
+  )}
 
-        <div
-          className="gameTopBtns"
-          style={{ display: 'flex', gap: 8, flexWrap: 'nowrap' }}
-        >
+  <div
+    className="gameTopBtns"
+    style={{ display: 'flex', gap: 8, flexWrap: 'nowrap' }}
+  >
+    ...
           <button
             type="button"
             className="btn"
