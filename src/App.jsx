@@ -1509,7 +1509,7 @@ export default function App() {
 
       <audio ref={hitAudioRef} src="/dart-hit.mp3" preload="auto" />
       <audio ref={winAudioRef} src="/tada-fanfare-a-6313.mp3" preload="auto" />
-
+        
       {/* FULLSCREEN OVERLAY PO VÝHŘE */}
       {showAd && (
         <div
@@ -1593,8 +1593,7 @@ export default function App() {
 
       {toast && <div className="toast ok">✔️ {toast}</div>}
     </div>
-</ErrorBoundary>
-      );
+  );
 } // konec App komponenty
       
 /* ===== LOBBY ===== */
