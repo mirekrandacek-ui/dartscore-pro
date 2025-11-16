@@ -1595,7 +1595,7 @@ export default function App() {
     </div>
   );
 } // konec App komponenty
-
+      
 /* ===== LOBBY ===== */
 function Lobby({
   lang, t,
@@ -1617,7 +1617,6 @@ function Lobby({
 }) {
   return (
     <div className="lobbyWrap">
-
       {/* Režim */}
       <div className="lobbyCard">
         <div className="lobbyControls">
