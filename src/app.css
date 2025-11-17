@@ -243,8 +243,8 @@ input[type="text"]{color:#fff}
 
 /* Slim sloupce hráčů */
 .playerCol {
-  flex: 0 0 130px;          /* TADY ZÚŽÍŠ sloupce (např 130 → 120 px) */
-  max-width: 130px;
+  flex: 0 0 110px;          /* TADY ZÚŽÍŠ sloupce (např 130 → 120 px) */
+  max-width: 110px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -599,4 +599,8 @@ input[type="text"]{color:#fff}
 /* Bezpečně vypneme horizontální posuv celé stránky */
 html, body{
   overflow-x:hidden;
+}
+/* === CRICKET spacing – mezera pod tabulkou před keypad === */
+.padPane{
+  margin-top:10px;   /* zvětší rozestup pod cricket tabulkou */
 }
