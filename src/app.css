@@ -11,11 +11,11 @@
   /* >>> nová aktivní accent barva, kterou přepisujeme z Reactu <<< */
   --accent:#16a34a;
 
-  --padH: 260px;
+  --padH: 160px;
   /* výška hlavičky sloupce hráče v Cricketu – kvůli zarovnání */
   --cricket-head-h: 44px;
 }
-@media (max-height: 720px){ :root{ --padH: 220px; } }
+@media (max-height: 720px){ :root{ --padH: 160px; } }
 
 *{box-sizing:border-box}
 html,body,#root{height:100%}
