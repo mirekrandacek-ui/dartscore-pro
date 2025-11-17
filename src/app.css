@@ -204,140 +204,131 @@ input[type="text"]{color:#fff}
   flex-direction:column;
   gap:8px;
 }
-/* CRICKET LAYOUT – levý sloupec + hráči 1:1 */
+/* === CRICKET LAYOUT — levý sloupec + hráči 1:1 === */
 
-.cricketWrap{
-  flex:1 1 auto;
-  min-height:0;
-  display:flex;
-  gap:8px;
-  align-items:flex-start;
+.cricketWrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
 }
 
 /* levý sloupec 15–25 */
-.targetsRail{
-  flex:0 0 64px;                     /* úzký sloupec vlevo */
-  background:var(--panel);
-  border:1px solid var(--line);
-  border-radius:12px;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
+.targetsRail {
+  flex: 0 0 64px;                 /* úzký pevný sloupec */
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-/* hlavička “Ziel / Cíl / Target” */
+/* nadpis levého sloupce i hráčů — stejné */
 .targetsRailHead,
-.playerColHead{
-  height:40px;
-  padding:0 8px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  font-weight:800;
-  white-space:nowrap;
-  text-overflow:ellipsis;
-  overflow:hidden;
-  border-bottom:1px solid var(--line);
+.playerColHead {
+  height: 40px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-bottom: 1px solid var(--line);
 }
 
-/* hráčův sloupec */
-.playerCol{
-  flex:1 1 0;
-  min-width:140px;
-  background:var(--panel);
-  border:1px solid var(--line);
-  border-radius:12px;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
+/* sloupec hráče */
+.playerCol {
+  flex: 1 1 0;
+  min-width: 140px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
+/* kontejnery na řádky */
 .targetsRailMarks,
-.playerColMarks{
-  display:flex;
-  flex-direction:column;
+.playerColMarks {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
-/* JEDINÉ místo, kde se řeší výška řádku */
+/* === JEDINÉ MÍSTO KTERÉ URČUJE ZAROVNÁNÍ 7 ŘÁDKŮ === */
 .targetCell,
-.markCell{
-  box-sizing:border-box;
-  height:56px;                       /* tady se zarovnává 7 řádků */
-  margin:0;
-  padding:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-bottom:1px solid var(--line);
-  background:#171a1f;
-  font-size:18px;
-  line-height:1;
+.markCell {
+  box-sizing: border-box;
+  height: 56px;                 /* přesně stejná výška vlevo i u hráčů */
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--line);
+  background: #171a1f;
+  font-size: 20px;              /* zvětšené číslo (čitelnost pro starší hráče) */
+  font-weight: 900;
+  line-height: 1;
 }
 
-/* poslední řádek bez extra čáry */
+/* poslední řádek bez spodní hrany */
 .targetsRailMarks .targetCell:last-child,
-.playerColMarks .markCell:last-child{
-  border-bottom:none;
+.playerColMarks .markCell:last-child {
+  border-bottom: none;
 }
 
-/* zvýraznění 25 v levém sloupci */
-.targetsRailMarks .targetCell:last-child{
-  background:#7f1d1d;
+/* zvýraznění cíle 25 */
+.targetsRailMarks .targetCell:last-child {
+  background: #7f1d1d;
 }
 
-/* první řádek bez extra čáry nahoře (kvůli border-radius) */
+/* první řádek bez horní hrany */
 .targetsRailMarks .targetCell:first-child,
-.playerColMarks .markCell:first-child{
-  border-top:none;
+.playerColMarks .markCell:first-child {
+  border-top: none;
 }
 
-/* 25 (Bull) v levém sloupci – zvýraznění */
-.targetsRailMarks .targetCell:last-child{
-  background:#7f1d1d;
+/* zavřené číslo (3 zásahy) */
+.markCell.closed {
+  background: #111827;
 }
 
-/* zavřená čísla v cricketu – zůstává tvoje logika */
-.markCell.closed{
-  background:#111827;
+/* === ostatní věci zůstávají === */
+.playerCard {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 8px;
 }
-
-/* Player card (Classic/Around) */
-.playerCard{
-  position:relative;
-  background:var(--panel);
-  border:1px solid var(--line);
-  border-radius:14px;
-  padding:8px
+.playerCard.active { outline: 2px solid var(--green); }
+.playerHeader { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.playerNameText { font-weight: 900; }
+.playerStats { display: flex; gap: 8px; color: var(--muted); }
+.playerScore { font-size: 40px; font-weight: 900; }
+.playerTurn { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.dartBox {
+  min-width: 56px;
+  height: 40px;
+  border-radius: 10px;
+  background: #171a1f;
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
 }
-.playerCard.active{outline:2px solid var(--green)}
-.playerHeader{
-  display:flex;align-items:center;justify-content:space-between;gap:8px
-}
-.playerNameText{font-weight:900}
-.playerStats{display:flex;gap:8px;color:var(--muted)}
-.playerScore{font-size:40px;font-weight:900}
-.playerTurn{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  margin-top:6px
-}
-.dartBox{
-  min-width:56px;
-  height:40px;
-  border-radius:10px;
-  background:#171a1f;
-  border:1px solid var(--line);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-weight:900
-}
-.lastTotal{
-  margin-left:auto;
-  color:#cbd5e1;
-  font-weight:800
+.lastTotal {
+  margin-left: auto;
+  color: #cbd5e1;
+  font-weight: 800;
 }
 
 /* Oslava */
