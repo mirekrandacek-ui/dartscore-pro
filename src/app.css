@@ -204,68 +204,97 @@ input[type="text"]{color:#fff}
   flex-direction:column;
   gap:8px;
 }
-/* CRICKET LAYOUT – levý sloupec + hráči */
+/* === CRICKET BLOCK (SLIM) === */
 
-.cricketWrap{
-  flex:1 1 auto;
-  min-height:0;
-  display:flex;
-  gap:8px;
-  align-items:stretch;
+.cricketWrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
 }
 
-/* levý sloupec 15–25 */
-.targetsRail{
-  flex:0 0 64px;
-  background:var(--panel);
-  border:1px solid var(--line);
-  border-radius:12px;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
+/* Levý sloupec */
+.targetsRail {
+  flex: 0 0 64px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-/* hlavička “Ziel / Cíl / Target” */
-.targetsRailHead{
-  height:40px;
-  padding:0 8px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-weight:800;
-  white-space:nowrap;
-  text-overflow:ellipsis;
-  overflow:hidden;
-  border-bottom:1px solid var(--line);
+/* Hlavičky */
+.targetsRailHead,
+.playerColHead {
+  height: 40px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-bottom: 1px solid var(--line);
 }
 
+/* Slim sloupce hráčů */
+.playerCol {
+  flex: 0 0 130px;          /* TADY ZÚŽÍŠ sloupce (např 130 → 120 px) */
+  max-width: 130px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 7 řádků – zarovnání 1:1 */
 .targetsRailMarks,
-.playerColMarks{
-  display:flex;
-  flex-direction:column;
+.playerColMarks {
+  display: flex;
+  flex-direction: column;
 }
 
-/* JEDINÉ místo, kde se řeší výška řádku */
 .targetCell,
-.markCell{
-  box-sizing:border-box;
-  height:56px;             /* 7 řádků = 15–20 + 25 */
-  margin:0;
-  padding:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-bottom:1px solid var(--line);
-  background:#171a1f;
-  font-size:18px;
-  font-weight:900;
-  line-height:1;
+.markCell {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #171a1f;
+  font-size: 20px;
+  line-height: 1;
+  border-bottom: 1px solid var(--line);
 }
 
-/* poslední řádek bez extra čáry */
 .targetsRailMarks .targetCell:last-child,
-.playerColMarks .markCell:last-child{
-  border-bottom:none;
+.playerColMarks .markCell:last-child {
+  border-bottom: none;
+}
+
+.targetsRailMarks .targetCell:last-child {
+  background: #7f1d1d;
+}
+
+.markCell.closed {
+  background: #111827;
+}
+
+/* Horizontální scroll hráčů */
+.cricketScroll {
+  display: flex;
+  overflow-x: auto;
+  gap: 8px;
+  padding-bottom: 0;
+  scrollbar-width: none;
+}
+.cricketScroll::-webkit-scrollbar {
+  display: none;
 }
 
 /* zvýraznění 25 v levém sloupci */
@@ -570,83 +599,4 @@ input[type="text"]{color:#fff}
 /* Bezpečně vypneme horizontální posuv celé stránky */
 html, body{
   overflow-x:hidden;
-}
-
-/* === CRICKET – zarovnání levého sloupce a hráčů, dynamická výška řádků === */
-
-.cricketWrap {
-  display:flex;
-  align-items:stretch;   /* všechny sloupce stejně vysoké */
-}
-
-/* sloupec 15–25 vlevo + sloupce hráčů */
-.targetsRail,
-.playerCol{
-  display:flex;
-  flex-direction:column;
-}
-
-/* oblast s řádky (15–25 i značky hráčů) vyplní prostor pod hlavičkou */
-.targetsRailMarks,
-.playerColMarks {
-  display:flex;
-  flex-direction:column;
-  flex:1 1 0;
-  gap:0;          /* žádné mezery mezi řádky */
-  min-height:0;
-}
-
-/* buňky řádků – stejné chování pro levý sloupec i hráče */
-.targetCell,
-.markCell {
-  flex:1 1 0;     /* 7 řádků se rovnoměrně roztáhne */
-  min-height:0;
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-/* ---- levý sloupec 15–25 (vzhled čísel) ---- */
-.targetCell{
-  /* jemný posun dolů */
-  transform:translateY(2px);
-
-  /* stejný styl jako čísla na keypad */
-  font-weight:900;
-  font-size:20px;
-  line-height:1;
-  white-space:nowrap;
-
-  border:1px solid var(--line);
-  border-radius:10px;
-  background:#171a1f;
-}
-
-/* řádky hráčů – ponecháme horní linku */
-.markCell{
-  border-top:1px solid var(--line);
-}
-
-/* hlavičky (Cíl vlevo / jméno hráče) */
-.targetsRailHead,
-.playerColHead {
-  box-sizing:border-box;
-  height:40px;      /* HEAD_H v App.jsx */
-  margin:0;
-  padding:0 8px;
-}
-
-/* scrollovací část s hráči – bez extra paddingu nahoře */
-.cricketScroll {
-  overflow-y:auto;
-  padding-top:0;
-}
-
-/* Zmenšíme mezeru mezi tabulkou a keypadem */
-.padPane{
-  margin-top:4px;
 }
