@@ -2209,15 +2209,14 @@ function Game({
   saveGame, restartGame, cardRefs, setScreen
 }) {
   const HEAD_H = 40;
-  const ROW_H  = 64;   // můžeš použít v inline stylech, když bude potřeba
-  const PAD_H  = 220;  // rezerva dole pro keypad
+  const PAD_H  = 220;
 
   // keypad layout
   const keypad = React.useMemo(() => {
     if (mode === 'cricket') {
       return [
         [15, 16, 17, 18, 19, 20, 25],
-        [0]
+        [0],
       ];
     }
     if (mode === 'around') {
@@ -2225,7 +2224,7 @@ function Game({
         [1, 2, 3, 4, 5, 6, 7],
         [8, 9, 10, 11, 12, 13, 14],
         [15, 16, 17, 18, 19, 20, 25],
-        [0]
+        [0],
       ];
     }
     // classic
@@ -2233,7 +2232,7 @@ function Game({
       [1, 2, 3, 4, 5, 6, 7],
       [8, 9, 10, 11, 12, 13, 14],
       [15, 16, 17, 18, 19, 20, 25],
-      [0, 50]
+      [0, 50],
     ];
   }, [mode]);
 
@@ -2241,13 +2240,13 @@ function Game({
 
   return (
     <div className="gameWrap">
-      {/* horní lišta */}
+      {/* HORNÍ LIŠTA */}
       <div className="gameTopBar">
-        <span className="badge">
-          {mode === 'classic'
-            ? `${t(lang, 'outLabel')}: ${outDesc}`
-            : outDesc}
-        </span>
+        {mode === 'classic' && (
+          <span className="badge">
+            {`${t(lang, 'outLabel')}: ${outDesc}`}
+          </span>
+        )}
 
         <div
           className="gameTopBtns"
@@ -2284,17 +2283,21 @@ function Game({
         </div>
       </div>
 
-      {/* SCOREBOARD / CRICKET */}
+      {/* SCOREBOARD */}
       {mode !== 'cricket' ? (
+        /* CLASSIC / AROUND */
         <div className="playersPane">
           {order.map((pIdx, i) => {
             const p = players[pIdx];
             const active = i === currIdx && winner == null;
             const currentDarts = active ? darts : [];
+
             return (
               <div
                 key={p.id}
-                ref={node => { if (node) cardRefs.current[pIdx] = node; }}
+                ref={node => {
+                  if (node) cardRefs.current[pIdx] = node;
+                }}
                 className={
                   'playerCard' +
                   (active ? ' active' : '') +
@@ -2321,9 +2324,11 @@ function Game({
 
                   {mode === 'classic' ? (
                     <div className="playerStats">
-                      <span>{(thrown[pIdx] || 0)} {t(lang, 'darts')}</span>
+                      <span>{thrown[pIdx] || 0} {t(lang, 'darts')}</span>
                       <span>•</span>
-                      <span>{t(lang, 'avg')}: {formatAvg(averages[pIdx])}</span>
+                      <span>
+                        {t(lang, 'avg')}: {formatAvg(averages[pIdx])}
+                      </span>
                     </div>
                   ) : (
                     <div className="playerStats">
@@ -2363,9 +2368,11 @@ function Game({
                       return (
                         <div key={ix} className="dartBox">
                           {d
-                            ? (d.score
+                            ? d.score
                               ? '✓'
-                              : (d.v === 0 ? '0' : '-'))
+                              : d.v === 0
+                                ? '0'
+                                : '-'
                             : '-'}
                         </div>
                       );
@@ -2387,7 +2394,7 @@ function Game({
                 height: HEAD_H,
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
               }}
             >
               <span className="targetsRailTitle">
@@ -2412,10 +2419,13 @@ function Game({
             {order.map((pIdx, i) => {
               const p = players[pIdx];
               const active = i === currIdx && winner == null;
+
               return (
                 <div
                   key={p.id}
-                  ref={node => { if (node) cardRefs.current[pIdx] = node; }}
+                  ref={node => {
+                    if (node) cardRefs.current[pIdx] = node;
+                  }}
                   className={
                     'playerCol' +
                     (active ? ' active' : '') +
@@ -2433,7 +2443,7 @@ function Game({
                       padding: '0 8px',
                       whiteSpace: 'nowrap',
                       textOverflow: 'ellipsis',
-                      overflow: 'hidden'
+                      overflow: 'hidden',
                     }}
                   >
                     <div
@@ -2441,7 +2451,7 @@ function Game({
                       style={{
                         fontWeight: 800,
                         overflow: 'hidden',
-                        textOverflow: 'ellipsis'
+                        textOverflow: 'ellipsis',
                       }}
                     >
                       {p.name}
@@ -2457,9 +2467,7 @@ function Game({
                       return (
                         <div
                           key={k}
-                          className={
-                            'markCell' + (mk >= 3 ? ' closed' : '')
-                          }
+                          className={'markCell' + (mk >= 3 ? ' closed' : '')}
                         >
                           {markSymbol(mk)}
                         </div>
@@ -2480,9 +2488,7 @@ function Game({
           <div className="padRow">
             <button
               type="button"
-              className={
-                'multBtn mult-2' + (mult === 2 ? ' active' : '')
-              }
+              className={'multBtn mult-2' + (mult === 2 ? ' active' : '')}
               onClick={() => setMult(m => (m === 2 ? 1 : 2))}
             >
               DOUBLE
@@ -2490,9 +2496,7 @@ function Game({
 
             <button
               type="button"
-              className={
-                'multBtn mult-3' + (mult === 3 ? ' active' : '')
-              }
+              className={'multBtn mult-3' + (mult === 3 ? ' active' : '')}
               onClick={() => setMult(m => (m === 3 ? 1 : 3))}
             >
               TRIPLE
@@ -2572,3 +2576,4 @@ function Game({
     </div>
   );
 }
+
