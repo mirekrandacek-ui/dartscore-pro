@@ -2209,7 +2209,7 @@ function Game({
   saveGame, restartGame, cardRefs, setScreen
 }) {
   const HEAD_H = 40;
-  const PAD_H  = 220;
+  const PAD_H  = 160;
 
   // keypad layout
   const keypad = React.useMemo(() => {
