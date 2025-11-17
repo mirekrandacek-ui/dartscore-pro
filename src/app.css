@@ -602,5 +602,5 @@ html, body{
 }
 /* === CRICKET spacing – mezera pod tabulkou před keypad === */
 .padPane{
-  margin-top:10px;   /* zvětší rozestup pod cricket tabulkou */
+  margin-top:16px;   /* zvětší rozestup pod cricket tabulkou */
 }
