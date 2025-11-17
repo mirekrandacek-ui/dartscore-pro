@@ -204,101 +204,124 @@ input[type="text"]{color:#fff}
   flex-direction:column;
   gap:8px;
 }
-/* === CRICKET LAYOUT — levý sloupec + hráči 1:1 === */
+/* CRICKET LAYOUT – levý sloupec + hráči */
 
-.cricketWrap {
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
+.cricketWrap{
+  flex:1 1 auto;
+  min-height:0;
+  display:flex;
+  gap:8px;
+  align-items:stretch;
 }
 
 /* levý sloupec 15–25 */
-.targetsRail {
-  flex: 0 0 64px;                 /* úzký pevný sloupec */
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+.targetsRail{
+  flex:0 0 64px;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:12px;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
 }
 
-/* nadpis levého sloupce i hráčů — stejné */
-.targetsRailHead,
-.playerColHead {
-  height: 40px;
-  padding: 0 8px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  font-weight: 800;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  border-bottom: 1px solid var(--line);
+/* hlavička “Ziel / Cíl / Target” */
+.targetsRailHead{
+  height:40px;
+  padding:0 8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:800;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  overflow:hidden;
+  border-bottom:1px solid var(--line);
 }
 
-/* sloupec hráče */
-.playerCol {
-  flex: 1 1 0;
-  min-width: 140px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* kontejnery na řádky */
 .targetsRailMarks,
-.playerColMarks {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+.playerColMarks{
+  display:flex;
+  flex-direction:column;
 }
 
-/* === JEDINÉ MÍSTO KTERÉ URČUJE ZAROVNÁNÍ 7 ŘÁDKŮ === */
+/* JEDINÉ místo, kde se řeší výška řádku */
 .targetCell,
-.markCell {
-  box-sizing: border-box;
-  height: 56px;                 /* přesně stejná výška vlevo i u hráčů */
-  margin: 0;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-bottom: 1px solid var(--line);
-  background: #171a1f;
-  font-size: 20px;              /* zvětšené číslo (čitelnost pro starší hráče) */
-  font-weight: 900;
-  line-height: 1;
+.markCell{
+  box-sizing:border-box;
+  height:56px;             /* 7 řádků = 15–20 + 25 */
+  margin:0;
+  padding:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-bottom:1px solid var(--line);
+  background:#171a1f;
+  font-size:18px;
+  font-weight:900;
+  line-height:1;
 }
 
-/* poslední řádek bez spodní hrany */
+/* poslední řádek bez extra čáry */
 .targetsRailMarks .targetCell:last-child,
-.playerColMarks .markCell:last-child {
-  border-bottom: none;
+.playerColMarks .markCell:last-child{
+  border-bottom:none;
 }
 
-/* zvýraznění cíle 25 */
-.targetsRailMarks .targetCell:last-child {
-  background: #7f1d1d;
+/* zvýraznění 25 v levém sloupci */
+.targetsRailMarks .targetCell:last-child{
+  background:#7f1d1d;
 }
 
-/* první řádek bez horní hrany */
-.targetsRailMarks .targetCell:first-child,
-.playerColMarks .markCell:first-child {
-  border-top: none;
+/* hráčův sloupec */
+.playerCol{
+  flex:0 0 160px;           /* minimální šířka jednoho hráče, zbytek scrolluje */
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:12px;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
 }
 
-/* zavřené číslo (3 zásahy) */
-.markCell.closed {
-  background: #111827;
+/* hlavička hráče */
+.playerColHead{
+  height:40px;
+  padding:0 8px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  font-weight:800;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  overflow:hidden;
+  border-bottom:1px solid var(--line);
 }
+
+.playerColName{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* scrollovatelné sloupce hráčů */
+.cricketScroll{
+  flex:1 1 auto;
+  min-width:0;
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  padding-bottom:2px;
+}
+
+/* zavřená čísla v cricketu – zůstává logika */
+.markCell.closed{
+  background:#111827;
+}
+
+/* Player card (Classic/Around) – zbytek necháš tak, jak už v souboru máš */
+
 
 /* === ostatní věci zůstávají === */
 .playerCard {
