@@ -423,15 +423,18 @@ input[type="text"]{color:#fff}
 }
 /* PAD */
 .padPane{
-  flex:0 0 var(--padH);
-  margin-top:14px;              /* >>> TADY posouváš klávesnici dolů <<< */
+  flex:0 0 var(--padH);     /* společná výška pro všechny módy */
   background:var(--panel);
   border:1px solid var(--line);
   border-radius:14px;
   padding:8px;
-  /* nové: rám zachytí přetok */
   overflow:hidden;
   max-width:100vw;
+  /* BEZ margin-top – ten řešíme jen pro cricket níž */
+}
+/* Extra mezera mezi tabulkou a klávesnicí jen v Cricketu */
+.container[data-mode="cricket"] .padPane{
+  margin-top:32px;    /* tady si hraj s mezerou – 24 / 32 / 40px */
 }
 .padRow{
   display:flex;
