@@ -204,19 +204,19 @@ input[type="text"]{color:#fff}
   flex-direction:column;
   gap:8px;
 }
-/* CRICKET LAYOUT – jednotná výška sloupců + responzivita */
+/* CRICKET LAYOUT – levý sloupec + hráči 1:1 */
 
 .cricketWrap{
   flex:1 1 auto;
   min-height:0;
   display:flex;
   gap:8px;
-  align-items:stretch;          /* všechny sloupce stejně vysoké */
+  align-items:flex-start;
 }
 
 /* levý sloupec 15–25 */
 .targetsRail{
-  flex:0 0 clamp(56px, 12vw, 80px);   /* šířka reaguje na displej */
+  flex:0 0 64px;                     /* úzký sloupec vlevo */
   background:var(--panel);
   border:1px solid var(--line);
   border-radius:12px;
@@ -225,7 +225,23 @@ input[type="text"]{color:#fff}
   overflow:hidden;
 }
 
-/* sloupec hráče */
+/* hlavička “Ziel / Cíl / Target” */
+.targetsRailHead,
+.playerColHead{
+  height:40px;
+  padding:0 8px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  font-weight:800;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  overflow:hidden;
+  border-bottom:1px solid var(--line);
+}
+
+/* hráčův sloupec */
 .playerCol{
   flex:1 1 0;
   min-width:140px;
@@ -234,46 +250,40 @@ input[type="text"]{color:#fff}
   border-radius:12px;
   display:flex;
   flex-direction:column;
-}
-
-/* hlavičky – Ziel / Spieler 1 / Player 1 ... */
-.targetsRailHead,
-.playerColHead{
-  flex:0 0 auto;
-  height:clamp(32px, 5vh, 44px);
-  padding:0 8px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  white-space:nowrap;
-  text-overflow:ellipsis;
   overflow:hidden;
-  font-weight:800;
 }
 
-/* kontejnery s řádky 15–25 + značky hráčů */
 .targetsRailMarks,
 .playerColMarks{
-  flex:1 1 auto;                     /* vyplní zbytek výšky */
   display:flex;
   flex-direction:column;
 }
 
-/* jednotlivé řádky – mají STEJNÉ nastavení v levém sloupci i u hráčů */
+/* JEDINÉ místo, kde se řeší výška řádku */
 .targetCell,
 .markCell{
-  flex:1 1 0;                         /* každý řádek stejné výšky, bez pevného px */
   box-sizing:border-box;
+  height:56px;                       /* tady se zarovnává 7 řádků */
   margin:0;
   padding:0;
   display:flex;
   align-items:center;
   justify-content:center;
-  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
   background:#171a1f;
-  font-size:clamp(16px, 2.8vh, 22px); /* čitelné od 6" do 11" */
+  font-size:18px;
   line-height:1;
+}
+
+/* poslední řádek bez extra čáry */
+.targetsRailMarks .targetCell:last-child,
+.playerColMarks .markCell:last-child{
+  border-bottom:none;
+}
+
+/* zvýraznění 25 v levém sloupci */
+.targetsRailMarks .targetCell:last-child{
+  background:#7f1d1d;
 }
 
 /* první řádek bez extra čáry nahoře (kvůli border-radius) */
