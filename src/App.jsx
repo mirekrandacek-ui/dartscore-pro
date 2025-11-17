@@ -2199,7 +2199,6 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
     </div>
   );
 }
-
 /* ===== GAME SCREEN ===== */
 function Game({
   lang, t, mode, outDesc, isPremium,
@@ -2209,10 +2208,9 @@ function Game({
   darts, mult, setMult, commitDart, undo, winner,
   saveGame, restartGame, cardRefs, setScreen
 }) {
-
   const HEAD_H = 40;
-  const ROW_H  = 64;
-  const PAD_H  = 220;
+  const ROW_H  = 64;   // můžeš použít v inline stylech, když bude potřeba
+  const PAD_H  = 220;  // rezerva dole pro keypad
 
   // keypad layout
   const keypad = React.useMemo(() => {
@@ -2244,70 +2242,49 @@ function Game({
   return (
     <div className="gameWrap">
       {/* horní lišta */}
-<div className="gameTopBar">
-  {mode === 'classic' && (
-    <span className="badge">
-      {`${t(lang, 'outLabel')}: ${outDesc}`}
-    </span>
-  )}
+      <div className="gameTopBar">
+        <span className="badge">
+          {mode === 'classic'
+            ? `${t(lang, 'outLabel')}: ${outDesc}`
+            : outDesc}
+        </span>
 
-  <div
-    className="gameTopBtns"
-    style={{ display: 'flex', gap: 8, flexWrap: 'nowrap' }}
-  >
-    <button
-      type="button"
-      className="btn"
-      onClick={restartGame}
-      style={{ whiteSpace: 'nowrap', minWidth: 80 }}
-    >
-      {t(lang, 'restart') ?? 'Restart'}
-    </button>
-
-    {isPremium && (
-      <button
-        type="button"
-        className="btn"
-        onClick={saveGame}
-        style={{ whiteSpace: 'nowrap', minWidth: 80 }}
-      >
-        {t(lang, 'saveGame') ?? 'Uložit hru'}
-      </button>
-    )}
-      <div
-        className="gameTopBtns"
-        style={{ display: 'flex', gap: 8, flexWrap: 'nowrap' }}
-      >
-        <button
-          type="button"
-          className="btn"
-          onClick={restartGame}
-          style={{ whiteSpace: 'nowrap', minWidth: 80 }}
+        <div
+          className="gameTopBtns"
+          style={{ display: 'flex', gap: 8, flexWrap: 'nowrap' }}
         >
-          {t(lang, 'restart') ?? 'Restart'}
-        </button>
-
-        {isPremium && (
           <button
             type="button"
             className="btn"
-            onClick={saveGame}
+            onClick={restartGame}
             style={{ whiteSpace: 'nowrap', minWidth: 80 }}
           >
-            {t(lang, 'saveGame') ?? 'Uložit hru'}
+            {t(lang, 'restart') ?? 'Restart'}
           </button>
-        )}
 
-        <button
-          type="button"
-          className="btn ghost"
-          onClick={() => setScreen('lobby')}
-          style={{ whiteSpace: 'nowrap', minWidth: 80 }}
-        >
-          {t(lang, 'back') ?? 'Zpět'}
-        </button>
+          {isPremium && (
+            <button
+              type="button"
+              className="btn"
+              onClick={saveGame}
+              style={{ whiteSpace: 'nowrap', minWidth: 80 }}
+            >
+              {t(lang, 'saveGame') ?? 'Uložit hru'}
+            </button>
+          )}
+
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() => setScreen('lobby')}
+            style={{ whiteSpace: 'nowrap', minWidth: 80 }}
+          >
+            {t(lang, 'back') ?? 'Zpět'}
+          </button>
+        </div>
       </div>
-      {/* SCOREBOARD */}
+
+      {/* SCOREBOARD / CRICKET */}
       {mode !== 'cricket' ? (
         <div className="playersPane">
           {order.map((pIdx, i) => {
@@ -2400,74 +2377,6 @@ function Game({
           })}
         </div>
       ) : (
-        /* CRICKET layout – 7 pevných řádků 1:1 s levým sloupcem */
-        <div className="cricketWrap">
-          {/* Levý sloupec s cíli 15–25 */}
-          <div className="targetsRail">
-            <div className="targetsRailHead">
-              <span>{t(lang, 'target')}</span>
-            </div>
-            <div className="targetsRailMarks">
-              {cricketTargets.map(k => {
-                const lbl = k === 'bull' ? '25' : k;
-                return (
-                  <div
-                    key={k}
-                    className="targetCell"
-                  >
-                    {lbl}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Hráči – horizontální scroll, ale řádky výškově 1:1 s levým sloupcem */}
-          <div className="cricketScroll">
-            {order.map((pIdx, i) => {
-              const p = players[pIdx];
-              const active = i === currIdx && winner == null;
-              return (
-                <div
-                  key={p.id}
-                  ref={node => { if (node) cardRefs.current[pIdx] = node; }}
-                  className={
-                    'playerCol' +
-                    (active ? ' active' : '') +
-                    (winner === pIdx ? ' winner' : '')
-                  }
-                >
-                  <div className="playerColHead">
-                    <div className="playerColName">
-                      {p.name}
-                    </div>
-                    <div className="playerColPts">
-                      {cricket?.[pIdx]?.points ?? 0}
-                    </div>
-                  </div>
-
-                  <div className="playerColMarks">
-                    {cricketTargets.map(k => {
-                      const mk = cricket?.[pIdx]?.marks?.[k] ?? 0;
-                      return (
-                        <div
-                          key={k}
-                          className={
-                            'markCell' + (mk >= 3 ? ' closed' : '')
-                          }
-                        >
-                          {markSymbol(mk)}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
         /* CRICKET layout – levý sloupec + scroll hráčů, 7 řádků 1:1 */
         <div className="cricketWrap">
           {/* Levý pevný sloupec 15–25 */}
@@ -2663,5 +2572,3 @@ function Game({
     </div>
   );
 }
-
-
