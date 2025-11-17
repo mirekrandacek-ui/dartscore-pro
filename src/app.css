@@ -424,7 +424,7 @@ input[type="text"]{color:#fff}
 /* PAD */
 .padPane{
   flex:0 0 var(--padH);
-  margin-top:32px;              /* >>> TADY posouváš klávesnici dolů <<< */
+  margin-top:28px;              /* >>> TADY posouváš klávesnici dolů <<< */
   background:var(--panel);
   border:1px solid var(--line);
   border-radius:14px;
