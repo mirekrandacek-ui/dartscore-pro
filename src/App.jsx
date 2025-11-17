@@ -2382,77 +2382,42 @@ function Game({
           })}
         </div>
       ) : (
-        /* CRICKET layout – pevné řádkování + spodní spacer */
+        {/* CRICKET layout – 7 pevných řádků 1:1 s levým sloupcem */}
         <div className="cricketWrap">
-          {/* levý pevný sloupec CÍL */}
-          <div className="targetsRail" style={{ display: 'flex', flexDirection: 'column' }}>
-            <div
-              className="targetsRailHead"
-              style={{
-                height: HEAD_H,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 800
-              }}
-            >
-              {t(lang, 'target')}
+          {/* Levý sloupec s cíli 15–25 */}
+          <div className="targetsRail">
+            <div className="targetsRailHead">
+              {/* text “Ziel / Cíl / Target” – použij svůj překlad, nebo nech Cíl */}
+              {t ? (t(lang, 'cricketTargetLabel') || 'Cíl') : 'Cíl'}
             </div>
-            <div
-              className="targetsRailMarks"
-              style={{ display: 'flex', flexDirection: 'column' }}
-            >
-              {cricketTargets.map(k => {
-                const lbl = k === 'bull' ? '25' : k;
-                return (
-                  <div
-                    key={k}
-                    className="targetCell"
-                    style={{
-                      height: ROW_H,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    {lbl}
-                  </div>
-                );
-              })}
+
+            <div className="targetsRailMarks">
+              {cricketTargets.map((k) => (
+                <div key={k} className="targetCell">
+                  {k === 'bull' ? 25 : k}
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* hráči – horizontální scroll jen pro ně */}
-          <div className="cricketScroll" style={{ overflowY: 'auto', paddingBottom: PAD_H }}>
+          {/* Sloupce hráčů – každý má 7 řádků zarovnaných s 15–25 */}
+          <div className="cricketScroll">
             {order.map((pIdx, i) => {
               const p = players[pIdx];
               const active = i === currIdx && winner == null;
+
               return (
                 <div
                   key={p.id}
-                  ref={node => { if (node) cardRefs.current[pIdx] = node; }}
-                  className={`playerCol ${active ? 'active' : ''} ${winner === pIdx ? 'winner' : ''}`}
-                  style={{ display: 'flex', flexDirection: 'column' }}
+                  ref={(node) => {
+                    if (node) cardRefs.current[pIdx] = node;
+                  }}
+                  className={`playerCol ${active ? 'active' : ''} ${
+                    winner === pIdx ? 'winner' : ''
+                  }`}
                 >
-                  <div
-                    className="playerColHead"
-                    style={{
-                      height: HEAD_H,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 8,
-                      padding: '0 8px',
-                      whiteSpace: 'nowrap',
-                      textOverflow: 'ellipsis',
-                      overflow: 'hidden'
-                    }}
-                  >
-                    <div
-                      className="playerColName"
-                      style={{ fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis' }}
-                    >
+                  <div className="playerColHead">
+                    <div className="playerColName">
                       {p.name}
                     </div>
                     <div className="playerColPts">
@@ -2460,22 +2425,13 @@ function Game({
                     </div>
                   </div>
 
-                  <div
-                    className="playerColMarks"
-                    style={{ display: 'flex', flexDirection: 'column' }}
-                  >
-                    {cricketTargets.map(k => {
+                  <div className="playerColMarks">
+                    {cricketTargets.map((k) => {
                       const mk = cricket?.[pIdx]?.marks?.[k] ?? 0;
                       return (
                         <div
                           key={k}
                           className={`markCell ${mk >= 3 ? 'closed' : ''}`}
-                          style={{
-                            height: ROW_H,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}
                         >
                           {markSymbol(mk)}
                         </div>
@@ -2487,7 +2443,6 @@ function Game({
             })}
           </div>
         </div>
-      )}
 
       {/* PAD / KEYPAD */}
       {winner == null && (
