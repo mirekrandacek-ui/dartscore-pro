@@ -421,10 +421,10 @@ input[type="text"]{color:#fff}
   10%{opacity:1}
   100%{transform:rotate(var(--r,0)) translate(calc((var(--i) - 20) * 6px), calc((var(--i) - 10) * -6px)) scale(1.1);opacity:0}
 }
-
 /* PAD */
 .padPane{
   flex:0 0 var(--padH);
+  margin-top:16px;              /* >>> TADY posouváš klávesnici dolů <<< */
   background:var(--panel);
   border:1px solid var(--line);
   border-radius:14px;
@@ -596,11 +596,8 @@ input[type="text"]{color:#fff}
   width:100%;
   min-width:0;
 }
+
 /* Bezpečně vypneme horizontální posuv celé stránky */
 html, body{
   overflow-x:hidden;
-}
-/* === CRICKET spacing – mezera pod tabulkou před keypad === */
-.padPane{
-  margin-top:22px;   /* zvětší rozestup pod cricket tabulkou */
 }
