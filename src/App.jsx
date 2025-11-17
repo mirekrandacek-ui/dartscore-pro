@@ -2244,14 +2244,47 @@ function Game({
   return (
     <div className="gameWrap">
       {/* horní lišta */}
-      <div className="gameTopBar">
-        <span className="badge">
-          {mode === 'classic'
-            ? `${t(lang, 'outLabel')}: ${outDesc}`
-            : outDesc}
-        </span>
+<div className="gameTopBar">
+  {mode === 'classic' && (
+    <span className="badge">
+      {`${t(lang, 'outLabel')}: ${outDesc}`}
+    </span>
+  )}
 
-        <div
+  <div
+    className="gameTopBtns"
+    style={{ display: 'flex', gap: 8, flexWrap: 'nowrap' }}
+  >
+    <button
+      type="button"
+      className="btn"
+      onClick={restartGame}
+      style={{ whiteSpace: 'nowrap', minWidth: 80 }}
+    >
+      {t(lang, 'restart') ?? 'Restart'}
+    </button>
+
+    {isPremium && (
+      <button
+        type="button"
+        className="btn"
+        onClick={saveGame}
+        style={{ whiteSpace: 'nowrap', minWidth: 80 }}
+      >
+        {t(lang, 'saveGame') ?? 'Uložit hru'}
+      </button>
+    )}
+
+    <button
+      type="button"
+      className="btn ghost"
+      onClick={() => setScreen('lobby')}
+      style={{ whiteSpace: 'nowrap', minWidth: 80 }}
+    >
+      {t(lang, 'back') ?? 'Zpět'}
+    </button>
+  </div>
+</div>
           className="gameTopBtns"
           style={{ display: 'flex', gap: 8, flexWrap: 'nowrap' }}
         >
