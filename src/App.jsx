@@ -2274,51 +2274,39 @@ function Game({
         {t(lang, 'saveGame') ?? 'Uložit hru'}
       </button>
     )}
-
-    <button
-      type="button"
-      className="btn ghost"
-      onClick={() => setScreen('lobby')}
-      style={{ whiteSpace: 'nowrap', minWidth: 80 }}
-    >
-      {t(lang, 'back') ?? 'Zpět'}
-    </button>
-  </div>
-</div>
-          className="gameTopBtns"
-          style={{ display: 'flex', gap: 8, flexWrap: 'nowrap' }}
+      <div
+        className="gameTopBtns"
+        style={{ display: 'flex', gap: 8, flexWrap: 'nowrap' }}
+      >
+        <button
+          type="button"
+          className="btn"
+          onClick={restartGame}
+          style={{ whiteSpace: 'nowrap', minWidth: 80 }}
         >
+          {t(lang, 'restart') ?? 'Restart'}
+        </button>
+
+        {isPremium && (
           <button
             type="button"
             className="btn"
-            onClick={restartGame}
+            onClick={saveGame}
             style={{ whiteSpace: 'nowrap', minWidth: 80 }}
           >
-            {t(lang, 'restart') ?? 'Restart'}
+            {t(lang, 'saveGame') ?? 'Uložit hru'}
           </button>
+        )}
 
-          {isPremium && (
-            <button
-              type="button"
-              className="btn"
-              onClick={saveGame}
-              style={{ whiteSpace: 'nowrap', minWidth: 80 }}
-            >
-              {t(lang, 'saveGame') ?? 'Uložit hru'}
-            </button>
-          )}
-
-          <button
-            type="button"
-            className="btn ghost"
-            onClick={() => setScreen('lobby')}
-            style={{ whiteSpace: 'nowrap', minWidth: 80 }}
-          >
-            {t(lang, 'back') ?? 'Zpět'}
-          </button>
-        </div>
+        <button
+          type="button"
+          className="btn ghost"
+          onClick={() => setScreen('lobby')}
+          style={{ whiteSpace: 'nowrap', minWidth: 80 }}
+        >
+          {t(lang, 'back') ?? 'Zpět'}
+        </button>
       </div>
-
       {/* SCOREBOARD */}
       {mode !== 'cricket' ? (
         <div className="playersPane">
@@ -2412,6 +2400,74 @@ function Game({
           })}
         </div>
       ) : (
+        /* CRICKET layout – 7 pevných řádků 1:1 s levým sloupcem */
+        <div className="cricketWrap">
+          {/* Levý sloupec s cíli 15–25 */}
+          <div className="targetsRail">
+            <div className="targetsRailHead">
+              <span>{t(lang, 'target')}</span>
+            </div>
+            <div className="targetsRailMarks">
+              {cricketTargets.map(k => {
+                const lbl = k === 'bull' ? '25' : k;
+                return (
+                  <div
+                    key={k}
+                    className="targetCell"
+                  >
+                    {lbl}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Hráči – horizontální scroll, ale řádky výškově 1:1 s levým sloupcem */}
+          <div className="cricketScroll">
+            {order.map((pIdx, i) => {
+              const p = players[pIdx];
+              const active = i === currIdx && winner == null;
+              return (
+                <div
+                  key={p.id}
+                  ref={node => { if (node) cardRefs.current[pIdx] = node; }}
+                  className={
+                    'playerCol' +
+                    (active ? ' active' : '') +
+                    (winner === pIdx ? ' winner' : '')
+                  }
+                >
+                  <div className="playerColHead">
+                    <div className="playerColName">
+                      {p.name}
+                    </div>
+                    <div className="playerColPts">
+                      {cricket?.[pIdx]?.points ?? 0}
+                    </div>
+                  </div>
+
+                  <div className="playerColMarks">
+                    {cricketTargets.map(k => {
+                      const mk = cricket?.[pIdx]?.marks?.[k] ?? 0;
+                      return (
+                        <div
+                          key={k}
+                          className={
+                            'markCell' + (mk >= 3 ? ' closed' : '')
+                          }
+                        >
+                          {markSymbol(mk)}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
         /* CRICKET layout – levý sloupec + scroll hráčů, 7 řádků 1:1 */
         <div className="cricketWrap">
           {/* Levý pevný sloupec 15–25 */}
