@@ -604,7 +604,14 @@ input[type="text"]{color:#fff}
 html, body{
   overflow-x:hidden;
 }
-/* Extra mezera mezi tabulkou a klávesnicí jen v Cricketu – finální override */
+/* === CRICKET: mezera mezi tabulkou a klávesnicí + výška klávesnice === */
+
+/* větší mezera pod tabulkou cricketu */
+.container[data-mode="cricket"] .cricketWrap{
+  margin-bottom:32px !important;   /* klidně zkus 24 / 32 / 40px */
+}
+
+/* menší klávesnice jen pro Cricket, ať nepřileze zpátky nahoru */
 .container[data-mode="cricket"] .padPane{
-  margin-top:40px !important;  /* klidně si hraj: 32 / 40 / 56px */
+  flex:0 0 220px !important;       /* zkus 200 / 220 / 240 podle oka */
 }
