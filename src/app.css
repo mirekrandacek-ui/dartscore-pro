@@ -243,7 +243,7 @@ input[type="text"]{color:#fff}
 
 /* Slim sloupce hráčů */
 .playerCol {
-  flex: 0 0 110px;          /* TADY ZÚŽÍŠ sloupce (např 130 → 120 px) */
+  flex: 0 0 120px;          /* TADY ZÚŽÍŠ sloupce (např 130 → 120 px) */
   max-width: 110px;
   background: var(--panel);
   border: 1px solid var(--line);
