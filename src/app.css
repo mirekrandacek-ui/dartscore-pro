@@ -615,3 +615,9 @@ html, body{
 .container[data-mode="cricket"] .padPane{
   flex:0 0 220px !important;       /* zkus 200 / 220 / 240 podle oka */
 }
+/* === CRICKET – force bold numbers in the left column === */
+.targetsRailMarks .targetCell {
+  font-weight: 900 !important;
+  font-size: 22px !important;   /* mírně větší a čitelnější – můžeš snížit */
+  letter-spacing: 0.5px;        /* jemné projasnění */
+}
