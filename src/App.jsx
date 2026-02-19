@@ -12,23 +12,23 @@ const IconSpeaker = () => (
 /* ===== Texty ===== */
 const T = {
   cs: {
-    app:'DartScore Pro', sound:'Zvuk', voice:'Hlas', back:'Zpět',
-    mode:'Režim', classic:'Klasická hra', cricket:'Cricket', around:'Around the Clock',
-    start:'Start', closing:'Ukončení',
-    doubleOut:'Double-out', tripleOut:'Triple-out', masterOut:'Master-out',
-    anyOutHint:'— pokud není vybráno nic, uzavírá se libovolně',
-    order:'Pořadí', fixed:'Fixní', random:'Náhodné', playThrough:'Dohrávat kolo',
-    robot:'Robot', off:'Vypn.', easy:'Snadná', medium:'Střední', hard:'Těžká',
-    startGame:'▶ Start hry', continueGame:'Pokračovat ve hře', saveGame:'Uložit hru', restart:'Opakovat hru',
-    rules:'Pravidla', addPlayer:'Přidat hráče',
-    saved:'Uložené hry', share:'Sdílet', clear:'Smazat vše',
-    player:'Hráč', game:'Hra', darts:'šipek', avg:'průměr/šipka', last:'Poslední hod',
-    undo:'Zpět', next:'Další hráč', bust:'bez skóre', checkout:'checkout',
-    youWinPrefix:'Výhra', outLabel:'Ukončení', zeroWord:'nula',
-    points:'Body', target:'Cíl',
-    premiumMode:'Premium režim',
-    filter:'Filtr', all:'Vše', week:'Týden', month:'Měsíc', year:'Rok',
-    h2h:'Vzájemné zápasy', selectPlayer:'Vyber hráče', wins:'výhry',
+    app: 'DartScore Pro', sound: 'Zvuk', voice: 'Hlas', back: 'Zpět',
+    mode: 'Režim', classic: 'Klasická hra', cricket: 'Cricket', around: 'Around the Clock',
+    start: 'Start', closing: 'Ukončení',
+    doubleOut: 'Double-out', tripleOut: 'Triple-out', masterOut: 'Master-out',
+    anyOutHint: '— pokud není vybráno nic, uzavírá se libovolně',
+    order: 'Pořadí', fixed: 'Fixní', random: 'Náhodné', playThrough: 'Dohrávat kolo',
+    robot: 'Robot', off: 'Vypn.', easy: 'Snadná', medium: 'Střední', hard: 'Těžká',
+    startGame: '▶ Start hry', continueGame: 'Pokračovat ve hře', saveGame: 'Uložit hru', restart: 'Opakovat hru',
+    rules: 'Pravidla', addPlayer: 'Přidat hráče',
+    saved: 'Uložené hry', share: 'Sdílet', clear: 'Smazat vše',
+    player: 'Hráč', game: 'Hra', darts: 'šipek', avg: 'průměr/šipka', last: 'Poslední hod',
+    undo: 'Zpět', next: 'Další hráč', bust: 'bez skóre', checkout: 'checkout',
+    youWinPrefix: 'Výhra', outLabel: 'Ukončení', zeroWord: 'nula',
+    points: 'Body', target: 'Cíl',
+    premiumMode: 'Premium režim',
+    filter: 'Filtr', all: 'Vše', week: 'Týden', month: 'Měsíc', year: 'Rok',
+    h2h: 'Vzájemné zápasy', selectPlayer: 'Vyber hráče', wins: 'výhry',
     // Pravidla – plně lokalizovaná
     rulesClassic:
       'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Cíl: přesně na 0. Volitelné: Double-out / Triple-out / Master-out (pokud nic, pak libovolné ukončení). Přestřelení nebo zbyde 1 (pokud je aktivní některé out pravidlo) = bez skóre.',
@@ -38,23 +38,23 @@ const T = {
       'Cíle jdou postupně 1 → 20 → Bull (25). Počítá se pouze zásah aktuálního cíle. Double/Triple se počítají jako zásah. Vyhrává, kdo první trefí Bull.'
   },
   en: {
-    app:'DartScore Pro', sound:'Sound', voice:'Voice', back:'Back',
-    mode:'Mode', classic:'Classic', cricket:'Cricket', around:'Around the Clock',
-    start:'Start', closing:'Finish',
-    doubleOut:'Double-out', tripleOut:'Triple-out', masterOut:'Master-out',
-    anyOutHint:'— if none is selected, any-out is allowed',
-    order:'Order', fixed:'Fixed', random:'Random', playThrough:'Play the round',
-    robot:'Bot', off:'Off', easy:'Easy', medium:'Medium', hard:'Hard',
-    startGame:'▶ Start Game', continueGame:'Continue game', saveGame:'Save game', restart:'Restart game',
-    rules:'Rules', addPlayer:'Add player',
-    saved:'Saved games', share:'Share', clear:'Clear all',
-    player:'Player', game:'Game', darts:'darts', avg:'avg/dart', last:'Last throw',
-    undo:'Undo', next:'Next', bust:'bust', checkout:'checkout',
-    youWinPrefix:'Win', outLabel:'Finish', zeroWord:'zero',
-    points:'Points', target:'Target',
-    premiumMode:'Premium Mode',
-    filter:'Filter', all:'All', week:'Week', month:'Month', year:'Year',
-    h2h:'Head-to-Head', selectPlayer:'Select player', wins:'wins',
+    app: 'DartScore Pro', sound: 'Sound', voice: 'Voice', back: 'Back',
+    mode: 'Mode', classic: 'Classic', cricket: 'Cricket', around: 'Around the Clock',
+    start: 'Start', closing: 'Finish',
+    doubleOut: 'Double-out', tripleOut: 'Triple-out', masterOut: 'Master-out',
+    anyOutHint: '— if none is selected, any-out is allowed',
+    order: 'Order', fixed: 'Fixed', random: 'Random', playThrough: 'Play the round',
+    robot: 'Bot', off: 'Off', easy: 'Easy', medium: 'Medium', hard: 'Hard',
+    startGame: '▶ Start Game', continueGame: 'Continue game', saveGame: 'Save game', restart: 'Restart game',
+    rules: 'Rules', addPlayer: 'Add player',
+    saved: 'Saved games', share: 'Share', clear: 'Clear all',
+    player: 'Player', game: 'Game', darts: 'darts', avg: 'avg/dart', last: 'Last throw',
+    undo: 'Undo', next: 'Next', bust: 'bust', checkout: 'checkout',
+    youWinPrefix: 'Win', outLabel: 'Finish', zeroWord: 'zero',
+    points: 'Points', target: 'Target',
+    premiumMode: 'Premium Mode',
+    filter: 'Filter', all: 'All', week: 'Week', month: 'Month', year: 'Year',
+    h2h: 'Head-to-Head', selectPlayer: 'Select player', wins: 'wins',
     rulesClassic:
       'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Goal: finish exactly on 0. Optional: Double-out / Triple-out / Master-out (if none, any-out allowed). Overshoot or leaving 1 (when any out-rule is active) = bust.',
     rulesCricket:
@@ -63,23 +63,23 @@ const T = {
       'Targets go 1 → 20 → Bull (25). Only hitting the current target counts. Doubles/Triples count as a hit. First to hit Bull wins.'
   },
   de: {
-    app:'DartScore Pro', sound:'Ton', voice:'Stimme', back:'Zurück',
-    mode:'Modus', classic:'Klassisch', cricket:'Cricket', around:'Rund um die Uhr',
-    start:'Start', closing:'Beenden',
-    doubleOut:'Double-out', tripleOut:'Triple-out', masterOut:'Master-out',
-    anyOutHint:'— wenn nichts gewählt ist, Any-out erlaubt',
-    order:'Reihenfolge', fixed:'Fix', random:'Zufällig', playThrough:'Runde ausspielen',
-    robot:'Roboter', off:'Aus', easy:'Leicht', medium:'Mittel', hard:'Schwer',
-    startGame:'▶ Spiel starten', continueGame:'Spiel fortsetzen', saveGame:'Spiel speichern', restart:'Neu starten',
-    rules:'Regeln', addPlayer:'Spieler hinzufügen',
-    saved:'Gespeicherte Spiele', share:'Teilen', clear:'Alles löschen',
-    player:'Spieler', game:'Spiel', darts:'Darts', avg:'Schnitt/Dart', last:'Letzter Wurf',
-    undo:'Zurück', next:'Nächster', bust:'bust', checkout:'Checkout',
-    youWinPrefix:'Sieg', outLabel:'Finish', zeroWord:'null',
-    points:'Punkte', target:'Ziel',
-    premiumMode:'Premium-Modus',
-    filter:'Filter', all:'Alle', week:'Woche', month:'Monat', year:'Jahr',
-    h2h:'Direkte Duelle', selectPlayer:'Spieler wählen', wins:'Siege',
+    app: 'DartScore Pro', sound: 'Ton', voice: 'Stimme', back: 'Zurück',
+    mode: 'Modus', classic: 'Klassisch', cricket: 'Cricket', around: 'Rund um die Uhr',
+    start: 'Start', closing: 'Beenden',
+    doubleOut: 'Double-out', tripleOut: 'Triple-out', masterOut: 'Master-out',
+    anyOutHint: '— wenn nichts gewählt ist, Any-out erlaubt',
+    order: 'Reihenfolge', fixed: 'Fix', random: 'Zufällig', playThrough: 'Runde ausspielen',
+    robot: 'Roboter', off: 'Aus', easy: 'Leicht', medium: 'Mittel', hard: 'Schwer',
+    startGame: '▶ Spiel starten', continueGame: 'Spiel fortsetzen', saveGame: 'Spiel speichern', restart: 'Neu starten',
+    rules: 'Regeln', addPlayer: 'Spieler hinzufügen',
+    saved: 'Gespeicherte Spiele', share: 'Teilen', clear: 'Alles löschen',
+    player: 'Spieler', game: 'Spiel', darts: 'Darts', avg: 'Schnitt/Dart', last: 'Letzter Wurf',
+    undo: 'Zurück', next: 'Nächster', bust: 'bust', checkout: 'Checkout',
+    youWinPrefix: 'Sieg', outLabel: 'Finish', zeroWord: 'null',
+    points: 'Punkte', target: 'Ziel',
+    premiumMode: 'Premium-Modus',
+    filter: 'Filter', all: 'Alle', week: 'Woche', month: 'Monat', year: 'Jahr',
+    h2h: 'Direkte Duelle', selectPlayer: 'Spieler wählen', wins: 'Siege',
     rulesClassic:
       'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Ziel: exakt 0. Optional: Double-out / Triple-out / Master-out (wenn nichts gewählt, any-out). Überschießen oder 1 übrig (bei aktivem Out-Regel) = bust.',
     rulesCricket:
@@ -88,23 +88,23 @@ const T = {
       'Ziele nacheinander 1 → 20 → Bull (25). Gewertet wird nur das aktuelle Ziel. Doppel/Triple zählen als Treffer. Sieger trifft zuerst Bull.'
   },
   es: {
-    app:'DartScore Pro', sound:'Sonido', voice:'Voz', back:'Atrás',
-    mode:'Modo', classic:'Clásico', cricket:'Cricket', around:'Alrededor del reloj',
-    start:'Inicio', closing:'Cierre',
-    doubleOut:'Double-out', tripleOut:'Triple-out', masterOut:'Master-out',
-    anyOutHint:'— si no se selecciona nada, se permite any-out',
-    order:'Orden', fixed:'Fijo', random:'Aleatorio', playThrough:'Jugar la ronda',
-    robot:'Robot', off:'Apag.', easy:'Fácil', medium:'Medio', hard:'Difícil',
-    startGame:'▶ Empezar', continueGame:'Continuar partida', saveGame:'Guardar partida', restart:'Reiniciar',
-    rules:'Reglas', addPlayer:'Añadir jugador',
-    saved:'Partidas guardadas', share:'Compartir', clear:'Borrar todo',
-    player:'Jugador', game:'Juego', darts:'dardos', avg:'prom/dardo', last:'Último tiro',
-    undo:'Deshacer', next:'Siguiente', bust:'sin puntuación', checkout:'checkout',
-    youWinPrefix:'Victoria', outLabel:'Finish', zeroWord:'cero',
-    points:'Puntos', target:'Objetivo',
-    premiumMode:'Modo Premium',
-    filter:'Filtro', all:'Todo', week:'Semana', month:'Mes', year:'Año',
-    h2h:'Cara a cara', selectPlayer:'Elige jugador', wins:'victorias',
+    app: 'DartScore Pro', sound: 'Sonido', voice: 'Voz', back: 'Atrás',
+    mode: 'Modo', classic: 'Clásico', cricket: 'Cricket', around: 'Alrededor del reloj',
+    start: 'Inicio', closing: 'Cierre',
+    doubleOut: 'Double-out', tripleOut: 'Triple-out', masterOut: 'Master-out',
+    anyOutHint: '— si no se selecciona nada, se permite any-out',
+    order: 'Orden', fixed: 'Fijo', random: 'Aleatorio', playThrough: 'Jugar la ronda',
+    robot: 'Robot', off: 'Apag.', easy: 'Fácil', medium: 'Medio', hard: 'Difícil',
+    startGame: '▶ Empezar', continueGame: 'Continuar partida', saveGame: 'Guardar partida', restart: 'Reiniciar',
+    rules: 'Reglas', addPlayer: 'Añadir jugador',
+    saved: 'Partidas guardadas', share: 'Compartir', clear: 'Borrar todo',
+    player: 'Jugador', game: 'Juego', darts: 'dardos', avg: 'prom/dardo', last: 'Último tiro',
+    undo: 'Deshacer', next: 'Siguiente', bust: 'sin puntuación', checkout: 'checkout',
+    youWinPrefix: 'Victoria', outLabel: 'Finish', zeroWord: 'cero',
+    points: 'Puntos', target: 'Objetivo',
+    premiumMode: 'Modo Premium',
+    filter: 'Filtro', all: 'Todo', week: 'Semana', month: 'Mes', year: 'Año',
+    h2h: 'Cara a cara', selectPlayer: 'Elige jugador', wins: 'victorias',
     rulesClassic:
       'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Objetivo: llegar a 0 exacto. Opcional: Double-out / Triple-out / Master-out (si no hay, any-out). Pasarse o quedar en 1 (con reglas activas) = sin puntuación.',
     rulesCricket:
@@ -113,23 +113,23 @@ const T = {
       'Secuencia 1 → 20 → Bull (25). Solo cuenta el objetivo actual. Dobles/Triples cuentan como acierto. Gana quien golpea Bull antes.'
   },
   nl: {
-    app:'DartScore Pro', sound:'Geluid', voice:'Spraak', back:'Terug',
-    mode:'Modus', classic:'Klassiek', cricket:'Cricket', around:'Rond de klok',
-    start:'Start', closing:'Einde',
-    doubleOut:'Double-out', tripleOut:'Triple-out', masterOut:'Master-out',
-    anyOutHint:'— als niets is gekozen, any-out toegestaan',
-    order:'Volgorde', fixed:'Vast', random:'Willekeurig', playThrough:'Ronde uitspelen',
-    robot:'Robot', off:'Uit', easy:'Makkelijk', medium:'Gemiddeld', hard:'Moeilijk',
-    startGame:'▶ Start spel', continueGame:'Doorgaan', saveGame:'Spel opslaan', restart:'Opnieuw',
-    rules:'Regels', addPlayer:'Speler toevoegen',
-    saved:'Opgeslagen spellen', share:'Delen', clear:'Alles wissen',
-    player:'Speler', game:'Spel', darts:'darts', avg:'gem/dart', last:'Laatste worp',
-    undo:'Ongedaan', next:'Volgende', bust:'bust', checkout:'checkout',
-    youWinPrefix:'Winst', outLabel:'Finish', zeroWord:'nul',
-    points:'Punten', target:'Doel',
-    premiumMode:'Premium-modus',
-    filter:'Filter', all:'Alles', week:'Week', month:'Maand', year:'Jaar',
-    h2h:'Onderling', selectPlayer:'Kies speler', wins:'zeges',
+    app: 'DartScore Pro', sound: 'Geluid', voice: 'Spraak', back: 'Terug',
+    mode: 'Modus', classic: 'Klassiek', cricket: 'Cricket', around: 'Rond de klok',
+    start: 'Start', closing: 'Einde',
+    doubleOut: 'Double-out', tripleOut: 'Triple-out', masterOut: 'Master-out',
+    anyOutHint: '— als niets is gekozen, any-out toegestaan',
+    order: 'Volgorde', fixed: 'Vast', random: 'Willekeurig', playThrough: 'Ronde uitspelen',
+    robot: 'Robot', off: 'Uit', easy: 'Makkelijk', medium: 'Gemiddeld', hard: 'Moeilijk',
+    startGame: '▶ Start spel', continueGame: 'Doorgaan', saveGame: 'Spel opslaan', restart: 'Opnieuw',
+    rules: 'Regels', addPlayer: 'Speler toevoegen',
+    saved: 'Opgeslagen spellen', share: 'Delen', clear: 'Alles wissen',
+    player: 'Speler', game: 'Spel', darts: 'darts', avg: 'gem/dart', last: 'Laatste worp',
+    undo: 'Ongedaan', next: 'Volgende', bust: 'bust', checkout: 'checkout',
+    youWinPrefix: 'Winst', outLabel: 'Finish', zeroWord: 'nul',
+    points: 'Punten', target: 'Doel',
+    premiumMode: 'Premium-modus',
+    filter: 'Filter', all: 'Alles', week: 'Week', month: 'Maand', year: 'Jaar',
+    h2h: 'Onderling', selectPlayer: 'Kies speler', wins: 'zeges',
     rulesClassic:
       'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Doel: exact 0. Optioneel: Double-out / Triple-out / Master-out (geen keuze = any-out). Overschieten of 1 over (met regel actief) = bust.',
     rulesCricket:
@@ -138,23 +138,23 @@ const T = {
       'Volgorde 1 → 20 → Bull (25). Alleen het huidige doel telt. Double/Triple telt als treffer. Wie het eerst Bull raakt, wint.'
   },
   ru: {
-    app:'DartScore Pro', sound:'Звук', voice:'Голос', back:'Назад',
-    mode:'Режим', classic:'Классика', cricket:'Крикет', around:'По кругу',
-    start:'Старт', closing:'Завершение',
-    doubleOut:'Double-out', tripleOut:'Triple-out', masterOut:'Master-out',
-    anyOutHint:'— если ничего не выбрано, допустим любой финиш',
-    order:'Порядок', fixed:'Фикс', random:'Случайно', playThrough:'Доиграть круг',
-    robot:'Робот', off:'Выкл.', easy:'Лёгкий', medium:'Средний', hard:'Сложный',
-    startGame:'▶ Начать игру', continueGame:'Продолжить', saveGame:'Сохранить игру', restart:'Перезапуск',
-    rules:'Правила', addPlayer:'Добавить игрока',
-    saved:'Сохранённые игры', share:'Поделиться', clear:'Удалить всё',
-    player:'Игрок', game:'Игра', darts:'дротиков', avg:'ср./дротик', last:'Последний бросок',
-    undo:'Отмена', next:'Далее', bust:'без очков', checkout:'чекаут',
-    youWinPrefix:'Победа', outLabel:'Finish', zeroWord:'ноль',
-    points:'Очки', target:'Цель',
-    premiumMode:'Премиум-режим',
-    filter:'Фильтр', all:'Все', week:'Неделя', month:'Месяц', year:'Год',
-    h2h:'Личные встречи', selectPlayer:'Выбери игрока', wins:'побед',
+    app: 'DartScore Pro', sound: 'Звук', voice: 'Голос', back: 'Назад',
+    mode: 'Режим', classic: 'Классика', cricket: 'Крикет', around: 'По кругу',
+    start: 'Старт', closing: 'Завершение',
+    doubleOut: 'Double-out', tripleOut: 'Triple-out', masterOut: 'Master-out',
+    anyOutHint: '— если ничего не выбрано, допустим любой финиш',
+    order: 'Порядок', fixed: 'Фикс', random: 'Случайно', playThrough: 'Доиграть круг',
+    robot: 'Робот', off: 'Выкл.', easy: 'Лёгкий', medium: 'Средний', hard: 'Сложный',
+    startGame: '▶ Начать игру', continueGame: 'Продолжить', saveGame: 'Сохранить игру', restart: 'Перезапуск',
+    rules: 'Правила', addPlayer: 'Добавить игрока',
+    saved: 'Сохранённые игры', share: 'Поделиться', clear: 'Удалить всё',
+    player: 'Игрок', game: 'Игра', darts: 'дротиков', avg: 'ср./дротик', last: 'Последний бросок',
+    undo: 'Отмена', next: 'Далее', bust: 'без очков', checkout: 'чекаут',
+    youWinPrefix: 'Победа', outLabel: 'Finish', zeroWord: 'ноль',
+    points: 'Очки', target: 'Цель',
+    premiumMode: 'Премиум-режим',
+    filter: 'Фильтр', all: 'Все', week: 'Неделя', month: 'Месяц', year: 'Год',
+    h2h: 'Личные встречи', selectPlayer: 'Выбери игрока', wins: 'побед',
     rulesClassic:
       'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Цель: ровно 0. Опции: Double-out / Triple-out / Master-out (если не выбрано, любой финиш). Перебор или 1 при активных правилах = без очков.',
     rulesCricket:
@@ -163,23 +163,23 @@ const T = {
       'Последовательно 1 → 20 → Bull (25). Засчитывается только текущая цель. Дабл/трипл засчитываются как попадание. Побеждает первый, кто попадёт в Bull.'
   },
   zh: {
-    app:'DartScore Pro', sound:'声音', voice:'语音', back:'返回',
-    mode:'模式', classic:'经典', cricket:'Cricket', around:'顺时靶位',
-    start:'开始', closing:'收尾',
-    doubleOut:'Double-out', tripleOut:'Triple-out', masterOut:'Master-out',
-    anyOutHint:'— 若未选择，允许任意收尾',
-    order:'顺序', fixed:'固定', random:'随机', playThrough:'打完整轮',
-    robot:'机器人', off:'关', easy:'简单', medium:'中等', hard:'困难',
-    startGame:'▶ 开始游戏', continueGame:'继续游戏', saveGame:'保存对局', restart:'重新开始',
-    rules:'规则', addPlayer:'添加玩家',
-    saved:'已保存的对局', share:'分享', clear:'全部清除',
-    player:'玩家', game:'对局', darts:'镖', avg:'均分/镖', last:'上轮合计',
-    undo:'撤销', next:'下一位', bust:'爆掉', checkout:'收尾',
-    youWinPrefix:'胜利', outLabel:'收尾', zeroWord:'零',
-    points:'分数', target:'目标',
-    premiumMode:'高级模式',
-    filter:'筛选', all:'全部', week:'一周', month:'一月', year:'一年',
-    h2h:'对战', selectPlayer:'选玩家', wins:'胜',
+    app: 'DartScore Pro', sound: '声音', voice: '语音', back: '返回',
+    mode: '模式', classic: '经典', cricket: 'Cricket', around: '顺时靶位',
+    start: '开始', closing: '收尾',
+    doubleOut: 'Double-out', tripleOut: 'Triple-out', masterOut: 'Master-out',
+    anyOutHint: '— 若未选择，允许任意收尾',
+    order: '顺序', fixed: '固定', random: '随机', playThrough: '打完整轮',
+    robot: '机器人', off: '关', easy: '简单', medium: '中等', hard: '困难',
+    startGame: '▶ 开始游戏', continueGame: '继续游戏', saveGame: '保存对局', restart: '重新开始',
+    rules: '规则', addPlayer: '添加玩家',
+    saved: '已保存的对局', share: '分享', clear: '全部清除',
+    player: '玩家', game: '对局', darts: '镖', avg: '均分/镖', last: '上轮合计',
+    undo: '撤销', next: '下一位', bust: '爆掉', checkout: '收尾',
+    youWinPrefix: '胜利', outLabel: '收尾', zeroWord: '零',
+    points: '分数', target: '目标',
+    premiumMode: '高级模式',
+    filter: '筛选', all: '全部', week: '一周', month: '一月', year: '一年',
+    h2h: '对战', selectPlayer: '选玩家', wins: '胜',
     rulesClassic:
       'Single = ×1, Double = ×2, Triple = ×3，Bull 25/50。目标：正好到 0。可选规则：Double-out / Triple-out / Master-out（未选则任意收尾）。超分或剩 1（在启用规则时）= 爆掉。',
     rulesCricket:
@@ -212,7 +212,15 @@ const deepClone = (obj) => {
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 const colors = ['#16a34a', '#3b82f6', '#ef4444', '#14b8a6', '#8b5cf6', '#e11d48', '#f59e0b', '#22c55e'];
-const defaultNameFor = (lang, n) => ({ cs: `Hráč ${n}`, en: `Player ${n}`, de: `Spieler ${n}`, es: `Jugador ${n}`, nl: `Speler ${n}`, ru: `Игрок ${n}`, zh: `玩家 ${n}` }[lang] || `Player ${n}`);
+const defaultNameFor = (lang, n) => ({
+  cs: `Hráč ${n}`,
+  en: `Player ${n}`,
+  de: `Spieler ${n}`,
+  es: `Jugador ${n}`,
+  nl: `Speler ${n}`,
+  ru: `Игрок ${n}`,
+  zh: `玩家 ${n}`
+}[lang] || `Player ${n}`);
 const autoNameRx = [/^Hráč (\d+)$/, /^Player (\d+)$/, /^Spieler (\d+)$/, /^Jugador (\d+)$/, /^Speler (\d+)$/, /^Игрок (\d+)$/, /^玩家 (\d+)$/];
 
 function speak(lang, text, enabled) {
@@ -310,8 +318,14 @@ function formatAvg(a) {
 /* ===== AdMob interstitial handler ===== */
 const ADMOB_INTERSTITIAL_ID = "ca-app-pub-3940256099942544/1033173712"; // test ID od Googlu
 
+/* >>> DARTSCORE_UNIQUE_ANCHOR__INTERSTITIAL_RETURN_BOOL__B3D9 <<< */
 async function showInterstitialAd() {
   try {
+    // Na webu tohle nemá šanci fungovat -> rovnou false
+    if (typeof window !== 'undefined' && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      return false;
+    }
+
     // dynamické volání modulu – Vite to vůbec nevidí
     const importer = new Function("modulePath", "return import(modulePath);");
     const mod = await importer("expo-ads-admob");
@@ -320,25 +334,34 @@ async function showInterstitialAd() {
     await AdMobInterstitial.setAdUnitID(ADMOB_INTERSTITIAL_ID);
     await AdMobInterstitial.requestAdAsync({ servePersonalizedAds: true });
     await AdMobInterstitial.showAdAsync();
+
+    return true;
   } catch (err) {
-    // Web (Vercel) tu skončí – žádná chyba, jen reklama se nespustí
-    console.warn("AdMob interstitial skipped on web:", err?.message || err);
+    console.warn("AdMob interstitial skipped:", err?.message || err);
+    return false;
   }
 }
+/* >>> DARTSCORE_UNIQUE_ANCHOR__INTERSTITIAL_RETURN_BOOL__B3D9 <<< */
+
 /* ===== MAIN APP ===== */
 export default function App() {
 
   /* viewport fix */
+  /* >>> DARTSCORE_UNIQUE_ANCHOR__VIEWPORT_FIX__START__C91E <<< */
   useEffect(() => {
-    const setVh = () =>
-      document.documentElement.style.setProperty(
-        '--vh',
-        `${window.innerHeight * 0.01}px`
-      );
+    // iOS standalone / Android cutouts fallback
+    const root = document.documentElement;
+    root.style.setProperty('--sat-fallback', '28px');
+
+    const setVh = () => {
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    };
+
     setVh();
     window.addEventListener('resize', setVh);
     return () => window.removeEventListener('resize', setVh);
   }, []);
+  /* >>> DARTSCORE_UNIQUE_ANCHOR__VIEWPORT_FIX__END__C91E <<< */
 
   /* === STATE === */
 
@@ -656,77 +679,106 @@ export default function App() {
 
     const resetMult = () => setMult(1);
 
+    const advanceTurn = () => {
+      // žádný scheduleNextPlayer – ať to nepadá, přepnutí je tady vždy definované
+      setTimeout(() => {
+        try { nextPlayer(); } catch (e) { console.error('nextPlayer failed:', e); }
+      }, 250);
+    };
+
+    // === BUST (přestřel / nebo zbyde 1 při out pravidlech) ===
     if (tentative < 0 || isBustLeavingOne(tentative)) {
       speak(lang, t(lang, 'bust'), voiceOn);
       playHitSound();
+
       pushAction({
         type: 'bust',
         mode: 'classic',
         pIdx,
         prevScore: prev,
-        dartsBefore: [...darts]
+        dartsBefore: [...darts],
       });
+
       setDarts([]);
-      setLastTurn(ls => ls.map((x, i) => i === pIdx ? 0 : x));
+      setLastTurn(ls => ls.map((x, i) => (i === pIdx ? 0 : x)));
       resetMult();
-      nextPlayer();
+      advanceTurn();
       return;
     }
 
+    // === FINISH (na 0) ===
     if (tentative === 0) {
-      if (isFinishAllowed(m)) {
-        playHitSound();
-        pushAction({
-          type: 'dart',
-          mode: 'classic',
-          pIdx,
-          prevScore: prev,
-          newScore: tentative,
-          hit: { v, m, score: hit }
-        });
-
-        setScores(sc => sc.map((x, i) => i === pIdx ? 0 : x));
-
-        setDarts(prevD => {
-          const nd = [...prevD, { v, m, score: hit }];
-          const total = nd.reduce((s, a) => s + (a?.score || 0), 0);
-          setThrown(th => th.map((x, i) => i === pIdx ? x + 1 : x));
-          setLastTurn(ls => ls.map((x, i) => i === pIdx ? total : x));
-          return nd;
-        });
-
-        if (!playThrough) {
-          finalizeWin(pIdx);
-          resetMult();
-          return;
-        } else {
-          const dartsUsed = (darts?.length ?? 0) + 1;
-          setPendingWin(prevBest => (
-            !prevBest || dartsUsed < prevBest.dartsUsed
-              ? { pIdx, dartsUsed }
-              : prevBest
-          ));
-          resetMult();
-          nextPlayer();
-          return;
-        }
-      } else {
+      // pokud out není povolený, je to bust
+      if (!isFinishAllowed(m)) {
         speak(lang, t(lang, 'bust'), voiceOn);
+
         pushAction({
           type: 'bust',
           mode: 'classic',
           pIdx,
           prevScore: prev,
-          dartsBefore: [...darts]
+          dartsBefore: [...darts],
         });
+
         setDarts([]);
-        setLastTurn(ls => ls.map((x, i) => i === pIdx ? 0 : x));
+        setLastTurn(ls => ls.map((x, i) => (i === pIdx ? 0 : x)));
         resetMult();
-        nextPlayer();
+        advanceTurn();
         return;
       }
+
+      // povolený finish
+      playHitSound();
+      pushAction({
+        type: 'dart',
+        mode: 'classic',
+        pIdx,
+        prevScore: prev,
+        newScore: 0,
+        hit: { v, m, score: hit },
+      });
+
+      setScores(sc => sc.map((x, i) => (i === pIdx ? 0 : x)));
+
+      // přidáme šipku do aktuálního kola + spočítáme total
+      setDarts(prevD => {
+        const nd = [...prevD, { v, m, score: hit }];
+        const total = nd.reduce((s, a) => s + (a?.score || 0), 0);
+
+        setThrown(th => th.map((x, i) => (i === pIdx ? x + 1 : x)));
+        setLastTurn(ls => ls.map((x, i) => (i === pIdx ? total : x)));
+
+        // když nedohráváš kolo => vyhra hned
+        if (!playThrough) {
+          // necháme nd (ať je vidět poslední trefa), win overlay si to převezme
+          return nd;
+        }
+
+        // dohráváš kolo => označ pending win a pokračuj dál
+        const dartsUsed = nd.length; // 1..3 (v rámci aktuálního kola)
+        setPendingWin(prevBest => (
+          !prevBest || dartsUsed < prevBest.dartsUsed
+            ? { pIdx, dartsUsed }
+            : prevBest
+        ));
+
+        // otoč hráče až po krátké pauze, ale vizuálně kolo ukonči
+        speak(lang, total === 0 ? t(lang, 'zeroWord') : total, voiceOn);
+        advanceTurn();
+        return [];
+      });
+
+      if (!playThrough) {
+        // finalizeWin musí být mimo setState callback (kvůli čitelnosti),
+        // ale tady je bezpečné – je to “okamžitý finish”
+        finalizeWin(pIdx);
+      }
+
+      resetMult();
+      return;
     }
 
+    // === NORMAL HIT (nejde na 0) ===
     playHitSound();
     pushAction({
       type: 'dart',
@@ -734,798 +786,884 @@ export default function App() {
       pIdx,
       prevScore: prev,
       newScore: tentative,
-      hit: { v, m, score: hit }
+      hit: { v, m, score: hit },
     });
 
-    setScores(sc => sc.map((x, i) => i === pIdx ? tentative : x));
+    setScores(sc => sc.map((x, i) => (i === pIdx ? tentative : x)));
 
     setDarts(prevD => {
       const nd = [...prevD, { v, m, score: hit }];
       const total = nd.reduce((s, a) => s + (a?.score || 0), 0);
 
-      setThrown(th => th.map((x, i) => i === pIdx ? x + 1 : x));
-      setLastTurn(ls => ls.map((x, i) => i === pIdx ? total : x));
+      setThrown(th => th.map((x, i) => (i === pIdx ? x + 1 : x)));
+      setLastTurn(ls => ls.map((x, i) => (i === pIdx ? total : x)));
 
       if (nd.length >= 3) {
         speak(lang, total === 0 ? t(lang, 'zeroWord') : total, voiceOn);
-        nextPlayer();
+        advanceTurn();
         return [];
       }
+
       return nd;
     });
 
     resetMult();
   };
+/* ===== Cricket commit ===== */
+const commitCricket = (value, mOverride) => {
+  let v = value;
+  let m = (mOverride ?? mult);
 
-  /* ===== Cricket commit ===== */
-  const commitCricket = (value, mOverride) => {
-    let v = value;
-    let m = (mOverride ?? mult);
+  if (!cricket || !Array.isArray(cricket)) return;
+  const pIdx = currentPlayerIndex;
+  if (pIdx == null || !cricket[pIdx]) return;
 
-    if (!cricket || !Array.isArray(cricket)) return;
-    const pIdx = currentPlayerIndex;
-    if (pIdx == null || !cricket[pIdx]) return;
+  // cricket bere jen 0, 15–20, 25
+  if (v === 0) m = 1;
+  if (v === 25) m = 1;
+  if (![0, 15, 16, 17, 18, 19, 20, 25].includes(v)) return;
 
-    if (v === 0) m = 1;
-    if (v === 25) m = 1;
-    if (![0, 15, 16, 17, 18, 19, 20, 25].includes(v)) return;
+  const prevState = deepClone(cricket);
+  const st = deepClone(cricket);
+  const me = st[pIdx];
 
-    const prevState = deepClone(cricket);
-    const st = deepClone(cricket);
-    const me = st[pIdx];
-
-    if (v === 0) {
-      playHitSound();
-      setThrown(th => th.map((x, i) => (i === pIdx ? x + 1 : x)));
-      setDarts(cur => {
-        const nd = [...cur, { v: 0, m: 1, score: 0 }];
-        if (nd.length >= 3) {
-          nextPlayer();
-          return [];
-        }
-        return nd;
-      });
-      setMult(1);
-      return;
-    }
-
-    const key = (v === 25 ? 'bull' : String(v));
-    const before = me.marks?.[key] ?? 0;
-
-    const add = Math.max(1, Math.min(3, m));
-    const newMarks = Math.min(3, before + add);
-    const overflow = Math.max(0, before + add - 3);
-
-    const opponentsOpen = st.some(
-      (pl, ix) => ix !== pIdx && (pl.marks?.[key] ?? 0) < 3
-    );
-    const pointsPerMark = v === 25 ? 25 : v;
-    const gained = overflow > 0 && opponentsOpen ? overflow * pointsPerMark : 0;
-
-    me.marks[key] = newMarks;
-    if (gained > 0) {
-      me.points = (me.points || 0) + gained;
-    }
-
-    setCricket(st);
+  // MISS (0) = jen šipka, žádné body/marky
+  if (v === 0) {
     playHitSound();
     pushAction({
       type: 'dart',
       mode: 'cricket',
       pIdx,
       prev: prevState,
-      delta: { v, add }
+      delta: { v: 0, add: 0 }
     });
 
     setThrown(th => th.map((x, i) => (i === pIdx ? x + 1 : x)));
-    setLastTurn(ls => ls.map((x, i) => (i === pIdx ? (x + gained) : x)));
-
-    const closedAll = Object.values(me.marks || {}).every(n => n >= 3);
-    const myPts = me.points || 0;
-    if (closedAll) {
-      const lead = st.every(
-        (pl, ix) => ix === pIdx || myPts >= (pl.points || 0)
-      );
-      if (lead) {
-        finalizeWin(pIdx, { silentVoice: false });
-        return;
-      }
-    }
 
     setDarts(cur => {
-      const nd = [...cur, { v, m: add, score: gained }];
+      const nd = [...cur, { v: 0, m: 1, score: 0 }];
       if (nd.length >= 3) {
-        nextPlayer();
+        scheduleNextPlayer(250);
         return [];
       }
       return nd;
     });
+
     setMult(1);
-  };
+    return;
+  }
 
-  /* ===== Around commit ===== */
-  const commitAround = (value, mOverride) => {
-    let v = value;
-    let m = (mOverride ?? mult);
-    if (v === 50) v = 25;
+  // normální zásah
+  const key = (v === 25 ? 'bull' : String(v));
+  const before = me.marks?.[key] ?? 0;
 
-    const pIdx = currentPlayerIndex;
-    if (!around || !Array.isArray(around)) return;
-    if (pIdx == null || !around[pIdx]) return;
+  const add = Math.max(1, Math.min(3, m));
+  const newMarks = Math.min(3, before + add);
+  const overflow = Math.max(0, before + add - 3);
 
-    const st = deepClone(around);
-    const me = st[pIdx];
-    const target = me.next;
+  const opponentsOpen = st.some(
+    (pl, ix) => ix !== pIdx && (pl.marks?.[key] ?? 0) < 3
+  );
 
-    let hit = false;
-    if (target <= 20) {
-      if (v === target) hit = true;
-    } else {
-      if (v === 25) hit = true;
+  const pointsPerMark = (v === 25 ? 25 : v);
+  const gained = (overflow > 0 && opponentsOpen) ? overflow * pointsPerMark : 0;
+
+  me.marks[key] = newMarks;
+  if (gained > 0) me.points = (me.points || 0) + gained;
+
+  setCricket(st);
+  playHitSound();
+
+  pushAction({
+    type: 'dart',
+    mode: 'cricket',
+    pIdx,
+    prev: prevState,
+    delta: { v, add }
+  });
+
+  setThrown(th => th.map((x, i) => (i === pIdx ? x + 1 : x)));
+  setLastTurn(ls => ls.map((x, i) => (i === pIdx ? (x + gained) : x)));
+
+  // výhra: zavřené všechno + vede/je na stejno
+  const closedAll = Object.values(me.marks || {}).every(n => n >= 3);
+  const myPts = me.points || 0;
+  if (closedAll) {
+    const lead = st.every((pl, ix) => ix === pIdx || myPts >= (pl.points || 0));
+    if (lead) {
+      finalizeWin(pIdx, { silentVoice: false });
+      return;
     }
+  }
 
-    setThrown(th => th.map((x, i) => i === pIdx ? x + 1 : x));
+  // 3. šipka = přepnout hráče (pouze tady, pouze jednou)
+  setDarts(cur => {
+    const nd = [...cur, { v, m: add, score: gained }];
+    if (nd.length >= 3) {
+      scheduleNextPlayer(250);
+      return [];
+    }
+    return nd;
+  });
 
-    if (hit) {
-      if (target < 20) {
-        me.next = target + 1;
-      } else if (target === 20) {
-        me.next = 25;
-      } else if (target === 25) {
+  setMult(1);
+};
+
+/* ===== Around commit ===== */  
+    const commitAround = (value, mOverride) => {
+      let v = value;
+      let m = (mOverride ?? mult);
+      if (v === 50) v = 25;
+
+      const pIdx = currentPlayerIndex;
+      if (!around || !Array.isArray(around)) return;
+      if (pIdx == null || !around[pIdx]) return;
+
+      const st = deepClone(around);
+      const me = st[pIdx];
+      const target = me.next;
+
+      let hit = false;
+      if (target <= 20) {
+        if (v === target) hit = true;
+      } else {
+        if (v === 25) hit = true;
+      }
+
+      setThrown(th => th.map((x, i) => i === pIdx ? x + 1 : x));
+
+      if (hit) {
+        if (target < 20) {
+          me.next = target + 1;
+        } else if (target === 20) {
+          me.next = 25;
+        } else if (target === 25) {
+          playHitSound();
+          pushAction({ type: 'dart', mode: 'around', pIdx, prev: around, hit: true });
+          setAround(st);
+          setDarts(cur => {
+            const nd = [...cur, { v, m, score: 0 }];
+            return nd.length >= 3 ? [] : nd;
+          });
+          setMult(1);
+          finalizeWin(pIdx, { silentVoice: true });
+          return;
+        }
         playHitSound();
         pushAction({ type: 'dart', mode: 'around', pIdx, prev: around, hit: true });
-        setAround(st);
-        setDarts(cur => {
-          const nd = [...cur, { v, m, score: 0 }];
-          return nd.length >= 3 ? [] : nd;
-        });
-        setMult(1);
-        finalizeWin(pIdx, { silentVoice: true });
-        return;
+      } else {
+        pushAction({ type: 'dart', mode: 'around', pIdx, prev: around, hit: false });
       }
-      playHitSound();
-      pushAction({ type: 'dart', mode: 'around', pIdx, prev: around, hit: true });
-    } else {
-      pushAction({ type: 'dart', mode: 'around', pIdx, prev: around, hit: false });
-    }
 
-    setAround(st);
-    setDarts(cur => {
-      const nd = [...cur, { v, m, score: hit ? 1 : 0 }];
-      if (nd.length >= 3) {
-        nextPlayer();
-        return [];
+      setAround(st);
+      setDarts(cur => {
+        const nd = [...cur, { v, m, score: hit ? 1 : 0 }];
+        if (nd.length >= 3) {
+          scheduleNextPlayer();
+          return [];
+        }
+        return nd;
+      });
+
+      setMult(1);
+    };
+
+    const commitDart = (value, mOverride) => {
+      if (winner != null) return;
+      if (mode === 'classic') return commitClassic(value, mOverride);
+      if (mode === 'cricket') return commitCricket(value, mOverride);
+      return commitAround(value, mOverride);
+    };
+
+    const finalizeWin = (pIdx, opts = {}) => {
+      if (!opts.silentVoice) {
+        speak(lang, 'Vítěz!', voiceOn);
       }
-      return nd;
-    });
-
-    setMult(1);
-  };
-
-  const commitDart = (value, mOverride) => {
-    if (winner != null) return;
-    if (mode === 'classic') return commitClassic(value, mOverride);
-    if (mode === 'cricket') return commitCricket(value, mOverride);
-    return commitAround(value, mOverride);
-  };
-
-  const finalizeWin = (pIdx, opts = {}) => {
-    if (!opts.silentVoice) {
-      speak(lang, 'Vítěz!', voiceOn);
-    }
-    try {
-      if (winAudioRef.current) {
-        winAudioRef.current.currentTime = 0;
-        winAudioRef.current.play();
-      }
-    } catch { }
-
-    setWinner(pIdx);
-
-    if (!isPremium) {
-      showInterstitialAd();
-      setAdSecondsLeft(20);
-      setShowAd(true);
-    }
-
-    if (isPremium) {
       try {
-        const list = JSON.parse(localStorage.getItem('finishedGames') || '[]');
-        const gameRecord = {
-          ts: Date.now(),
-          mode, startScore,
-          outDouble, outTriple, outMaster,
-          randomOrder, playThrough,
-          players: players.map(p => p.name),
-          winner: players[pIdx]?.name || ''
-        };
-        if (mode === 'classic' && Array.isArray(scores)) {
-          gameRecord.remainingByPlayer = players.map((p, ix) => ({
-            name: p.name,
-            remaining: scores[ix] ?? 0
-          }));
+        if (winAudioRef.current) {
+          winAudioRef.current.currentTime = 0;
+          winAudioRef.current.play();
         }
-        list.unshift(gameRecord);
-        localStorage.setItem('finishedGames', JSON.stringify(list.slice(0, 200)));
       } catch { }
-    }
-  };
 
-  const nextPlayer = () => {
-    setCurrIdx(i => {
-      const next = (i + 1) % order.length;
-      if (mode === 'classic' && next === 0 && playThrough && pendingWin && winner == null) {
-        finalizeWin(pendingWin.pIdx);
-        setPendingWin(null);
+      setWinner(pIdx);
+if (!isPremium) {
+  // Web (Codespace) = AdMob interstitial se reálně nespustí, ale overlay musí naběhnout
+  console.log('[ADS] finalizeWin -> showing overlay', { isPremium });
+
+  setAdSecondsLeft(20);
+  setShowAd(true);
+
+  // zkus interstitial (na webu to typicky vrátí false / nic nezobrazí)
+  showInterstitialAd();
+}
+
+/* >>> DARTSCORE_UNIQUE_ANCHOR__FINALIZE_WIN_BLOCK__X92K <<< */
+
+      if (!isPremium) {
+  // Web: žádný AdMob interstitial -> nezobrazuj fake pauzu
+  if (typeof window !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    // Mobilní build (až bude): tady teprve dává smysl pauza
+    setAdSecondsLeft(20);
+    setShowAd(true);
+    showInterstitialAd();
+  } else {
+    // web: nic
+    console.log('Interstitial skipped on web');
+  }
+}
+      if (isPremium) {
+        try {
+          const list = JSON.parse(localStorage.getItem('finishedGames') || '[]');
+          const gameRecord = {
+            ts: Date.now(),
+            mode, startScore,
+            outDouble, outTriple, outMaster,
+            randomOrder, playThrough,
+            players: players.map(p => p.name),
+            winner: players[pIdx]?.name || ''
+          };
+          if (mode === 'classic' && Array.isArray(scores)) {
+            gameRecord.remainingByPlayer = players.map((p, ix) => ({
+              name: p.name,
+              remaining: scores[ix] ?? 0
+            }));
+          }
+          list.unshift(gameRecord);
+          localStorage.setItem('finishedGames', JSON.stringify(list.slice(0, 200)));
+        } catch { }
       }
-      return next;
-    });
-    setDarts([]);
-  };
-
-  const undo = () => {
-    if (winner != null) return;
-    setActions(st => {
-      if (st.length === 0) return st;
-      const last = st[st.length - 1];
-
-      if (last.mode === 'classic') {
-        if (last.type === 'dart') {
-          const { pIdx, prevScore, hit } = last;
-          setScores(sc => sc.map((x, i) => i === pIdx ? prevScore : x));
-          setDarts(ds => {
-            const d = [...ds];
-            if (order[currIdx] !== pIdx) {
-              const pos = order.indexOf(pIdx);
-              if (pos >= 0) setCurrIdx(pos);
-            }
-            if (d.length > 0) d.pop();
-            else d.push(hit);
-            return d;
-          });
-          setThrown(th => th.map((x, i) =>
-            i === pIdx ? Math.max(0, x - 1) : x
-          ));
-          setLastTurn(ls => ls.map((x, i) =>
-            i === pIdx ? Math.max(0, x - (hit?.score || 0)) : x
-          ));
-        } else if (last.type === 'bust') {
-          const { pIdx, prevScore } = last;
-          setScores(sc => sc.map((x, i) => i === pIdx ? prevScore : x));
-          const pos = order.indexOf(pIdx);
-          if (pos >= 0) setCurrIdx(pos);
-          setDarts(last.dartsBefore || []);
-          setLastTurn(ls => ls.map((x, i) => i === pIdx ? 0 : x));
-        }
-      } else if (last.mode === 'cricket') {
-        setCricket(last.prev);
-        setThrown(th => th.map((x, i) =>
-          i === last.pIdx ? Math.max(0, x - 1) : x
-        ));
-        setDarts(ds => {
-          const d = [...ds];
-          if (d.length > 0) d.pop();
-          return d;
-        });
-      } else if (last.mode === 'around') {
-        setAround(last.prev);
-        setThrown(th => th.map((x, i) =>
-          i === last.pIdx ? Math.max(0, x - 1) : x
-        ));
-        setDarts(ds => {
-          const d = [...ds];
-          if (d.length > 0) d.pop();
-          return d;
-        });
-      }
-
-      return st.slice(0, -1);
-    });
-    setMult(1);
-  };
-
-  const averages = useMemo(() => {
-    if (mode !== 'classic') {
-      return players.map(() => 0);
-    }
-    return players.map((_, i) => {
-      const thrownDarts = thrown[i] || 0;
-      const done = startScore - (scores[i] ?? startScore);
-      return thrownDarts > 0 ? (done / thrownDarts) : 0;
-    });
-  }, [players, thrown, scores, startScore, mode]);
-
-  const cardRefs = useRef({});
-  useEffect(() => {
-    const activeIdx = order[currIdx];
-    const el = cardRefs.current[activeIdx];
-    if (el && el.scrollIntoView) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-    }
-  }, [order, currIdx, mode]);
-
-  /* BOT TURN (AI) – beze změny logiky, necháváme, funguje */
-
-  useEffect(() => {
-    const pIdx = order[currIdx];
-    const p = players[pIdx];
-
-    if (!p || !p.bot || winner != null) return;
-
-    const tables = {
-      easy: { miss: 0.55, single: 0.40, double: 0.04, triple: 0.01 },
-      medium: { miss: 0.18, single: 0.58, double: 0.16, triple: 0.08 },
-      hard: { miss: 0.09, single: 0.50, double: 0.24, triple: 0.17 }
-    };
-    const tb = tables[p.level || 'easy'];
-
-    let cancelled = false;
-    const delays = [800, 1600, 2400];
-
-    const rollMult = () => {
-      const r = Math.random();
-      if (r < tb.miss) return { m: 1, miss: true };
-      if (r < tb.miss + tb.triple) return { m: 3, miss: false };
-      if (r < tb.miss + tb.triple + tb.double) return { m: 2, miss: false };
-      return { m: 1, miss: false };
     };
 
-    const chooseTargetClassic = () => {
-      const myScore = scores[pIdx];
+   /* >>> DARTSCORE_UNIQUE_ANCHOR__TURN_SWITCH_HELPERS__START__7C2A <<< */
+const orderRef = useRef(order);
+useEffect(() => { orderRef.current = order; }, [order]);
 
-      const finishAllowed = (m) => {
-        if (!anyOutSelected) return true;
-        if (m === 2 && outDouble) return true;
-        if (m === 3 && outTriple) return true;
-        if ((m === 2 || m === 3) && outMaster) return true;
-        return false;
+const modeRef = useRef(mode);
+useEffect(() => { modeRef.current = mode; }, [mode]);
+
+const playThroughRef = useRef(playThrough);
+useEffect(() => { playThroughRef.current = playThrough; }, [playThrough]);
+
+const pendingWinRef = useRef(pendingWin);
+useEffect(() => { pendingWinRef.current = pendingWin; }, [pendingWin]);
+
+const winnerRef = useRef(winner);
+useEffect(() => { winnerRef.current = winner; }, [winner]);
+
+const turnTimerRef = useRef(null);
+const turnLockRef = useRef(false);
+
+// odemkni plánování při změně hráče / návratu do lobby
+useEffect(() => { turnLockRef.current = false; }, [currIdx, screen]);
+
+const nextPlayerSafe = () => {
+  if (turnLockRef.current) return;           // HARD GUARD: nedovol 2× přepnutí v jednom "tahu"
+  turnLockRef.current = true;
+
+  setCurrIdx((i) => {
+    const ord = orderRef.current || [];
+    const len = ord.length || 0;
+    if (len < 1) return 0;
+
+    const next = (i + 1) % len;
+
+    // playThrough win po dokončení kola (použij refy, ne closure)
+    if (
+      modeRef.current === 'classic' &&
+      next === 0 &&
+      playThroughRef.current &&
+      pendingWinRef.current &&
+      winnerRef.current == null
+    ) {
+      finalizeWin(pendingWinRef.current.pIdx);
+      setPendingWin(null);
+    }
+
+    return next;
+  });
+
+  setDarts([]);
+  setMult(1);
+
+  // odemkni až po chvíli, ať se timer/klik nepoperou
+  setTimeout(() => { turnLockRef.current = false; }, 80);
+};
+
+const scheduleNextPlayer = (delay = 250) => {
+  if (turnTimerRef.current) clearTimeout(turnTimerRef.current);
+  turnTimerRef.current = setTimeout(() => {
+    turnTimerRef.current = null;
+    nextPlayerSafe();
+  }, delay);
+};
+/* >>> DARTSCORE_UNIQUE_ANCHOR__NEXTPLAYER_ALIAS__ADD__A11C <<< */
+const nextPlayer = () => nextPlayerSafe();
+/* >>> DARTSCORE_UNIQUE_ANCHOR__NEXTPLAYER_ALIAS__ADD__A11C <<< */
+
+/* >>> DARTSCORE_UNIQUE_ANCHOR__TURN_SWITCH_HELPERS__END__7C2A <<< */
+
+const undo = () => {
+  if (winner != null) return;
+  setActions(st => {
+    if (st.length === 0) return st;
+    const last = st[st.length - 1];
+
+    if (last.mode === 'classic') {
+      if (last.type === 'dart') {
+        const { pIdx, prevScore, hit } = last;
+        setScores(sc => sc.map((x, i) => i === pIdx ? prevScore : x));
+        setDarts(ds => {
+          const d = [...ds];
+          if (order[currIdx] !== pIdx) {
+            const pos = order.indexOf(pIdx);
+            if (pos >= 0) setCurrIdx(pos);
+          }
+          if (d.length > 0) d.pop();
+          else d.push(hit);
+          return d;
+        });
+        setThrown(th => th.map((x, i) =>
+          i === pIdx ? Math.max(0, x - 1) : x
+        ));
+        setLastTurn(ls => ls.map((x, i) =>
+          i === pIdx ? Math.max(0, x - (hit?.score || 0)) : x
+        ));
+      } else if (last.type === 'bust') {
+        const { pIdx, prevScore } = last;
+        setScores(sc => sc.map((x, i) => i === pIdx ? prevScore : x));
+        const pos = order.indexOf(pIdx);
+        if (pos >= 0) setCurrIdx(pos);
+        setDarts(last.dartsBefore || []);
+        setLastTurn(ls => ls.map((x, i) => i === pIdx ? 0 : x));
+      }
+    } else if (last.mode === 'cricket') {
+      setCricket(last.prev);
+      setThrown(th => th.map((x, i) =>
+        i === last.pIdx ? Math.max(0, x - 1) : x
+      ));
+      setDarts(ds => {
+        const d = [...ds];
+        if (d.length > 0) d.pop();
+        return d;
+      });
+    } else if (last.mode === 'around') {
+      setAround(last.prev);
+      setThrown(th => th.map((x, i) =>
+        i === last.pIdx ? Math.max(0, x - 1) : x
+      ));
+      setDarts(ds => {
+        const d = [...ds];
+        if (d.length > 0) d.pop();
+        return d;
+      });
+    }
+
+    return st.slice(0, -1);
+  });
+  setMult(1);
+};
+
+const averages = useMemo(() => {
+  if (mode !== 'classic') {
+    return players.map(() => 0);
+  }
+  return players.map((_, i) => {
+    const thrownDarts = thrown[i] || 0;
+    const done = startScore - (scores[i] ?? startScore);
+    return thrownDarts > 0 ? (done / thrownDarts) : 0;
+  });
+}, [players, thrown, scores, startScore, mode]);
+
+const cardRefs = useRef({});
+useEffect(() => {
+  const activeIdx = order[currIdx];
+  const el = cardRefs.current[activeIdx];
+  if (el && el.scrollIntoView) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }
+}, [order, currIdx, mode]);
+
+    /* BOT TURN (AI) – beze změny logiky, necháváme, funguje */
+
+    useEffect(() => {
+      const pIdx = order[currIdx];
+      const p = players[pIdx];
+
+      if (!p || !p.bot || winner != null) return;
+
+      const tables = {
+        easy: { miss: 0.55, single: 0.40, double: 0.04, triple: 0.01 },
+        medium: { miss: 0.18, single: 0.58, double: 0.16, triple: 0.08 },
+        hard: { miss: 0.09, single: 0.50, double: 0.24, triple: 0.17 }
+      };
+      const tb = tables[p.level || 'easy'];
+
+      let cancelled = false;
+      const delays = [800, 1600, 2400];
+
+      const rollMult = () => {
+        const r = Math.random();
+        if (r < tb.miss) return { m: 1, miss: true };
+        if (r < tb.miss + tb.triple) return { m: 3, miss: false };
+        if (r < tb.miss + tb.triple + tb.double) return { m: 2, miss: false };
+        return { m: 1, miss: false };
       };
 
-      const checkouts = [
-        { v: 20, m: 2, need: 40 }, { v: 10, m: 2, need: 20 },
-        { v: 12, m: 2, need: 24 }, { v: 16, m: 2, need: 32 },
-        { v: 8, m: 2, need: 16 }, { v: 6, m: 2, need: 12 },
-        { v: 4, m: 2, need: 8 }, { v: 2, m: 2, need: 4 }
-      ];
-      for (const co of checkouts) {
-        if (myScore === co.need && finishAllowed(co.m)) return co;
-      }
+      const chooseTargetClassic = () => {
+        const myScore = scores[pIdx];
 
-      if (myScore <= 62) {
-        if (finishAllowed(2) && myScore % 2 === 0) {
-          const d = Math.min(20, Math.max(2, (myScore / 2) | 0));
-          return { v: d, m: 2 };
+        const finishAllowed = (m) => {
+          if (!anyOutSelected) return true;
+          if (m === 2 && outDouble) return true;
+          if (m === 3 && outTriple) return true;
+          if ((m === 2 || m === 3) && outMaster) return true;
+          return false;
+        };
+
+        const checkouts = [
+          { v: 20, m: 2, need: 40 }, { v: 10, m: 2, need: 20 },
+          { v: 12, m: 2, need: 24 }, { v: 16, m: 2, need: 32 },
+          { v: 8, m: 2, need: 16 }, { v: 6, m: 2, need: 12 },
+          { v: 4, m: 2, need: 8 }, { v: 2, m: 2, need: 4 }
+        ];
+        for (const co of checkouts) {
+          if (myScore === co.need && finishAllowed(co.m)) return co;
         }
-        const s = Math.min(20, Math.max(1, myScore - 40));
-        return { v: (s || 1), m: 1 };
-      }
 
-      if ((p.level || 'easy') === 'easy') {
+        if (myScore <= 62) {
+          if (finishAllowed(2) && myScore % 2 === 0) {
+            const d = Math.min(20, Math.max(2, (myScore / 2) | 0));
+            return { v: d, m: 2 };
+          }
+          const s = Math.min(20, Math.max(1, myScore - 40));
+          return { v: (s || 1), m: 1 };
+        }
+
+        if ((p.level || 'easy') === 'easy') {
+          if (Math.random() < tb.miss) {
+            return { v: 0, m: 1 };
+          }
+          return { v: 20, m: 1 };
+        }
+
+        return { v: 20, m: 3 };
+      };
+
+      const chooseTargetCricket = () => {
+        const me = cricket?.[pIdx];
+        if (!me) return { v: 20, m: 1 };
+
+        const orderArr = [20, 19, 18, 17, 16, 15, 25];
+
+        for (const v of orderArr) {
+          const key = v === 25 ? 'bull' : String(v);
+          const marks = me.marks?.[key] ?? 0;
+          if (marks < 3) {
+            const { m, miss } = rollMult();
+            const mAdj = (v === 25 ? 1 : m);
+            if (miss) return { v: 0, m: 1 };
+            return { v, m: mAdj };
+          }
+        }
+
+        const opponentsOpen = (v) => {
+          const key = v === 25 ? 'bull' : String(v);
+          return cricket?.some(
+            (pl, ix) => ix !== pIdx && (pl.marks?.[key] ?? 0) < 3
+          );
+        };
+        for (const v of orderArr) {
+          if (opponentsOpen(v)) {
+            const { m, miss } = rollMult();
+            const mAdj = (v === 25 ? 1 : m);
+            if (miss) return { v: 0, m: 1 };
+            return { v, m: mAdj };
+          }
+        }
+
+        return { v: 20, m: 1 };
+      };
+
+      const chooseTargetAround = () => {
+        const me = around?.[pIdx];
+        const target = me?.next ?? 1;
+
         if (Math.random() < tb.miss) {
           return { v: 0, m: 1 };
         }
-        return { v: 20, m: 1 };
-      }
-
-      return { v: 20, m: 3 };
-    };
-
-    const chooseTargetCricket = () => {
-      const me = cricket?.[pIdx];
-      if (!me) return { v: 20, m: 1 };
-
-      const orderArr = [20, 19, 18, 17, 16, 15, 25];
-
-      for (const v of orderArr) {
-        const key = v === 25 ? 'bull' : String(v);
-        const marks = me.marks?.[key] ?? 0;
-        if (marks < 3) {
-          const { m, miss } = rollMult();
-          const mAdj = (v === 25 ? 1 : m);
-          if (miss) return { v: 0, m: 1 };
-          return { v, m: mAdj };
-        }
-      }
-
-      const opponentsOpen = (v) => {
-        const key = v === 25 ? 'bull' : String(v);
-        return cricket?.some(
-          (pl, ix) => ix !== pIdx && (pl.marks?.[key] ?? 0) < 3
-        );
+        if (target <= 20) return { v: target, m: 1 };
+        return { v: 25, m: 1 };
       };
-      for (const v of orderArr) {
-        if (opponentsOpen(v)) {
-          const { m, miss } = rollMult();
-          const mAdj = (v === 25 ? 1 : m);
-          if (miss) return { v: 0, m: 1 };
-          return { v, m: mAdj };
-        }
-      }
 
-      return { v: 20, m: 1 };
-    };
+      const pickThrow = () => {
+        if (mode === 'classic') return chooseTargetClassic();
+        if (mode === 'cricket') return chooseTargetCricket();
+        return chooseTargetAround();
+      };
 
-    const chooseTargetAround = () => {
-      const me = around?.[pIdx];
-      const target = me?.next ?? 1;
+      const myIdx = pIdx;
 
-      if (Math.random() < tb.miss) {
-        return { v: 0, m: 1 };
-      }
-      if (target <= 20) return { v: target, m: 1 };
-      return { v: 25, m: 1 };
-    };
-
-    const pickThrow = () => {
-      if (mode === 'classic') return chooseTargetClassic();
-      if (mode === 'cricket') return chooseTargetCricket();
-      return chooseTargetAround();
-    };
-
-    const myIdx = pIdx;
-
-    const throwOnce = (i) => {
-      if (cancelled || winner != null) return;
-      if (order[currIdx] !== myIdx) return;
-
-      let { v, m } = pickThrow();
-
-      if (mode === 'classic') {
-        if ((v === 0 || v === 25 || v === 50) && m > 1) m = 1;
-      } else if (mode === 'cricket') {
-        if (v === 0) m = 1;
-        if (v === 25) m = 1;
-      }
-
-      setTimeout(() => {
+      const throwOnce = (i) => {
         if (cancelled || winner != null) return;
         if (order[currIdx] !== myIdx) return;
-        commitDart(v, m);
 
-        if (i < 2) {
-          setTimeout(() => {
-            if (order[currIdx] === myIdx && winner == null) {
-              throwOnce(i + 1);
-            }
-          }, 200);
+        let { v, m } = pickThrow();
+
+        if (mode === 'classic') {
+          if ((v === 0 || v === 25 || v === 50) && m > 1) m = 1;
+        } else if (mode === 'cricket') {
+          if (v === 0) m = 1;
+          if (v === 25) m = 1;
         }
-      }, delays[i]);
-    };
 
-    throwOnce(0);
+        setTimeout(() => {
+          if (cancelled || winner != null) return;
+          if (order[currIdx] !== myIdx) return;
+          commitDart(v, m);
 
-    return () => { cancelled = true; };
+          if (i < 2) {
+            setTimeout(() => {
+              if (order[currIdx] === myIdx && winner == null) {
+                throwOnce(i + 1);
+              }
+            }, 200);
+          }
+        }, delays[i]);
+      };
 
-  }, [
-    currIdx, order, players, winner, mode, scores,
-    cricket, around,
-    outDouble, outTriple, outMaster, anyOutSelected
-  ]);
+      throwOnce(0);
 
-  /* reklama overlay */
-  useEffect(() => {
-    if (!showAd) {
-      if (adTimerRef.current) {
-        clearInterval(adTimerRef.current);
-        adTimerRef.current = null;
-      }
-      return;
-    }
-    adTimerRef.current = setInterval(() => {
-      setAdSecondsLeft(s => {
-        if (s <= 1) {
+      return () => { cancelled = true; };
+
+    }, [
+      currIdx, order, players, winner, mode, scores,
+      cricket, around,
+      outDouble, outTriple, outMaster, anyOutSelected
+    ]);
+
+    /* reklama overlay */
+    useEffect(() => {
+      if (!showAd) {
+        if (adTimerRef.current) {
           clearInterval(adTimerRef.current);
           adTimerRef.current = null;
-          return 0;
         }
-        return s - 1;
-      });
-    }, 1000);
-
-    return () => {
-      if (adTimerRef.current) {
-        clearInterval(adTimerRef.current);
-        adTimerRef.current = null;
-      }
-    };
-  }, [showAd]);
-
-  const closeAdNow = () => {
-    setShowAd(false);
-  };
-
-  const makeSnapshot = () => ({
-    version: 2, screen: 'game',
-    lang, soundOn, voiceOn,
-    mode, startScore,
-    outDouble, outTriple, outMaster,
-    randomOrder, playThrough, ai,
-    players, order, currIdx,
-    scores, darts, mult, actions, thrown, lastTurn,
-    winner, pendingWin,
-    cricket, around,
-    isPremium, themeColor
-  });
-
-  const saveSnapshot = () => {
-    try {
-      const snap = makeSnapshot();
-      localStorage.setItem('savedGame', JSON.stringify(snap));
-    } catch { }
-  };
-
-  const continueSaved = () => {
-    try {
-      const s = JSON.parse(localStorage.getItem('savedGame') || '{}');
-      if (!s || !s.order) {
-        showToast('Nic k pokračování');
         return;
       }
-      setLang(s.lang || lang);
-      setMode(s.mode || 'classic');
-      setStartScore(s.startScore || 501);
-      setPlayers(s.players || players);
-      setOrder(s.order || []);
-      setCurrIdx(s.currIdx || 0);
-      setScores(s.scores || []);
-      setDarts(s.darts || []);
-      setMult(s.mult || 1);
-      setActions(s.actions || []);
-      setThrown(s.thrown || []);
-      setLastTurn(s.lastTurn || []);
-      setWinner(s.winner ?? null);
-      setPendingWin(s.pendingWin ?? null);
-      setCricket(s.cricket ?? null);
-      setAround(s.around ?? null);
-      setIsPremium(!!s.isPremium);
-      setThemeColor(s.themeColor || 'default');
+      adTimerRef.current = setInterval(() => {
+        setAdSecondsLeft(s => {
+          if (s <= 1) {
+            clearInterval(adTimerRef.current);
+            adTimerRef.current = null;
+            return 0;
+          }
+          return s - 1;
+        });
+      }, 1000);
 
+      return () => {
+        if (adTimerRef.current) {
+          clearInterval(adTimerRef.current);
+          adTimerRef.current = null;
+        }
+      };
+    }, [showAd]);
+
+    const closeAdNow = () => {
       setShowAd(false);
-      setAdSecondsLeft(20);
+    };
 
-      setScreen('game');
-    } catch (e) {
-      console.error(e);
-      showToast('Obnova selhala');
-    }
-  };
+    const makeSnapshot = () => ({
+      version: 2, screen: 'game',
+      lang, soundOn, voiceOn,
+      mode, startScore,
+      outDouble, outTriple, outMaster,
+      randomOrder, playThrough, ai,
+      players, order, currIdx,
+      scores, darts, mult, actions, thrown, lastTurn,
+      winner, pendingWin,
+      cricket, around,
+      isPremium, themeColor
+    });
 
-  useEffect(() => {
-    const handler = () => {
+    const saveSnapshot = () => {
       try {
         const snap = makeSnapshot();
         localStorage.setItem('savedGame', JSON.stringify(snap));
       } catch { }
     };
-    window.addEventListener('pagehide', handler);
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) handler();
-    });
-    return () => {
-      window.removeEventListener('pagehide', handler);
+
+    const continueSaved = () => {
+      try {
+        const s = JSON.parse(localStorage.getItem('savedGame') || '{}');
+        if (!s || !s.order) {
+          showToast('Nic k pokračování');
+          return;
+        }
+        setLang(s.lang || lang);
+        setMode(s.mode || 'classic');
+        setStartScore(s.startScore || 501);
+        setPlayers(s.players || players);
+        setOrder(s.order || []);
+        setCurrIdx(s.currIdx || 0);
+        setScores(s.scores || []);
+        setDarts(s.darts || []);
+        setMult(s.mult || 1);
+        setActions(s.actions || []);
+        setThrown(s.thrown || []);
+        setLastTurn(s.lastTurn || []);
+        setWinner(s.winner ?? null);
+        setPendingWin(s.pendingWin ?? null);
+        setCricket(s.cricket ?? null);
+        setAround(s.around ?? null);
+        setIsPremium(!!s.isPremium);
+        setThemeColor(s.themeColor || 'default');
+
+        setShowAd(false);
+        setAdSecondsLeft(20);
+
+        setScreen('game');
+      } catch (e) {
+        console.error(e);
+        showToast('Obnova selhala');
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
-  const hasSaved = !!localStorage.getItem('savedGame');
+    useEffect(() => {
+      const handler = () => {
+        try {
+          const snap = makeSnapshot();
+          localStorage.setItem('savedGame', JSON.stringify(snap));
+        } catch { }
+      };
+      window.addEventListener('pagehide', handler);
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) handler();
+      });
+      return () => {
+        window.removeEventListener('pagehide', handler);
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-  // text režimu do hlavičky vedle výběru jazyka
-  const modeLabel = (() => {
-    if (mode === 'classic') return t(lang, 'classic');
-    if (mode === 'cricket') return t(lang, 'cricket');
-    return t(lang, 'around');
-  })();
+    const hasSaved = !!localStorage.getItem('savedGame');
 
-  return (
-    <ErrorBoundary>
-      <div className="container" data-mode={mode}>
+    // text režimu do hlavičky vedle výběru jazyka
+    const modeLabel = (() => {
+      if (mode === 'classic') return t(lang, 'classic');
+      if (mode === 'cricket') return t(lang, 'cricket');
+      return t(lang, 'around');
+    })();
 
-        {/* HEADER */}
-        <div className="header" style={{ flexWrap: 'wrap' }}>
-          {/* LEVÁ STRANA: logo + Premium badge */}
-          <div
-            className="left"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              minWidth: 0,
-              flexWrap: 'wrap'
-            }}
-          >
-            {screen === 'game' && (
-              <button
-                type="button"
-                className="btn ghost"
-                onClick={() => {
-                  saveSnapshot();
-                  setScreen('lobby');
-                }}
-                title={t(lang, 'back')}
-                style={{ flexShrink: 0 }}
-              >
-                ←
-              </button>
-            )}
-
+    return (
+      <ErrorBoundary>
+        <div
+          className="container"
+          data-mode={mode}
+          data-premium={isPremium ? '1' : '0'}
+          style={{
+            paddingTop: 'max(var(--sat, 0px), var(--sat-fallback, 28px))',
+            paddingBottom: 'var(--sab, 0px)',
+          }}
+        >
+          {/* HEADER */}
+          <div className="header" style={{ flexWrap: 'wrap' }}>
+            {/* LEVÁ STRANA: logo + Premium badge */}
             <div
-              className="logo"
+              className="left"
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                flexShrink: 0,
                 minWidth: 0,
-                fontWeight: 900,
-                whiteSpace: 'nowrap'
+                flexWrap: 'wrap'
               }}
             >
-              <span className="dart"></span>
-              <span style={{ fontWeight: 900, whiteSpace: 'nowrap' }}>
-                {t(lang, 'app')}
-              </span>
-            </div>
+              {screen === 'game' && (
+                <button
+                  type="button"
+                  className="btn ghost"
+                  onClick={() => {
+                    saveSnapshot();
+                    setScreen('lobby');
+                  }}
+                  title={t(lang, 'back')}
+                  style={{ flexShrink: 0 }}
+                >
+                  ←
+                </button>
+              )}
 
-            {isPremium && (
-              <span
+              <div
+                className="logo"
                 style={{
-                  fontSize: 12,
-                  fontWeight: 800,
-                  lineHeight: 1.2,
-                  background: '#0f1318',
-                  border: '1px solid var(--accent)',
-                  color: 'var(--accent)',
-                  padding: '4px 8px',
-                  borderRadius: '999px',
-                  flexShrink: 0,
-                  display: 'inline-flex',
+                  display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  gap: '8px',
+                  flexShrink: 0,
+                  minWidth: 0,
+                  fontWeight: 900,
+                  whiteSpace: 'nowrap'
                 }}
               >
-                Premium
-              </span>
-            )}
-          </div>
+                <span className="dart"></span>
+                <span style={{ fontWeight: 900, whiteSpace: 'nowrap' }}>
+                  {t(lang, 'app')}
+                </span>
+              </div>
 
-          {/* PRAVÁ STRANA: zvuk / hlas / jazyk / Cricket badge */}
-          <div
-            className="controls"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              flexShrink: 0,
-              flexWrap: 'wrap',
-              justifyContent: 'flex-end'
-            }}
-          >
-            <button
-              type="button"
-              className={`iconBtn ${!soundOn ? 'muted' : ''}`}
-              onClick={() => setSoundOn(v => !v)}
-              aria-label={t(lang, 'sound')}
-            >
-              <IconSpeaker />
-            </button>
+              {isPremium && (
+                <span
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 800,
+                    lineHeight: 1.2,
+                    background: '#0f1318',
+                    border: '1px solid var(--accent)',
+                    color: 'var(--accent)',
+                    padding: '4px 8px',
+                    borderRadius: '999px',
+                    flexShrink: 0,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  Premium
+                </span>
+              )}
+            </div>
 
-            <button
-              type="button"
-              className={`iconBtn ${!voiceOn ? 'muted' : ''}`}
-              onClick={() => setVoiceOn(v => !v)}
-              aria-label={t(lang, 'voice')}
-            >
-              <span className="iconHead" aria-hidden="true"></span>
-            </button>
-
-            <select
-              className="input"
-              value={lang}
-              onChange={e => setLang(e.target.value)}
-              style={{ height: 34 }}
-            >
-              {['cs', 'en', 'de', 'es', 'nl', 'ru', 'zh'].map(code => (
-                <option key={code} value={code}>{LANG_LABEL[code]}</option>
-              ))}
-            </select>
-
-            {/* badge s názvem režimu (Classic / Cricket / Around) */}
-            <span
+            {/* PRAVÁ STRANA: zvuk / hlas / jazyk / Cricket badge */}
+            <div
+              className="controls"
               style={{
-                background: '#0f1318',
-                border: '1px solid var(--accent)',
-                borderRadius: 999,
-                padding: '4px 10px',
-                fontWeight: 800,
-                fontSize: 12,
-                color: 'var(--accent)',
-                whiteSpace: 'nowrap'
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                flexShrink: 0,
+                flexWrap: 'wrap',
+                justifyContent: 'flex-end'
               }}
             >
-              {modeLabel}
-            </span>
+              <button
+                type="button"
+                className={`iconBtn ${!soundOn ? 'muted' : ''}`}
+                onClick={() => setSoundOn(v => !v)}
+                aria-label={t(lang, 'sound')}
+              >
+                <IconSpeaker />
+              </button>
+
+              <button
+                type="button"
+                className={`iconBtn ${!voiceOn ? 'muted' : ''}`}
+                onClick={() => setVoiceOn(v => !v)}
+                aria-label={t(lang, 'voice')}
+              >
+                <span className="iconHead" aria-hidden="true"></span>
+              </button>
+
+              <select
+                className="input"
+                value={lang}
+                onChange={e => setLang(e.target.value)}
+                style={{ height: 34 }}
+              >
+                {['cs', 'en', 'de', 'es', 'nl', 'ru', 'zh'].map(code => (
+                  <option key={code} value={code}>{LANG_LABEL[code]}</option>
+                ))}
+              </select>
+
+              {/* badge s názvem režimu (Classic / Cricket / Around) */}
+              <span
+                style={{
+                  background: '#0f1318',
+                  border: '1px solid var(--accent)',
+                  borderRadius: 999,
+                  padding: '4px 10px',
+                  fontWeight: 800,
+                  fontSize: 12,
+                  color: 'var(--accent)',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {modeLabel}
+              </span>
+            </div>
           </div>
-        </div>
+         
+          {screen === 'lobby' ? (
+            <Lobby
+              lang={lang} t={t}
+              mode={mode} setMode={setMode}
+              startScore={startScore} setStartScore={setStartScore}
+              outDouble={outDouble} setOutDouble={setOutDouble}
+              outTriple={outTriple} setOutTriple={setOutTriple}
+              outMaster={outMaster} setOutMaster={setOutMaster}
+              randomOrder={randomOrder} setRandomOrder={setRandomOrder}
+              playThrough={playThrough} setPlayThrough={setPlayThrough}
+              ai={ai} setAi={setAi}
+              players={players} setPlayers={setPlayers}
+              addPlayer={addPlayer} deletePlayer={deletePlayer}
+              movePlayer={movePlayer}
+              startGame={startGame}
+              continueSaved={continueSaved}
+              showToast={showToast}
+              hasSaved={hasSaved}
+              isPremium={isPremium} setIsPremium={setIsPremium}
+              themeColor={themeColor} setThemeColor={setThemeColor}
+            />
+          ) : (
+            <Game
+              lang={lang} t={t}
+              mode={mode}
+              isPremium={isPremium}
+              outDesc={(() => {
+                if (mode !== 'classic') {
+                  return mode === 'cricket' ? 'Cricket' : 'Around the Clock';
+                }
+                const arr = [];
+                if (outDouble) arr.push('Double-out');
+                if (outTriple) arr.push('Triple-out');
+                if (outMaster) arr.push('Master-out');
+                if (arr.length === 0) return 'Any-out';
+                return arr.join(' + ');
+              })()}
+              players={players} order={order} currIdx={currIdx}
+              scores={scores} thrown={thrown} lastTurn={lastTurn}
+              cricket={cricket} around={around}
+              averages={averages}
+              darts={darts} mult={mult} setMult={setMult}
+              commitDart={commitDart} undo={undo}
+              winner={winner}
+              saveGame={() => {
+                try {
+                  const list = JSON.parse(localStorage.getItem('finishedGames') || '[]');
+                  list.unshift({
+                    ts: Date.now(),
+                    mode, startScore,
+                    outDouble, outTriple, outMaster,
+                    randomOrder, playThrough,
+                    players: players.map(p => p.name),
+                    winner: players[order[currIdx]]?.name || ''
+                  });
+                  localStorage.setItem('finishedGames', JSON.stringify(list.slice(0, 200)));
+                } catch { }
+                showToast('Uloženo');
+              }}
+              restartGame={restartGame}
+              cardRefs={cardRefs}
+              setScreen={(scr) => {
+                if (scr === 'lobby') saveSnapshot();
+                setScreen(scr);
+              }}
+            />
+          )}
 
-        {/* ADS banner strip v lobby */}
-        {screen === 'lobby' && !isPremium && (
-          <div className="adstrip">
-            <div className="adcard">Reklamní pauza</div>
-            <div className="adcard">Podporuje vývoj hry</div>
-            <div className="adcard">Díky ❤️</div>
-          </div>
-        )}
-
-        {screen === 'lobby' ? (
-          <Lobby
-            lang={lang} t={t}
-            mode={mode} setMode={setMode}
-            startScore={startScore} setStartScore={setStartScore}
-            outDouble={outDouble} setOutDouble={setOutDouble}
-            outTriple={outTriple} setOutTriple={setOutTriple}
-            outMaster={outMaster} setOutMaster={setOutMaster}
-            randomOrder={randomOrder} setRandomOrder={setRandomOrder}
-            playThrough={playThrough} setPlayThrough={setPlayThrough}
-            ai={ai} setAi={setAi}
-            players={players} setPlayers={setPlayers}
-            addPlayer={addPlayer} deletePlayer={deletePlayer}
-            movePlayer={movePlayer}
-            startGame={startGame}
-            continueSaved={continueSaved}
-            showToast={showToast}
-            hasSaved={hasSaved}
-            isPremium={isPremium} setIsPremium={setIsPremium}
-            themeColor={themeColor} setThemeColor={setThemeColor}
-          />
-        ) : (
-          <Game
-            lang={lang} t={t}
-            mode={mode}
-            isPremium={isPremium}
-            outDesc={(() => {
-              if (mode !== 'classic') {
-                return mode === 'cricket' ? 'Cricket' : 'Around the Clock';
-              }
-              const arr = [];
-              if (outDouble) arr.push('Double-out');
-              if (outTriple) arr.push('Triple-out');
-              if (outMaster) arr.push('Master-out');
-              if (arr.length === 0) return 'Any-out';
-              return arr.join(' + ');
-            })()}
-            players={players} order={order} currIdx={currIdx}
-            scores={scores} thrown={thrown} lastTurn={lastTurn}
-            cricket={cricket} around={around}
-            averages={averages}
-            darts={darts} mult={mult} setMult={setMult}
-            commitDart={commitDart} undo={undo}
-            winner={winner}
-            saveGame={() => {
-              try {
-                const list = JSON.parse(localStorage.getItem('finishedGames') || '[]');
-                list.unshift({
-                  ts: Date.now(),
-                  mode, startScore,
-                  outDouble, outTriple, outMaster,
-                  randomOrder, playThrough,
-                  players: players.map(p => p.name),
-                  winner: players[order[currIdx]]?.name || ''
-                });
-                localStorage.setItem('finishedGames', JSON.stringify(list.slice(0, 200)));
-              } catch { }
-              showToast('Uloženo');
-            }}
-            restartGame={restartGame}
-            cardRefs={cardRefs}
-            setScreen={(scr) => {
-              if (scr === 'lobby') saveSnapshot();
-              setScreen(scr);
-            }}
-          />
-        )}
-
-        <audio ref={hitAudioRef} src="/dart-hit.mp3" preload="auto" />
-        <audio ref={winAudioRef} src="/tada-fanfare-a-6313.mp3" preload="auto" />
+          <audio ref={hitAudioRef} src="/dart-hit.mp3" preload="auto" />
+          <audio ref={winAudioRef} src="/tada-fanfare-a-6313.mp3" preload="auto" />
 
         {/* FULLSCREEN OVERLAY PO VÝHŘE */}
         {showAd && (
@@ -1564,7 +1702,7 @@ export default function App() {
               Reklamní pauza – děkujeme za podporu hry
             </div>
 
-            <div style={{ marginTop: '16px', fontSize: '14px', opacity: .8, fontWeight: 600 }}>
+            <div style={{ marginTop: '16px', fontSize: '14px', opacity: 0.8, fontWeight: 600 }}>
               Pokračovat za {adSecondsLeft}s
             </div>
 
@@ -1591,19 +1729,31 @@ export default function App() {
             </button>
 
             {!isPremium && (
-              <div
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPremium(true); // zatím testovací aktivace
+                  setShowAd(false);
+                  showToast('Premium aktivováno (test)');
+                }}
                 style={{
                   marginTop: '16px',
                   fontSize: '12px',
                   lineHeight: 1.4,
                   maxWidth: '260px',
-                  opacity: .8
+                  opacity: 0.9,
+                  background: 'transparent',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  color: '#fff',
+                  padding: '10px 12px',
+                  borderRadius: 10,
+                  cursor: 'pointer'
                 }}
               >
                 Žádné pauzy a vlastní vzhled?
                 <br />
-                Odemkni Premium.
-              </div>
+                <strong>Odemkni Premium</strong>
+              </button>
             )}
           </div>
         )}
@@ -1612,968 +1762,942 @@ export default function App() {
       </div>
     </ErrorBoundary>
   );
-} // konec App komponenty
+    }   
+  /* ===== LOBBY ===== */
+  function Lobby({
+    lang, t,
+    mode, setMode,
+    startScore, setStartScore,
+    outDouble, setOutDouble,
+    outTriple, setOutTriple,
+    outMaster, setOutMaster,
+    randomOrder, setRandomOrder,
+    playThrough, setPlayThrough,
+    ai, setAi,
+    players, setPlayers,
+    addPlayer, deletePlayer, movePlayer,
+    startGame, continueSaved,
+    showToast,
+    hasSaved,
+    isPremium, setIsPremium,
+    themeColor, setThemeColor
+  }) {
+    return (
+      <div className="lobbyWrap">
 
-/* ===== LOBBY ===== */
-function Lobby({
-  lang, t,
-  mode, setMode,
-  startScore, setStartScore,
-  outDouble, setOutDouble,
-  outTriple, setOutTriple,
-  outMaster, setOutMaster,
-  randomOrder, setRandomOrder,
-  playThrough, setPlayThrough,
-  ai, setAi,
-  players, setPlayers,
-  addPlayer, deletePlayer, movePlayer,
-  startGame, continueSaved,
-  showToast,
-  hasSaved,
-  isPremium, setIsPremium,
-  themeColor, setThemeColor
-}) {
-  return (
-    <div className="lobbyWrap">
-
-      {/* Režim */}
-      <div className="lobbyCard">
-        <div className="lobbyControls">
-          <span>{t(lang, 'mode')}</span>
-          <select
-            className="input"
-            value={mode}
-            onChange={e => setMode(e.target.value)}
-            style={{ height: 34 }}
-          >
-            <option value="classic">{t(lang, 'classic')}</option>
-            <option value="cricket">{t(lang, 'cricket')}</option>
-            <option value="around">{t(lang, 'around')}</option>
-          </select>
-        </div>
-      </div>
-
-      {/* StartScore jen pro Classic */}
-      {mode === 'classic' && (
+        {/* Režim */}
         <div className="lobbyCard">
           <div className="lobbyControls">
-            <span>{t(lang, 'start')}</span>
-            {[101, 301, 501, 701, 901].map(s => (
-              <button
-                type="button"
-                key={s}
-                className={`tab ${startScore === s ? 'active' : ''}`}
-                style={{ padding: '4px 8px', lineHeight: 1.1 }}
-                onClick={() => setStartScore(s)}
-              >
-                {s}
-              </button>
-            ))}
+            <span>{t(lang, 'mode')}</span>
+            <select
+              className="input"
+              value={mode}
+              onChange={e => setMode(e.target.value)}
+              style={{ height: 34 }}
+            >
+              <option value="classic">{t(lang, 'classic')}</option>
+              <option value="cricket">{t(lang, 'cricket')}</option>
+              <option value="around">{t(lang, 'around')}</option>
+            </select>
           </div>
         </div>
-      )}
 
-      {/* Out pravidla pro Classic */}
-      {mode === 'classic' && (
-        <div className="lobbyCard">
-          <div className="lobbyControls">
-            <span>{t(lang, 'closing')}</span>
-
-            <label className={`tab ${outDouble ? 'active' : ''}`}>
-              <input
-                type="checkbox"
-                checked={outDouble}
-                onChange={e => setOutDouble(e.target.checked)}
-                style={{ marginRight: 6 }}
-              />
-              {t(lang, 'doubleOut')}
-            </label>
-
-            <label className={`tab ${outTriple ? 'active' : ''}`}>
-              <input
-                type="checkbox"
-                checked={outTriple}
-                onChange={e => setOutTriple(e.target.checked)}
-                style={{ marginRight: 6 }}
-              />
-              {t(lang, 'tripleOut')}
-            </label>
-
-            <label className={`tab ${outMaster ? 'active' : ''}`}>
-              <input
-                type="checkbox"
-                checked={outMaster}
-                onChange={e => setOutMaster(e.target.checked)}
-                style={{ marginRight: 6 }}
-              />
-              {t(lang, 'masterOut')}
-            </label>
-
-            <div style={{ opacity: .8, fontSize: 12 }}>
-              {t(lang, 'anyOutHint')}
+        {/* StartScore jen pro Classic */}
+        {mode === 'classic' && (
+          <div className="lobbyCard">
+            <div className="lobbyControls">
+              <span>{t(lang, 'start')}</span>
+              {[101, 301, 501, 701, 901].map(s => (
+                <button
+                  type="button"
+                  key={s}
+                  className={`tab ${startScore === s ? 'active' : ''}`}
+                  style={{ padding: '4px 8px', lineHeight: 1.1 }}
+                  onClick={() => setStartScore(s)}
+                >
+                  {s}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Pořadí & Robot */}
-      <div className="lobbyCard">
-        <div
-          className="lobbyControls"
-          style={{
-            flexWrap: 'wrap',
-            justifyContent: 'space-between',
-            rowGap: '8px',
-            columnGap: '12px',
-            width: '100%'
-          }}
-        >
+        {/* Out pravidla pro Classic */}
+        {mode === 'classic' && (
+          <div className="lobbyCard">
+            <div className="lobbyControls">
+              <span>{t(lang, 'closing')}</span>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
-            <span>{t(lang, 'order')}</span>
-
-            <select
-              className="input"
-              value={randomOrder ? 'random' : 'fixed'}
-              onChange={e => setRandomOrder(e.target.value === 'random')}
-              style={{ height: 34 }}
-            >
-              <option value="fixed">{t(lang, 'fixed')}</option>
-              <option value="random">{t(lang, 'random')}</option>
-            </select>
-
-            {mode === 'classic' && (
-              <label
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8
-                }}
-              >
+              <label className={`tab ${outDouble ? 'active' : ''}`}>
                 <input
                   type="checkbox"
-                  checked={playThrough}
-                  onChange={e => setPlayThrough(e.target.checked)}
+                  checked={outDouble}
+                  onChange={e => setOutDouble(e.target.checked)}
+                  style={{ marginRight: 6 }}
                 />
-                {t(lang, 'playThrough')}
+                {t(lang, 'doubleOut')}
               </label>
-            )}
+
+              <label className={`tab ${outTriple ? 'active' : ''}`}>
+                <input
+                  type="checkbox"
+                  checked={outTriple}
+                  onChange={e => setOutTriple(e.target.checked)}
+                  style={{ marginRight: 6 }}
+                />
+                {t(lang, 'tripleOut')}
+              </label>
+
+              <label className={`tab ${outMaster ? 'active' : ''}`}>
+                <input
+                  type="checkbox"
+                  checked={outMaster}
+                  onChange={e => setOutMaster(e.target.checked)}
+                  style={{ marginRight: 6 }}
+                />
+                {t(lang, 'masterOut')}
+              </label>
+
+              <div style={{ opacity: .8, fontSize: 12 }}>
+                {t(lang, 'anyOutHint')}
+              </div>
+            </div>
           </div>
+        )}
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
-            <span>{t(lang, 'robot')}</span>
-            <select
-              className="input"
-              value={ai}
-              onChange={e => setAi(e.target.value)}
-              style={{ height: 34 }}
-            >
-              <option value="off">{t(lang, 'off')}</option>
-              <option value="easy">{t(lang, 'easy')}</option>
-              <option value="medium">{t(lang, 'medium')}</option>
-              <option value="hard">{t(lang, 'hard')}</option>
-            </select>
-          </div>
-
-        </div>
-      </div>
-
-      {/* Premium + vzhled */}
-      <div className="lobbyCard">
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '8px',
-            marginBottom: 8
-          }}
-        >
-          <span
+        {/* Pořadí & Robot */}
+        <div className="lobbyCard">
+          <div
+            className="lobbyControls"
             style={{
-              fontWeight: 800,
-              fontSize: 14,
-              color: '#fff',
-              lineHeight: 1.2
+              flexWrap: 'wrap',
+              justifyContent: 'space-between',
+              rowGap: '8px',
+              columnGap: '12px',
+              width: '100%'
             }}
           >
-            {t(lang, 'premiumMode')}
-          </span>
+
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+              <span>{t(lang, 'order')}</span>
+
+              <select
+                className="input"
+                value={randomOrder ? 'random' : 'fixed'}
+                onChange={e => setRandomOrder(e.target.value === 'random')}
+                style={{ height: 34 }}
+              >
+                <option value="fixed">{t(lang, 'fixed')}</option>
+                <option value="random">{t(lang, 'random')}</option>
+              </select>
+
+              {mode === 'classic' && (
+                <label
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={playThrough}
+                    onChange={e => setPlayThrough(e.target.checked)}
+                  />
+                  {t(lang, 'playThrough')}
+                </label>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+              <span>{t(lang, 'robot')}</span>
+              <select
+                className="input"
+                value={ai}
+                onChange={e => setAi(e.target.value)}
+                style={{ height: 34 }}
+              >
+                <option value="off">{t(lang, 'off')}</option>
+                <option value="easy">{t(lang, 'easy')}</option>
+                <option value="medium">{t(lang, 'medium')}</option>
+                <option value="hard">{t(lang, 'hard')}</option>
+              </select>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Premium + vzhled */}
+        <div className="lobbyCard">
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '8px',
+              marginBottom: 8
+            }}
+          >
+            <span
+              style={{
+                fontWeight: 800,
+                fontSize: 14,
+                color: '#fff',
+                lineHeight: 1.2
+              }}
+            >
+              {t(lang, 'premiumMode')}
+            </span>
+
+            <button
+              type="button"
+              className="btn"
+              onClick={() => {
+                setIsPremium(prev => {
+                  const next = !prev;
+                  try {
+                    const raw = localStorage.getItem('lobby');
+                    const parsed = raw ? JSON.parse(raw) : {};
+                    parsed.isPremium = next;
+                    localStorage.setItem('lobby', JSON.stringify(parsed));
+                  } catch { }
+                  return next;
+                });
+              }}
+              style={{
+                minWidth: 90,
+                fontWeight: 800,
+                borderColor: 'var(--accent)',
+                boxShadow: isPremium ? '0 0 6px var(--accent)' : 'none'
+              }}
+            >
+              {isPremium ? t(lang, 'premiumMode') : 'Free'}
+            </button>
+          </div>
+
+          {isPremium && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div
+                style={{
+                  fontSize: 12,
+                  color: '#fff',
+                  opacity: .8,
+                  fontWeight: 600
+                }}
+              >
+                Vzhled aplikace:
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+
+                <button
+                  type="button"
+                  onClick={() => { setThemeColor('black'); }}
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: 4,
+                    border: '2px solid #fff',
+                    background: '#0e0e0e',
+                    cursor: 'pointer',
+                    boxShadow: themeColor === 'black' ? '0 0 6px #fff' : 'none'
+                  }}
+                  title="černá"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => { setThemeColor('green'); }}
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: 4,
+                    border: '2px solid #14532d',
+                    background: '#16a34a',
+                    cursor: 'pointer',
+                    boxShadow: themeColor === 'green' ? '0 0 6px #fff' : 'none'
+                  }}
+                  title="zelená"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => { setThemeColor('blue'); }}
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: 4,
+                    border: '2px solid #1e3a8a',
+                    background: '#3b82f6',
+                    cursor: 'pointer',
+                    boxShadow: themeColor === 'blue' ? '0 0 6px #fff' : 'none'
+                  }}
+                  title="modrá"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => { setThemeColor('red'); }}
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: 4,
+                    border: '2px solid #7f1d1d',
+                    background: '#ef4444',
+                    cursor: 'pointer',
+                    boxShadow: themeColor === 'red' ? '0 0 6px #fff' : 'none'
+                  }}
+                  title="červená"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => { setThemeColor('purple'); }}
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: 4,
+                    border: '2px solid #4c1d95',
+                    background: '#8b5cf6',
+                    cursor: 'pointer',
+                    boxShadow: themeColor === 'purple' ? '0 0 6px #fff' : 'none'
+                  }}
+                  title="fialová"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Start & Pokračovat */}
+        <div className="lobbyCard">
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className="btn green"
+              onClick={startGame}
+            >
+              {t(lang, 'startGame')}
+            </button>
+
+            {hasSaved && (
+              <button
+                type="button"
+                className="btn"
+                onClick={continueSaved}
+              >
+                {t(lang, 'continueGame')}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Hráči */}
+        <div className="lobbyCard">
+          {players.map((p, i) => (
+            <div key={p.id} className="playerRow">
+              <div className="playerName">
+                <input
+                  className="input"
+                  value={p.name}
+                  onChange={e => setPlayers(ps => ps.map((x, ix) => ix === i ? { ...x, name: e.target.value } : x))}
+                  onFocus={e => e.target.select()}
+                  onMouseUp={e => e.preventDefault()}
+                />
+              </div>
+
+              <div className="playerActions">
+                <button
+                  type="button"
+                  className="btn ghost"
+                  onClick={() => movePlayer(i, -1)}
+                  title="Up"
+                  style={{ padding: '4px 8px', lineHeight: 1.1 }}
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  className="btn ghost"
+                  onClick={() => movePlayer(i, 1)}
+                  title="Down"
+                  style={{ padding: '4px 8px', lineHeight: 1.1 }}
+                >
+                  ↓
+                </button>
+              </div>
+
+              <div>
+                <span className="score">
+                  {mode === 'classic'
+                    ? startScore
+                    : (mode === 'cricket'
+                      ? t(lang, 'points')
+                      : `${t(lang, 'target')}`)}
+                </span>
+              </div>
+
+              <div className="playerDelete">
+                <button
+                  type="button"
+                  className="trash"
+                  onClick={() => deletePlayer(i)}
+                  title="Delete"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+          ))}
 
           <button
             type="button"
             className="btn"
-            onClick={() => {
-              setIsPremium(prev => {
-                const next = !prev;
-                try {
-                  const raw = localStorage.getItem('lobby');
-                  const parsed = raw ? JSON.parse(raw) : {};
-                  parsed.isPremium = next;
-                  localStorage.setItem('lobby', JSON.stringify(parsed));
-                } catch { }
-                return next;
-              });
-            }}
-            style={{
-              minWidth: 90,
-              fontWeight: 800,
-              borderColor: 'var(--accent)',
-              boxShadow: isPremium ? '0 0 6px var(--accent)' : 'none'
-            }}
+            onClick={addPlayer}
           >
-            {isPremium ? t(lang, 'premiumMode') : 'Free'}
+            + {t(lang, 'addPlayer')}
           </button>
         </div>
 
-        {isPremium && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <div
-              style={{
-                fontSize: 12,
-                color: '#fff',
-                opacity: .8,
-                fontWeight: 600
-              }}
-            >
-              Vzhled aplikace:
-            </div>
+        {/* Pravidla */}
+        {/* >>> DARTSCORE_UNIQUE_ANCHOR__RULES_BLOCK__START__9F31 <<< */}
+        <div className="lobbyCard">
+          <details>
+            <summary className="btn ghost">📖 {t(lang, 'rules')}</summary>
+            <dl className="rules">
+              <dt>{t(lang, 'classic')}</dt>
+              <dd>{t(lang, 'rulesClassic')}</dd>
 
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <dt>{t(lang, 'cricket')}</dt>
+              <dd>{t(lang, 'rulesCricket')}</dd>
 
-              <button
-                type="button"
-                onClick={() => { setThemeColor('black'); }}
-                style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: 4,
-                  border: '2px solid #fff',
-                  background: '#0e0e0e',
-                  cursor: 'pointer',
-                  boxShadow: themeColor === 'black' ? '0 0 6px #fff' : 'none'
-                }}
-                title="černá"
-              />
-
-              <button
-                type="button"
-                onClick={() => { setThemeColor('green'); }}
-                style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: 4,
-                  border: '2px solid #14532d',
-                  background: '#16a34a',
-                  cursor: 'pointer',
-                  boxShadow: themeColor === 'green' ? '0 0 6px #fff' : 'none'
-                }}
-                title="zelená"
-              />
-
-              <button
-                type="button"
-                onClick={() => { setThemeColor('blue'); }}
-                style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: 4,
-                  border: '2px solid #1e3a8a',
-                  background: '#3b82f6',
-                  cursor: 'pointer',
-                  boxShadow: themeColor === 'blue' ? '0 0 6px #fff' : 'none'
-                }}
-                title="modrá"
-              />
-
-              <button
-                type="button"
-                onClick={() => { setThemeColor('red'); }}
-                style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: 4,
-                  border: '2px solid #7f1d1d',
-                  background: '#ef4444',
-                  cursor: 'pointer',
-                  boxShadow: themeColor === 'red' ? '0 0 6px #fff' : 'none'
-                }}
-                title="červená"
-              />
-
-              <button
-                type="button"
-                onClick={() => { setThemeColor('purple'); }}
-                style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: 4,
-                  border: '2px solid #4c1d95',
-                  background: '#8b5cf6',
-                  cursor: 'pointer',
-                  boxShadow: themeColor === 'purple' ? '0 0 6px #fff' : 'none'
-                }}
-                title="fialová"
-              />
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Start & Pokračovat */}
-      <div className="lobbyCard">
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            className="btn green"
-            onClick={startGame}
-          >
-            {t(lang, 'startGame')}
-          </button>
-
-          {hasSaved && (
-            <button
-              type="button"
-              className="btn"
-              onClick={continueSaved}
-            >
-              {t(lang, 'continueGame')}
-            </button>
-          )}
+              <dt>{t(lang, 'around')}</dt>
+              <dd>{t(lang, 'rulesAround')}</dd>
+            </dl>
+          </details>
         </div>
-      </div>
-
-      {/* Hráči */}
-      <div className="lobbyCard">
-        {players.map((p, i) => (
-          <div key={p.id} className="playerRow">
-            <div className="playerName">
-              <input
-                className="input"
-                value={p.name}
-                onChange={e => setPlayers(ps => ps.map((x, ix) => ix === i ? { ...x, name: e.target.value } : x))}
-                onFocus={e => e.target.select()}
-                onMouseUp={e => e.preventDefault()}
-              />
-            </div>
-
-            <div className="playerActions">
-              <button
-                type="button"
-                className="btn ghost"
-                onClick={() => movePlayer(i, -1)}
-                title="Up"
-                style={{ padding: '4px 8px', lineHeight: 1.1 }}
-              >
-                ↑
-              </button>
-              <button
-                type="button"
-                className="btn ghost"
-                onClick={() => movePlayer(i, 1)}
-                title="Down"
-                style={{ padding: '4px 8px', lineHeight: 1.1 }}
-              >
-                ↓
-              </button>
-            </div>
-
-            <div>
-              <span className="score">
-                {mode === 'classic'
-                  ? startScore
-                  : (mode === 'cricket'
-                    ? t(lang, 'points')
-                    : `${t(lang, 'target')}`)}
-              </span>
-            </div>
-
-            <div className="playerDelete">
-              <button
-                type="button"
-                className="trash"
-                onClick={() => deletePlayer(i)}
-                title="Delete"
-              >
-                🗑️
-              </button>
-            </div>
-          </div>
-        ))}
-
-        <button
-          type="button"
-          className="btn"
-          onClick={addPlayer}
-        >
-          + {t(lang, 'addPlayer')}
-        </button>
-      </div>
-
-      {/* Pravidla */}
-      <div className="lobbyCard">
-        <details>
-          <summary className="btn ghost">📖 {t(lang, 'rules')}</summary>
-          <dl className="rules">
-            <dt>{t(lang, 'classic')}</dt>
-            <dd>
-              Single = ×1, Double = ×2, Triple = ×3, Bull 25/50.
-              Cíl: přesně na 0.
-              <em> Double-out, Triple-out, Master-out</em>.
-              {t(lang, 'anyOutHint')}.
-              Přestřelení nebo zbyde 1 (pokud je aktivní některé out pravidlo)
-              = {t(lang, 'bust')}.
-            </dd>
-
-            <dt>{t(lang, 'cricket')}</dt>
-            <dd>
-              Hraje se čísly 15–20 a 25.
-              Každý zásah: Single = 1 značka „/“, Double = 2 (✕), Triple = 3 (Ⓧ).
-              Po 3 značkách je číslo zavřené.
-              Přebytky dávají body, jen pokud soupeř(i) nemají číslo zavřené.
-            </dd>
-
-            <dt>{t(lang, 'around')}</dt>
-            <dd>
-              Postupně 1 → 20 → Bull (25).
-              Počítá se zásah aktuálního cíle.
-              Double/Triple se počítají jako zásah.
-              Vyhrává ten, kdo první trefí Bull.
-            </dd>
-          </dl>
-        </details>
-      </div>
-
-      {isPremium && <SavedGames lang={lang} t={t} showToast={showToast} />}
-    </div>
-  );
-}
-
-/* ===== SAVED GAMES (Premium) ===== */
-function SavedGames({ lang, t, showToast }) {
-  const [list, setList] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('finishedGames') || '[]'); }
-    catch { return []; }
-  });
-
-  const [filter, setFilter] = useState('all');
-  const [p1, setP1] = useState('');
-  const [p2, setP2] = useState('');
-
-  const shareItem = async (it) => {
-    const text =
-      `${t(lang, 'saved')}: ${new Date(it.ts).toLocaleString()} — ${it.mode} ${it.startScore || ''}
-${it.players.join(', ')}
-${t(lang, 'youWinPrefix')}: ${it.winner}`;
-    try {
-      if (navigator.share) {
-        await navigator.share({ text });
-      } else {
-        await navigator.clipboard.writeText(text);
-        try { showToast && showToast('Zkopírováno'); } catch { }
-      }
-    } catch { }
-  };
-
-  const clearAll = () => {
-    try {
-      localStorage.removeItem('finishedGames');
-      setList([]);
-      showToast && showToast('Vše smazáno');
-    } catch { }
-  };
-
-  const now = Date.now();
-  const cutoff = {
-    all: 0,
-    week: now - 7 * 24 * 60 * 60 * 1000,
-    month: now - 30 * 24 * 60 * 60 * 1000,
-    year: now - 365 * 24 * 60 * 60 * 1000
-  }[filter] || 0;
-
-  const filtered = list.filter(g => (g.ts || 0) >= cutoff);
-
-  const allPlayers = Array.from(new Set(list.flatMap(g => g.players || []))).sort();
-
-  let h2h = null;
-  if (p1 && p2 && p1 !== p2) {
-    let p1wins = 0, p2wins = 0, games = 0;
-    for (const g of filtered) {
-      if ((g.players || []).includes(p1) && (g.players || []).includes(p2)) {
-        games++;
-        if (g.winner === p1) p1wins++;
-        else if (g.winner === p2) p2wins++;
-      }
-    }
-    h2h = { games, p1wins, p2wins };
-  }
-
-  if (list.length === 0) {
-    return (
-      <div className="lobbyCard">
-        <strong>{t(lang, 'saved')}:</strong> —
+        {/* >>> DARTSCORE_UNIQUE_ANCHOR__RULES_BLOCK__END__9F31 <<< */}
+        {isPremium && <SavedGames lang={lang} t={t} showToast={showToast} />}
       </div>
     );
   }
 
-  return (
-    <div className="lobbyCard">
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: 8,
-        marginBottom: 6
-      }}>
-        <strong>{t(lang, 'saved')}</strong>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
-            {t(lang, 'filter')}:
-            <select className="input" value={filter} onChange={e => setFilter(e.target.value)} style={{ height: 30 }}>
-              <option value="all">{t(lang, 'all')}</option>
-              <option value="week">{t(lang, 'week')}</option>
-              <option value="month">{t(lang, 'month')}</option>
-              <option value="year">{t(lang, 'year')}</option>
-            </select>
-          </label>
+  /* ===== SAVED GAMES (Premium) ===== */
+  function SavedGames({ lang, t, showToast }) {
+    const [list, setList] = useState(() => {
+      try { return JSON.parse(localStorage.getItem('finishedGames') || '[]'); }
+      catch { return []; }
+    });
 
-          <button
-            type="button"
-            className="btn"
-            onClick={clearAll}
-          >
-            {t(lang, 'clear')}
-          </button>
+    const [filter, setFilter] = useState('all');
+    const [p1, setP1] = useState('');
+    const [p2, setP2] = useState('');
+
+    const shareItem = async (it) => {
+      const text =
+        `${t(lang, 'saved')}: ${new Date(it.ts).toLocaleString()} — ${it.mode} ${it.startScore || ''}
+${it.players.join(', ')}
+${t(lang, 'youWinPrefix')}: ${it.winner}`;
+      try {
+        if (navigator.share) {
+          await navigator.share({ text });
+        } else {
+          await navigator.clipboard.writeText(text);
+          try { showToast && showToast('Zkopírováno'); } catch { }
+        }
+      } catch { }
+    };
+
+    const clearAll = () => {
+      try {
+        localStorage.removeItem('finishedGames');
+        setList([]);
+        showToast && showToast('Vše smazáno');
+      } catch { }
+    };
+
+    const now = Date.now();
+    const cutoff = {
+      all: 0,
+      week: now - 7 * 24 * 60 * 60 * 1000,
+      month: now - 30 * 24 * 60 * 60 * 1000,
+      year: now - 365 * 24 * 60 * 60 * 1000
+    }[filter] || 0;
+
+    const filtered = list.filter(g => (g.ts || 0) >= cutoff);
+
+    const allPlayers = Array.from(new Set(list.flatMap(g => g.players || []))).sort();
+
+    let h2h = null;
+    if (p1 && p2 && p1 !== p2) {
+      let p1wins = 0, p2wins = 0, games = 0;
+      for (const g of filtered) {
+        if ((g.players || []).includes(p1) && (g.players || []).includes(p2)) {
+          games++;
+          if (g.winner === p1) p1wins++;
+          else if (g.winner === p2) p2wins++;
+        }
+      }
+      h2h = { games, p1wins, p2wins };
+    }
+
+    if (list.length === 0) {
+      return (
+        <div className="lobbyCard">
+          <strong>{t(lang, 'saved')}:</strong> —
         </div>
-      </div>
+      );
+    }
 
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
-        <strong>{t(lang, 'h2h')}:</strong>
-        <select className="input" value={p1} onChange={e => setP1(e.target.value)} style={{ height: 30 }}>
-          <option value="">{t(lang, 'selectPlayer')}</option>
-          {allPlayers.map(n => <option key={`p1-${n}`} value={n}>{n}</option>)}
-        </select>
-        <span>vs</span>
-        <select className="input" value={p2} onChange={e => setP2(e.target.value)} style={{ height: 30 }}>
-          <option value="">{t(lang, 'selectPlayer')}</option>
-          {allPlayers.map(n => <option key={`p2-${n}`} value={n}>{n}</option>)}
-        </select>
-        {h2h && (
-          <span style={{ fontSize: 12, opacity: .9 }}>
-            {p1}: {h2h.p1wins} {t(lang, 'wins')} • {p2}: {h2h.p2wins} {t(lang, 'wins')} • {h2h.games} {t(lang, 'game')}
-          </span>
-        )}
-      </div>
+    return (
+      <div className="lobbyCard">
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 8,
+          marginBottom: 6
+        }}>
+          <strong>{t(lang, 'saved')}</strong>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+              {t(lang, 'filter')}:
+              <select className="input" value={filter} onChange={e => setFilter(e.target.value)} style={{ height: 30 }}>
+                <option value="all">{t(lang, 'all')}</option>
+                <option value="week">{t(lang, 'week')}</option>
+                <option value="month">{t(lang, 'month')}</option>
+                <option value="year">{t(lang, 'year')}</option>
+              </select>
+            </label>
 
-      <div className="savedList">
-        {filtered.map((it, idx) => (
-          <div key={idx} className="savedRow">
-            <div>
-              <div className="savedTitle">
-                {new Date(it.ts).toLocaleString()}
-              </div>
-              <div className="savedSub">
-                {`${it.mode} ${it.startScore || ''} • ${it.players.join(', ')}`}
-              </div>
-              <div className="savedSub">
-                {t(lang, 'youWinPrefix')}: {it.winner}
-              </div>
-              {Array.isArray(it.remainingByPlayer) && it.remainingByPlayer.length > 0 && (
-                <div className="savedSub">
-                  {it.remainingByPlayer.map(r => `${r.name}: ${r.remaining}`).join(' • ')}
-                </div>
-              )}
-            </div>
             <button
               type="button"
               className="btn"
-              onClick={() => shareItem(it)}
+              onClick={clearAll}
             >
-              {t(lang, 'share')}
+              {t(lang, 'clear')}
             </button>
           </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-/* ===== GAME SCREEN ===== */
-function Game({
-  lang, t, mode, outDesc, isPremium,
-  players, order, currIdx,
-  scores, averages, thrown, lastTurn,
-  cricket, around,
-  darts, mult, setMult, commitDart, undo, winner,
-  saveGame, restartGame, cardRefs, setScreen
-}) {
-  const HEAD_H = 40;
-  const PAD_H  = 160;
+        </div>
 
-  // keypad layout
-  const keypad = React.useMemo(() => {
-    if (mode === 'cricket') {
-      return [
-        [15, 16, 17, 18, 19, 20, 25],
-        [0],
-      ];
-    }
-    if (mode === 'around') {
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
+          <strong>{t(lang, 'h2h')}:</strong>
+          <select className="input" value={p1} onChange={e => setP1(e.target.value)} style={{ height: 30 }}>
+            <option value="">{t(lang, 'selectPlayer')}</option>
+            {allPlayers.map(n => <option key={`p1-${n}`} value={n}>{n}</option>)}
+          </select>
+          <span>vs</span>
+          <select className="input" value={p2} onChange={e => setP2(e.target.value)} style={{ height: 30 }}>
+            <option value="">{t(lang, 'selectPlayer')}</option>
+            {allPlayers.map(n => <option key={`p2-${n}`} value={n}>{n}</option>)}
+          </select>
+          {h2h && (
+            <span style={{ fontSize: 12, opacity: .9 }}>
+              {p1}: {h2h.p1wins} {t(lang, 'wins')} • {p2}: {h2h.p2wins} {t(lang, 'wins')} • {h2h.games} {t(lang, 'game')}
+            </span>
+          )}
+        </div>
+
+        <div className="savedList">
+          {filtered.map((it, idx) => (
+            <div key={idx} className="savedRow">
+              <div>
+                <div className="savedTitle">
+                  {new Date(it.ts).toLocaleString()}
+                </div>
+                <div className="savedSub">
+                  {`${it.mode} ${it.startScore || ''} • ${it.players.join(', ')}`}
+                </div>
+                <div className="savedSub">
+                  {t(lang, 'youWinPrefix')}: {it.winner}
+                </div>
+                {Array.isArray(it.remainingByPlayer) && it.remainingByPlayer.length > 0 && (
+                  <div className="savedSub">
+                    {it.remainingByPlayer.map(r => `${r.name}: ${r.remaining}`).join(' • ')}
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => shareItem(it)}
+              >
+                {t(lang, 'share')}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  /* ===== GAME SCREEN ===== */
+  function Game({
+    lang, t, mode, outDesc, isPremium,
+    players, order, currIdx,
+    scores, averages, thrown, lastTurn,
+    cricket, around,
+    darts, mult, setMult, commitDart, undo, winner,
+    saveGame, restartGame, cardRefs, setScreen
+  }) {
+    const HEAD_H = 40;
+    const PAD_H = 160;
+
+    // keypad layout
+    const keypad = React.useMemo(() => {
+      if (mode === 'cricket') {
+        return [
+          [15, 16, 17, 18, 19, 20, 25],
+          [0],
+        ];
+      }
+      if (mode === 'around') {
+        return [
+          [1, 2, 3, 4, 5, 6, 7],
+          [8, 9, 10, 11, 12, 13, 14],
+          [15, 16, 17, 18, 19, 20, 25],
+          [0],
+        ];
+      }
+      // classic
       return [
         [1, 2, 3, 4, 5, 6, 7],
         [8, 9, 10, 11, 12, 13, 14],
         [15, 16, 17, 18, 19, 20, 25],
-        [0],
+        [0, 50],
       ];
-    }
-    // classic
-    return [
-      [1, 2, 3, 4, 5, 6, 7],
-      [8, 9, 10, 11, 12, 13, 14],
-      [15, 16, 17, 18, 19, 20, 25],
-      [0, 50],
-    ];
-  }, [mode]);
+    }, [mode]);
 
-  const cricketTargets = ['15', '16', '17', '18', '19', '20', 'bull'];
+    const cricketTargets = ['15', '16', '17', '18', '19', '20', 'bull'];
+    const activeStyle = isPremium
+      ? { outline: '2px solid #ffffff', background: 'rgba(255,255,255,0.08)' }
+      : { outline: '2px solid var(--green)' };
+    return (
+      <div className="gameWrap">
+        {/* HORNÍ LIŠTA */}
+        <div className="gameTopBar">
+          {mode === 'classic' && (
+            <span className="badge">
+              {`${t(lang, 'outLabel')}: ${outDesc}`}
+            </span>
+          )}
 
-  return (
-    <div className="gameWrap">
-      {/* HORNÍ LIŠTA */}
-      <div className="gameTopBar">
-        {mode === 'classic' && (
-          <span className="badge">
-            {`${t(lang, 'outLabel')}: ${outDesc}`}
-          </span>
-        )}
-
-        <div
-          className="gameTopBtns"
-          style={{ display: 'flex', gap: 8, flexWrap: 'nowrap' }}
-        >
-          <button
-            type="button"
-            className="btn"
-            onClick={restartGame}
-            style={{ whiteSpace: 'nowrap', minWidth: 80 }}
+          <div
+            className="gameTopBtns"
+            style={{ display: 'flex', gap: 8, flexWrap: 'nowrap' }}
           >
-            {t(lang, 'restart') ?? 'Restart'}
-          </button>
-
-          {isPremium && (
             <button
               type="button"
               className="btn"
-              onClick={saveGame}
+              onClick={restartGame}
               style={{ whiteSpace: 'nowrap', minWidth: 80 }}
             >
-              {t(lang, 'saveGame') ?? 'Uložit hru'}
+              {t(lang, 'restart') ?? 'Restart'}
             </button>
-          )}
 
-          <button
-            type="button"
-            className="btn ghost"
-            onClick={() => setScreen('lobby')}
-            style={{ whiteSpace: 'nowrap', minWidth: 80 }}
-          >
-            {t(lang, 'back') ?? 'Zpět'}
-          </button>
-        </div>
-      </div>
-
-      {/* SCOREBOARD */}
-      {mode !== 'cricket' ? (
-        /* CLASSIC / AROUND */
-        <div className="playersPane">
-          {order.map((pIdx, i) => {
-            const p = players[pIdx];
-            const active = i === currIdx && winner == null;
-            const currentDarts = active ? darts : [];
-
-            return (
-              <div
-                key={p.id}
-                ref={node => {
-                  if (node) cardRefs.current[pIdx] = node;
-                }}
-                className={
-                  'playerCard' +
-                  (active ? ' active' : '') +
-                  (winner === pIdx ? ' winner' : '')
-                }
+            {isPremium && (
+              <button
+                type="button"
+                className="btn"
+                onClick={saveGame}
+                style={{ whiteSpace: 'nowrap', minWidth: 80 }}
               >
-                {winner === pIdx && (
-                  <>
-                    <div className="starburst" aria-hidden="true">
-                      {Array.from({ length: 12 }).map((_, k) => (
-                        <span key={k} style={{ '--k': k }} />
-                      ))}
-                    </div>
-                    <div className="confetti" aria-hidden="true">
-                      {Array.from({ length: 50 }).map((_, k) => (
-                        <span key={k} style={{ '--i': k }} />
-                      ))}
-                    </div>
-                  </>
-                )}
+                {t(lang, 'saveGame') ?? 'Uložit hru'}
+              </button>
+            )}
 
-                <div className="playerHeader">
-                  <div className="playerNameText">{p.name}</div>
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={() => setScreen('lobby')}
+              style={{ whiteSpace: 'nowrap', minWidth: 80 }}
+            >
+              {t(lang, 'back') ?? 'Zpět'}
+            </button>
+          </div>
+        </div>
+
+        {/* SCOREBOARD */}
+        {mode !== 'cricket' ? (
+          /* CLASSIC / AROUND */
+          <div className="playersPane" data-premium={isPremium ? '1' : '0'}>
+            {order.map((pIdx, i) => {
+              const p = players[pIdx];
+              const active = i === currIdx && winner == null;
+              const currentDarts = active ? darts : [];
+
+              return (
+                <div
+                  key={p.id}
+                  ref={node => { if (node) cardRefs.current[pIdx] = node; }}
+                  className={'playerCard' + (active ? ' active' : '') + (winner === pIdx ? ' winner' : '')}
+                  style={active ? activeStyle : undefined}
+                >
+                  {winner === pIdx && (
+                    <>
+                      <div className="starburst" aria-hidden="true">
+                        {Array.from({ length: 12 }).map((_, k) => (
+                          <span key={k} style={{ '--k': k }} />
+                        ))}
+                      </div>
+                      <div className="confetti" aria-hidden="true">
+                        {Array.from({ length: 50 }).map((_, k) => (
+                          <span key={k} style={{ '--i': k }} />
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  <div className="playerHeader">
+                    <div className="playerNameText">{p.name}</div>
+
+                    {mode === 'classic' ? (
+                      <div className="playerStats">
+                        <span>{thrown[pIdx] || 0} {t(lang, 'darts')}</span>
+                        <span>•</span>
+                        <span>
+                          {t(lang, 'avg')}: {formatAvg(averages[pIdx])}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="playerStats">
+                        <span>
+                          {t(lang, 'target')}: {around?.[pIdx]?.next ?? 1}
+                        </span>
+                      </div>
+                    )}
+                  </div>
 
                   {mode === 'classic' ? (
-                    <div className="playerStats">
-                      <span>{thrown[pIdx] || 0} {t(lang, 'darts')}</span>
-                      <span>•</span>
-                      <span>
-                        {t(lang, 'avg')}: {formatAvg(averages[pIdx])}
-                      </span>
-                    </div>
+                    <>
+                      <div className="playerScore">
+                        {scores[pIdx] ?? 0}
+                      </div>
+                      <div className="playerTurn">
+                        {[0, 1, 2].map(ix => {
+                          const d = currentDarts[ix];
+                          return (
+                            <div key={ix} className="dartBox">
+                              {d ? formatHit(d) : '-'}
+                            </div>
+                          );
+                        })}
+                        <div className="lastTotal">
+                          {t(lang, 'last')}: {lastTurn[pIdx] || 0}
+                        </div>
+                      </div>
+                    </>
                   ) : (
-                    <div className="playerStats">
-                      <span>
-                        {t(lang, 'target')}: {around?.[pIdx]?.next ?? 1}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {mode === 'classic' ? (
-                  <>
-                    <div className="playerScore">
-                      {scores[pIdx] ?? 0}
-                    </div>
                     <div className="playerTurn">
+                      <div className="dartBox targetBox">
+                        {around?.[pIdx]?.next ?? 1}
+                      </div>
                       {[0, 1, 2].map(ix => {
                         const d = currentDarts[ix];
                         return (
                           <div key={ix} className="dartBox">
-                            {d ? formatHit(d) : '-'}
+                            {d
+                              ? d.score
+                                ? '✓'
+                                : d.v === 0
+                                  ? '0'
+                                  : '-'
+                              : '-'}
                           </div>
                         );
                       })}
-                      <div className="lastTotal">
-                        {t(lang, 'last')}: {lastTurn[pIdx] || 0}
-                      </div>
                     </div>
-                  </>
-                ) : (
-                  <div className="playerTurn">
-                    <div className="dartBox targetBox">
-                      {around?.[pIdx]?.next ?? 1}
-                    </div>
-                    {[0, 1, 2].map(ix => {
-                      const d = currentDarts[ix];
-                      return (
-                        <div key={ix} className="dartBox">
-                          {d
-                            ? d.score
-                              ? '✓'
-                              : d.v === 0
-                                ? '0'
-                                : '-'
-                            : '-'}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          /* CRICKET layout – levý sloupec + scroll hráčů, 7 řádků 1:1 */
+          <div className="cricketWrap">
+            {/* Levý pevný sloupec 15–25 */}
+            <div className="targetsRail">
+              <div
+                className="targetsRailHead"
+                style={{
+                  height: HEAD_H,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <span className="targetsRailTitle">
+                  {t(lang, 'target')}
+                </span>
               </div>
-            );
-          })}
-        </div>
-      ) : (
-        /* CRICKET layout – levý sloupec + scroll hráčů, 7 řádků 1:1 */
-        <div className="cricketWrap">
-          {/* Levý pevný sloupec 15–25 */}
-          <div className="targetsRail">
-            <div
-              className="targetsRailHead"
-              style={{
-                height: HEAD_H,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <span className="targetsRailTitle">
-                {t(lang, 'target')}
-              </span>
+
+              <div className="targetsRailMarks">
+                {cricketTargets.map(k => {
+                  const lbl = k === 'bull' ? '25' : k;
+                  return (
+                    <div key={k} className="targetCell">
+                      {lbl}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="targetsRailMarks">
-              {cricketTargets.map(k => {
-                const lbl = k === 'bull' ? '25' : k;
+            {/* Scrollovatelné sloupce hráčů */}
+            <div className="cricketScroll" style={{ paddingBottom: PAD_H }}>
+              {order.map((pIdx, i) => {
+                const p = players[pIdx];
+                const active = i === currIdx && winner == null;
+
                 return (
-                  <div key={k} className="targetCell">
-                    {lbl}
+                  <div
+                    key={p.id}
+                    ref={node => { if (node) cardRefs.current[pIdx] = node; }}
+                    className={'playerCol' + (active ? ' active' : '') + (winner === pIdx ? ' winner' : '')}
+                    style={active ? activeStyle : undefined}
+                  >
+                    <div
+                      className="playerColHead"
+                      style={{
+                        height: HEAD_H,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 8,
+                        padding: '0 8px',
+                        whiteSpace: 'nowrap',
+                        textOverflow: 'ellipsis',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div
+                        className="playerColName"
+                        style={{
+                          fontWeight: 800,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {p.name}
+                      </div>
+                      <div className="playerColPts">
+                        {cricket?.[pIdx]?.points ?? 0}
+                      </div>
+                    </div>
+
+                    <div className="playerColMarks">
+                      {cricketTargets.map(k => {
+                        const mk = cricket?.[pIdx]?.marks?.[k] ?? 0;
+                        return (
+                          <div
+                            key={k}
+                            className={'markCell' + (mk >= 3 ? ' closed' : '')}
+                          >
+                            {markSymbol(mk)}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 );
               })}
             </div>
           </div>
+        )}
 
-          {/* Scrollovatelné sloupce hráčů */}
-          <div className="cricketScroll" style={{ paddingBottom: PAD_H }}>
-            {order.map((pIdx, i) => {
-              const p = players[pIdx];
-              const active = i === currIdx && winner == null;
+        {/* PAD / KEYPAD */}
+        {winner == null && (
+          <div className="padPane">
+            {/* první řádek: DOUBLE / TRIPLE / undo */}
+            <div className="padRow">
+              <button
+                type="button"
+                className={'multBtn mult-2' + (mult === 2 ? ' active' : '')}
+                onClick={() => setMult(m => (m === 2 ? 1 : 2))}
+              >
+                DOUBLE
+              </button>
 
-              return (
-                <div
-                  key={p.id}
-                  ref={node => {
-                    if (node) cardRefs.current[pIdx] = node;
-                  }}
-                  className={
-                    'playerCol' +
-                    (active ? ' active' : '') +
-                    (winner === pIdx ? ' winner' : '')
-                  }
+              <button
+                type="button"
+                className={'multBtn mult-3' + (mult === 3 ? ' active' : '')}
+                onClick={() => setMult(m => (m === 3 ? 1 : 3))}
+              >
+                TRIPLE
+              </button>
+
+              <button
+                type="button"
+                className="multBtn backspace"
+                onClick={undo}
+                title={t(lang, 'undo')}
+                aria-label={t(lang, 'undo')}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="iconBackspace"
+                  aria-hidden="true"
                 >
-                  <div
-                    className="playerColHead"
-                    style={{
-                      height: HEAD_H,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 8,
-                      padding: '0 8px',
-                      whiteSpace: 'nowrap',
-                      textOverflow: 'ellipsis',
-                      overflow: 'hidden',
+                  <path
+                    d="M7 5L3 12l4 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H7z"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  />
+                  <path
+                    d="M12 9l4 4m0-4-4 4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* čísla */}
+            {keypad.map((row, ri) => (
+              <div key={`row-${row.join('-')}`} className="padRow">
+                {row.map(n => (
+                  <button
+                    type="button"
+                    key={n}
+                    className="key"
+                    onPointerDown={e => {
+                      e.currentTarget.classList.add('pressed');
+
+                      // Cricket speciály:
+                      if (mode === 'cricket') {
+                        if (n === 0) {
+                          setMult(1);
+                          commitDart(0, 1);
+                          return;
+                        }
+                        if (n === 25) {
+                          setMult(1);
+                          commitDart(25, 1);
+                          return;
+                        }
+                      }
+
+                      commitDart(n);
+                    }}
+                    onPointerUp={e => {
+                      e.currentTarget.classList.remove('pressed');
+                    }}
+                    onPointerLeave={e => {
+                      e.currentTarget.classList.remove('pressed');
                     }}
                   >
-                    <div
-                      className="playerColName"
-                      style={{
-                        fontWeight: 800,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
-                      {p.name}
-                    </div>
-                    <div className="playerColPts">
-                      {cricket?.[pIdx]?.points ?? 0}
-                    </div>
-                  </div>
-
-                  <div className="playerColMarks">
-                    {cricketTargets.map(k => {
-                      const mk = cricket?.[pIdx]?.marks?.[k] ?? 0;
-                      return (
-                        <div
-                          key={k}
-                          className={'markCell' + (mk >= 3 ? ' closed' : '')}
-                        >
-                          {markSymbol(mk)}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
+                    {n}
+                  </button>
+                ))}
+              </div>
+            ))}
           </div>
-        </div>
-      )}
-
-      {/* PAD / KEYPAD */}
-      {winner == null && (
-        <div className="padPane">
-          {/* první řádek: DOUBLE / TRIPLE / undo */}
-          <div className="padRow">
-            <button
-              type="button"
-              className={'multBtn mult-2' + (mult === 2 ? ' active' : '')}
-              onClick={() => setMult(m => (m === 2 ? 1 : 2))}
-            >
-              DOUBLE
-            </button>
-
-            <button
-              type="button"
-              className={'multBtn mult-3' + (mult === 3 ? ' active' : '')}
-              onClick={() => setMult(m => (m === 3 ? 1 : 3))}
-            >
-              TRIPLE
-            </button>
-
-            <button
-              type="button"
-              className="multBtn backspace"
-              onClick={undo}
-              title={t(lang, 'undo')}
-              aria-label={t(lang, 'undo')}
-            >
-              <svg
-                viewBox="0 0 24 24"
-                className="iconBackspace"
-                aria-hidden="true"
-              >
-                <path
-                  d="M7 5L3 12l4 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H7z"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                />
-                <path
-                  d="M12 9l4 4m0-4-4 4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-          </div>
-
-          {/* čísla */}
-          {keypad.map((row, ri) => (
-            <div key={`row-${ri}`} className="padRow">
-              {row.map(n => (
-                <button
-                  type="button"
-                  key={n}
-                  className="key"
-                  onPointerDown={e => {
-                    e.currentTarget.classList.add('pressed');
-
-                    // Cricket speciály:
-                    if (mode === 'cricket') {
-                      if (n === 0) {
-                        setMult(1);
-                        commitDart(0, 1);
-                        return;
-                      }
-                      if (n === 25) {
-                        setMult(1);
-                        commitDart(25, 1);
-                        return;
-                      }
-                    }
-
-                    commitDart(n);
-                  }}
-                  onPointerUp={e => {
-                    e.currentTarget.classList.remove('pressed');
-                  }}
-                  onPointerLeave={e => {
-                    e.currentTarget.classList.remove('pressed');
-                  }}
-                >
-                  {n}
-                </button>
-              ))}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
+        )}
+      </div>
+    );
+  }

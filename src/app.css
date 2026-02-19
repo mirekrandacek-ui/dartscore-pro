@@ -1,4 +1,11 @@
 :root{
+  /* Safe-area insety (iOS notch / Android cutout / gesture bar) */
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+}
+:root{
   --bg:#1f2227;
   --panel:#24282e;
   --text:#fff;
@@ -25,8 +32,14 @@ body{
 }
 .container{
   height:calc(var(--vh,1vh)*100);
-  display:flex;flex-direction:column;min-height:0;
-}
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+padding-top: var(--sat);
+  padding-right: var(--sar);
+  padding-bottom: var(--sab);
+  padding-left: var(--sal);
+}  
 
 /* TOAST */
 .toast{
@@ -39,7 +52,8 @@ body{
 /* HEADER */
 .header{
   display:flex;align-items:center;justify-content:space-between;
-  gap:8px;padding:6px 8px;background:#13161a;border-bottom:1px solid var(--line)
+  gap:8px;padding:6px 8px;padding-top: max(6px, var(--sat), 28px);
+background:#13161a;border-bottom:1px solid var(--line)
 }
 .header .left{display:flex;align-items:center;gap:8px;min-width:0}
 .logo{
@@ -240,6 +254,20 @@ input[type="text"]{color:#fff}
   text-overflow: ellipsis;
   border-bottom: 1px solid var(--line);
 }
+/* === ACTIVE hráč – CRICKET (sloupec) === */
+.playerCol.active{
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  box-shadow: 0 0 0 1px var(--accent), 0 0 12px rgba(22,163,74,.25);
+}
+
+.playerCol.active .playerColHead{
+  background: rgba(22,163,74,.14);
+}
+
+.playerCol.active .markCell{
+  border-bottom-color: rgba(22,163,74,.35);
+}
 
 /* Slim sloupce hráčů */
 .playerCol {
@@ -360,7 +388,12 @@ input[type="text"]{color:#fff}
   border-radius: 14px;
   padding: 8px;
 }
-.playerCard.active { outline: 2px solid var(--green); }
+/* >>> DARTSCORE_UNIQUE_ANCHOR__ACTIVE_PLAYER_HIGHLIGHT__A1C7 <<< */
+.playerCard.active{
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  box-shadow: 0 0 0 1px var(--accent), 0 0 12px rgba(0,0,0,.4);
+}
 .playerHeader { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .playerNameText { font-weight: 900; }
 .playerStats { display: flex; gap: 8px; color: var(--muted); }
@@ -621,3 +654,15 @@ html, body{
   font-size: 22px !important;   /* mírně větší a čitelnější – můžeš snížit */
   letter-spacing: 0.5px;        /* jemné projasnění */
 }
+/* === ACTIVE PLAYER: FREE vs PREMIUM === */
+.playersPane[data-premium="0"] .playerCard.active{
+  background: rgba(0, 180, 90, 0.18);
+  border-color: rgba(0, 180, 90, 0.55);
+}
+.playersPane[data-premium="1"] .playerCard.active{
+  border-color: #fff;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.75),
+    inset 0 0 0 1px rgba(255,255,255,0.12);
+}
+
