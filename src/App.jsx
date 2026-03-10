@@ -316,8 +316,8 @@ function formatAvg(a) {
 }
 
 /* ===== AdMob interstitial handler ===== */
-const ADMOB_INTERSTITIAL_ID = "ca-app-pub-3940256099942544/1033173712"; // test ID od Googlu
-
+const ADMOB_INTERSTITIAL_ID = "ca-app-pub-9232105399279318/3900554547";
+const ADMOB_BANNER_ID = "ca-app-pub-9232105399279318/2746750399";
 /* >>> DARTSCORE_UNIQUE_ANCHOR__INTERSTITIAL_RETURN_BOOL__B3D9 <<< */
 async function showInterstitialAd() {
   try {
@@ -1511,6 +1511,27 @@ useEffect(() => {
                 <span style={{ fontWeight: 900, whiteSpace: 'nowrap' }}>
                   {t(lang, 'app')}
                 </span>
+                {/* ===== Ad banner ===== */}
+{!isPremium && (
+  <div style={{
+    width: "100%",
+    display: "flex",
+    justifyContent: "center",
+    padding: "6px 0",
+    background: "#111827"
+  }}>
+    <iframe
+      title="ad-banner"
+      src={`https://googleads.g.doubleclick.net/pagead/ads?client=${ADMOB_BANNER_ID}`}
+      style={{
+        width: "320px",
+        height: "50px",
+        border: "none",
+        overflow: "hidden"
+      }}
+    />
+  </div>
+)}
               </div>
 
               {isPremium && (
