@@ -344,10 +344,9 @@ async function showInterstitialAd() {
 /* >>> DARTSCORE_UNIQUE_ANCHOR__INTERSTITIAL_RETURN_BOOL__B3D9 <<< */
 
 /* ===== MAIN APP ===== */
-export default function App() {
-
+function App() {
   /* viewport fix */
-  /* >>> DARTSCORE_UNIQUE_ANCHOR__VIEWPORT_FIX__START__C91E <<< */
+    /* >>> DARTSCORE_UNIQUE_ANCHOR__VIEWPORT_FIX__START__C91E <<< */
   useEffect(() => {
     // iOS standalone / Android cutouts fallback
     const root = document.documentElement;
@@ -1344,36 +1343,91 @@ useEffect(() => {
 
     /* reklama overlay */
     useEffect(() => {
-      if (!showAd) {
-        if (adTimerRef.current) {
-          clearInterval(adTimerRef.current);
-          adTimerRef.current = null;
-        }
-        return;
-      }
-      adTimerRef.current = setInterval(() => {
-        setAdSecondsLeft(s => {
-          if (s <= 1) {
-            clearInterval(adTimerRef.current);
-            adTimerRef.current = null;
-            return 0;
-          }
-          return s - 1;
-        });
-      }, 1000);
+  if (!showAd) return;
 
-      return () => {
-        if (adTimerRef.current) {
-          clearInterval(adTimerRef.current);
-          adTimerRef.current = null;
-        }
-      };
-    }, [showAd]);
+  if (adTimerRef.current) {
+    clearInterval(adTimerRef.current);
+    adTimerRef.current = null;
+  }
+
+  adTimerRef.current = setInterval(() => {
+    setAdSecondsLeft((s) => {
+      if (s <= 1) {
+        clearInterval(adTimerRef.current);
+        adTimerRef.current = null;
+        setShowAd(false);
+        return 0;
+      }
+      return s - 1;
+    });
+  }, 1000);
+
+  return () => {
+    if (adTimerRef.current) {
+      clearInterval(adTimerRef.current);
+      adTimerRef.current = null;
+    }
+  };
+}, [showAd]);
 
     const closeAdNow = () => {
       setShowAd(false);
     };
+const buyPremium = async () => {
+  try {
+    // 1) Google Play Billing v TWA
+    if (window.getDigitalGoodsService && window.PaymentRequest) {
+      const service = await window.getDigitalGoodsService(
+        'https://play.google.com/billing'
+      );
 
+      const details = await service.getDetails(['premium_unlock']);
+      if (!details || !details.length) {
+        throw new Error('premium_unlock not found in Play Billing');
+      }
+
+      const request = new PaymentRequest(
+        [
+          {
+            supportedMethods: 'https://play.google.com/billing',
+            data: { sku: 'premium_unlock' },
+          },
+        ],
+        {
+          total: {
+            label: 'DartScore Premium',
+            amount: { currency: 'USD', value: '0' },
+          },
+        }
+      );
+
+      const response = await request.show();
+      const token = response?.details?.token;
+
+      if (!token) {
+        throw new Error('Missing purchase token');
+      }
+
+      await service.acknowledge(token, 'onetime');
+      await response.complete('success');
+
+      setIsPremium(true);
+      localStorage.setItem('premium', 'true');
+      setShowAd(false);
+      showToast('Premium aktivováno');
+      return;
+    }
+
+    // 2) Web / Codespaces fallback
+    setIsPremium(true);
+    localStorage.setItem('premium', 'true');
+    setShowAd(false);
+    showToast('Premium aktivováno (test)');
+  } catch (err) {
+    console.error(err);
+    showToast('Nákup Premium selhal');
+  }
+};
     const makeSnapshot = () => ({
       version: 2, screen: 'game',
       lang, soundOn, voiceOn,
@@ -1511,27 +1565,7 @@ useEffect(() => {
                 <span style={{ fontWeight: 900, whiteSpace: 'nowrap' }}>
                   {t(lang, 'app')}
                 </span>
-                {/* ===== Ad banner ===== */}
-{!isPremium && (
-  <div style={{
-    width: "100%",
-    display: "flex",
-    justifyContent: "center",
-    padding: "6px 0",
-    background: "#111827"
-  }}>
-    <iframe
-      title="ad-banner"
-      src={`https://googleads.g.doubleclick.net/pagead/ads?client=${ADMOB_BANNER_ID}`}
-      style={{
-        width: "320px",
-        height: "50px",
-        border: "none",
-        overflow: "hidden"
-      }}
-    />
-  </div>
-)}
+                
               </div>
 
               {isPremium && (
@@ -1752,11 +1786,7 @@ useEffect(() => {
             {!isPremium && (
               <button
                 type="button"
-                onClick={() => {
-                  setIsPremium(true); // zatím testovací aktivace
-                  setShowAd(false);
-                  showToast('Premium aktivováno (test)');
-                }}
+                onClick={buyPremium}                 
                 style={{
                   marginTop: '16px',
                   fontSize: '12px',
@@ -2722,3 +2752,4 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
       </div>
     );
   }
+export default App;

@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.randis2288.dartscorepro",
+      "sha256_cert_fingerprints": [
+        "2F:CD:B0:5F:5E:8D:82:89:7E:BC:FE:01:B6:03:73:6B:F0:E8:03:E1:8B:E9:6C:F7:AD:B0:57:DD:A9:7D:E4:3B"
+      ]
+    }
+  }
+]
