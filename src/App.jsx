@@ -1375,13 +1375,32 @@ useEffect(() => {
     };
 const buyPremium = async () => {
   try {
-    // 1) Google Play Billing v TWA
-    if (window.getDigitalGoodsService && window.PaymentRequest) {
+    console.log('BUY CLICKED');
+
+    const hasDigitalGoods = typeof window !== 'undefined' && !!window.getDigitalGoodsService;
+    const hasPaymentRequest = typeof window !== 'undefined' && !!window.PaymentRequest;
+    const isLocalDev =
+      typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' ||
+        window.location.hostname.includes('github.dev'));
+
+    console.log('DigitalGoods:', hasDigitalGoods);
+    console.log('PaymentRequest:', hasPaymentRequest);
+    console.log('isLocalDev:', isLocalDev);
+    console.log('hostname:', typeof window !== 'undefined' ? window.location.hostname : 'no-window');
+
+    // 1) Reálný Google Play Billing v TWA
+    if (hasDigitalGoods && hasPaymentRequest) {
+      console.log('TRYING PLAY BILLING');
+
       const service = await window.getDigitalGoodsService(
         'https://play.google.com/billing'
       );
+      console.log('SERVICE:', service);
 
       const details = await service.getDetails(['premium_unlock']);
+      console.log('DETAILS:', details);
+
       if (!details || !details.length) {
         throw new Error('premium_unlock not found in Play Billing');
       }
@@ -1402,7 +1421,10 @@ const buyPremium = async () => {
       );
 
       const response = await request.show();
+      console.log('RESPONSE:', response);
+
       const token = response?.details?.token;
+      console.log('TOKEN:', token);
 
       if (!token) {
         throw new Error('Missing purchase token');
@@ -1418,13 +1440,22 @@ const buyPremium = async () => {
       return;
     }
 
-    // 2) Web / Codespaces fallback
-    setIsPremium(true);
-    localStorage.setItem('premium', 'true');
-    setShowAd(false);
-    showToast('Premium aktivováno (test)');
+    // 2) Jen lokální dev fallback
+    if (isLocalDev) {
+      console.log('LOCAL DEV FALLBACK');
+
+      setIsPremium(true);
+      localStorage.setItem('premium', 'true');
+      setShowAd(false);
+      showToast('Premium aktivováno (test)');
+      return;
+    }
+
+    // 3) Produkční / testovací appka bez dostupného billing API
+    console.log('NO BILLING API IN APP');
+    showToast('Google Play nákup není v této verzi dostupný');
   } catch (err) {
-    console.error(err);
+    console.error('BUY PREMIUM ERROR:', err);
     showToast('Nákup Premium selhal');
   }
 };
