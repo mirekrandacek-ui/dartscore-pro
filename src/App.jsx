@@ -1456,7 +1456,7 @@ const buyPremium = async () => {
     showToast('Google Play nákup není v této verzi dostupný');
   } catch (err) {
     console.error('BUY PREMIUM ERROR:', err);
-    showToast('Nákup Premium selhal');
+    showToast(`Nákup Premium selhal: ${err?.message || err}`);
   }
 };
     const makeSnapshot = () => ({
@@ -1680,29 +1680,66 @@ const buyPremium = async () => {
             </div>
           </div>
          
-          {screen === 'lobby' ? (
-            <Lobby
-              lang={lang} t={t}
-              mode={mode} setMode={setMode}
-              startScore={startScore} setStartScore={setStartScore}
-              outDouble={outDouble} setOutDouble={setOutDouble}
-              outTriple={outTriple} setOutTriple={setOutTriple}
-              outMaster={outMaster} setOutMaster={setOutMaster}
-              randomOrder={randomOrder} setRandomOrder={setRandomOrder}
-              playThrough={playThrough} setPlayThrough={setPlayThrough}
-              ai={ai} setAi={setAi}
-              players={players} setPlayers={setPlayers}
-              addPlayer={addPlayer} deletePlayer={deletePlayer}
-              movePlayer={movePlayer}
-              startGame={startGame}
-              continueSaved={continueSaved}
-              showToast={showToast}
-              hasSaved={hasSaved}
-              isPremium={isPremium} setIsPremium={setIsPremium}
-              themeColor={themeColor} setThemeColor={setThemeColor}
-            />
-          ) : (
-            <Game
+        {screen === 'lobby' ? (
+  <>
+    <Lobby
+      lang={lang} t={t}
+      mode={mode} setMode={setMode}
+      startScore={startScore} setStartScore={setStartScore}
+      outDouble={outDouble} setOutDouble={setOutDouble}
+      outTriple={outTriple} setOutTriple={setOutTriple}
+      outMaster={outMaster} setOutMaster={setOutMaster}
+      randomOrder={randomOrder} setRandomOrder={setRandomOrder}
+      playThrough={playThrough} setPlayThrough={setPlayThrough}
+      ai={ai} setAi={setAi}
+      players={players} setPlayers={setPlayers}
+      addPlayer={addPlayer} deletePlayer={deletePlayer}
+      movePlayer={movePlayer}
+      startGame={startGame}
+      continueSaved={continueSaved}
+      showToast={showToast}
+      hasSaved={hasSaved}
+      buyPremium={buyPremium}
+      isPremium={isPremium} setIsPremium={setIsPremium}
+      themeColor={themeColor} setThemeColor={setThemeColor}
+    />
+    {!isPremium && (
+      <div
+        style={{
+          position: 'fixed',
+          left: 0,
+          right: 0,
+          bottom: 'max(var(--sab, 0px), 0px)',
+          display: 'flex',
+          justifyContent: 'center',
+          pointerEvents: 'none',
+          zIndex: 50
+        }}
+      >
+        <div
+          style={{
+            width: 320,
+            height: 50,
+            margin: '0 auto 6px',
+            borderRadius: 8,
+            background: '#1a1a1a',
+            border: '1px solid #333',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#aaa',
+            fontSize: 12,
+            fontWeight: 700,
+            pointerEvents: 'auto'
+          }}
+        >
+          Banner reklama
+        </div>
+      </div>
+    )}
+  </>
+) : (
+                        <Game
               lang={lang} t={t}
               mode={mode}
               isPremium={isPremium}
@@ -1861,6 +1898,7 @@ const buyPremium = async () => {
     startGame, continueSaved,
     showToast,
     hasSaved,
+    buyPremium,
     isPremium, setIsPremium,
     themeColor, setThemeColor
   }) {
@@ -2035,18 +2073,7 @@ const buyPremium = async () => {
             <button
               type="button"
               className="btn"
-              onClick={() => {
-                setIsPremium(prev => {
-                  const next = !prev;
-                  try {
-                    const raw = localStorage.getItem('lobby');
-                    const parsed = raw ? JSON.parse(raw) : {};
-                    parsed.isPremium = next;
-                    localStorage.setItem('lobby', JSON.stringify(parsed));
-                  } catch { }
-                  return next;
-                });
-              }}
+              onClick={buyPremium}              
               style={{
                 minWidth: 90,
                 fontWeight: 800,
@@ -2056,7 +2083,7 @@ const buyPremium = async () => {
             >
               {isPremium ? t(lang, 'premiumMode') : 'Free'}
             </button>
-          </div>
+                     </div>
 
           {isPremium && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
