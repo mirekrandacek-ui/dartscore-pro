@@ -385,6 +385,31 @@ function App() {
 
   const [isPremium, setIsPremium] = useState(false);
 
+  useEffect(() => {
+    const restorePremium = async () => {
+      try {
+        if (!window.getDigitalGoodsService) return;
+
+        const service = await window.getDigitalGoodsService(
+          'https://play.google.com/billing'
+        );
+
+        const purchases = await service.listPurchases();
+        const hasPremium = purchases?.some(p => p.sku === 'premium_unlock');
+
+        if (hasPremium) {
+          setIsPremium(true);
+          localStorage.setItem('premium', 'true');
+          console.log('Premium restored from Play');
+        }
+      } catch (e) {
+        console.warn('Restore premium failed', e);
+      }
+    };
+
+    restorePremium();
+  }, []);
+
   const [themeColor, setThemeColor] = useState('default');
 
   const [showAd, setShowAd] = useState(false);
@@ -407,7 +432,6 @@ function App() {
 
   const hitAudioRef = useRef(null);
   const winAudioRef = useRef(null);
-
   /* persist screen */
   useEffect(() => {
     localStorage.setItem('screen', screen);
@@ -1374,36 +1398,32 @@ useEffect(() => {
       setShowAd(false);
     };
 const buyPremium = async () => {
-  try {
-    console.log('BUY CLICKED');
+  let response;
 
-    const hasDigitalGoods = typeof window !== 'undefined' && !!window.getDigitalGoodsService;
-    const hasPaymentRequest = typeof window !== 'undefined' && !!window.PaymentRequest;
+  try {
+    const hasDigitalGoods =
+      typeof window !== 'undefined' && !!window.getDigitalGoodsService;
+    const hasPaymentRequest =
+      typeof window !== 'undefined' && !!window.PaymentRequest;
     const isLocalDev =
       typeof window !== 'undefined' &&
       (window.location.hostname === 'localhost' ||
         window.location.hostname.includes('github.dev'));
 
-    console.log('DigitalGoods:', hasDigitalGoods);
-    console.log('PaymentRequest:', hasPaymentRequest);
-    console.log('isLocalDev:', isLocalDev);
-    console.log('hostname:', typeof window !== 'undefined' ? window.location.hostname : 'no-window');
-
-    // 1) Reálný Google Play Billing v TWA
+    // 1) Google Play Billing v TWA / Android buildu
     if (hasDigitalGoods && hasPaymentRequest) {
-      console.log('TRYING PLAY BILLING');
-
       const service = await window.getDigitalGoodsService(
         'https://play.google.com/billing'
       );
-      console.log('SERVICE:', service);
 
       const details = await service.getDetails(['premium_unlock']);
-      console.log('DETAILS:', details);
-
       if (!details || !details.length) {
         throw new Error('premium_unlock not found in Play Billing');
       }
+
+      const item = details[0];
+      const currency = item?.price?.currency || 'CZK';
+      const value = item?.price?.value || '69.99';
 
       const request = new PaymentRequest(
         [
@@ -1415,23 +1435,30 @@ const buyPremium = async () => {
         {
           total: {
             label: 'DartScore Premium',
-            amount: { currency: 'USD', value: '0' },
+            amount: { currency, value },
           },
         }
       );
 
-      const response = await request.show();
-      console.log('RESPONSE:', response);
+      response = await request.show();
 
-      const token = response?.details?.token;
-      console.log('TOKEN:', token);
+      const token =
+        response?.details?.purchaseToken ||
+        response?.details?.token ||
+        response?.purchaseToken ||
+        response?.token;
 
       if (!token) {
         throw new Error('Missing purchase token');
       }
 
-      await service.acknowledge(token, 'onetime');
-      await response.complete('success');
+      if (service.acknowledge) {
+        await service.acknowledge(token, 'onetime');
+      }
+
+      if (response.complete) {
+        await response.complete('success');
+      }
 
       setIsPremium(true);
       localStorage.setItem('premium', 'true');
@@ -1442,8 +1469,6 @@ const buyPremium = async () => {
 
     // 2) Jen lokální dev fallback
     if (isLocalDev) {
-      console.log('LOCAL DEV FALLBACK');
-
       setIsPremium(true);
       localStorage.setItem('premium', 'true');
       setShowAd(false);
@@ -1451,12 +1476,32 @@ const buyPremium = async () => {
       return;
     }
 
-    // 3) Produkční / testovací appka bez dostupného billing API
-    console.log('NO BILLING API IN APP');
+    // 3) Produkční / testovací appka bez billing API
     showToast('Google Play nákup není v této verzi dostupný');
   } catch (err) {
+    const msg = String(err?.message || err || '');
+
+    // už vlastní položku -> rovnou aktivuj Premium
+    if (
+      msg.includes('already own') ||
+      msg.includes('already owned') ||
+      msg.includes('Tuto položku již vlastníte')
+    ) {
+      setIsPremium(true);
+      localStorage.setItem('premium', 'true');
+      setShowAd(false);
+      showToast('Premium obnoveno');
+      return;
+    }
+
+    try {
+      if (response?.complete) {
+        await response.complete('fail');
+      }
+    } catch {}
+
     console.error('BUY PREMIUM ERROR:', err);
-    showToast(`Nákup Premium selhal: ${err?.message || err}`);
+    showToast(`Nákup Premium selhal: ${msg}`);
   }
 };
     const makeSnapshot = () => ({
