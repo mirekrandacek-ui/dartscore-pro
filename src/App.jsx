@@ -27,6 +27,7 @@ const T = {
     youWinPrefix: 'Výhra', outLabel: 'Ukončení', zeroWord: 'nula',
     points: 'Body', target: 'Cíl',
     premiumMode: 'Premium režim',
+    activatePremium: 'Aktivovat Premium',
     filter: 'Filtr', all: 'Vše', week: 'Týden', month: 'Měsíc', year: 'Rok',
     h2h: 'Vzájemné zápasy', selectPlayer: 'Vyber hráče', wins: 'výhry',
     // Pravidla – plně lokalizovaná
@@ -35,7 +36,15 @@ const T = {
     rulesCricket:
       'Hraje se čísly 15–20 a 25. Single = 1 značka „/“, Double = 2 (✕), Triple = 3 (Ⓧ). Po 3 značkách je číslo zavřené. Přebytečné zásahy dávají body, jen pokud soupeř(i) nemají číslo zavřené.',
     rulesAround:
-      'Cíle jdou postupně 1 → 20 → Bull (25). Počítá se pouze zásah aktuálního cíle. Double/Triple se počítají jako zásah. Vyhrává, kdo první trefí Bull.'
+      'Cíle jdou postupně 1 → 20 → Bull (25). Počítá se pouze zásah aktuálního cíle. Double/Triple se počítají jako zásah. Vyhrává, kdo první trefí Bull.',
+      premiumTitle: "DartScore Premium",
+premiumDesc: "Posuň svou hru na vyšší úroveň. Získej víc přehledu, pohodlí a hraj bez omezení.",
+premiumFeature1: "Bez reklam – ničím nerušená hra",
+premiumFeature2: "Ukládání rozehraných i dohraných her",
+premiumFeature3: "Statistiky vzájemných zápasů",
+premiumFeature4: "Vlastní barevný vzhled aplikace",
+premiumButton: "Odemknout Premium – 69,99 Kč",
+premiumNote: "Jednorázová platba. Žádné předplatné.",
   },
   en: {
     app: 'DartScore Pro', sound: 'Sound', voice: 'Voice', back: 'Back',
@@ -60,8 +69,17 @@ const T = {
     rulesCricket:
       'Targets: 15–20 and 25. Single = 1 “/”, Double = 2 (✕), Triple = 3 (Ⓧ). After 3 marks the number is closed. Extra marks score points only if opponents still have the number open.',
     rulesAround:
-      'Targets go 1 → 20 → Bull (25). Only hitting the current target counts. Doubles/Triples count as a hit. First to hit Bull wins.'
-  },
+      'Targets go 1 → 20 → Bull (25). Only hitting the current target counts. Doubles/Triples count as a hit. First to hit Bull wins.',
+  premiumTitle: "DartScore Premium",
+premiumDesc: "Take your game to the next level. Get more control, insights and enjoy a smoother experience.",
+premiumFeature1: "Ad-free – uninterrupted gameplay",
+premiumFeature2: "Save ongoing and finished games",
+premiumFeature3: "Head-to-head match statistics",
+premiumFeature4: "Custom app color themes",
+premiumButton: "Unlock Premium – 2.99 €",
+premiumNote: "One-time payment. No subscription.",
+activatePremium: 'Activate Premium',
+    },
   de: {
     app: 'DartScore Pro', sound: 'Ton', voice: 'Stimme', back: 'Zurück',
     mode: 'Modus', classic: 'Klassisch', cricket: 'Cricket', around: 'Rund um die Uhr',
@@ -78,6 +96,7 @@ const T = {
     youWinPrefix: 'Sieg', outLabel: 'Finish', zeroWord: 'null',
     points: 'Punkte', target: 'Ziel',
     premiumMode: 'Premium-Modus',
+    activatePremium: 'Premium aktivieren',
     filter: 'Filter', all: 'Alle', week: 'Woche', month: 'Monat', year: 'Jahr',
     h2h: 'Direkte Duelle', selectPlayer: 'Spieler wählen', wins: 'Siege',
     rulesClassic:
@@ -85,7 +104,15 @@ const T = {
     rulesCricket:
       'Ziele: 15–20 und 25. Single = 1 „/“, Double = 2 (✕), Triple = 3 (Ⓧ). Nach 3 Marken ist die Zahl geschlossen. Überschüsse punkten nur, wenn Gegner die Zahl nicht geschlossen haben.',
     rulesAround:
-      'Ziele nacheinander 1 → 20 → Bull (25). Gewertet wird nur das aktuelle Ziel. Doppel/Triple zählen als Treffer. Sieger trifft zuerst Bull.'
+      'Ziele nacheinander 1 → 20 → Bull (25). Gewertet wird nur das aktuelle Ziel. Doppel/Triple zählen als Treffer. Sieger trifft zuerst Bull.',
+      premiumTitle: "DartScore Premium",
+premiumDesc: "Bringe dein Spiel auf das nächste Level. Mehr Übersicht, Komfort und ein besseres Spielerlebnis.",
+premiumFeature1: "Werbefrei – ungestörtes Spielen",
+premiumFeature2: "Speichern laufender und beendeter Spiele",
+premiumFeature3: "Statistiken direkter Duelle",
+premiumFeature4: "Individuelles Farbschema der App",
+premiumButton: "Premium freischalten – 2,99 €",
+premiumNote: "Einmalige Zahlung. Kein Abo.",
   },
   es: {
     app: 'DartScore Pro', sound: 'Sonido', voice: 'Voz', back: 'Atrás',
@@ -103,6 +130,7 @@ const T = {
     youWinPrefix: 'Victoria', outLabel: 'Finish', zeroWord: 'cero',
     points: 'Puntos', target: 'Objetivo',
     premiumMode: 'Modo Premium',
+    activatePremium: 'Activar Premium',
     filter: 'Filtro', all: 'Todo', week: 'Semana', month: 'Mes', year: 'Año',
     h2h: 'Cara a cara', selectPlayer: 'Elige jugador', wins: 'victorias',
     rulesClassic:
@@ -110,7 +138,15 @@ const T = {
     rulesCricket:
       'Objetivos 15–20 y 25. Single = 1 “/”, Double = 2 (✕), Triple = 3 (Ⓧ). Con 3 marcas el número se cierra. Excesos puntúan solo si los rivales no lo tienen cerrado.',
     rulesAround:
-      'Secuencia 1 → 20 → Bull (25). Solo cuenta el objetivo actual. Dobles/Triples cuentan como acierto. Gana quien golpea Bull antes.'
+      'Secuencia 1 → 20 → Bull (25). Solo cuenta el objetivo actual. Dobles/Triples cuentan como acierto. Gana quien golpea Bull antes.',
+      premiumTitle: "DartScore Premium",
+premiumDesc: "Lleva tu juego al siguiente nivel. Consigue más control, estadísticas y una mejor experiencia.",
+premiumFeature1: "Sin anuncios – juego sin interrupciones",
+premiumFeature2: "Guardar partidas en curso y finalizadas",
+premiumFeature3: "Estadísticas de enfrentamientos directos",
+premiumFeature4: "Colores personalizados de la aplicación",
+premiumButton: "Desbloquear Premium – 2,99 €",
+premiumNote: "Pago único. Sin suscripción.",
   },
   nl: {
     app: 'DartScore Pro', sound: 'Geluid', voice: 'Spraak', back: 'Terug',
@@ -128,6 +164,7 @@ const T = {
     youWinPrefix: 'Winst', outLabel: 'Finish', zeroWord: 'nul',
     points: 'Punten', target: 'Doel',
     premiumMode: 'Premium-modus',
+    activatePremium: 'Premium activeren',
     filter: 'Filter', all: 'Alles', week: 'Week', month: 'Maand', year: 'Jaar',
     h2h: 'Onderling', selectPlayer: 'Kies speler', wins: 'zeges',
     rulesClassic:
@@ -135,7 +172,15 @@ const T = {
     rulesCricket:
       'Doelen 15–20 en 25. Single = 1 “/”, Double = 2 (✕), Triple = 3 (Ⓧ). Na 3 tekens is het getal gesloten. Overschotten scoren alleen als tegenstanders nog open hebben.',
     rulesAround:
-      'Volgorde 1 → 20 → Bull (25). Alleen het huidige doel telt. Double/Triple telt als treffer. Wie het eerst Bull raakt, wint.'
+      'Volgorde 1 → 20 → Bull (25). Alleen het huidige doel telt. Double/Triple telt als treffer. Wie het eerst Bull raakt, wint.',
+      premiumTitle: "DartScore Premium",
+premiumDesc: "Breng je spel naar een hoger niveau. Krijg meer overzicht, statistieken en speelcomfort.",
+premiumFeature1: "Zonder advertenties – ongestoord spelen",
+premiumFeature2: "Lopende en voltooide spellen opslaan",
+premiumFeature3: "Onderlinge wedstrijdstatistieken",
+premiumFeature4: "Aangepaste kleuren van de app",
+premiumButton: "Premium ontgrendelen – €2,99",
+premiumNote: "Eenmalige betaling. Geen abonnement.",
   },
   ru: {
     app: 'DartScore Pro', sound: 'Звук', voice: 'Голос', back: 'Назад',
@@ -153,6 +198,7 @@ const T = {
     youWinPrefix: 'Победа', outLabel: 'Finish', zeroWord: 'ноль',
     points: 'Очки', target: 'Цель',
     premiumMode: 'Премиум-режим',
+    activatePremium: 'Активировать Premium',
     filter: 'Фильтр', all: 'Все', week: 'Неделя', month: 'Месяц', year: 'Год',
     h2h: 'Личные встречи', selectPlayer: 'Выбери игрока', wins: 'побед',
     rulesClassic:
@@ -160,7 +206,15 @@ const T = {
     rulesCricket:
       'Цели: 15–20 и 25. Single = 1 «/», Double = 2 (✕), Triple = 3 (Ⓧ). После 3 меток число закрыто. Излишки дают очки только если у соперников число не закрыто.',
     rulesAround:
-      'Последовательно 1 → 20 → Bull (25). Засчитывается только текущая цель. Дабл/трипл засчитываются как попадание. Побеждает первый, кто попадёт в Bull.'
+      'Последовательно 1 → 20 → Bull (25). Засчитывается только текущая цель. Дабл/трипл засчитываются как попадание. Побеждает первый, кто попадёт в Bull.',
+      premiumTitle: "DartScore Premium",
+premiumDesc: "Подними свою игру на новый уровень. Больше контроля, статистики и удобства.",
+premiumFeature1: "Без рекламы — игра без отвлечений",
+premiumFeature2: "Сохранение текущих и завершённых игр",
+premiumFeature3: "Статистика личных встреч",
+premiumFeature4: "Собственная цветовая тема приложения",
+premiumButton: "Разблокировать Premium – 2,99 €",
+premiumNote: "Разовая оплата. Без подписки.",
   },
   zh: {
     app: 'DartScore Pro', sound: '声音', voice: '语音', back: '返回',
@@ -178,6 +232,7 @@ const T = {
     youWinPrefix: '胜利', outLabel: '收尾', zeroWord: '零',
     points: '分数', target: '目标',
     premiumMode: '高级模式',
+    activatePremium: 'Активировать Premium',
     filter: '筛选', all: '全部', week: '一周', month: '一月', year: '一年',
     h2h: '对战', selectPlayer: '选玩家', wins: '胜',
     rulesClassic:
@@ -185,7 +240,15 @@ const T = {
     rulesCricket:
       '目标为 15–20 和 25。Single = 1“/”，Double = 2（✕），Triple = 3（Ⓧ）。3 记号后该数关闭。多余命中仅在对手未关闭时计分。',
     rulesAround:
-      '依次 1 → 20 → Bull（25）。只计算当前目标。双倍/三倍视作命中。先中 Bull 者胜。'
+      '依次 1 → 20 → Bull（25）。只计算当前目标。双倍/三倍视作命中。先中 Bull 者胜。',
+      premiumTitle: "DartScore 高级版",
+premiumDesc: "将你的游戏提升到新的水平。获得更多控制、统计数据和更好的体验。",
+premiumFeature1: "无广告——不受干扰的游戏体验",
+premiumFeature2: "保存进行中和已完成的游戏",
+premiumFeature3: "对战统计",
+premiumFeature4: "自定义应用颜色主题",
+premiumButton: "解锁高级版 – €2.99",
+premiumNote: "一次性付款，无订阅。",
   }
 };
 
@@ -345,6 +408,7 @@ async function showInterstitialAd() {
 
 /* ===== MAIN APP ===== */
 function App() {
+  const ADS_ENABLED = false;
   /* viewport fix */
     /* >>> DARTSCORE_UNIQUE_ANCHOR__VIEWPORT_FIX__START__C91E <<< */
   useEffect(() => {
@@ -413,6 +477,13 @@ function App() {
   const [themeColor, setThemeColor] = useState('default');
 
   const [showAd, setShowAd] = useState(false);
+  const [showPremiumInfo, setShowPremiumInfo] = useState(false);
+  const [showPremiumDetails, setShowPremiumDetails] = useState(false);
+  useEffect(() => {
+  if (!ADS_ENABLED) {
+    setShowAd(false);
+  }
+}, []);
   const [adSecondsLeft, setAdSecondsLeft] = useState(20);
   const adTimerRef = useRef(null);
 
@@ -1365,9 +1436,9 @@ useEffect(() => {
       outDouble, outTriple, outMaster, anyOutSelected
     ]);
 
-    /* reklama overlay */
-    useEffect(() => {
-  if (!showAd) return;
+ /* reklama overlay */
+useEffect(() => {
+  if (!ADS_ENABLED || !showAd) return;
 
   if (adTimerRef.current) {
     clearInterval(adTimerRef.current);
@@ -1394,94 +1465,98 @@ useEffect(() => {
   };
 }, [showAd]);
 
-    const closeAdNow = () => {
-      setShowAd(false);
-    };
+const closeAdNow = () => {
+  setShowAd(false);
+};
+
 const buyPremium = async () => {
   let response;
 
   try {
+    const hasWindow = typeof window !== 'undefined';
     const hasDigitalGoods =
-      typeof window !== 'undefined' && !!window.getDigitalGoodsService;
+      hasWindow && typeof window.getDigitalGoodsService === 'function';
     const hasPaymentRequest =
-      typeof window !== 'undefined' && !!window.PaymentRequest;
+      hasWindow && typeof window.PaymentRequest === 'function';
     const isLocalDev =
-      typeof window !== 'undefined' &&
+      hasWindow &&
       (window.location.hostname === 'localhost' ||
         window.location.hostname.includes('github.dev'));
 
-    // 1) Google Play Billing v TWA / Android buildu
-    if (hasDigitalGoods && hasPaymentRequest) {
-      const service = await window.getDigitalGoodsService(
-        'https://play.google.com/billing'
-      );
-
-      const details = await service.getDetails(['premium_unlock']);
-      if (!details || !details.length) {
-        throw new Error('premium_unlock not found in Play Billing');
-      }
-
-      const item = details[0];
-      const currency = item?.price?.currency || 'CZK';
-      const value = item?.price?.value || '69.99';
-
-      const request = new PaymentRequest(
-        [
-          {
-            supportedMethods: 'https://play.google.com/billing',
-            data: { sku: 'premium_unlock' },
-          },
-        ],
-        {
-          total: {
-            label: 'DartScore Premium',
-            amount: { currency, value },
-          },
-        }
-      );
-
-      response = await request.show();
-
-      const token =
-        response?.details?.purchaseToken ||
-        response?.details?.token ||
-        response?.purchaseToken ||
-        response?.token;
-
-      if (!token) {
-        throw new Error('Missing purchase token');
-      }
-
-      if (service.acknowledge) {
-        await service.acknowledge(token, 'onetime');
-      }
-
-      if (response.complete) {
-        await response.complete('success');
-      }
-
-      setIsPremium(true);
-      localStorage.setItem('premium', 'true');
-      setShowAd(false);
-      showToast('Premium aktivováno');
-      return;
-    }
-
-    // 2) Jen lokální dev fallback
     if (isLocalDev) {
       setIsPremium(true);
       localStorage.setItem('premium', 'true');
+      setShowPremiumInfo(false);
       setShowAd(false);
       showToast('Premium aktivováno (test)');
       return;
     }
 
-    // 3) Produkční / testovací appka bez billing API
-    showToast('Google Play nákup není v této verzi dostupný');
+    if (!hasDigitalGoods || !hasPaymentRequest) {
+      showToast('Google Play nákup není v této verzi dostupný');
+      return;
+    }
+
+    const service = await window.getDigitalGoodsService(
+      'https://play.google.com/billing'
+    );
+
+    if (!service) {
+      throw new Error('Billing service is unavailable');
+    }
+
+    const details = await service.getDetails(['premium_unlock']);
+    if (!details || !details.length) {
+      throw new Error('premium_unlock not found in Play Billing');
+    }
+
+    const item = details[0];
+    const currency = item?.price?.currency || 'CZK';
+    const value = item?.price?.value || '69.99';
+
+    const request = new window.PaymentRequest(
+      [
+        {
+          supportedMethods: 'https://play.google.com/billing',
+          data: { sku: 'premium_unlock' },
+        },
+      ],
+      {
+        total: {
+          label: 'DartScore Premium',
+          amount: { currency, value },
+        },
+      }
+    );
+
+    response = await request.show();
+
+    const token =
+      response?.details?.purchaseToken ||
+      response?.details?.token ||
+      response?.purchaseToken ||
+      response?.token;
+
+    if (!token) {
+      throw new Error('Missing purchase token');
+    }
+
+    if (typeof service.acknowledge === 'function') {
+      await service.acknowledge(token, 'onetime');
+    }
+
+    if (typeof response.complete === 'function') {
+      await response.complete('success');
+    }
+
+    setIsPremium(true);
+    localStorage.setItem('premium', 'true');
+    setShowPremiumInfo(false);
+    setShowAd(false);
+    showToast('Premium aktivováno');
   } catch (err) {
     const msg = String(err?.message || err || '');
 
-    // už vlastní položku -> rovnou aktivuj Premium
     if (
       msg.includes('already own') ||
       msg.includes('already owned') ||
@@ -1489,6 +1564,7 @@ const buyPremium = async () => {
     ) {
       setIsPremium(true);
       localStorage.setItem('premium', 'true');
+      setShowPremiumInfo(false);
       setShowAd(false);
       showToast('Premium obnoveno');
       return;
@@ -1501,6 +1577,20 @@ const buyPremium = async () => {
     } catch {}
 
     console.error('BUY PREMIUM ERROR:', err);
+
+    if (
+      msg.includes('clientAppUnavailable') ||
+      msg.includes('Billing service is unavailable')
+    ) {
+      showToast('Nákup teď není dostupný. Zavři a znovu otevři aplikaci a zkus to znovu.');
+      return;
+    }
+
+    if (msg.includes('AbortError')) {
+      showToast('Nákup byl zrušen.');
+      return;
+    }
+
     showToast(`Nákup Premium selhal: ${msg}`);
   }
 };
@@ -1748,7 +1838,7 @@ const buyPremium = async () => {
       isPremium={isPremium} setIsPremium={setIsPremium}
       themeColor={themeColor} setThemeColor={setThemeColor}
     />
-    {!isPremium && (
+    {false && (
       <div
         style={{
           position: 'fixed',
@@ -1778,63 +1868,125 @@ const buyPremium = async () => {
             pointerEvents: 'auto'
           }}
         >
-          Banner reklama
+         Banner reklama
+        </div>
+      </div>
+    )}
+
+    {showPremiumInfo && (
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.85)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999
+        }}
+      >
+        <div
+          style={{
+            background: '#111',
+            padding: '24px',
+            borderRadius: '12px',
+            width: '90%',
+            maxWidth: '320px',
+            textAlign: 'center'
+          }}
+        >
+          <h2>{t.premiumTitle}</h2>
+
+<div style={{ marginBottom: '12px', fontSize: '14px', opacity: 0.85 }}>
+  {t.premiumDesc}
+</div>
+
+<div style={{ textAlign: 'left', marginBottom: '16px', fontSize: '14px' }}>
+  <div>✔️ {t.premiumFeature1}</div>
+  <div>✔️ {t.premiumFeature2}</div>
+  <div>✔️ {t.premiumFeature3}</div>
+  <div>✔️ {t.premiumFeature4}</div>
+</div>
+
+<button onClick={buyPremium}>
+  {t.premiumButton}
+</button>
+
+<div style={{ marginTop: '8px', fontSize: '12px', opacity: 0.6 }}>
+  {t.premiumNote}
+</div>
+
+          <button onClick={() => setShowPremiumInfo(false)}>
+            Zavřít
+          </button>
         </div>
       </div>
     )}
   </>
 ) : (
-                        <Game
-              lang={lang} t={t}
-              mode={mode}
-              isPremium={isPremium}
-              outDesc={(() => {
-                if (mode !== 'classic') {
-                  return mode === 'cricket' ? 'Cricket' : 'Around the Clock';
-                }
-                const arr = [];
-                if (outDouble) arr.push('Double-out');
-                if (outTriple) arr.push('Triple-out');
-                if (outMaster) arr.push('Master-out');
-                if (arr.length === 0) return 'Any-out';
-                return arr.join(' + ');
-              })()}
-              players={players} order={order} currIdx={currIdx}
-              scores={scores} thrown={thrown} lastTurn={lastTurn}
-              cricket={cricket} around={around}
-              averages={averages}
-              darts={darts} mult={mult} setMult={setMult}
-              commitDart={commitDart} undo={undo}
-              winner={winner}
-              saveGame={() => {
-                try {
-                  const list = JSON.parse(localStorage.getItem('finishedGames') || '[]');
-                  list.unshift({
-                    ts: Date.now(),
-                    mode, startScore,
-                    outDouble, outTriple, outMaster,
-                    randomOrder, playThrough,
-                    players: players.map(p => p.name),
-                    winner: players[order[currIdx]]?.name || ''
-                  });
-                  localStorage.setItem('finishedGames', JSON.stringify(list.slice(0, 200)));
-                } catch { }
-                showToast('Uloženo');
-              }}
-              restartGame={restartGame}
-              cardRefs={cardRefs}
-              setScreen={(scr) => {
-                if (scr === 'lobby') saveSnapshot();
-                setScreen(scr);
-              }}
-            />
-          )}
-
+  <Game
+    lang={lang}
+    t={t}
+    mode={mode}
+    isPremium={isPremium}
+    outDesc={(() => {
+      if (mode !== 'classic') {
+        return mode === 'cricket' ? 'Cricket' : 'Around the Clock';
+      }
+      const arr = [];
+      if (outDouble) arr.push('Double-out');
+      if (outTriple) arr.push('Triple-out');
+      if (outMaster) arr.push('Master-out');
+      if (arr.length === 0) return 'Any-out';
+      return arr.join(' + ');
+    })()}
+    players={players}
+    order={order}
+    currIdx={currIdx}
+    scores={scores}
+    thrown={thrown}
+    lastTurn={lastTurn}
+    cricket={cricket}
+    around={around}
+    averages={averages}
+    darts={darts}
+    mult={mult}
+    setMult={setMult}
+    commitDart={commitDart}
+    undo={undo}
+    winner={winner}
+    saveGame={() => {
+      try {
+        const list = JSON.parse(localStorage.getItem('finishedGames') || '[]');
+        list.unshift({
+          ts: Date.now(),
+          mode,
+          startScore,
+          outDouble,
+          outTriple,
+          outMaster,
+          randomOrder,
+          playThrough,
+          players: players.map(p => p.name),
+          winner: players[order[currIdx]]?.name || ''
+        });
+        localStorage.setItem('finishedGames', JSON.stringify(list.slice(0, 200)));
+      } catch {}
+      showToast('Uloženo');
+    }}
+    restartGame={restartGame}
+    cardRefs={cardRefs}
+    setScreen={(scr) => {
+      if (scr === 'lobby') saveSnapshot();
+      setScreen(scr);
+    }}
+  />
+)}
           <audio ref={hitAudioRef} src="/dart-hit.mp3" preload="auto" />
           <audio ref={winAudioRef} src="/tada-fanfare-a-6313.mp3" preload="auto" />
 
         {/* FULLSCREEN OVERLAY PO VÝHŘE */}
-        {showAd && (
+        {false && (
           <div
             style={{
               position: 'fixed',
@@ -1899,7 +2051,7 @@ const buyPremium = async () => {
             {!isPremium && (
               <button
                 type="button"
-                onClick={buyPremium}                 
+                onClick={() => setShowPremiumInfo(true)}                 
                 style={{
                   marginTop: '16px',
                   fontSize: '12px',
@@ -1921,14 +2073,13 @@ const buyPremium = async () => {
             )}
           </div>
         )}
-
         {toast && <div className="toast ok">✔️ {toast}</div>}
       </div>
     </ErrorBoundary>
   );
-    }   
-  /* ===== LOBBY ===== */
-  function Lobby({
+}
+/* ===== LOBBY ===== */
+function Lobby({       
     lang, t,
     mode, setMode,
     startScore, setStartScore,
@@ -2104,21 +2255,23 @@ const buyPremium = async () => {
               marginBottom: 8
             }}
           >
-            <span
-              style={{
-                fontWeight: 800,
-                fontSize: 14,
-                color: '#fff',
-                lineHeight: 1.2
-              }}
-            >
-              {t(lang, 'premiumMode')}
-            </span>
-
+            <button
+  type="button"
+  className="btn"
+  onClick={() => setShowPremiumDetails(s => !s)}
+  style={{
+    minWidth: 90,
+    fontWeight: 800,
+    borderColor: 'var(--accent)',
+    boxShadow: showPremiumDetails ? '0 0 6px var(--accent)' : 'none'
+  }}
+>
+  {t(lang, 'premiumMode')}
+</button>
             <button
               type="button"
               className="btn"
-              onClick={buyPremium}              
+              onClick={() => setShowPremiumInfo(true)}             
               style={{
                 minWidth: 90,
                 fontWeight: 800,
@@ -2126,10 +2279,20 @@ const buyPremium = async () => {
                 boxShadow: isPremium ? '0 0 6px var(--accent)' : 'none'
               }}
             >
-              {isPremium ? t(lang, 'premiumMode') : 'Free'}
+            {isPremium ? t(lang, 'premiumMode') : t(lang, 'activatePremium')}
             </button>
                      </div>
-
+{showPremiumDetails && (
+  <div style={{
+    marginTop: '8px',
+    fontSize: 12,
+    color: '#fff',
+    opacity: 0.85,
+    lineHeight: 1.4
+  }}>
+    Bez reklam • Ukládání her • Statistiky • Vlastní vzhled • 69,99 Kč jednorázově
+  </div>
+)}
           {isPremium && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <div
