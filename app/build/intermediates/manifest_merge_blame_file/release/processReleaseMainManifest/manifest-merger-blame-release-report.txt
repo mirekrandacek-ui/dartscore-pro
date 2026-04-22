@@ -23,8 +23,8 @@
 23-->
 24<manifest xmlns:android="http://schemas.android.com/apk/res/android"
 25    package="com.randis2288.dartscorepro"
-26    android:versionCode="28"
-27    android:versionName="28" >
+26    android:versionCode="29"
+27    android:versionName="29" >
 28
 29    <uses-sdk
 30        android:minSdkVersion="21"

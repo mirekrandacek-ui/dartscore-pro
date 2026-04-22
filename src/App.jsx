@@ -477,8 +477,6 @@ function App() {
   const [themeColor, setThemeColor] = useState('default');
 
   const [showAd, setShowAd] = useState(false);
-  const [showPremiumInfo, setShowPremiumInfo] = useState(false);
-  const [showPremiumDetails, setShowPremiumDetails] = useState(false);
   useEffect(() => {
   if (!ADS_ENABLED) {
     setShowAd(false);
@@ -1486,7 +1484,6 @@ const buyPremium = async () => {
     if (isLocalDev) {
       setIsPremium(true);
       localStorage.setItem('premium', 'true');
-      setShowPremiumInfo(false);
       setShowAd(false);
       showToast('Premium aktivováno (test)');
       return;
@@ -1551,7 +1548,6 @@ const buyPremium = async () => {
 
     setIsPremium(true);
     localStorage.setItem('premium', 'true');
-    setShowPremiumInfo(false);
     setShowAd(false);
     showToast('Premium aktivováno');
   } catch (err) {
@@ -1563,8 +1559,7 @@ const buyPremium = async () => {
       msg.includes('Tuto položku již vlastníte')
     ) {
       setIsPremium(true);
-      localStorage.setItem('premium', 'true');
-      setShowPremiumInfo(false);
+      localStorage.setItem('premium', 'true');      
       setShowAd(false);
       showToast('Premium obnoveno');
       return;
@@ -1872,56 +1867,6 @@ const buyPremium = async () => {
         </div>
       </div>
     )}
-
-    {showPremiumInfo && (
-      <div
-        style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(0,0,0,0.85)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999
-        }}
-      >
-        <div
-          style={{
-            background: '#111',
-            padding: '24px',
-            borderRadius: '12px',
-            width: '90%',
-            maxWidth: '320px',
-            textAlign: 'center'
-          }}
-        >
-          <h2>{t.premiumTitle}</h2>
-
-<div style={{ marginBottom: '12px', fontSize: '14px', opacity: 0.85 }}>
-  {t.premiumDesc}
-</div>
-
-<div style={{ textAlign: 'left', marginBottom: '16px', fontSize: '14px' }}>
-  <div>✔️ {t.premiumFeature1}</div>
-  <div>✔️ {t.premiumFeature2}</div>
-  <div>✔️ {t.premiumFeature3}</div>
-  <div>✔️ {t.premiumFeature4}</div>
-</div>
-
-<button onClick={buyPremium}>
-  {t.premiumButton}
-</button>
-
-<div style={{ marginTop: '8px', fontSize: '12px', opacity: 0.6 }}>
-  {t.premiumNote}
-</div>
-
-          <button onClick={() => setShowPremiumInfo(false)}>
-            Zavřít
-          </button>
-        </div>
-      </div>
-    )}
   </>
 ) : (
   <Game
@@ -2098,6 +2043,7 @@ function Lobby({
     isPremium, setIsPremium,
     themeColor, setThemeColor
   }) {
+    const [showPremiumDetails, setShowPremiumDetails] = useState(false);
     return (
       <div className="lobbyWrap">
 
@@ -2271,7 +2217,7 @@ function Lobby({
             <button
               type="button"
               className="btn"
-              onClick={() => setShowPremiumInfo(true)}             
+              onClick={buyPremium}           
               style={{
                 minWidth: 90,
                 fontWeight: 800,
