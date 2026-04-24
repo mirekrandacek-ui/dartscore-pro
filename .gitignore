@@ -1,0 +1,33 @@
+# dependencies
+node_modules/
+
+# Vite build
+dist/
+
+# env/local
+.env
+.env.*
+*.local
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Capacitor / Android build outputs
+android/.gradle/
+android/app/build/
+android/build/
+android/.idea/
+android/local.properties
+
+# Root Android/Gradle leftovers if any
+.gradle/
+app/build/
+build/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/

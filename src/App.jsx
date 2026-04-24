@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { AdMob, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob';
 import './app.css';
 
 /* ===== Ikona reproduktoru ===== */
@@ -408,7 +409,7 @@ async function showInterstitialAd() {
 
 /* ===== MAIN APP ===== */
 function App() {
-  const ADS_ENABLED = false;
+  const ADS_ENABLED = true;
   /* viewport fix */
     /* >>> DARTSCORE_UNIQUE_ANCHOR__VIEWPORT_FIX__START__C91E <<< */
   useEffect(() => {
@@ -425,6 +426,7 @@ function App() {
     return () => window.removeEventListener('resize', setVh);
   }, []);
   /* >>> DARTSCORE_UNIQUE_ANCHOR__VIEWPORT_FIX__END__C91E <<< */
+
 
   /* === STATE === */
 
@@ -448,6 +450,39 @@ function App() {
   const [startScore, setStartScore] = useState(501);
 
   const [isPremium, setIsPremium] = useState(false);
+
+  /* ===== AdMob banner ===== */
+  useEffect(() => {
+    if (!ADS_ENABLED || isPremium) return;
+
+    let cancelled = false;
+
+    const startAdMobBanner = async () => {
+      try {
+        await AdMob.initialize();
+
+        if (cancelled) return;
+
+        await AdMob.showBanner({
+          adId: 'ca-app-pub-3940256099942544/6300978111',
+          adSize: BannerAdSize.ADAPTIVE_BANNER,
+          position: BannerAdPosition.BOTTOM_CENTER,
+          margin: 0,
+          isTesting: true,
+        });
+      } catch (err) {
+        console.warn('AdMob banner error:', err);
+      }
+    };
+
+    startAdMobBanner();
+
+    return () => {
+      cancelled = true;
+      AdMob.hideBanner().catch(() => {});
+    };
+  }, [ADS_ENABLED, isPremium]);
+
 
   useEffect(() => {
     const restorePremium = async () => {
