@@ -506,7 +506,7 @@ function App() {
       }
     };
 
-    restorePremium();
+    // restorePremium(); // dočasně vypnuto pro test reklamního banneru
   }, []);
 
   const [themeColor, setThemeColor] = useState('default');
@@ -555,7 +555,7 @@ function App() {
       if (typeof s.playThrough === 'boolean') setPlayThrough(s.playThrough);
       if (s.ai) setAi(s.ai);
       if (s.players) setPlayers(s.players);
-      if (typeof s.isPremium === 'boolean') setIsPremium(s.isPremium);
+      // Premium se nesmí obnovovat z lobby snapshotu; řeší ho Play Billing/local purchase flow.
       if (s.themeColor) setThemeColor(s.themeColor);
     } catch { }
   }, []);
@@ -569,7 +569,7 @@ function App() {
           lang, mode, startScore,
           outDouble, outTriple, outMaster,
           randomOrder, playThrough, ai, players,
-          isPremium, themeColor
+          themeColor
         })
       );
     } catch { }
@@ -577,7 +577,7 @@ function App() {
     lang, mode, startScore,
     outDouble, outTriple, outMaster,
     randomOrder, playThrough, ai, players,
-    isPremium, themeColor
+    themeColor
   ]);
 
   /* přelož auto-jména při změně jazyka */
@@ -1634,7 +1634,7 @@ const buyPremium = async () => {
       scores, darts, mult, actions, thrown, lastTurn,
       winner, pendingWin,
       cricket, around,
-      isPremium, themeColor
+      themeColor
     });
 
     const saveSnapshot = () => {
@@ -1667,7 +1667,7 @@ const buyPremium = async () => {
         setPendingWin(s.pendingWin ?? null);
         setCricket(s.cricket ?? null);
         setAround(s.around ?? null);
-        setIsPremium(!!s.isPremium);
+        // Premium se nesmí obnovovat ze savedGame snapshotu.
         setThemeColor(s.themeColor || 'default');
 
         setShowAd(false);
