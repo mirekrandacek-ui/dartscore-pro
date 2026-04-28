@@ -173,6 +173,12 @@ input[type="text"]{color:#fff}
   min-height:calc(var(--vh,1vh)*100);
 }
 
+/* AdMob banner ve free verzi je nativní overlay dole,
+   proto dáme celé herní obrazovce spodní rezervu. */
+.container[data-premium="0"] .gameWrap{
+  padding-bottom:calc(88px + var(--sab));
+}
+
 /* horní lišta – jeden pevný řádek */
 .gameTopBar{
   display:flex;
@@ -290,12 +296,12 @@ input[type="text"]{color:#fff}
 
 .targetCell,
 .markCell {
-  height: 56px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #171a1f;
-  font-size: 20px;
+  font-size: 19px;
   line-height: 1;
   border-bottom: 1px solid var(--line);
 }
@@ -467,7 +473,7 @@ input[type="text"]{color:#fff}
 }
 /* Extra mezera mezi tabulkou a klávesnicí jen v Cricketu */
 .container[data-mode="cricket"] .padPane{
-  margin-top:40px;    /* tady si hraj s mezerou – 24 / 32 / 40px */
+  margin-top:12px;    /* menší mezera, aby se vešel i řádek 25 */
 }
 .padRow{
   display:flex;
@@ -641,12 +647,12 @@ html, body{
 
 /* větší mezera pod tabulkou cricketu */
 .container[data-mode="cricket"] .cricketWrap{
-  margin-bottom:32px !important;   /* klidně zkus 24 / 32 / 40px */
+  margin-bottom:8px !important;   /* menší mezera kvůli AdMob banneru */
 }
 
 /* menší klávesnice jen pro Cricket, ať nepřileze zpátky nahoru */
 .container[data-mode="cricket"] .padPane{
-  flex:0 0 220px !important;       /* zkus 200 / 220 / 240 podle oka */
+  flex:0 0 165px !important;       /* nižší Cricket klávesnice kvůli banneru */
 }
 /* === CRICKET – force bold numbers in the left column === */
 .targetsRailMarks .targetCell {
