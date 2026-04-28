@@ -506,7 +506,7 @@ function App() {
       }
     };
 
-    // restorePremium(); // dočasně vypnuto pro test reklamního banneru
+    restorePremium();
   }, []);
 
   const [themeColor, setThemeColor] = useState('default');
