@@ -464,11 +464,11 @@ function App() {
         if (cancelled) return;
 
         await AdMob.showBanner({
-          adId: 'ca-app-pub-3940256099942544/6300978111',
+          adId: ADMOB_BANNER_ID,
           adSize: BannerAdSize.ADAPTIVE_BANNER,
           position: BannerAdPosition.BOTTOM_CENTER,
           margin: 0,
-          isTesting: true,
+          isTesting: false,
         });
       } catch (err) {
         console.warn('AdMob banner error:', err);
