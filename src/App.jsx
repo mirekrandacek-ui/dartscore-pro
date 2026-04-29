@@ -1516,7 +1516,12 @@ const buyPremium = async () => {
       (window.location.hostname === 'localhost' ||
         window.location.hostname.includes('github.dev'));
 
-    if (isLocalDev) {
+    const isNativeApp =
+      hasWindow && !!window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function'
+        ? window.Capacitor.isNativePlatform()
+        : false;
+
+    if (isLocalDev && !isNativeApp) {
       setIsPremium(true);
       localStorage.setItem('premium', 'true');
       setShowAd(false);

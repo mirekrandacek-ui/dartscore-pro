@@ -43,7 +43,7 @@ padding-top: var(--sat);
 
 /* TOAST */
 .toast{
-  position:fixed;left:50%;bottom:16px;transform:translateX(-50%);
+  position:fixed;left:50%;bottom:calc(92px + var(--sab));transform:translateX(-50%);
   background:#0f1318;border:1px solid var(--line);color:#e5fbea;
   padding:10px 14px;border-radius:12px;font-weight:900;box-shadow:0 6px 20px #0009;z-index:9999
 }
