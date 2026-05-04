@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AdMob, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob';
+import { NativePurchases, PURCHASE_TYPE } from '@capgo/native-purchases';
 import './app.css';
 
 /* ===== Ikona reproduktoru ===== */
@@ -487,19 +488,20 @@ function App() {
   useEffect(() => {
     const restorePremium = async () => {
       try {
-        if (!window.getDigitalGoodsService) return;
+        const { purchases } = await NativePurchases.getPurchases({
+          productType: PURCHASE_TYPE.INAPP,
+          onlyCurrentEntitlements: true,
+        });
 
-        const service = await window.getDigitalGoodsService(
-          'https://play.google.com/billing'
+        const hasPremium = purchases?.some(p =>
+          p.productIdentifier === 'premium_unlock' &&
+          (!p.purchaseState || String(p.purchaseState) === '1')
         );
-
-        const purchases = await service.listPurchases();
-        const hasPremium = purchases?.some(p => p.sku === 'premium_unlock');
 
         if (hasPremium) {
           setIsPremium(true);
           localStorage.setItem('premium', 'true');
-          console.log('Premium restored from Play');
+          console.log('Premium restored from native purchases');
         }
       } catch (e) {
         console.warn('Restore premium failed', e);
@@ -1503,14 +1505,8 @@ const closeAdNow = () => {
 };
 
 const buyPremium = async () => {
-  let response;
-
   try {
     const hasWindow = typeof window !== 'undefined';
-    const hasDigitalGoods =
-      hasWindow && typeof window.getDigitalGoodsService === 'function';
-    const hasPaymentRequest =
-      hasWindow && typeof window.PaymentRequest === 'function';
     const isLocalDev =
       hasWindow &&
       (window.location.hostname === 'localhost' ||
@@ -1529,62 +1525,26 @@ const buyPremium = async () => {
       return;
     }
 
-    if (!hasDigitalGoods || !hasPaymentRequest) {
-      showToast('Google Play nákup není v této verzi dostupný');
+    if (!isNativeApp) {
+      showToast('Google Play nákup je dostupný jen v Android aplikaci');
       return;
     }
 
-    const service = await window.getDigitalGoodsService(
-      'https://play.google.com/billing'
-    );
+    const { products } = await NativePurchases.getProducts({
+      productIdentifiers: ['premium_unlock'],
+      productType: PURCHASE_TYPE.INAPP,
+    });
 
-    if (!service) {
-      throw new Error('Billing service is unavailable');
+    if (!products || !products.length) {
+      throw new Error('premium_unlock not found');
     }
 
-    const details = await service.getDetails(['premium_unlock']);
-    if (!details || !details.length) {
-      throw new Error('premium_unlock not found in Play Billing');
-    }
-
-    const item = details[0];
-    const currency = item?.price?.currency || 'CZK';
-    const value = item?.price?.value || '69.99';
-
-    const request = new window.PaymentRequest(
-      [
-        {
-          supportedMethods: 'https://play.google.com/billing',
-          data: { sku: 'premium_unlock' },
-        },
-      ],
-      {
-        total: {
-          label: 'DartScore Premium',
-          amount: { currency, value },
-        },
-      }
-    );
-
-    response = await request.show();
-
-    const token =
-      response?.details?.purchaseToken ||
-      response?.details?.token ||
-      response?.purchaseToken ||
-      response?.token;
-
-    if (!token) {
-      throw new Error('Missing purchase token');
-    }
-
-    if (typeof service.acknowledge === 'function') {
-      await service.acknowledge(token, 'onetime');
-    }
-
-    if (typeof response.complete === 'function') {
-      await response.complete('success');
-    }
+    await NativePurchases.purchaseProduct({
+      productIdentifier: 'premium_unlock',
+      productType: PURCHASE_TYPE.INAPP,
+      isConsumable: false,
+      autoAcknowledgePurchases: true,
+    });
 
     setIsPremium(true);
     localStorage.setItem('premium', 'true');
@@ -1596,36 +1556,27 @@ const buyPremium = async () => {
     if (
       msg.includes('already own') ||
       msg.includes('already owned') ||
+      msg.includes('ITEM_ALREADY_OWNED') ||
       msg.includes('Tuto položku již vlastníte')
     ) {
       setIsPremium(true);
-      localStorage.setItem('premium', 'true');      
+      localStorage.setItem('premium', 'true');
       setShowAd(false);
       showToast('Premium obnoveno');
       return;
     }
 
-    try {
-      if (response?.complete) {
-        await response.complete('fail');
-      }
-    } catch {}
-
-    console.error('BUY PREMIUM ERROR:', err);
-
     if (
-      msg.includes('clientAppUnavailable') ||
-      msg.includes('Billing service is unavailable')
+      msg.includes('cancel') ||
+      msg.includes('canceled') ||
+      msg.includes('cancelled') ||
+      msg.includes('AbortError')
     ) {
-      showToast('Nákup teď není dostupný. Zavři a znovu otevři aplikaci a zkus to znovu.');
-      return;
-    }
-
-    if (msg.includes('AbortError')) {
       showToast('Nákup byl zrušen.');
       return;
     }
 
+    console.error('BUY PREMIUM ERROR:', err);
     showToast(`Nákup Premium selhal: ${msg}`);
   }
 };
