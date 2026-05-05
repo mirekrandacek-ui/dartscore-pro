@@ -488,9 +488,21 @@ function App() {
   useEffect(() => {
     const restorePremium = async () => {
       try {
+        // Rychlý lokální fallback po už jednou úspěšném nákupu.
+        // Skutečný restore z Google Play běží hned potom.
+        if (localStorage.getItem('premium') === 'true') {
+          setIsPremium(true);
+          setShowAd(false);
+        }
+
+        try {
+          await NativePurchases.restorePurchases();
+        } catch (restoreErr) {
+          console.warn('Native restorePurchases skipped', restoreErr);
+        }
+
         const { purchases } = await NativePurchases.getPurchases({
           productType: PURCHASE_TYPE.INAPP,
-          onlyCurrentEntitlements: true,
         });
 
         const hasPremium = purchases?.some(p =>
@@ -501,6 +513,7 @@ function App() {
         if (hasPremium) {
           setIsPremium(true);
           localStorage.setItem('premium', 'true');
+          setShowAd(false);
           console.log('Premium restored from native purchases');
         }
       } catch (e) {
