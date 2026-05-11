@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AdMob, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob';
 import { NativePurchases, PURCHASE_TYPE } from '@capgo/native-purchases';
+import { CapgoInAppReview } from '@capgo/capacitor-in-app-review';
 import './app.css';
 
 /* ===== Ikona reproduktoru ===== */
@@ -1129,31 +1130,31 @@ const commitCricket = (value, mOverride) => {
       } catch { }
 
       setWinner(pIdx);
-if (!isPremium) {
-  // Web (Codespace) = AdMob interstitial se reálně nespustí, ale overlay musí naběhnout
-  console.log('[ADS] finalizeWin -> showing overlay', { isPremium });
 
-  setAdSecondsLeft(20);
-  setShowAd(true);
+      // Po 3. dokončené hře zkusíme po vítězné fanfáře zobrazit Google Play In-App Review.
+      // API nevrací, jestli uživatel opravdu hodnotil, proto po prvním pokusu už dál neotravujeme.
+      try {
+        const completedGames = Number(localStorage.getItem('reviewCompletedGames') || '0') + 1;
+        localStorage.setItem('reviewCompletedGames', String(completedGames));
 
-  // zkus interstitial (na webu to typicky vrátí false / nic nezobrazí)
-  showInterstitialAd();
-}
+        const reviewAlreadyAsked = localStorage.getItem('reviewPromptDone') === 'true';
 
+        if (completedGames >= 3 && !reviewAlreadyAsked) {
+          localStorage.setItem('reviewPromptDone', 'true');
+
+          const reviewDelayMs = 4500;
+
+          setTimeout(() => {
+            CapgoInAppReview.requestReview().catch(err => {
+              console.warn('In-app review skipped:', err);
+            });
+          }, reviewDelayMs);
+        }
+      } catch (reviewErr) {
+        console.warn('Review prompt scheduling failed:', reviewErr);
+      }
 /* >>> DARTSCORE_UNIQUE_ANCHOR__FINALIZE_WIN_BLOCK__X92K <<< */
 
-      if (!isPremium) {
-  // Web: žádný AdMob interstitial -> nezobrazuj fake pauzu
-  if (typeof window !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    // Mobilní build (až bude): tady teprve dává smysl pauza
-    setAdSecondsLeft(20);
-    setShowAd(true);
-    showInterstitialAd();
-  } else {
-    // web: nic
-    console.log('Interstitial skipped on web');
-  }
-}
       if (isPremium) {
         try {
           const list = JSON.parse(localStorage.getItem('finishedGames') || '[]');
