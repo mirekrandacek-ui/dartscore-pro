@@ -1685,8 +1685,46 @@ const buyPremium = async () => {
           style={{
             paddingTop: 'max(var(--sat, 0px), var(--sat-fallback, 28px))',
             paddingBottom: 'var(--sab, 0px)',
+            position: 'relative',
           }}
         >
+          {screen === 'lobby' && (
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={() => {
+                const playUrl = 'https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro';
+                try {
+                  window.open(playUrl, '_blank', 'noopener,noreferrer');
+                } catch {
+                  window.location.href = playUrl;
+                }
+              }}
+              aria-label={({ cs: 'Ohodnotit', en: 'Rate app', de: 'Bewerten', es: 'Valorar', nl: 'Beoordelen', ru: 'Оценить', zh: '评分' }[lang] || 'Rate app')}
+              title={({ cs: 'Ohodnotit', en: 'Rate app', de: 'Bewerten', es: 'Valorar', nl: 'Beoordelen', ru: 'Оценить', zh: '评分' }[lang] || 'Rate app')}
+              style={{
+                position: 'absolute',
+                top: 'calc(max(var(--sat, 0px), var(--sat-fallback, 28px)) + 2px)',
+                right: 12,
+                height: 30,
+                minHeight: 30,
+                padding: '0 10px',
+                borderRadius: 999,
+                fontSize: 12,
+                fontWeight: 900,
+                lineHeight: 1,
+                color: 'var(--accent)',
+                border: '1px solid rgba(68, 255, 162, 0.55)',
+                background: 'rgba(15, 19, 24, 0.72)',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.18)',
+                zIndex: 20,
+                whiteSpace: 'nowrap'
+              }}
+            >
+              ⭐ {({ cs: 'Ohodnotit', en: 'Rate app', de: 'Bewerten', es: 'Valorar', nl: 'Beoordelen', ru: 'Оценить', zh: '评分' }[lang] || 'Rate app')}
+            </button>
+          )}
+
           {/* HEADER */}
           <div className="header" style={{ flexWrap: 'wrap' }}>
             {/* LEVÁ STRANA: logo + Premium badge */}
