@@ -653,6 +653,7 @@ function App() {
     let panel = '#181a1f';
     let line = '#2b2f36';
     let accent = '#16a34a';
+    let cricketGrid = '#fff';
 
     if (isPremium) {
       if (themeColor === 'blue') {
@@ -660,21 +661,25 @@ function App() {
         panel = '#12284a';
         line = '#27406a';
         accent = '#3b82f6';
+        cricketGrid = accent;
       } else if (themeColor === 'red') {
         bg = '#3b0d0d';
         panel = '#551414';
         line = '#752222';
         accent = '#ef4444';
+        cricketGrid = accent;
       } else if (themeColor === 'purple') {
         bg = '#28104d';
         panel = '#3b176f';
         line = '#5b2aa3';
         accent = '#8b5cf6';
+        cricketGrid = accent;
       } else if (themeColor === 'green') {
         bg = '#0e2d17';
         panel = '#154220';
         line = '#236633';
         accent = '#16a34a';
+        cricketGrid = accent;
       } else if (themeColor === 'black') {
         bg = '#0e0e0e';
         panel = '#181a1f';
@@ -687,6 +692,7 @@ function App() {
     root.style.setProperty('--panel', panel);
     root.style.setProperty('--line', line);
     root.style.setProperty('--accent', accent);
+    root.style.setProperty('--cricket-grid', cricketGrid);
   }, [themeColor, isPremium]);
 
   const movePlayer = (i, dir) => setPlayers(ps => {
