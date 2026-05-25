@@ -1697,7 +1697,9 @@ const buyPremium = async () => {
           data-premium={isPremium ? '1' : '0'}
           style={{
             paddingTop: 'max(var(--sat, 0px), var(--sat-fallback, 28px))',
-            paddingBottom: 'var(--sab, 0px)',
+            paddingBottom: isPremium
+              ? 'var(--sab, 0px)'
+              : 'calc(88px + var(--sab, 0px))',
             position: 'relative',
           }}
         >

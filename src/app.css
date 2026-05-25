@@ -168,15 +168,9 @@ input[type="text"]{color:#fff}
   flex-direction:column;
   gap:8px;
   padding:8px;
-  flex:1;
-  /* aby hra využila celý displej */
-  min-height:calc(var(--vh,1vh)*100);
-}
-
-/* AdMob banner ve free verzi je nativní overlay dole,
-   proto dáme celé herní obrazovce spodní rezervu. */
-.container[data-premium="0"] .gameWrap{
-  padding-bottom:calc(88px + var(--sab));
+  flex:1 1 auto;
+  min-height:0;
+  overflow:hidden;
 }
 
 /* horní lišta – jeden pevný řádek */
