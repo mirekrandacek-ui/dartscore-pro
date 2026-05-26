@@ -32,6 +32,7 @@ const T = {
     youWinPrefix: 'Výhra', outLabel: 'Ukončení', zeroWord: 'nula',
     points: 'Body', target: 'Cíl',
     premiumMode: 'Premium režim',
+    voicePremiumOnly: 'Hlasové pokyny jsou součástí Premium',
     appAppearance: 'Vzhled aplikace',
     activatePremium: 'Aktivovat Premium',
     filter: 'Filtr', all: 'Vše', week: 'Týden', month: 'Měsíc', year: 'Rok',
@@ -49,6 +50,7 @@ premiumFeature1: "Bez reklam",
 premiumFeature2: "Ukládání her",
 premiumFeature3: "Statistiky hráčů",
 premiumFeature4: "Vlastní barevný vzhled",
+premiumFeature5: "Hlasové pokyny",
 premiumButton: "Odemknout Premium – 69,99 Kč",
 premiumNote: "Jednorázová platba. Žádné předplatné.",
   },
@@ -68,6 +70,7 @@ premiumNote: "Jednorázová platba. Žádné předplatné.",
     youWinPrefix: 'Win', outLabel: 'Finish', zeroWord: 'zero',
     points: 'Points', target: 'Target',
     premiumMode: 'Premium Mode',
+    voicePremiumOnly: 'Voice prompts are a Premium feature',
     appAppearance: 'App appearance',
     filter: 'Filter', all: 'All', week: 'Week', month: 'Month', year: 'Year',
     h2h: 'Head-to-Head', selectPlayer: 'Select player', wins: 'wins',
@@ -83,6 +86,7 @@ premiumFeature1: "No ads",
 premiumFeature2: "Game saving",
 premiumFeature3: "Player statistics",
 premiumFeature4: "Custom color theme",
+premiumFeature5: "Voice prompts",
 premiumButton: "Unlock Premium – 2.99 €",
 premiumNote: "One-time payment. No subscription.",
 activatePremium: 'Activate Premium',
@@ -103,6 +107,7 @@ activatePremium: 'Activate Premium',
     youWinPrefix: 'Sieg', outLabel: 'Finish', zeroWord: 'null',
     points: 'Punkte', target: 'Ziel',
     premiumMode: 'Premium-Modus',
+    voicePremiumOnly: 'Sprachansagen sind Teil von Premium',
     appAppearance: 'App-Design',
     activatePremium: 'Premium aktivieren',
     filter: 'Filter', all: 'Alle', week: 'Woche', month: 'Monat', year: 'Jahr',
@@ -119,6 +124,7 @@ premiumFeature1: "Keine Werbung",
 premiumFeature2: "Spiele speichern",
 premiumFeature3: "Spielerstatistiken",
 premiumFeature4: "Eigenes Farbschema",
+premiumFeature5: "Sprachansagen",
 premiumButton: "Premium freischalten – 2,99 €",
 premiumNote: "Einmalige Zahlung. Kein Abo.",
   },
@@ -138,6 +144,7 @@ premiumNote: "Einmalige Zahlung. Kein Abo.",
     youWinPrefix: 'Victoria', outLabel: 'Finish', zeroWord: 'cero',
     points: 'Puntos', target: 'Objetivo',
     premiumMode: 'Modo Premium',
+    voicePremiumOnly: 'Las indicaciones de voz son parte de Premium',
     appAppearance: 'Aspecto de la app',
     activatePremium: 'Activar Premium',
     filter: 'Filtro', all: 'Todo', week: 'Semana', month: 'Mes', year: 'Año',
@@ -154,6 +161,7 @@ premiumFeature1: "Sin anuncios",
 premiumFeature2: "Guardar partidas",
 premiumFeature3: "Estadísticas de jugadores",
 premiumFeature4: "Tema de color personalizado",
+premiumFeature5: "Indicaciones de voz",
 premiumButton: "Desbloquear Premium – 2,99 €",
 premiumNote: "Pago único. Sin suscripción.",
   },
@@ -173,6 +181,7 @@ premiumNote: "Pago único. Sin suscripción.",
     youWinPrefix: 'Winst', outLabel: 'Finish', zeroWord: 'nul',
     points: 'Punten', target: 'Doel',
     premiumMode: 'Premium-modus',
+    voicePremiumOnly: 'Spraakaanwijzingen zijn onderdeel van Premium',
     appAppearance: 'Uiterlijk van app',
     activatePremium: 'Premium activeren',
     filter: 'Filter', all: 'Alles', week: 'Week', month: 'Maand', year: 'Jaar',
@@ -189,6 +198,7 @@ premiumFeature1: "Geen advertenties",
 premiumFeature2: "Spellen opslaan",
 premiumFeature3: "Spelerstatistieken",
 premiumFeature4: "Eigen kleurthema",
+premiumFeature5: "Spraakaanwijzingen",
 premiumButton: "Premium ontgrendelen – €2,99",
 premiumNote: "Eenmalige betaling. Geen abonnement.",
   },
@@ -208,6 +218,7 @@ premiumNote: "Eenmalige betaling. Geen abonnement.",
     youWinPrefix: 'Победа', outLabel: 'Finish', zeroWord: 'ноль',
     points: 'Очки', target: 'Цель',
     premiumMode: 'Премиум-режим',
+    voicePremiumOnly: 'Голосовые подсказки доступны в Premium',
     appAppearance: 'Внешний вид приложения',
     activatePremium: 'Активировать Premium',
     filter: 'Фильтр', all: 'Все', week: 'Неделя', month: 'Месяц', year: 'Год',
@@ -224,6 +235,7 @@ premiumFeature1: "Без рекламы",
 premiumFeature2: "Сохранение игр",
 premiumFeature3: "Статистика игроков",
 premiumFeature4: "Собственная цветовая тема",
+premiumFeature5: "Голосовые подсказки",
 premiumButton: "Разблокировать Premium – 2,99 €",
 premiumNote: "Разовая оплата. Без подписки.",
   },
@@ -243,6 +255,7 @@ premiumNote: "Разовая оплата. Без подписки.",
     youWinPrefix: '胜利', outLabel: '收尾', zeroWord: '零',
     points: '分数', target: '目标',
     premiumMode: '高级模式',
+    voicePremiumOnly: '语音提示是 Premium 功能',
     appAppearance: '应用外观',
     activatePremium: '激活 Premium',
     filter: '筛选', all: '全部', week: '一周', month: '一月', year: '一年',
@@ -259,6 +272,7 @@ premiumFeature1: "无广告",
 premiumFeature2: "保存游戏",
 premiumFeature3: "玩家统计",
 premiumFeature4: "自定义颜色主题",
+premiumFeature5: "语音提示",
 premiumButton: "解锁高级版 – €2.99",
 premiumNote: "一次性付款，无订阅。",
   }
@@ -874,7 +888,7 @@ function App() {
 
     // === BUST (přestřel / nebo zbyde 1 při out pravidlech) ===
     if (tentative < 0 || isBustLeavingOne(tentative)) {
-      speak(lang, t(lang, 'bust'), voiceOn);
+      speak(lang, t(lang, 'bust'), isPremium && voiceOn);
       playHitSound();
 
       pushAction({
@@ -896,7 +910,7 @@ function App() {
     if (tentative === 0) {
       // pokud out není povolený, je to bust
       if (!isFinishAllowed(m)) {
-        speak(lang, t(lang, 'bust'), voiceOn);
+        speak(lang, t(lang, 'bust'), isPremium && voiceOn);
 
         pushAction({
           type: 'bust',
@@ -949,7 +963,7 @@ function App() {
         ));
 
         // otoč hráče až po krátké pauze, ale vizuálně kolo ukonči
-        speak(lang, total === 0 ? t(lang, 'zeroWord') : total, voiceOn);
+        speak(lang, total === 0 ? t(lang, 'zeroWord') : total, isPremium && voiceOn);
         advanceTurn();
         return [];
       });
@@ -985,7 +999,7 @@ function App() {
       setLastTurn(ls => ls.map((x, i) => (i === pIdx ? total : x)));
 
       if (nd.length >= 3) {
-        speak(lang, total === 0 ? t(lang, 'zeroWord') : total, voiceOn);
+        speak(lang, total === 0 ? t(lang, 'zeroWord') : total, isPremium && voiceOn);
         advanceTurn();
         return [];
       }
@@ -1163,7 +1177,7 @@ const commitCricket = (value, mOverride) => {
 
     const finalizeWin = (pIdx, opts = {}) => {
       if (!opts.silentVoice) {
-        speak(lang, 'Vítěz!', voiceOn);
+        speak(lang, 'Vítěz!', isPremium && voiceOn);
       }
       try {
         if (winAudioRef.current) {
@@ -1862,9 +1876,16 @@ const buyPremium = async () => {
 
               <button
                 type="button"
-                className={`iconBtn ${!voiceOn ? 'muted' : ''}`}
-                onClick={() => setVoiceOn(v => !v)}
+                className={`iconBtn ${(!isPremium || !voiceOn) ? 'muted' : ''}`}
+                onClick={() => {
+                  if (!isPremium) {
+                    showToast(t(lang, 'voicePremiumOnly'));
+                    return;
+                  }
+                  setVoiceOn(v => !v);
+                }}
                 aria-label={t(lang, 'voice')}
+                title={isPremium ? t(lang, 'voice') : t(lang, 'voicePremiumOnly')}
               >
                 <span className="iconHead" aria-hidden="true"></span>
               </button>
@@ -2328,6 +2349,7 @@ function Lobby({
     <div>{t(lang, 'premiumFeature2')}</div>
     <div>{t(lang, 'premiumFeature3')}</div>
     <div>{t(lang, 'premiumFeature4')}</div>
+    <div>{t(lang, 'premiumFeature5')}</div>
   </div>
 )}
           {isPremium && (
