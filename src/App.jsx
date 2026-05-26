@@ -2921,7 +2921,7 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
             </div>
 
             {/* Scrollovatelné sloupce hráčů */}
-            <div className="cricketScroll" style={{ paddingBottom: PAD_H }}>
+            <div className="cricketScroll">
               {order.map((pIdx, i) => {
                 const p = players[pIdx];
                 const active = i === currIdx && winner == null;
