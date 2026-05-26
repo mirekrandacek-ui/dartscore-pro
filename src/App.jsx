@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { AdMob, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob';
+import { TextToSpeech } from '@capacitor-community/text-to-speech';
 import { NativePurchases, PURCHASE_TYPE } from '@capgo/native-purchases';
 import { CapgoInAppReview } from '@capgo/capacitor-in-app-review';
 import './app.css';
@@ -296,11 +298,10 @@ const defaultNameFor = (lang, n) => ({
 }[lang] || `Player ${n}`);
 const autoNameRx = [/^Hráč (\d+)$/, /^Player (\d+)$/, /^Spieler (\d+)$/, /^Jugador (\d+)$/, /^Speler (\d+)$/, /^Игрок (\d+)$/, /^玩家 (\d+)$/];
 
-function speak(lang, text, enabled) {
-  if (!enabled || typeof window === 'undefined' || !window.speechSynthesis) return;
+async function speak(lang, text, enabled) {
+  if (!enabled || typeof window === 'undefined') return;
 
-  const synth = window.speechSynthesis;
-  const utter = new SpeechSynthesisUtterance(String(text));
+  const message = String(text);
 
   const langMap = {
     cs: 'cs-CZ',
@@ -313,30 +314,90 @@ function speak(lang, text, enabled) {
   };
 
   const targetLang = langMap[lang] || 'en-US';
-  utter.lang = targetLang;
 
-  // pokus o výběr ženského hlasu pro daný jazyk
-  const pickVoice = () => {
-    const voices = synth.getVoices() || [];
-    if (!voices.length) return null;
+  const femaleVoiceHints = /female|woman|samantha|victoria|karen|allison|susan|ava|serena|zira|hazel|joanna|salli|ivy|kimberly|emma|amy|linda|helena|zuzana|tereza|iveta|alena|eliška|eliska|jitka|marie|hana|marketa|markéta|jfs/i;
+  const maleVoiceHints = /male|man|david|daniel|michael|pavel|jakub|jiri|jiří|michal|honza|jan|tomas|tomáš/i;
 
-    const sameLang = voices.filter(v =>
-      v.lang && v.lang.toLowerCase().startsWith(targetLang.slice(0, 2).toLowerCase())
+  const voiceLang = (voice) => String(
+    voice?.lang || voice?.language || voice?.locale || ''
+  ).toLowerCase();
+
+  const voiceName = (voice) => String(
+    voice?.name || voice?.voiceURI || voice?.id || ''
+  );
+
+  const pickNativeVoiceIndex = (voices) => {
+    if (!Array.isArray(voices) || voices.length === 0) return undefined;
+
+    const prefix = targetLang.slice(0, 2).toLowerCase();
+
+    const indexed = voices.map((voice, index) => ({ voice, index }));
+    const sameLang = indexed.filter(({ voice }) =>
+      voiceLang(voice).startsWith(prefix) || voiceName(voice).toLowerCase().includes(prefix)
     );
 
-    // preferuj ženské hlasy podle názvu
-    const female = sameLang.find(v =>
-      /female|frau|woman|frau|frauensprache|žena/i.test(v.name)
-    );
+    const pool = sameLang.length ? sameLang : indexed;
 
-    return female || sameLang[0] || voices[0] || null;
+    const female = pool.find(({ voice }) => {
+      const name = voiceName(voice);
+      return femaleVoiceHints.test(name) && !maleVoiceHints.test(name);
+    });
+
+    return (female || pool[0])?.index;
   };
 
-  const voice = pickVoice();
-  if (voice) utter.voice = voice;
+  // Native Android/iOS path – reliable inside Capacitor app.
+  if (Capacitor?.isNativePlatform?.()) {
+    try {
+      const voicesResult = await TextToSpeech.getSupportedVoices().catch(() => ({ voices: [] }));
+      const nativeVoiceIndex = pickNativeVoiceIndex(voicesResult?.voices);
+
+      if (typeof TextToSpeech.stop === 'function') {
+        await TextToSpeech.stop().catch(() => {});
+      }
+
+      await TextToSpeech.speak({
+        text: message,
+        lang: targetLang,
+        rate: 0.95,
+        pitch: 1.12,
+        volume: 1.0,
+        ...(nativeVoiceIndex !== undefined ? { voice: nativeVoiceIndex } : {})
+      });
+
+      return;
+    } catch (err) {
+      console.warn('Native TTS failed, falling back to Web Speech:', err);
+    }
+  }
+
+  // Browser preview fallback.
+  if (!window.speechSynthesis) return;
+
+  const synth = window.speechSynthesis;
+  const utter = new SpeechSynthesisUtterance(message);
+
+  utter.lang = targetLang;
+  utter.rate = 0.95;
+  utter.pitch = 1.12;
+  utter.volume = 1.0;
+
+  const voices = synth.getVoices() || [];
+  const prefix = targetLang.slice(0, 2).toLowerCase();
+
+  const sameLang = voices.filter(v =>
+    v.lang && v.lang.toLowerCase().startsWith(prefix)
+  );
+
+  const female = sameLang.find(v => {
+    const name = String(v.name || '');
+    return femaleVoiceHints.test(name) && !maleVoiceHints.test(name);
+  });
+
+  utter.voice = female || sameLang[0] || voices[0] || null;
 
   synth.cancel();
-  synth.speak(utter);
+  setTimeout(() => synth.speak(utter), 60);
 }
 
 /* Cricket značky */
