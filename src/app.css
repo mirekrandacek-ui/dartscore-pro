@@ -160,6 +160,57 @@ input[type="text"]{color:#fff}
   background:linear-gradient(#b91c1c,#7f1d1d);color:#fff;font-weight:900
 }
 
+
+/* MODE PICKER MODAL */
+.modePickerButton{
+  height:34px;
+  min-width:160px;
+  text-align:left;
+  cursor:pointer;
+}
+
+.modePickerOverlay{
+  position:fixed;
+  inset:0;
+  z-index:9998;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:rgba(0,0,0,0.55);
+}
+
+.modePickerCard{
+  width:min(320px, calc(100vw - 48px));
+  background:#0f1318;
+  border:1px solid var(--accent);
+  border-radius:18px;
+  padding:10px;
+  box-shadow:0 16px 48px rgba(0,0,0,0.65);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.modePickerOption{
+  width:100%;
+  min-height:46px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:#171a1f;
+  color:#fff;
+  font-weight:900;
+  font-size:16px;
+  text-align:left;
+  padding:10px 12px;
+}
+
+.modePickerOption.active{
+  border-color:var(--accent);
+  color:var(--accent);
+  box-shadow:inset 0 0 0 1px var(--accent);
+}
+
 /* RULES & SAVED */
 .rules dt{font-weight:900;margin-top:6px}
 .rules dd{margin:0 0 6px 0;color:var(--muted)}
@@ -675,6 +726,25 @@ input[type="text"]{color:#fff}
 .container:not([data-mode="cricket"]) .padPane .multBtn{
   width:100%;
   min-width:0;
+}
+
+
+/* CRICKET GAME: celá herní část scrolluje jako jeden celek */
+.container[data-screen="game"][data-mode="cricket"]{
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+}
+
+.container[data-screen="game"][data-mode="cricket"] .gameWrap{
+  flex:0 0 auto;
+  min-height:auto;
+  overflow:visible;
+}
+
+.container[data-screen="game"][data-mode="cricket"] .cricketWrap{
+  flex:0 0 auto;
+  overflow:visible;
 }
 
 /* Bezpečně vypneme horizontální posuv celé stránky */

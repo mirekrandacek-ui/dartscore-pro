@@ -1837,6 +1837,7 @@ const buyPremium = async () => {
       <ErrorBoundary>
         <div
           className="container"
+          data-screen={screen}
           data-mode={mode}
           data-premium={isPremium ? '1' : '0'}
           style={{
@@ -2253,6 +2254,7 @@ function Lobby({
     themeColor, setThemeColor
   }) {
     const [showPremiumDetails, setShowPremiumDetails] = useState(false);
+    const [showModePicker, setShowModePicker] = useState(false);
     return (
       <div className="lobbyWrap">
 
@@ -2260,16 +2262,53 @@ function Lobby({
         <div className="lobbyCard">
           <div className="lobbyControls">
             <span>{t(lang, 'mode')}</span>
-            <select
-              className="input"
-              value={mode}
-              onChange={e => setMode(e.target.value)}
-              style={{ height: 34 }}
+            <button
+              type="button"
+              className="input modePickerButton"
+              onClick={() => setShowModePicker(true)}
             >
-              <option value="classic">{t(lang, 'classic')}</option>
-              <option value="cricket">{t(lang, 'cricket')}</option>
-              <option value="around">{t(lang, 'around')}</option>
-            </select>
+              {t(lang, mode)}
+            </button>
+
+            {showModePicker && (
+              <div
+                className="modePickerOverlay"
+                role="presentation"
+                onClick={() => setShowModePicker(false)}
+              >
+                <div
+                  className="modePickerCard"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label={t(lang, 'mode')}
+                  onClick={e => e.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    className={'modePickerOption' + (mode === 'classic' ? ' active' : '')}
+                    onClick={() => { setMode('classic'); setShowModePicker(false); }}
+                  >
+                    {t(lang, 'classic')}
+                  </button>
+
+                  <button
+                    type="button"
+                    className={'modePickerOption' + (mode === 'cricket' ? ' active' : '')}
+                    onClick={() => { setMode('cricket'); setShowModePicker(false); }}
+                  >
+                    {t(lang, 'cricket')}
+                  </button>
+
+                  <button
+                    type="button"
+                    className={'modePickerOption' + (mode === 'around' ? ' active' : '')}
+                    onClick={() => { setMode('around'); setShowModePicker(false); }}
+                  >
+                    {t(lang, 'around')}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
