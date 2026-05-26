@@ -780,6 +780,15 @@ function App() {
   const [cricket, setCricket] = useState(null);
   const [around, setAround] = useState(null);
 
+const scoresRef = useRef(scores);
+useEffect(() => { scoresRef.current = scores; }, [scores]);
+
+const cricketRef = useRef(cricket);
+useEffect(() => { cricketRef.current = cricket; }, [cricket]);
+
+const aroundRef = useRef(around);
+useEffect(() => { aroundRef.current = around; }, [around]);
+
   const currentPlayerIndex = order[currIdx] ?? 0;
 
   const startGame = () => {
@@ -880,10 +889,12 @@ function App() {
     const resetMult = () => setMult(1);
 
     const advanceTurn = () => {
-      // žádný scheduleNextPlayer – ať to nepadá, přepnutí je tady vždy definované
+      // U robota necháme třetí šipku chvíli vidět, než se políčka vyčistí přepnutím hráče.
+      const delay = players[pIdx]?.bot ? 750 : 250;
+
       setTimeout(() => {
         try { nextPlayer(); } catch (e) { console.error('nextPlayer failed:', e); }
-      }, 250);
+      }, delay);
     };
 
     // === BUST (přestřel / nebo zbyde 1 při out pravidlech) ===
@@ -1001,7 +1012,7 @@ function App() {
       if (nd.length >= 3) {
         speak(lang, total === 0 ? t(lang, 'zeroWord') : total, isPremium && voiceOn);
         advanceTurn();
-        return [];
+        return players[pIdx]?.bot ? nd : [];
       }
 
       return nd;
@@ -1392,26 +1403,97 @@ useEffect(() => {
 
       if (!p || !p.bot || winner != null) return;
 
-      const tables = {
-        easy: { miss: 0.55, single: 0.40, double: 0.04, triple: 0.01 },
-        medium: { miss: 0.18, single: 0.58, double: 0.16, triple: 0.08 },
-        hard: { miss: 0.09, single: 0.50, double: 0.24, triple: 0.17 }
+      const botProfiles = {
+        // opravdu slabý začátečník: nízké náhozy, slabé doubly, občas úplně mimo
+        easy: {
+          classicMiss: 0.46,
+          classicTriple: 0.01,
+          classicDouble: 0.03,
+          aim20: 0.28,
+          checkoutDouble: 0.06,
+          setupSingle: 0.22,
+          cricketHit: 0.30,
+          cricketDouble: 0.08,
+          cricketTriple: 0.04,
+          aroundHit: 0.25
+        },
+
+        // běžný rekreační hráč: občas pěkný hod, ale pořád dost chyb
+        medium: {
+          classicMiss: 0.22,
+          classicTriple: 0.04,
+          classicDouble: 0.08,
+          aim20: 0.52,
+          checkoutDouble: 0.14,
+          setupSingle: 0.45,
+          cricketHit: 0.50,
+          cricketDouble: 0.16,
+          cricketTriple: 0.09,
+          aroundHit: 0.43
+        },
+
+        // dobrý hráč: silnější, ale ne neporazitelný a ne T20 automat
+        hard: {
+          classicMiss: 0.12,
+          classicTriple: 0.07,
+          classicDouble: 0.09,
+          aim20: 0.68,
+          checkoutDouble: 0.26,
+          setupSingle: 0.65,
+          cricketHit: 0.65,
+          cricketDouble: 0.22,
+          cricketTriple: 0.15,
+          aroundHit: 0.62
+        }
       };
-      const tb = tables[p.level || 'easy'];
+
+      const level = p.level || 'easy';
+      const bot = botProfiles[level] || botProfiles.easy;
 
       let cancelled = false;
-      const delays = [800, 1600, 2400];
+      const delays = [600, 600, 600];
 
-      const rollMult = () => {
+      const sample = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+      const adjacentNumber = (v) => Math.min(20, Math.max(1, v + sample([-2, -1, 1, 2])));
+
+      const chooseClassicNumber = () => {
         const r = Math.random();
-        if (r < tb.miss) return { m: 1, miss: true };
-        if (r < tb.miss + tb.triple) return { m: 3, miss: false };
-        if (r < tb.miss + tb.triple + tb.double) return { m: 2, miss: false };
-        return { m: 1, miss: false };
+
+        if (level === 'easy') {
+          if (r < bot.aim20) return 20;
+          return sample([1, 1, 5, 5, 12, 18, 4, 7, 9, 11, 14, 20]);
+        }
+
+        if (level === 'medium') {
+          if (r < bot.aim20) return 20;
+          return sample([19, 18, 20, 12, 5, 16, 15, 1]);
+        }
+
+        if (r < bot.aim20) return 20;
+        return sample([19, 18, 17, 20, 16, 15]);
+      };
+
+      const rollClassicMultiplier = (target) => {
+        if (target <= 0 || target === 25 || target === 50) return 1;
+
+        const r = Math.random();
+        if (r < bot.classicTriple) return 3;
+        if (r < bot.classicTriple + bot.classicDouble) return 2;
+        return 1;
+      };
+
+      const chooseSetupSingle = (score) => {
+        const setupTargets = [20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+
+        return setupTargets.find(v => {
+          const remaining = score - v;
+          return remaining >= 2 && remaining <= 40 && remaining % 2 === 0;
+        }) || null;
       };
 
       const chooseTargetClassic = () => {
-        const myScore = scores[pIdx];
+        const myScore = scoresRef.current?.[pIdx];
 
         const finishAllowed = (m) => {
           if (!anyOutSelected) return true;
@@ -1421,37 +1503,59 @@ useEffect(() => {
           return false;
         };
 
-        const checkouts = [
-          { v: 20, m: 2, need: 40 }, { v: 10, m: 2, need: 20 },
-          { v: 12, m: 2, need: 24 }, { v: 16, m: 2, need: 32 },
-          { v: 8, m: 2, need: 16 }, { v: 6, m: 2, need: 12 },
-          { v: 4, m: 2, need: 8 }, { v: 2, m: 2, need: 4 }
-        ];
-        for (const co of checkouts) {
-          if (myScore === co.need && finishAllowed(co.m)) return co;
-        }
+        // Double-out / checkout: čím vyšší obtížnost, tím větší šance zavřít,
+        // ale ani hard není stroj.
+        if (finishAllowed(2) && myScore >= 2 && myScore <= 40 && myScore % 2 === 0) {
+          const d = myScore / 2;
 
-        if (myScore <= 62) {
-          if (finishAllowed(2) && myScore % 2 === 0) {
-            const d = Math.min(20, Math.max(2, (myScore / 2) | 0));
+          if (Math.random() < bot.checkoutDouble) {
             return { v: d, m: 2 };
           }
-          const s = Math.min(20, Math.max(1, myScore - 40));
-          return { v: (s || 1), m: 1 };
+
+          // Minutý double: mimo, single do stejného čísla nebo vedlejší pole.
+          const r = Math.random();
+          if (r < 0.45) return { v: 0, m: 1 };
+          if (r < 0.75) return { v: d, m: 1 };
+          return { v: adjacentNumber(d), m: 1 };
         }
 
-        if ((p.level || 'easy') === 'easy') {
-          if (Math.random() < tb.miss) {
-            return { v: 0, m: 1 };
+        // Checkout setup: robot se občas pokusí připravit si rozumný double.
+        if (myScore <= 62) {
+          const setup = chooseSetupSingle(myScore);
+
+          if (setup && Math.random() < bot.setupSingle) {
+            if (Math.random() < bot.classicMiss) return { v: 0, m: 1 };
+            return { v: setup, m: 1 };
           }
-          return { v: 20, m: 1 };
+
+          if (Math.random() < bot.classicMiss) return { v: 0, m: 1 };
+          const target = setup || chooseClassicNumber();
+          return { v: target, m: 1 };
         }
 
-        return { v: 20, m: 3 };
+        // Běžné skórování: žádný automatický T20.
+        if (Math.random() < bot.classicMiss) {
+          return { v: 0, m: 1 };
+        }
+
+        const target = chooseClassicNumber();
+        return { v: target, m: rollClassicMultiplier(target) };
+      };
+
+      const rollCricketTarget = (v) => {
+        if (Math.random() > bot.cricketHit) return { v: 0, m: 1 };
+
+        if (v === 25) return { v: 25, m: 1 };
+
+        const r = Math.random();
+        if (r < bot.cricketTriple) return { v, m: 3 };
+        if (r < bot.cricketTriple + bot.cricketDouble) return { v, m: 2 };
+        return { v, m: 1 };
       };
 
       const chooseTargetCricket = () => {
-        const me = cricket?.[pIdx];
+        const currentCricket = cricketRef.current;
+        const me = currentCricket?.[pIdx];
         if (!me) return { v: 20, m: 1 };
 
         const orderArr = [20, 19, 18, 17, 16, 15, 25];
@@ -1460,25 +1564,20 @@ useEffect(() => {
           const key = v === 25 ? 'bull' : String(v);
           const marks = me.marks?.[key] ?? 0;
           if (marks < 3) {
-            const { m, miss } = rollMult();
-            const mAdj = (v === 25 ? 1 : m);
-            if (miss) return { v: 0, m: 1 };
-            return { v, m: mAdj };
+            return rollCricketTarget(v);
           }
         }
 
         const opponentsOpen = (v) => {
           const key = v === 25 ? 'bull' : String(v);
-          return cricket?.some(
+          return currentCricket?.some(
             (pl, ix) => ix !== pIdx && (pl.marks?.[key] ?? 0) < 3
           );
         };
+
         for (const v of orderArr) {
           if (opponentsOpen(v)) {
-            const { m, miss } = rollMult();
-            const mAdj = (v === 25 ? 1 : m);
-            if (miss) return { v: 0, m: 1 };
-            return { v, m: mAdj };
+            return rollCricketTarget(v);
           }
         }
 
@@ -1486,12 +1585,14 @@ useEffect(() => {
       };
 
       const chooseTargetAround = () => {
-        const me = around?.[pIdx];
+        const currentAround = aroundRef.current;
+        const me = currentAround?.[pIdx];
         const target = me?.next ?? 1;
 
-        if (Math.random() < tb.miss) {
+        if (Math.random() > bot.aroundHit) {
           return { v: 0, m: 1 };
         }
+
         if (target <= 20) return { v: target, m: 1 };
         return { v: 25, m: 1 };
       };
@@ -1537,8 +1638,7 @@ useEffect(() => {
       return () => { cancelled = true; };
 
     }, [
-      currIdx, order, players, winner, mode, scores,
-      cricket, around,
+      currIdx, order, players, winner, mode,
       outDouble, outTriple, outMaster, anyOutSelected
     ]);
 
