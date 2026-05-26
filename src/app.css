@@ -123,7 +123,15 @@ input[type="text"]{color:#fff}
 
 /* LOBBY */
 .lobbyWrap{
-  display:flex;flex-direction:column;gap:8px;padding:8px;flex:1;min-height:0
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding:8px;
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
 }
 .lobbyCard{
   flex:0 0 auto;background:var(--panel);border:1px solid var(--line);
