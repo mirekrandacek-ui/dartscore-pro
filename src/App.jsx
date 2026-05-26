@@ -318,40 +318,10 @@ async function speak(lang, text, enabled) {
   const femaleVoiceHints = /female|woman|samantha|victoria|karen|allison|susan|ava|serena|zira|hazel|joanna|salli|ivy|kimberly|emma|amy|linda|helena|zuzana|tereza|iveta|alena|eliška|eliska|jitka|marie|hana|marketa|markéta|jfs/i;
   const maleVoiceHints = /male|man|david|daniel|michael|pavel|jakub|jiri|jiří|michal|honza|jan|tomas|tomáš/i;
 
-  const voiceLang = (voice) => String(
-    voice?.lang || voice?.language || voice?.locale || ''
-  ).toLowerCase();
-
-  const voiceName = (voice) => String(
-    voice?.name || voice?.voiceURI || voice?.id || ''
-  );
-
-  const pickNativeVoiceIndex = (voices) => {
-    if (!Array.isArray(voices) || voices.length === 0) return undefined;
-
-    const prefix = targetLang.slice(0, 2).toLowerCase();
-
-    const indexed = voices.map((voice, index) => ({ voice, index }));
-    const sameLang = indexed.filter(({ voice }) =>
-      voiceLang(voice).startsWith(prefix) || voiceName(voice).toLowerCase().includes(prefix)
-    );
-
-    const pool = sameLang.length ? sameLang : indexed;
-
-    const female = pool.find(({ voice }) => {
-      const name = voiceName(voice);
-      return femaleVoiceHints.test(name) && !maleVoiceHints.test(name);
-    });
-
-    return (female || pool[0])?.index;
-  };
-
-  // Native Android/iOS path – reliable inside Capacitor app.
+  // Native Android/iOS path – use lang only.
+  // Passing a concrete voice index can pick a wrong language on some Android devices.
   if (Capacitor?.isNativePlatform?.()) {
     try {
-      const voicesResult = await TextToSpeech.getSupportedVoices().catch(() => ({ voices: [] }));
-      const nativeVoiceIndex = pickNativeVoiceIndex(voicesResult?.voices);
-
       if (typeof TextToSpeech.stop === 'function') {
         await TextToSpeech.stop().catch(() => {});
       }
@@ -361,8 +331,7 @@ async function speak(lang, text, enabled) {
         lang: targetLang,
         rate: 0.95,
         pitch: 1.12,
-        volume: 1.0,
-        ...(nativeVoiceIndex !== undefined ? { voice: nativeVoiceIndex } : {})
+        volume: 1.0
       });
 
       return;
