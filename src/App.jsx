@@ -533,9 +533,7 @@ function App() {
 
   /* === STATE === */
 
-  const [screen, setScreen] = useState(
-    () => localStorage.getItem('screen') || 'lobby'
-  );
+  const [screen, setScreen] = useState('lobby');
 
   const [toast, setToast] = useState(null);
   const showToast = (msg) => {
@@ -609,9 +607,6 @@ function App() {
   const hitAudioRef = useRef(null);
   const winAudioRef = useRef(null);
   /* persist screen */
-  useEffect(() => {
-    localStorage.setItem('screen', screen);
-  }, [screen]);
 
   /* načti lobby z localStorage */
   useEffect(() => {
@@ -1925,11 +1920,13 @@ const buyPremium = async () => {
   }
 };
     const makeSnapshot = () => ({
-      version: 2, screen: 'game',
+      version: 2,
+      screen: 'game',
       lang, soundOn, voiceOn,
       mode, startScore,
       outDouble, outTriple, outMaster,
       randomOrder, playThrough, ai,
+      scoreInputMode, playerMode,
       players, order, currIdx,
       scores, darts, mult, actions, thrown, lastTurn,
       winner, pendingWin,
@@ -1937,25 +1934,85 @@ const buyPremium = async () => {
       isPremium, themeColor
     });
 
+    const normalizeSavedGame = (snap) => {
+      if (!snap || typeof snap !== 'object') return null;
+
+      const safePlayers = Array.isArray(snap.players)
+        ? snap.players.filter(Boolean)
+        : [];
+
+      const rawOrder = Array.isArray(snap.order) ? snap.order : [];
+      const safeOrder = rawOrder
+        .filter(ix => Number.isInteger(ix) && ix >= 0 && ix < safePlayers.length);
+
+      const fixedOrder = safeOrder.length > 0
+        ? safeOrder
+        : safePlayers.map((_, ix) => ix);
+
+      const maxCurr = Math.max(0, fixedOrder.length - 1);
+      const fixedCurrIdx = Number.isInteger(snap.currIdx)
+        ? Math.min(Math.max(snap.currIdx, 0), maxCurr)
+        : 0;
+
+      return {
+        ...snap,
+        screen: 'game',
+        players: safePlayers,
+        order: fixedOrder,
+        currIdx: fixedCurrIdx
+      };
+    };
+
+    const isValidSavedGame = (snap) => {
+      const s = normalizeSavedGame(snap);
+      if (!s) return false;
+      if (!Array.isArray(s.players) || s.players.length === 0) return false;
+      if (!Array.isArray(s.order) || s.order.length === 0) return false;
+
+      if (s.mode === 'classic') {
+        return Array.isArray(s.scores) && s.scores.length > 0;
+      }
+
+      if (s.mode === 'cricket') {
+        return Array.isArray(s.cricket) && s.cricket.length > 0;
+      }
+
+      if (s.mode === 'around') {
+        return Array.isArray(s.around) && s.around.length > 0;
+      }
+
+      return false;
+    };
+
     const saveSnapshot = () => {
       try {
-        const snap = makeSnapshot();
+        if (screen !== 'game') return;
+
+        const snap = normalizeSavedGame(makeSnapshot());
+        if (!isValidSavedGame(snap)) return;
+
         localStorage.setItem('savedGame', JSON.stringify(snap));
       } catch { }
     };
 
     const continueSaved = () => {
       try {
-        const s = JSON.parse(localStorage.getItem('savedGame') || '{}');
-        if (!s || !s.order) {
+        const raw = JSON.parse(localStorage.getItem('savedGame') || '{}');
+        const s = normalizeSavedGame(raw);
+
+        if (!isValidSavedGame(s)) {
+          localStorage.removeItem('savedGame');
           showToast('Nic k pokračování');
           return;
         }
+
         setLang(s.lang || lang);
         setMode(s.mode || 'classic');
         setStartScore(s.startScore || 501);
-        setPlayers(s.players || players);
-        setOrder(s.order || []);
+        if (s.scoreInputMode) setScoreInputMode(s.scoreInputMode);
+        if (s.playerMode) setPlayerMode(s.playerMode);
+        setPlayers(s.players);
+        setOrder(s.order);
         setCurrIdx(s.currIdx || 0);
         setScores(s.scores || []);
         setDarts(s.darts || []);
@@ -1976,28 +2033,55 @@ const buyPremium = async () => {
         setScreen('game');
       } catch (e) {
         console.error(e);
+        localStorage.removeItem('savedGame');
         showToast('Obnova selhala');
       }
     };
 
     useEffect(() => {
+      if (screen !== 'game') return;
+
+      saveSnapshot();
+
       const handler = () => {
-        try {
-          const snap = makeSnapshot();
-          localStorage.setItem('savedGame', JSON.stringify(snap));
-        } catch { }
+        saveSnapshot();
       };
-      window.addEventListener('pagehide', handler);
-      document.addEventListener('visibilitychange', () => {
+
+      const visibilityHandler = () => {
         if (document.hidden) handler();
-      });
+      };
+
+      window.addEventListener('pagehide', handler);
+      window.addEventListener('beforeunload', handler);
+      document.addEventListener('visibilitychange', visibilityHandler);
+
       return () => {
         window.removeEventListener('pagehide', handler);
+        window.removeEventListener('beforeunload', handler);
+        document.removeEventListener('visibilitychange', visibilityHandler);
       };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [
+      screen,
+      lang, soundOn, voiceOn,
+      mode, startScore,
+      outDouble, outTriple, outMaster,
+      randomOrder, playThrough, ai,
+      scoreInputMode, playerMode,
+      players, order, currIdx,
+      scores, darts, mult, actions, thrown, lastTurn,
+      winner, pendingWin,
+      cricket, around,
+      isPremium, themeColor
+    ]);
 
-    const hasSaved = !!localStorage.getItem('savedGame');
+    const hasSaved = (() => {
+      try {
+        return isValidSavedGame(JSON.parse(localStorage.getItem('savedGame') || '{}'));
+      } catch {
+        return false;
+      }
+    })();
+
 
     // text režimu do hlavičky vedle výběru jazyka
     const modeLabel = (() => {
