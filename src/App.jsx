@@ -26,6 +26,14 @@ const T = {
     undo: 'Zpět', next: 'Další hráč', bust: 'bez skóre', checkout: 'checkout',
     youWinPrefix: 'Výhra', outLabel: 'Ukončení', zeroWord: 'nula',
     points: 'Body', target: 'Cíl',
+    playerModeLabel: 'Režim hráčů',
+    individualPlayers: 'Jednotlivci',
+    teamPlayers: 'Týmy',
+    teamLabel: 'Tým',
+    teamA: 'Tým A',
+    teamB: 'Tým B',
+    teamC: 'Tým C',
+    teamNeedPlayers: 'Alespoň dva týmy musí mít hráče.',
       scoreInput: 'Zadávání',
       scoreByDarts: 'Po šipkách',
       roundTotal: 'Součet kola',
@@ -68,6 +76,14 @@ premiumNote: "Jednorázová platba. Žádné předplatné.",
     undo: 'Undo', next: 'Next', bust: 'bust', checkout: 'checkout',
     youWinPrefix: 'Win', outLabel: 'Finish', zeroWord: 'zero',
     points: 'Points', target: 'Target',
+    playerModeLabel: 'Player mode',
+    individualPlayers: 'Individuals',
+    teamPlayers: 'Teams',
+    teamLabel: 'Team',
+    teamA: 'Team A',
+    teamB: 'Team B',
+    teamC: 'Team C',
+    teamNeedPlayers: 'At least two teams must have players.',
       scoreInput: 'Input',
       scoreByDarts: 'By darts',
       roundTotal: 'Round total',
@@ -109,6 +125,14 @@ activatePremium: 'Activate Premium',
     undo: 'Zurück', next: 'Nächster', bust: 'bust', checkout: 'Checkout',
     youWinPrefix: 'Sieg', outLabel: 'Finish', zeroWord: 'null',
     points: 'Punkte', target: 'Ziel',
+    playerModeLabel: 'Spielermodus',
+    individualPlayers: 'Einzelspieler',
+    teamPlayers: 'Teams',
+    teamLabel: 'Team',
+    teamA: 'Team A',
+    teamB: 'Team B',
+    teamC: 'Team C',
+    teamNeedPlayers: 'Mindestens zwei Teams müssen Spieler haben.',
       scoreInput: 'Eingabe',
       scoreByDarts: 'Pro Dart',
       roundTotal: 'Rundensumme',
@@ -150,6 +174,14 @@ premiumNote: "Einmalige Zahlung. Kein Abo.",
     undo: 'Deshacer', next: 'Siguiente', bust: 'sin puntuación', checkout: 'checkout',
     youWinPrefix: 'Victoria', outLabel: 'Finish', zeroWord: 'cero',
     points: 'Puntos', target: 'Objetivo',
+    playerModeLabel: 'Modo jugadores',
+    individualPlayers: 'Individuales',
+    teamPlayers: 'Equipos',
+    teamLabel: 'Equipo',
+    teamA: 'Equipo A',
+    teamB: 'Equipo B',
+    teamC: 'Equipo C',
+    teamNeedPlayers: 'Al menos dos equipos deben tener jugadores.',
       scoreInput: 'Entrada',
       scoreByDarts: 'Por dardos',
       roundTotal: 'Total ronda',
@@ -191,6 +223,14 @@ premiumNote: "Pago único. Sin suscripción.",
     undo: 'Ongedaan', next: 'Volgende', bust: 'bust', checkout: 'checkout',
     youWinPrefix: 'Winst', outLabel: 'Finish', zeroWord: 'nul',
     points: 'Punten', target: 'Doel',
+    playerModeLabel: 'Spelermodus',
+    individualPlayers: 'Individueel',
+    teamPlayers: 'Teams',
+    teamLabel: 'Team',
+    teamA: 'Team A',
+    teamB: 'Team B',
+    teamC: 'Team C',
+    teamNeedPlayers: 'Minstens twee teams moeten spelers hebben.',
       scoreInput: 'Invoer',
       scoreByDarts: 'Per dart',
       roundTotal: 'Rondetotaal',
@@ -232,6 +272,14 @@ premiumNote: "Eenmalige betaling. Geen abonnement.",
     undo: 'Отмена', next: 'Далее', bust: 'без очков', checkout: 'чекаут',
     youWinPrefix: 'Победа', outLabel: 'Finish', zeroWord: 'ноль',
     points: 'Очки', target: 'Цель',
+    playerModeLabel: 'Режим игроков',
+    individualPlayers: 'Индивидуально',
+    teamPlayers: 'Команды',
+    teamLabel: 'Команда',
+    teamA: 'Команда A',
+    teamB: 'Команда B',
+    teamC: 'Команда C',
+    teamNeedPlayers: 'Минимум в двух командах должны быть игроки.',
       scoreInput: 'Ввод',
       scoreByDarts: 'По дротикам',
       roundTotal: 'Сумма раунда',
@@ -273,6 +321,14 @@ premiumNote: "Разовая оплата. Без подписки.",
     undo: '撤销', next: '下一位', bust: '爆掉', checkout: '收尾',
     youWinPrefix: '胜利', outLabel: '收尾', zeroWord: '零',
     points: '分数', target: '目标',
+    playerModeLabel: '玩家模式',
+    individualPlayers: '个人',
+    teamPlayers: '团队',
+    teamLabel: '团队',
+    teamA: '团队 A',
+    teamB: '团队 B',
+    teamC: '团队 C',
+    teamNeedPlayers: '至少两个团队必须有玩家。',
       scoreInput: '输入',
       scoreByDarts: '按镖输入',
       roundTotal: '回合总分',
@@ -543,10 +599,11 @@ function App() {
 
   const [ai, setAi] = useState('off'); // off | easy | medium | hard
   const [scoreInputMode, setScoreInputMode] = useState('darts'); // darts | round
+  const [playerMode, setPlayerMode] = useState('individual'); // individual | teams
 
   const [players, setPlayers] = useState([
-    { id: uid(), name: defaultNameFor(lang, 1), color: colors[0], bot: false },
-    { id: uid(), name: defaultNameFor(lang, 2), color: colors[1], bot: false }
+    { id: uid(), name: defaultNameFor(lang, 1), color: colors[0], bot: false, team: 'A' },
+    { id: uid(), name: defaultNameFor(lang, 2), color: colors[1], bot: false, team: 'B' }
   ]);
 
   const hitAudioRef = useRef(null);
@@ -570,7 +627,8 @@ function App() {
       if (typeof s.playThrough === 'boolean') setPlayThrough(s.playThrough);
       if (s.ai) setAi(s.ai);
       if (s.scoreInputMode) setScoreInputMode(s.scoreInputMode);
-      if (s.players) setPlayers(s.players);
+      if (s.playerMode) setPlayerMode(s.playerMode);
+      if (s.players) setPlayers(s.players.map((p, ix) => ({ ...p, team: p.team || (['A', 'B', 'C'][ix % 3]) })));
       if (typeof s.isPremium === 'boolean') setIsPremium(s.isPremium);
       if (s.themeColor) setThemeColor(s.themeColor);
     } catch { }
@@ -584,7 +642,7 @@ function App() {
         JSON.stringify({
           lang, mode, startScore,
           outDouble, outTriple, outMaster,
-          randomOrder, playThrough, ai, scoreInputMode, players,
+          randomOrder, playThrough, ai, scoreInputMode, playerMode, players,
           isPremium, themeColor
         })
       );
@@ -592,7 +650,7 @@ function App() {
   }, [
     lang, mode, startScore,
     outDouble, outTriple, outMaster,
-    randomOrder, playThrough, ai, scoreInputMode, players,
+    randomOrder, playThrough, ai, scoreInputMode, playerMode, players,
     isPremium, themeColor
   ]);
 
@@ -725,9 +783,80 @@ function App() {
 
   const currentPlayerIndex = order[currIdx] ?? 0;
 
+  const TEAM_CODES = ['A', 'B', 'C'];
+
+  const teamCodeByIndex = (idx) => TEAM_CODES[idx] || 'A';
+
+  const isClassicTeamMode = () => mode === 'classic' && playerMode === 'teams';
+
+  const playerTeam = (pIdx) => (
+    players[pIdx]?.team || teamCodeByIndex(pIdx % TEAM_CODES.length)
+  );
+
+  const scoreIndexForPlayer = (pIdx) => {
+    if (!isClassicTeamMode()) return pIdx;
+    const idx = TEAM_CODES.indexOf(playerTeam(pIdx));
+    return idx >= 0 ? idx : 0;
+  };
+
+  const teamNameByIndex = (idx) => {
+    const code = teamCodeByIndex(idx);
+    if (code === 'C') return t(lang, 'teamC');
+    if (code === 'B') return t(lang, 'teamB');
+    return t(lang, 'teamA');
+  };
+
+  const activeTeamCodesForPlayers = (sourcePlayers) => (
+    TEAM_CODES.filter(code =>
+      sourcePlayers.some((pl, ix) => (
+        (pl.team || teamCodeByIndex(ix % TEAM_CODES.length)) === code
+      ))
+    )
+  );
+
+  const buildTeamOrder = (sourcePlayers) => {
+    const activeTeams = activeTeamCodesForPlayers(sourcePlayers);
+    if (activeTeams.length < 2) return null;
+
+    const groups = activeTeams.map(code => {
+      const members = sourcePlayers
+        .map((pl, ix) => ({ pl, ix }))
+        .filter(x => (
+          (x.pl.team || teamCodeByIndex(x.ix % TEAM_CODES.length)) === code
+        ))
+        .map(x => x.ix);
+
+      return {
+        code,
+        members: randomOrder ? shuffle(members) : members
+      };
+    });
+
+    const max = Math.max(...groups.map(g => g.members.length));
+    const result = [];
+
+    for (let i = 0; i < max; i++) {
+      for (const g of groups) {
+        result.push(g.members[i % g.members.length]);
+      }
+    }
+
+    return result;
+  };
+
   const startGame = () => {
     const baseOrder = players.map((_, i) => i);
-    const ord = randomOrder ? shuffle(baseOrder) : baseOrder;
+    const teamMode = mode === 'classic' && playerMode === 'teams';
+    const teamOrder = teamMode ? buildTeamOrder(players) : null;
+
+    if (teamMode && !teamOrder) {
+      alert(t(lang, 'teamNeedPlayers'));
+      return;
+    }
+
+    const ord = teamMode
+      ? teamOrder
+      : (randomOrder ? shuffle(baseOrder) : baseOrder);
 
     setOrder(ord);
     setCurrIdx(0);
@@ -738,9 +867,10 @@ function App() {
     setDarts([]);
 
     if (mode === 'classic') {
-      const sc = players.map(() => startScore);
-      const dartsCnt = players.map(() => 0);
-      const last = players.map(() => 0);
+      const scoreSlots = playerMode === 'teams' ? 3 : players.length;
+      const sc = Array.from({ length: scoreSlots }, () => startScore);
+      const dartsCnt = Array.from({ length: scoreSlots }, () => 0);
+      const last = Array.from({ length: scoreSlots }, () => 0);
       setScores(sc);
       setThrown(dartsCnt);
       setLastTurn(last);
@@ -811,13 +941,14 @@ function App() {
     let m = (mOverride ?? mult);
 
     const pIdx = currentPlayerIndex;
-    if (pIdx == null || scores[pIdx] == null) return;
+    const scoreIdx = scoreIndexForPlayer(pIdx);
+    if (pIdx == null || scores[scoreIdx] == null) return;
 
     if (isInvalidComboClassic(v, m)) return;
     if (v === 25 || v === 50) { m = 1; }
 
     const hit = v * m;
-    const prev = scores[pIdx];
+    const prev = scores[scoreIdx];
     const tentative = prev - hit;
 
     const resetMult = () => setMult(1);
@@ -838,12 +969,14 @@ function App() {
         type: 'bust',
         mode: 'classic',
         pIdx,
+
+        scoreIdx,
         prevScore: prev,
         dartsBefore: [...darts],
       });
 
       setDarts([]);
-      setLastTurn(ls => ls.map((x, i) => (i === pIdx ? 0 : x)));
+      setLastTurn(ls => ls.map((x, i) => (i === scoreIdx ? 0 : x)));
       resetMult();
       advanceTurn();
       return;
@@ -859,12 +992,14 @@ function App() {
           type: 'bust',
           mode: 'classic',
           pIdx,
+
+          scoreIdx,
           prevScore: prev,
           dartsBefore: [...darts],
         });
 
         setDarts([]);
-        setLastTurn(ls => ls.map((x, i) => (i === pIdx ? 0 : x)));
+        setLastTurn(ls => ls.map((x, i) => (i === scoreIdx ? 0 : x)));
         resetMult();
         advanceTurn();
         return;
@@ -876,20 +1011,22 @@ function App() {
         type: 'dart',
         mode: 'classic',
         pIdx,
+
+        scoreIdx,
         prevScore: prev,
         newScore: 0,
         hit: { v, m, score: hit },
       });
 
-      setScores(sc => sc.map((x, i) => (i === pIdx ? 0 : x)));
+      setScores(sc => sc.map((x, i) => (i === scoreIdx ? 0 : x)));
 
       // přidáme šipku do aktuálního kola + spočítáme total
       setDarts(prevD => {
         const nd = [...prevD, { v, m, score: hit }];
         const total = nd.reduce((s, a) => s + (a?.score || 0), 0);
 
-        setThrown(th => th.map((x, i) => (i === pIdx ? x + 1 : x)));
-        setLastTurn(ls => ls.map((x, i) => (i === pIdx ? total : x)));
+        setThrown(th => th.map((x, i) => (i === scoreIdx ? x + 1 : x)));
+        setLastTurn(ls => ls.map((x, i) => (i === scoreIdx ? total : x)));
 
         // když nedohráváš kolo => vyhra hned
         if (!playThrough) {
@@ -901,7 +1038,7 @@ function App() {
         const dartsUsed = nd.length; // 1..3 (v rámci aktuálního kola)
         setPendingWin(prevBest => (
           !prevBest || dartsUsed < prevBest.dartsUsed
-            ? { pIdx, dartsUsed }
+            ? { pIdx: scoreIdx, dartsUsed }
             : prevBest
         ));
 
@@ -914,7 +1051,7 @@ function App() {
       if (!playThrough) {
         // finalizeWin musí být mimo setState callback (kvůli čitelnosti),
         // ale tady je bezpečné – je to “okamžitý finish”
-        finalizeWin(pIdx);
+        finalizeWin(scoreIdx);
       }
 
       resetMult();
@@ -927,19 +1064,21 @@ function App() {
       type: 'dart',
       mode: 'classic',
       pIdx,
+
+      scoreIdx,
       prevScore: prev,
       newScore: tentative,
       hit: { v, m, score: hit },
     });
 
-    setScores(sc => sc.map((x, i) => (i === pIdx ? tentative : x)));
+    setScores(sc => sc.map((x, i) => (i === scoreIdx ? tentative : x)));
 
     setDarts(prevD => {
       const nd = [...prevD, { v, m, score: hit }];
       const total = nd.reduce((s, a) => s + (a?.score || 0), 0);
 
-      setThrown(th => th.map((x, i) => (i === pIdx ? x + 1 : x)));
-      setLastTurn(ls => ls.map((x, i) => (i === pIdx ? total : x)));
+      setThrown(th => th.map((x, i) => (i === scoreIdx ? x + 1 : x)));
+      setLastTurn(ls => ls.map((x, i) => (i === scoreIdx ? total : x)));
 
       if (nd.length >= 3) {
         speak(lang, total === 0 ? t(lang, 'zeroWord') : total, voiceOn);
@@ -957,9 +1096,10 @@ function App() {
     if (!Number.isInteger(total) || total < 0 || total > 180) return;
 
     const pIdx = currentPlayerIndex;
-    if (pIdx == null || scores[pIdx] == null) return;
+    const scoreIdx = scoreIndexForPlayer(pIdx);
+    if (pIdx == null || scores[scoreIdx] == null) return;
 
-    const prev = scores[pIdx];
+    const prev = scores[scoreIdx];
     const tentative = prev - total;
 
     const resetMult = () => setMult(1);
@@ -978,12 +1118,14 @@ function App() {
         type: 'bust',
         mode: 'classic',
         pIdx,
+
+        scoreIdx,
         prevScore: prev,
         dartsBefore: [...darts],
       });
 
       setDarts([]);
-      setLastTurn(ls => ls.map((x, i) => (i === pIdx ? 0 : x)));
+      setLastTurn(ls => ls.map((x, i) => (i === scoreIdx ? 0 : x)));
       resetMult();
       advanceTurn();
     };
@@ -1011,29 +1153,31 @@ function App() {
         type: 'round',
         mode: 'classic',
         pIdx,
+
+        scoreIdx,
         prevScore: prev,
         newScore: 0,
         hit: { v: total, m: 1, score: total },
         dartsBefore: [...darts],
-        lastTurnBefore: lastTurn[pIdx] ?? 0,
+        lastTurnBefore: lastTurn[scoreIdx] ?? 0,
         thrownDelta: 3,
       });
 
-      setScores(sc => sc.map((x, i) => (i === pIdx ? 0 : x)));
-      setThrown(th => th.map((x, i) => (i === pIdx ? x + 3 : x)));
-      setLastTurn(ls => ls.map((x, i) => (i === pIdx ? total : x)));
+      setScores(sc => sc.map((x, i) => (i === scoreIdx ? 0 : x)));
+      setThrown(th => th.map((x, i) => (i === scoreIdx ? x + 3 : x)));
+      setLastTurn(ls => ls.map((x, i) => (i === scoreIdx ? total : x)));
       setDarts([]);
 
       if (playThrough) {
         setPendingWin(prevBest => (
           !prevBest || 3 < prevBest.dartsUsed
-            ? { pIdx, dartsUsed: 3 }
+            ? { pIdx: scoreIdx, dartsUsed: 3 }
             : prevBest
         ));
         speak(lang, total === 0 ? t(lang, 'zeroWord') : total, voiceOn);
         advanceTurn();
       } else {
-        finalizeWin(pIdx);
+        finalizeWin(scoreIdx);
       }
 
       resetMult();
@@ -1046,17 +1190,19 @@ function App() {
       type: 'round',
       mode: 'classic',
       pIdx,
+
+      scoreIdx,
       prevScore: prev,
       newScore: tentative,
       hit: { v: total, m: 1, score: total },
       dartsBefore: [...darts],
-      lastTurnBefore: lastTurn[pIdx] ?? 0,
+      lastTurnBefore: lastTurn[scoreIdx] ?? 0,
       thrownDelta: 3,
     });
 
-    setScores(sc => sc.map((x, i) => (i === pIdx ? tentative : x)));
-    setThrown(th => th.map((x, i) => (i === pIdx ? x + 3 : x)));
-    setLastTurn(ls => ls.map((x, i) => (i === pIdx ? total : x)));
+    setScores(sc => sc.map((x, i) => (i === scoreIdx ? tentative : x)));
+    setThrown(th => th.map((x, i) => (i === scoreIdx ? x + 3 : x)));
+    setLastTurn(ls => ls.map((x, i) => (i === scoreIdx ? total : x)));
     setDarts([]);
 
     speak(lang, total === 0 ? t(lang, 'zeroWord') : total, voiceOn);
@@ -1279,10 +1425,17 @@ if (!isPremium) {
             winner: players[pIdx]?.name || ''
           };
           if (mode === 'classic' && Array.isArray(scores)) {
-            gameRecord.remainingByPlayer = players.map((p, ix) => ({
-              name: p.name,
-              remaining: scores[ix] ?? 0
-            }));
+            gameRecord.remainingByPlayer = playerMode === 'teams'
+              ? [0, 1, 2]
+                  .filter(ix => players.some((_, pIx) => scoreIndexForPlayer(pIx) === ix))
+                  .map(ix => ({
+                    name: teamNameByIndex(ix),
+                    remaining: scores[ix] ?? 0
+                  }))
+              : players.map((p, ix) => ({
+                  name: p.name,
+                  remaining: scores[ix] ?? 0
+                }));
           }
           list.unshift(gameRecord);
           localStorage.setItem('finishedGames', JSON.stringify(list.slice(0, 200)));
@@ -1366,9 +1519,9 @@ const undo = () => {
 
     if (last.mode === 'classic') {
         if (last.type === 'round') {
-          const { pIdx, prevScore, dartsBefore, lastTurnBefore, thrownDelta = 3 } = last;
+          const { pIdx, scoreIdx = pIdx, prevScore, dartsBefore, lastTurnBefore, thrownDelta = 3 } = last;
 
-          setScores(sc => sc.map((x, i) => i === pIdx ? prevScore : x));
+          setScores(sc => sc.map((x, i) => i === scoreIdx ? prevScore : x));
 
           const pos = order.indexOf(pIdx);
           if (pos >= 0) setCurrIdx(pos);
@@ -1376,15 +1529,15 @@ const undo = () => {
           setDarts(dartsBefore || []);
 
           setThrown(th => th.map((x, i) =>
-            i === pIdx ? Math.max(0, x - thrownDelta) : x
+            i === scoreIdx ? Math.max(0, x - thrownDelta) : x
           ));
 
           setLastTurn(ls => ls.map((x, i) =>
-            i === pIdx ? (lastTurnBefore ?? 0) : x
+            i === scoreIdx ? (lastTurnBefore ?? 0) : x
           ));
         } else if (last.type === 'dart') {
-        const { pIdx, prevScore, hit } = last;
-        setScores(sc => sc.map((x, i) => i === pIdx ? prevScore : x));
+        const { pIdx, scoreIdx = pIdx, prevScore, hit } = last;
+        setScores(sc => sc.map((x, i) => i === scoreIdx ? prevScore : x));
         setDarts(ds => {
           const d = [...ds];
           if (order[currIdx] !== pIdx) {
@@ -1396,18 +1549,18 @@ const undo = () => {
           return d;
         });
         setThrown(th => th.map((x, i) =>
-          i === pIdx ? Math.max(0, x - 1) : x
+          i === scoreIdx ? Math.max(0, x - 1) : x
         ));
         setLastTurn(ls => ls.map((x, i) =>
-          i === pIdx ? Math.max(0, x - (hit?.score || 0)) : x
+          i === scoreIdx ? Math.max(0, x - (hit?.score || 0)) : x
         ));
       } else if (last.type === 'bust') {
-        const { pIdx, prevScore } = last;
-        setScores(sc => sc.map((x, i) => i === pIdx ? prevScore : x));
+        const { pIdx, scoreIdx = pIdx, prevScore } = last;
+        setScores(sc => sc.map((x, i) => i === scoreIdx ? prevScore : x));
         const pos = order.indexOf(pIdx);
         if (pos >= 0) setCurrIdx(pos);
         setDarts(last.dartsBefore || []);
-        setLastTurn(ls => ls.map((x, i) => i === pIdx ? 0 : x));
+        setLastTurn(ls => ls.map((x, i) => i === scoreIdx ? 0 : x));
       }
     } else if (last.mode === 'cricket') {
       setCricket(last.prev);
@@ -1437,15 +1590,17 @@ const undo = () => {
 };
 
 const averages = useMemo(() => {
-  if (mode !== 'classic') {
-    return players.map(() => 0);
-  }
-  return players.map((_, i) => {
-    const thrownDarts = thrown[i] || 0;
-    const done = startScore - (scores[i] ?? startScore);
-    return thrownDarts > 0 ? (done / thrownDarts) : 0;
-  });
-}, [players, thrown, scores, startScore, mode]);
+    if (mode !== 'classic') {
+      return players.map(() => 0);
+    }
+
+    const count = playerMode === 'teams' ? 3 : players.length;
+    return Array.from({ length: count }, (_, i) => {
+      const thrownDarts = thrown[i] || 0;
+      const done = startScore - (scores[i] ?? startScore);
+      return thrownDarts > 0 ? (done / thrownDarts) : 0;
+    });
+  }, [players, thrown, scores, startScore, mode, playerMode]);
 
 const cardRefs = useRef({});
 useEffect(() => {
@@ -2003,6 +2158,7 @@ const buyPremium = async () => {
       playThrough={playThrough} setPlayThrough={setPlayThrough}
       ai={ai} setAi={setAi}
       scoreInputMode={scoreInputMode} setScoreInputMode={setScoreInputMode}
+      playerMode={playerMode} setPlayerMode={setPlayerMode}
       players={players} setPlayers={setPlayers}
       addPlayer={addPlayer} deletePlayer={deletePlayer}
       movePlayer={movePlayer}
@@ -2054,6 +2210,7 @@ const buyPremium = async () => {
     lang={lang}
     t={t}
     mode={mode}
+    playerMode={playerMode}
       scoreInputMode={scoreInputMode}
     isPremium={isPremium}
     outDesc={(() => {
@@ -2218,6 +2375,7 @@ function Lobby({
     playThrough, setPlayThrough,
     ai, setAi,
     scoreInputMode, setScoreInputMode,
+    playerMode, setPlayerMode,
     players, setPlayers,
     addPlayer, deletePlayer, movePlayer,
     startGame, continueSaved,
@@ -2560,6 +2718,21 @@ function Lobby({
 
         {/* Hráči */}
         <div className="lobbyCard">
+            {mode === 'classic' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+                <span style={{ fontSize: 12, opacity: .85 }}>{t(lang, 'playerModeLabel')}</span>
+                <select
+                  className="input"
+                  value={playerMode}
+                  onChange={e => setPlayerMode(e.target.value)}
+                  style={{ height: 32, minWidth: 128 }}
+                >
+                  <option value="individual">{t(lang, 'individualPlayers')}</option>
+                  <option value="teams">{t(lang, 'teamPlayers')}</option>
+                </select>
+              </div>
+            )}
+
           {players.map((p, i) => (
             <div key={p.id} className="playerRow">
               <div className="playerName">
@@ -2571,6 +2744,22 @@ function Lobby({
                   onMouseUp={e => e.preventDefault()}
                 />
               </div>
+
+                {mode === 'classic' && playerMode === 'teams' && (
+                  <div style={{ minWidth: 92 }}>
+                    <select
+                      className="input"
+                      value={p.team || (['A', 'B', 'C'][i % 3])}
+                      onChange={e => setPlayers(ps => ps.map((x, ix) => ix === i ? { ...x, team: e.target.value } : x))}
+                      style={{ height: 34, width: '100%' }}
+                      title={t(lang, 'teamLabel')}
+                    >
+                      <option value="A">{t(lang, 'teamA')}</option>
+                      <option value="B">{t(lang, 'teamB')}</option>
+                      <option value="C">{t(lang, 'teamC')}</option>
+                    </select>
+                  </div>
+                )}
 
               <div className="playerActions">
                 <button
@@ -2789,7 +2978,7 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
   }
   /* ===== GAME SCREEN ===== */
   function Game({
-    lang, t, mode, scoreInputMode, outDesc, isPremium,
+    lang, t, mode, playerMode, scoreInputMode, outDesc, isPremium,
     players, order, currIdx,
     scores, averages, thrown, lastTurn,
     cricket, around,
@@ -2799,6 +2988,26 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
     const HEAD_H = 40;
     const PAD_H = 160;
     const [roundScoreInput, setRoundScoreInput] = React.useState('');
+
+    const gameTeamCodes = ['A', 'B', 'C'];
+
+    const gameTeamCodeByIndex = (idx) => gameTeamCodes[idx] || 'A';
+
+    const gameTeamIndex = (code) => {
+      const idx = gameTeamCodes.indexOf(code);
+      return idx >= 0 ? idx : 0;
+    };
+
+    const gamePlayerTeam = (player, ix) => (
+      player?.team || gameTeamCodeByIndex(ix % gameTeamCodes.length)
+    );
+
+    const gameActiveTeamIndexes = () => (
+      gameTeamCodes
+        .map((code, idx) => ({ code, idx }))
+        .filter(({ code }) => players.some((pl, ix) => gamePlayerTeam(pl, ix) === code))
+        .map(x => x.idx)
+    );
 
     const submitRoundScore = () => {
       if (roundScoreInput === '') return;
@@ -2883,7 +3092,88 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
         </div>
 
         {/* SCOREBOARD */}
-        {mode !== 'cricket' ? (
+          {mode === 'classic' && playerMode === 'teams' ? (
+            <div className="playersPane" data-premium={isPremium ? '1' : '0'}>
+              {gameActiveTeamIndexes().map(teamIdx => {
+                const activePlayerIdx = order[currIdx];
+                const activeTeamIdx = gameTeamIndex(gamePlayerTeam(players[activePlayerIdx], activePlayerIdx));
+                const active = teamIdx === activeTeamIdx && winner == null;
+                const currentDarts = active ? darts : [];
+                const teamName = t(lang, teamIdx === 2 ? 'teamC' : teamIdx === 1 ? 'teamB' : 'teamA');
+                const teamCode = gameTeamCodeByIndex(teamIdx);
+                const members = players
+                  .map((pl, ix) => ({ name: pl.name, ix, team: gamePlayerTeam(pl, ix) }))
+                  .filter(m => m.team === teamCode);
+
+                return (
+                  <div
+                    key={`team-${teamIdx}`}
+                    ref={node => { if (node) cardRefs.current[teamIdx] = node; }}
+                    className={'playerCard' + (active ? ' active' : '') + (winner === teamIdx ? ' winner' : '')}
+                    style={active ? activeStyle : undefined}
+                  >
+                    {winner === teamIdx && (
+                      <>
+                        <div className="starburst" aria-hidden="true">
+                          {Array.from({ length: 12 }).map((_, k) => (
+                            <span key={k} style={{ '--k': k }} />
+                          ))}
+                        </div>
+                        <div className="confetti" aria-hidden="true">
+                          {Array.from({ length: 50 }).map((_, k) => (
+                            <span key={k} style={{ '--i': k }} />
+                          ))}
+                        </div>
+                      </>
+                    )}
+
+                    <div className="playerHeader">
+                      <div className="playerNameText">{teamName}</div>
+
+                      <div className="playerStats">
+                        <span>{thrown[teamIdx] || 0} {t(lang, 'darts')}</span>
+                        <span>•</span>
+                        <span>{t(lang, 'avg')}: {formatAvg(averages[teamIdx])}</span>
+                        {members.length > 0 && (
+                          <>
+                            <span>•</span>
+                            <span>
+                              {members.map((m, mi) => (
+                                <span
+                                  key={m.ix}
+                                  style={{ fontWeight: m.ix === activePlayerIdx ? 900 : 400 }}
+                                >
+                                  {mi > 0 ? ', ' : ''}{m.name}
+                                </span>
+                              ))}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="playerScore">
+                      {scores[teamIdx] ?? 0}
+                    </div>
+
+                    <div className="playerTurn">
+                      {[0, 1, 2].map(ix => {
+                        const d = currentDarts[ix];
+                        return (
+                          <div key={ix} className="dartBox">
+                            {d ? formatHit(d) : '-'}
+                          </div>
+                        );
+                      })}
+                      <div className="lastTotal">
+                        {t(lang, 'last')}: {lastTurn[teamIdx] || 0}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : mode !== 'cricket' ? (
           /* CLASSIC / AROUND */
           <div className="playersPane" data-premium={isPremium ? '1' : '0'}>
             {order.map((pIdx, i) => {
