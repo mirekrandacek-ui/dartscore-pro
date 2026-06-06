@@ -32,8 +32,9 @@ const T = {
       submitScore: 'Zapsat',
       roundTotalHint: 'Zadej součet za celé kolo po 3 šipkách.',
       confirmCheckoutRound: 'Bylo kolo zavřeno správným double/triple/master-out hodem?',
+    premiumInfoButton: 'Co obsahuje Premium',
     premiumMode: 'Premium režim',
-    activatePremium: 'Aktivovat Premium',
+    activatePremium: 'Aktivuj Premium',
     filter: 'Filtr', all: 'Vše', week: 'Týden', month: 'Měsíc', year: 'Rok',
     h2h: 'Vzájemné zápasy', selectPlayer: 'Vyber hráče', wins: 'výhry',
     // Pravidla – plně lokalizovaná
@@ -73,6 +74,7 @@ premiumNote: "Jednorázová platba. Žádné předplatné.",
       submitScore: 'Submit',
       roundTotalHint: 'Enter the total score for the full 3-dart round.',
       confirmCheckoutRound: 'Was the round finished with a valid double/triple/master-out throw?',
+    premiumInfoButton: 'What Premium includes',
     premiumMode: 'Premium Mode',
     filter: 'Filter', all: 'All', week: 'Week', month: 'Month', year: 'Year',
     h2h: 'Head-to-Head', selectPlayer: 'Select player', wins: 'wins',
@@ -113,6 +115,7 @@ activatePremium: 'Activate Premium',
       submitScore: 'Eintragen',
       roundTotalHint: 'Gib die Gesamtpunktzahl der kompletten 3-Dart-Runde ein.',
       confirmCheckoutRound: 'Wurde die Runde mit einem gültigen Double/Triple/Master-out beendet?',
+    premiumInfoButton: 'Was enthält Premium?',
     premiumMode: 'Premium-Modus',
     activatePremium: 'Premium aktivieren',
     filter: 'Filter', all: 'Alle', week: 'Woche', month: 'Monat', year: 'Jahr',
@@ -153,6 +156,7 @@ premiumNote: "Einmalige Zahlung. Kein Abo.",
       submitScore: 'Guardar',
       roundTotalHint: 'Introduce la puntuación total de la ronda completa de 3 dardos.',
       confirmCheckoutRound: '¿La ronda se cerró con un tiro válido double/triple/master-out?',
+    premiumInfoButton: 'Qué incluye Premium',
     premiumMode: 'Modo Premium',
     activatePremium: 'Activar Premium',
     filter: 'Filtro', all: 'Todo', week: 'Semana', month: 'Mes', year: 'Año',
@@ -193,6 +197,7 @@ premiumNote: "Pago único. Sin suscripción.",
       submitScore: 'Opslaan',
       roundTotalHint: 'Voer de totale score van de volledige 3-dart ronde in.',
       confirmCheckoutRound: 'Is de ronde beëindigd met een geldige double/triple/master-out worp?',
+    premiumInfoButton: 'Wat bevat Premium?',
     premiumMode: 'Premium-modus',
     activatePremium: 'Premium activeren',
     filter: 'Filter', all: 'Alles', week: 'Week', month: 'Maand', year: 'Jaar',
@@ -233,6 +238,7 @@ premiumNote: "Eenmalige betaling. Geen abonnement.",
       submitScore: 'Записать',
       roundTotalHint: 'Введите сумму за полный раунд из 3 дротиков.',
       confirmCheckoutRound: 'Раунд был завершён правильным броском double/triple/master-out?',
+    premiumInfoButton: 'Что включает Premium',
     premiumMode: 'Премиум-режим',
     activatePremium: 'Активировать Premium',
     filter: 'Фильтр', all: 'Все', week: 'Неделя', month: 'Месяц', year: 'Год',
@@ -273,8 +279,9 @@ premiumNote: "Разовая оплата. Без подписки.",
       submitScore: '提交',
       roundTotalHint: '输入完整 3 镖回合的总分。',
       confirmCheckoutRound: '本回合是否以有效的 double/triple/master-out 投镖结束？',
+    premiumInfoButton: 'Premium 包含什么',
     premiumMode: '高级模式',
-    activatePremium: 'Активировать Premium',
+    activatePremium: '激活 Premium',
     filter: '筛选', all: '全部', week: '一周', month: '一月', year: '一年',
     h2h: '对战', selectPlayer: '选玩家', wins: '胜',
     rulesClassic:
@@ -2404,7 +2411,7 @@ function Lobby({
     boxShadow: showPremiumDetails ? '0 0 6px var(--accent)' : 'none'
   }}
 >
-  {t(lang, 'premiumMode')}
+  {t(lang, 'premiumInfoButton')}
 </button>
             <button
               type="button"
@@ -2417,7 +2424,7 @@ function Lobby({
                 boxShadow: isPremium ? '0 0 6px var(--accent)' : 'none'
               }}
             >
-            {isPremium ? t(lang, 'premiumMode') : t(lang, 'activatePremium')}
+            {t(lang, 'activatePremium')}
             </button>
                      </div>
 {showPremiumDetails && (
@@ -2584,16 +2591,6 @@ function Lobby({
                 >
                   ↓
                 </button>
-              </div>
-
-              <div>
-                <span className="score">
-                  {mode === 'classic'
-                    ? startScore
-                    : (mode === 'cricket'
-                      ? t(lang, 'points')
-                      : `${t(lang, 'target')}`)}
-                </span>
               </div>
 
               <div className="playerDelete">
