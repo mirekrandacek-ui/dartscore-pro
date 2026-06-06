@@ -26,6 +26,12 @@ const T = {
     undo: 'Zpět', next: 'Další hráč', bust: 'bez skóre', checkout: 'checkout',
     youWinPrefix: 'Výhra', outLabel: 'Ukončení', zeroWord: 'nula',
     points: 'Body', target: 'Cíl',
+      scoreInput: 'Zadávání',
+      scoreByDarts: 'Po šipkách',
+      roundTotal: 'Součet kola',
+      submitScore: 'Zapsat',
+      roundTotalHint: 'Zadej součet za celé kolo po 3 šipkách.',
+      confirmCheckoutRound: 'Bylo kolo zavřeno správným double/triple/master-out hodem?',
     premiumMode: 'Premium režim',
     activatePremium: 'Aktivovat Premium',
     filter: 'Filtr', all: 'Vše', week: 'Týden', month: 'Měsíc', year: 'Rok',
@@ -61,6 +67,12 @@ premiumNote: "Jednorázová platba. Žádné předplatné.",
     undo: 'Undo', next: 'Next', bust: 'bust', checkout: 'checkout',
     youWinPrefix: 'Win', outLabel: 'Finish', zeroWord: 'zero',
     points: 'Points', target: 'Target',
+      scoreInput: 'Input',
+      scoreByDarts: 'By darts',
+      roundTotal: 'Round total',
+      submitScore: 'Submit',
+      roundTotalHint: 'Enter the total score for the full 3-dart round.',
+      confirmCheckoutRound: 'Was the round finished with a valid double/triple/master-out throw?',
     premiumMode: 'Premium Mode',
     filter: 'Filter', all: 'All', week: 'Week', month: 'Month', year: 'Year',
     h2h: 'Head-to-Head', selectPlayer: 'Select player', wins: 'wins',
@@ -95,6 +107,12 @@ activatePremium: 'Activate Premium',
     undo: 'Zurück', next: 'Nächster', bust: 'bust', checkout: 'Checkout',
     youWinPrefix: 'Sieg', outLabel: 'Finish', zeroWord: 'null',
     points: 'Punkte', target: 'Ziel',
+      scoreInput: 'Eingabe',
+      scoreByDarts: 'Pro Dart',
+      roundTotal: 'Rundensumme',
+      submitScore: 'Eintragen',
+      roundTotalHint: 'Gib die Gesamtpunktzahl der kompletten 3-Dart-Runde ein.',
+      confirmCheckoutRound: 'Wurde die Runde mit einem gültigen Double/Triple/Master-out beendet?',
     premiumMode: 'Premium-Modus',
     activatePremium: 'Premium aktivieren',
     filter: 'Filter', all: 'Alle', week: 'Woche', month: 'Monat', year: 'Jahr',
@@ -129,6 +147,12 @@ premiumNote: "Einmalige Zahlung. Kein Abo.",
     undo: 'Deshacer', next: 'Siguiente', bust: 'sin puntuación', checkout: 'checkout',
     youWinPrefix: 'Victoria', outLabel: 'Finish', zeroWord: 'cero',
     points: 'Puntos', target: 'Objetivo',
+      scoreInput: 'Entrada',
+      scoreByDarts: 'Por dardos',
+      roundTotal: 'Total ronda',
+      submitScore: 'Guardar',
+      roundTotalHint: 'Introduce la puntuación total de la ronda completa de 3 dardos.',
+      confirmCheckoutRound: '¿La ronda se cerró con un tiro válido double/triple/master-out?',
     premiumMode: 'Modo Premium',
     activatePremium: 'Activar Premium',
     filter: 'Filtro', all: 'Todo', week: 'Semana', month: 'Mes', year: 'Año',
@@ -163,6 +187,12 @@ premiumNote: "Pago único. Sin suscripción.",
     undo: 'Ongedaan', next: 'Volgende', bust: 'bust', checkout: 'checkout',
     youWinPrefix: 'Winst', outLabel: 'Finish', zeroWord: 'nul',
     points: 'Punten', target: 'Doel',
+      scoreInput: 'Invoer',
+      scoreByDarts: 'Per dart',
+      roundTotal: 'Rondetotaal',
+      submitScore: 'Opslaan',
+      roundTotalHint: 'Voer de totale score van de volledige 3-dart ronde in.',
+      confirmCheckoutRound: 'Is de ronde beëindigd met een geldige double/triple/master-out worp?',
     premiumMode: 'Premium-modus',
     activatePremium: 'Premium activeren',
     filter: 'Filter', all: 'Alles', week: 'Week', month: 'Maand', year: 'Jaar',
@@ -197,6 +227,12 @@ premiumNote: "Eenmalige betaling. Geen abonnement.",
     undo: 'Отмена', next: 'Далее', bust: 'без очков', checkout: 'чекаут',
     youWinPrefix: 'Победа', outLabel: 'Finish', zeroWord: 'ноль',
     points: 'Очки', target: 'Цель',
+      scoreInput: 'Ввод',
+      scoreByDarts: 'По дротикам',
+      roundTotal: 'Сумма раунда',
+      submitScore: 'Записать',
+      roundTotalHint: 'Введите сумму за полный раунд из 3 дротиков.',
+      confirmCheckoutRound: 'Раунд был завершён правильным броском double/triple/master-out?',
     premiumMode: 'Премиум-режим',
     activatePremium: 'Активировать Premium',
     filter: 'Фильтр', all: 'Все', week: 'Неделя', month: 'Месяц', year: 'Год',
@@ -231,6 +267,12 @@ premiumNote: "Разовая оплата. Без подписки.",
     undo: '撤销', next: '下一位', bust: '爆掉', checkout: '收尾',
     youWinPrefix: '胜利', outLabel: '收尾', zeroWord: '零',
     points: '分数', target: '目标',
+      scoreInput: '输入',
+      scoreByDarts: '按镖输入',
+      roundTotal: '回合总分',
+      submitScore: '提交',
+      roundTotalHint: '输入完整 3 镖回合的总分。',
+      confirmCheckoutRound: '本回合是否以有效的 double/triple/master-out 投镖结束？',
     premiumMode: '高级模式',
     activatePremium: 'Активировать Premium',
     filter: '筛选', all: '全部', week: '一周', month: '一月', year: '一年',
@@ -493,6 +535,7 @@ function App() {
   const [playThrough, setPlayThrough] = useState(false);
 
   const [ai, setAi] = useState('off'); // off | easy | medium | hard
+  const [scoreInputMode, setScoreInputMode] = useState('darts'); // darts | round
 
   const [players, setPlayers] = useState([
     { id: uid(), name: defaultNameFor(lang, 1), color: colors[0], bot: false },
@@ -519,6 +562,7 @@ function App() {
       if (typeof s.randomOrder === 'boolean') setRandomOrder(s.randomOrder);
       if (typeof s.playThrough === 'boolean') setPlayThrough(s.playThrough);
       if (s.ai) setAi(s.ai);
+      if (s.scoreInputMode) setScoreInputMode(s.scoreInputMode);
       if (s.players) setPlayers(s.players);
       if (typeof s.isPremium === 'boolean') setIsPremium(s.isPremium);
       if (s.themeColor) setThemeColor(s.themeColor);
@@ -533,7 +577,7 @@ function App() {
         JSON.stringify({
           lang, mode, startScore,
           outDouble, outTriple, outMaster,
-          randomOrder, playThrough, ai, players,
+          randomOrder, playThrough, ai, scoreInputMode, players,
           isPremium, themeColor
         })
       );
@@ -541,7 +585,7 @@ function App() {
   }, [
     lang, mode, startScore,
     outDouble, outTriple, outMaster,
-    randomOrder, playThrough, ai, players,
+    randomOrder, playThrough, ai, scoreInputMode, players,
     isPremium, themeColor
   ]);
 
@@ -901,6 +945,118 @@ function App() {
 
     resetMult();
   };
+  const commitClassicRound = (roundScore) => {
+    const total = Number(roundScore);
+    if (!Number.isInteger(total) || total < 0 || total > 180) return;
+
+    const pIdx = currentPlayerIndex;
+    if (pIdx == null || scores[pIdx] == null) return;
+
+    const prev = scores[pIdx];
+    const tentative = prev - total;
+
+    const resetMult = () => setMult(1);
+
+    const advanceTurn = () => {
+      setTimeout(() => {
+        try { nextPlayer(); } catch (e) { console.error('nextPlayer failed:', e); }
+      }, 250);
+    };
+
+    const doBust = () => {
+      speak(lang, t(lang, 'bust'), voiceOn);
+      playHitSound();
+
+      pushAction({
+        type: 'bust',
+        mode: 'classic',
+        pIdx,
+        prevScore: prev,
+        dartsBefore: [...darts],
+      });
+
+      setDarts([]);
+      setLastTurn(ls => ls.map((x, i) => (i === pIdx ? 0 : x)));
+      resetMult();
+      advanceTurn();
+    };
+
+    if (tentative < 0 || isBustLeavingOne(tentative)) {
+      doBust();
+      return;
+    }
+
+    if (tentative === 0) {
+      let finishOk = true;
+
+      if (anyOutSelected) {
+        finishOk = window.confirm(t(lang, 'confirmCheckoutRound'));
+      }
+
+      if (!finishOk) {
+        doBust();
+        return;
+      }
+
+      playHitSound();
+
+      pushAction({
+        type: 'round',
+        mode: 'classic',
+        pIdx,
+        prevScore: prev,
+        newScore: 0,
+        hit: { v: total, m: 1, score: total },
+        dartsBefore: [...darts],
+        lastTurnBefore: lastTurn[pIdx] ?? 0,
+        thrownDelta: 3,
+      });
+
+      setScores(sc => sc.map((x, i) => (i === pIdx ? 0 : x)));
+      setThrown(th => th.map((x, i) => (i === pIdx ? x + 3 : x)));
+      setLastTurn(ls => ls.map((x, i) => (i === pIdx ? total : x)));
+      setDarts([]);
+
+      if (playThrough) {
+        setPendingWin(prevBest => (
+          !prevBest || 3 < prevBest.dartsUsed
+            ? { pIdx, dartsUsed: 3 }
+            : prevBest
+        ));
+        speak(lang, total === 0 ? t(lang, 'zeroWord') : total, voiceOn);
+        advanceTurn();
+      } else {
+        finalizeWin(pIdx);
+      }
+
+      resetMult();
+      return;
+    }
+
+    playHitSound();
+
+    pushAction({
+      type: 'round',
+      mode: 'classic',
+      pIdx,
+      prevScore: prev,
+      newScore: tentative,
+      hit: { v: total, m: 1, score: total },
+      dartsBefore: [...darts],
+      lastTurnBefore: lastTurn[pIdx] ?? 0,
+      thrownDelta: 3,
+    });
+
+    setScores(sc => sc.map((x, i) => (i === pIdx ? tentative : x)));
+    setThrown(th => th.map((x, i) => (i === pIdx ? x + 3 : x)));
+    setLastTurn(ls => ls.map((x, i) => (i === pIdx ? total : x)));
+    setDarts([]);
+
+    speak(lang, total === 0 ? t(lang, 'zeroWord') : total, voiceOn);
+    resetMult();
+    advanceTurn();
+  };
+
 /* ===== Cricket commit ===== */
 const commitCricket = (value, mOverride) => {
   let v = value;
@@ -1202,7 +1358,24 @@ const undo = () => {
     const last = st[st.length - 1];
 
     if (last.mode === 'classic') {
-      if (last.type === 'dart') {
+        if (last.type === 'round') {
+          const { pIdx, prevScore, dartsBefore, lastTurnBefore, thrownDelta = 3 } = last;
+
+          setScores(sc => sc.map((x, i) => i === pIdx ? prevScore : x));
+
+          const pos = order.indexOf(pIdx);
+          if (pos >= 0) setCurrIdx(pos);
+
+          setDarts(dartsBefore || []);
+
+          setThrown(th => th.map((x, i) =>
+            i === pIdx ? Math.max(0, x - thrownDelta) : x
+          ));
+
+          setLastTurn(ls => ls.map((x, i) =>
+            i === pIdx ? (lastTurnBefore ?? 0) : x
+          ));
+        } else if (last.type === 'dart') {
         const { pIdx, prevScore, hit } = last;
         setScores(sc => sc.map((x, i) => i === pIdx ? prevScore : x));
         setDarts(ds => {
@@ -1822,6 +1995,7 @@ const buyPremium = async () => {
       randomOrder={randomOrder} setRandomOrder={setRandomOrder}
       playThrough={playThrough} setPlayThrough={setPlayThrough}
       ai={ai} setAi={setAi}
+      scoreInputMode={scoreInputMode} setScoreInputMode={setScoreInputMode}
       players={players} setPlayers={setPlayers}
       addPlayer={addPlayer} deletePlayer={deletePlayer}
       movePlayer={movePlayer}
@@ -1873,6 +2047,7 @@ const buyPremium = async () => {
     lang={lang}
     t={t}
     mode={mode}
+      scoreInputMode={scoreInputMode}
     isPremium={isPremium}
     outDesc={(() => {
       if (mode !== 'classic') {
@@ -1898,6 +2073,7 @@ const buyPremium = async () => {
     mult={mult}
     setMult={setMult}
     commitDart={commitDart}
+      commitClassicRound={commitClassicRound}
     undo={undo}
     winner={winner}
     saveGame={() => {
@@ -2034,6 +2210,7 @@ function Lobby({
     randomOrder, setRandomOrder,
     playThrough, setPlayThrough,
     ai, setAi,
+    scoreInputMode, setScoreInputMode,
     players, setPlayers,
     addPlayer, deletePlayer, movePlayer,
     startGame, continueSaved,
@@ -2171,20 +2348,35 @@ function Lobby({
               )}
             </div>
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
-              <span>{t(lang, 'robot')}</span>
-              <select
-                className="input"
-                value={ai}
-                onChange={e => setAi(e.target.value)}
-                style={{ height: 34 }}
-              >
-                <option value="off">{t(lang, 'off')}</option>
-                <option value="easy">{t(lang, 'easy')}</option>
-                <option value="medium">{t(lang, 'medium')}</option>
-                <option value="hard">{t(lang, 'hard')}</option>
-              </select>
-            </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10 }}>
+                <span>{t(lang, 'robot')}</span>
+                <select
+                  className="input"
+                  value={ai}
+                  onChange={e => setAi(e.target.value)}
+                  style={{ height: 34, minWidth: 104 }}
+                >
+                  <option value="off">{t(lang, 'off')}</option>
+                  <option value="easy">{t(lang, 'easy')}</option>
+                  <option value="medium">{t(lang, 'medium')}</option>
+                  <option value="hard">{t(lang, 'hard')}</option>
+                </select>
+
+                {mode === 'classic' && (
+                  <>
+                    <span style={{ marginLeft: 6, whiteSpace: 'nowrap' }}>{t(lang, 'scoreInput')}</span>
+                    <select
+                      className="input"
+                      value={scoreInputMode}
+                      onChange={e => setScoreInputMode(e.target.value)}
+                      style={{ height: 34, minWidth: 126 }}
+                    >
+                      <option value="darts">{t(lang, 'scoreByDarts')}</option>
+                      <option value="round">{t(lang, 'roundTotal')}</option>
+                    </select>
+                  </>
+                )}
+              </div>
 
           </div>
         </div>
@@ -2600,15 +2792,24 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
   }
   /* ===== GAME SCREEN ===== */
   function Game({
-    lang, t, mode, outDesc, isPremium,
+    lang, t, mode, scoreInputMode, outDesc, isPremium,
     players, order, currIdx,
     scores, averages, thrown, lastTurn,
     cricket, around,
-    darts, mult, setMult, commitDart, undo, winner,
+    darts, mult, setMult, commitDart, commitClassicRound, undo, winner,
     saveGame, restartGame, cardRefs, setScreen
   }) {
     const HEAD_H = 40;
     const PAD_H = 160;
+    const [roundScoreInput, setRoundScoreInput] = React.useState('');
+
+    const submitRoundScore = () => {
+      if (roundScoreInput === '') return;
+      const n = Number(roundScoreInput);
+      if (!Number.isInteger(n) || n < 0 || n > 180) return;
+      commitClassicRound(n);
+      setRoundScoreInput('');
+    };
 
     // keypad layout
     const keypad = React.useMemo(() => {
@@ -2872,98 +3073,172 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
           </div>
         )}
 
-        {/* PAD / KEYPAD */}
-        {winner == null && (
-          <div className="padPane">
-            {/* první řádek: DOUBLE / TRIPLE / undo */}
-            <div className="padRow">
-              <button
-                type="button"
-                className={'multBtn mult-2' + (mult === 2 ? ' active' : '')}
-                onClick={() => setMult(m => (m === 2 ? 1 : 2))}
-              >
-                DOUBLE
-              </button>
+          {/* PAD / KEYPAD */}
+          {winner == null && (
+            <div className="padPane">
+              {mode === 'classic' && scoreInputMode === 'round' ? (
+                <>
+                  <div className="padRow">
+                    <input
+                      className="input"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      placeholder="0–180"
+                      value={roundScoreInput}
+                      onChange={e => {
+                        const clean = e.target.value.replace(/\D/g, '').slice(0, 3);
+                        setRoundScoreInput(clean);
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') submitRoundScore();
+                      }}
+                      style={{
+                        height: 44,
+                        flex: 1,
+                        minWidth: 0,
+                        textAlign: 'center',
+                        fontSize: 20,
+                        fontWeight: 900
+                      }}
+                    />
 
-              <button
-                type="button"
-                className={'multBtn mult-3' + (mult === 3 ? ' active' : '')}
-                onClick={() => setMult(m => (m === 3 ? 1 : 3))}
-              >
-                TRIPLE
-              </button>
+                    <button
+                      type="button"
+                      className="btn green"
+                      onClick={submitRoundScore}
+                      style={{ height: 44, minWidth: 86 }}
+                    >
+                      {t(lang, 'submitScore')}
+                    </button>
 
-              <button
-                type="button"
-                className="multBtn backspace"
-                onClick={undo}
-                title={t(lang, 'undo')}
-                aria-label={t(lang, 'undo')}
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  className="iconBackspace"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M7 5L3 12l4 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H7z"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  />
-                  <path
-                    d="M12 9l4 4m0-4-4 4"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
+                    <button
+                      type="button"
+                      className="multBtn backspace"
+                      onClick={undo}
+                      title={t(lang, 'undo')}
+                      aria-label={t(lang, 'undo')}
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="iconBackspace"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M7 5L3 12l4 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H7z"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        />
+                        <path
+                          d="M12 9l4 4m0-4-4 4"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <div style={{ fontSize: 12, opacity: .75, textAlign: 'center', paddingTop: 4 }}>
+                    {t(lang, 'roundTotalHint')}
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* první řádek: DOUBLE / TRIPLE / undo */}
+                  <div className="padRow">
+                    <button
+                      type="button"
+                      className={'multBtn mult-2' + (mult === 2 ? ' active' : '')}
+                      onClick={() => setMult(m => (m === 2 ? 1 : 2))}
+                    >
+                      DOUBLE
+                    </button>
+
+                    <button
+                      type="button"
+                      className={'multBtn mult-3' + (mult === 3 ? ' active' : '')}
+                      onClick={() => setMult(m => (m === 3 ? 1 : 3))}
+                    >
+                      TRIPLE
+                    </button>
+
+                    <button
+                      type="button"
+                      className="multBtn backspace"
+                      onClick={undo}
+                      title={t(lang, 'undo')}
+                      aria-label={t(lang, 'undo')}
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="iconBackspace"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M7 5L3 12l4 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H7z"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        />
+                        <path
+                          d="M12 9l4 4m0-4-4 4"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* čísla */}
+                  {keypad.map((row, ri) => (
+                    <div key={`row-${row.join('-')}`} className="padRow">
+                      {row.map(n => (
+                        <button
+                          type="button"
+                          key={n}
+                          className="key"
+                          onPointerDown={e => {
+                            e.currentTarget.classList.add('pressed');
+
+                            // Cricket speciály:
+                            if (mode === 'cricket') {
+                              if (n === 0) {
+                                setMult(1);
+                                commitDart(0, 1);
+                                return;
+                              }
+                              if (n === 25) {
+                                setMult(1);
+                                commitDart(25, 1);
+                                return;
+                              }
+                            }
+
+                            commitDart(n);
+                          }}
+                          onPointerUp={e => {
+                            e.currentTarget.classList.remove('pressed');
+                          }}
+                          onPointerLeave={e => {
+                            e.currentTarget.classList.remove('pressed');
+                          }}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
-
-            {/* čísla */}
-            {keypad.map((row, ri) => (
-              <div key={`row-${row.join('-')}`} className="padRow">
-                {row.map(n => (
-                  <button
-                    type="button"
-                    key={n}
-                    className="key"
-                    onPointerDown={e => {
-                      e.currentTarget.classList.add('pressed');
-
-                      // Cricket speciály:
-                      if (mode === 'cricket') {
-                        if (n === 0) {
-                          setMult(1);
-                          commitDart(0, 1);
-                          return;
-                        }
-                        if (n === 25) {
-                          setMult(1);
-                          commitDart(25, 1);
-                          return;
-                        }
-                      }
-
-                      commitDart(n);
-                    }}
-                    onPointerUp={e => {
-                      e.currentTarget.classList.remove('pressed');
-                    }}
-                    onPointerLeave={e => {
-                      e.currentTarget.classList.remove('pressed');
-                    }}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
-            ))}
-          </div>
-        )}
+          )}
       </div>
     );
   }
