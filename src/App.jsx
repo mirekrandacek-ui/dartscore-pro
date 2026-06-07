@@ -40,6 +40,7 @@ const T = {
       submitScore: 'Zapsat',
       roundTotalHint: 'Zadej součet za celé kolo po 3 šipkách.',
       confirmCheckoutRound: 'Bylo kolo zavřeno správným double/triple/master-out hodem?',
+    rateAppButton: 'Líbí se ti aplikace?',
     premiumInfoButton: 'Co obsahuje Premium',
     premiumMode: 'Premium režim',
     activatePremium: 'Aktivuj Premium',
@@ -90,6 +91,7 @@ premiumNote: "Jednorázová platba. Žádné předplatné.",
       submitScore: 'Submit',
       roundTotalHint: 'Enter the total score for the full 3-dart round.',
       confirmCheckoutRound: 'Was the round finished with a valid double/triple/master-out throw?',
+    rateAppButton: 'Do you like the app?',
     premiumInfoButton: 'What Premium includes',
     premiumMode: 'Premium Mode',
     filter: 'Filter', all: 'All', week: 'Week', month: 'Month', year: 'Year',
@@ -139,6 +141,7 @@ activatePremium: 'Activate Premium',
       submitScore: 'Eintragen',
       roundTotalHint: 'Gib die Gesamtpunktzahl der kompletten 3-Dart-Runde ein.',
       confirmCheckoutRound: 'Wurde die Runde mit einem gültigen Double/Triple/Master-out beendet?',
+    rateAppButton: 'Gefällt dir die App?',
     premiumInfoButton: 'Was enthält Premium?',
     premiumMode: 'Premium-Modus',
     activatePremium: 'Premium aktivieren',
@@ -188,6 +191,7 @@ premiumNote: "Einmalige Zahlung. Kein Abo.",
       submitScore: 'Guardar',
       roundTotalHint: 'Introduce la puntuación total de la ronda completa de 3 dardos.',
       confirmCheckoutRound: '¿La ronda se cerró con un tiro válido double/triple/master-out?',
+    rateAppButton: '¿Te gusta la app?',
     premiumInfoButton: 'Qué incluye Premium',
     premiumMode: 'Modo Premium',
     activatePremium: 'Activar Premium',
@@ -237,6 +241,7 @@ premiumNote: "Pago único. Sin suscripción.",
       submitScore: 'Opslaan',
       roundTotalHint: 'Voer de totale score van de volledige 3-dart ronde in.',
       confirmCheckoutRound: 'Is de ronde beëindigd met een geldige double/triple/master-out worp?',
+    rateAppButton: 'Vind je de app leuk?',
     premiumInfoButton: 'Wat bevat Premium?',
     premiumMode: 'Premium-modus',
     activatePremium: 'Premium activeren',
@@ -286,6 +291,7 @@ premiumNote: "Eenmalige betaling. Geen abonnement.",
       submitScore: 'Записать',
       roundTotalHint: 'Введите сумму за полный раунд из 3 дротиков.',
       confirmCheckoutRound: 'Раунд был завершён правильным броском double/triple/master-out?',
+    rateAppButton: 'Нравится приложение?',
     premiumInfoButton: 'Что включает Premium',
     premiumMode: 'Премиум-режим',
     activatePremium: 'Активировать Premium',
@@ -335,6 +341,7 @@ premiumNote: "Разовая оплата. Без подписки.",
       submitScore: '提交',
       roundTotalHint: '输入完整 3 镖回合的总分。',
       confirmCheckoutRound: '本回合是否以有效的 double/triple/master-out 投镖结束？',
+    rateAppButton: '喜欢这个应用吗？',
     premiumInfoButton: 'Premium 包含什么',
     premiumMode: '高级模式',
     activatePremium: '激活 Premium',
@@ -2084,6 +2091,16 @@ const buyPremium = async () => {
 
 
     // text režimu do hlavičky vedle výběru jazyka
+    const rateApp = () => {
+      const url = 'https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro';
+
+      try {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      } catch {
+        window.location.href = url;
+      }
+    };
+
     const modeLabel = (() => {
       if (mode === 'classic') return t(lang, 'classic');
       if (mode === 'cricket') return t(lang, 'cricket');
@@ -2211,21 +2228,22 @@ const buyPremium = async () => {
                 ))}
               </select>
 
-              {/* badge s názvem režimu (Classic / Cricket / Around) */}
-              <span
-                style={{
-                  background: '#0f1318',
-                  border: '1px solid var(--accent)',
-                  borderRadius: 999,
-                  padding: '4px 10px',
-                  fontWeight: 800,
-                  fontSize: 12,
-                  color: 'var(--accent)',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {modeLabel}
-              </span>
+                {screen === 'lobby' && (
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={rateApp}
+                    style={{
+                      height: 34,
+                      fontSize: 12,
+                      padding: '4px 10px',
+                      borderColor: 'var(--accent)',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    ⭐ {t(lang, 'rateAppButton')}
+                  </button>
+                )}
             </div>
           </div>
          
