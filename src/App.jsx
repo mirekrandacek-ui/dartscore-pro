@@ -2119,134 +2119,169 @@ const buyPremium = async () => {
           }}
         >
           {/* HEADER */}
-          <div className="header" style={{ flexWrap: 'wrap' }}>
-            {/* LEVÁ STRANA: logo + Premium badge */}
+          <div
+            className="header"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8
+            }}
+          >
+            {/* 1. řádek: logo + Premium + zvuk/hlas */}
             <div
-              className="left"
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                minWidth: 0,
-                flexWrap: 'wrap'
+                justifyContent: 'space-between',
+                gap: 8,
+                width: '100%'
               }}
             >
-              {screen === 'game' && (
-                <button
-                  type="button"
-                  className="btn ghost"
-                  onClick={() => {
-                    saveSnapshot();
-                    setScreen('lobby');
-                  }}
-                  title={t(lang, 'back')}
-                  style={{ flexShrink: 0 }}
-                >
-                  ←
-                </button>
-              )}
-
               <div
-                className="logo"
+                className="left"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  flexShrink: 0,
                   minWidth: 0,
-                  fontWeight: 900,
-                  whiteSpace: 'nowrap'
+                  flexWrap: 'wrap'
                 }}
               >
-                <span className="dart"></span>
-                <span style={{ fontWeight: 900, whiteSpace: 'nowrap' }}>
-                  {t(lang, 'app')}
-                </span>
-                
-              </div>
+                {screen === 'game' && (
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    onClick={() => {
+                      saveSnapshot();
+                      setScreen('lobby');
+                    }}
+                    title={t(lang, 'back')}
+                    style={{ flexShrink: 0 }}
+                  >
+                    ←
+                  </button>
+                )}
 
-              {isPremium && (
-                <span
+                <div
+                  className="logo"
                   style={{
-                    fontSize: 12,
-                    fontWeight: 800,
-                    lineHeight: 1.2,
-                    background: '#0f1318',
-                    border: '1px solid var(--accent)',
-                    color: 'var(--accent)',
-                    padding: '4px 8px',
-                    borderRadius: '999px',
-                    flexShrink: 0,
-                    display: 'inline-flex',
+                    display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    gap: '8px',
+                    flexShrink: 0,
+                    minWidth: 0,
+                    fontWeight: 900,
+                    whiteSpace: 'nowrap'
                   }}
                 >
-                  Premium
-                </span>
-              )}
+                  <span className="dart"></span>
+                  <span style={{ fontWeight: 900, whiteSpace: 'nowrap' }}>
+                    {t(lang, 'app')}
+                  </span>
+                </div>
+
+                {isPremium && (
+                  <span
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 800,
+                      lineHeight: 1.2,
+                      background: '#0f1318',
+                      border: '1px solid var(--accent)',
+                      color: 'var(--accent)',
+                      padding: '4px 8px',
+                      borderRadius: '999px',
+                      flexShrink: 0,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    Premium
+                  </span>
+                )}
+              </div>
+
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  flexShrink: 0
+                }}
+              >
+                <button
+                  type="button"
+                  className={`iconBtn ${!soundOn ? 'muted' : ''}`}
+                  onClick={() => setSoundOn(v => !v)}
+                  aria-label={t(lang, 'sound')}
+                >
+                  <IconSpeaker />
+                </button>
+
+                <button
+                  type="button"
+                  className={`iconBtn ${!voiceOn ? 'muted' : ''}`}
+                  onClick={() => setVoiceOn(v => !v)}
+                  aria-label={t(lang, 'voice')}
+                >
+                  <span className="iconHead" aria-hidden="true"></span>
+                </button>
+              </div>
             </div>
 
-            {/* PRAVÁ STRANA: zvuk / hlas / jazyk / Cricket badge */}
+            {/* 2. řádek: jazyk + hodnocení */}
             <div
               className="controls"
               style={{
                 display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                flexShrink: 0,
-                flexWrap: 'wrap',
-                justifyContent: 'flex-end'
+                alignItems: 'stretch',
+                gap: 8,
+                width: '100%'
               }}
             >
-              <button
-                type="button"
-                className={`iconBtn ${!soundOn ? 'muted' : ''}`}
-                onClick={() => setSoundOn(v => !v)}
-                aria-label={t(lang, 'sound')}
-              >
-                <IconSpeaker />
-              </button>
-
-              <button
-                type="button"
-                className={`iconBtn ${!voiceOn ? 'muted' : ''}`}
-                onClick={() => setVoiceOn(v => !v)}
-                aria-label={t(lang, 'voice')}
-              >
-                <span className="iconHead" aria-hidden="true"></span>
-              </button>
-
               <select
                 className="input"
                 value={lang}
                 onChange={e => setLang(e.target.value)}
-                style={{ height: 34 }}
+                style={{
+                  height: 44,
+                  minWidth: 150,
+                  flex: '0 0 auto'
+                }}
               >
                 {['cs', 'en', 'de', 'es', 'nl', 'ru', 'zh'].map(code => (
                   <option key={code} value={code}>{LANG_LABEL[code]}</option>
                 ))}
               </select>
 
-                {screen === 'lobby' && (
-                  <button
-                    type="button"
-                    className="btn"
-                    onClick={rateApp}
-                    style={{
-                      height: 34,
-                      fontSize: 12,
-                      padding: '4px 10px',
-                      borderColor: 'var(--accent)',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    ⭐ {t(lang, 'rateAppButton')}
-                  </button>
-                )}
+              {screen === 'lobby' && (
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={rateApp}
+                  style={{
+                    minHeight: 44,
+                    flex: '1 1 auto',
+                    minWidth: 0,
+                    fontSize: 12,
+                    padding: '7px 10px',
+                    borderColor: 'var(--accent)',
+                    whiteSpace: 'normal',
+                    lineHeight: 1.15,
+                    textAlign: 'center',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflowWrap: 'anywhere'
+                  }}
+                >
+                  ⭐ {t(lang, 'rateAppButton')}
+                </button>
+              )}
             </div>
           </div>
-         
+
         {screen === 'lobby' ? (
   <>
     <Lobby
