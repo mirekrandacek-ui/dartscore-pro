@@ -13,7 +13,7 @@ const IconSpeaker = () => (
 const T = {
   cs: {
     app: 'DartScore Pro', sound: 'Zvuk', voice: 'Hlas', back: 'Zpět',
-    mode: 'Režim', classic: 'Klasická hra', cricket: 'Cricket', around: 'Around the Clock',
+    mode: 'Režim', classic: 'Klasická hra', cricket: 'Cricket', around: 'Around the Clock', roulette: 'Ruleta', rouletteDouble: 'Ruleta Double',
     start: 'Start', closing: 'Ukončení',
     doubleOut: 'Double-out', tripleOut: 'Triple-out', masterOut: 'Master-out',
     anyOutHint: '— pokud není vybráno nic, uzavírá se libovolně',
@@ -40,6 +40,9 @@ const T = {
       submitScore: 'Zapsat',
       roundTotalHint: 'Zadej součet za celé kolo po 3 šipkách.',
       confirmCheckoutRound: 'Bylo kolo zavřeno správným double/triple/master-out hodem?',
+    rouletteDrawButton: 'Losovat',
+    rouletteHitButton: 'Zásah +1',
+    rouletteSwitchButton: 'Přepnout hráče',
     rateAppButton: 'Líbí se ti aplikace?',
     premiumInfoButton: 'Co obsahuje Premium',
     premiumMode: 'Premium režim',
@@ -53,6 +56,8 @@ const T = {
       'Hraje se čísly 15–20 a 25. Single = 1 značka „/“, Double = 2 (✕), Triple = 3 (Ⓧ). Po 3 značkách je číslo zavřené. Přebytečné zásahy dávají body, jen pokud soupeř(i) nemají číslo zavřené.',
     rulesAround:
       'Cíle jdou postupně 1 → 20 → Bull (25). Počítá se pouze zásah aktuálního cíle. Double/Triple se počítají jako zásah. Vyhrává, kdo první trefí Bull.',
+    rulesRoulette: 'Ruleta: losuje se cíl 1–20, malý Bull 25 nebo velký Bull 50. Hráč má 3 šipky v tahu. Počítá se zásah vylosovaného cíle v libovolném poli. Single, double i triple mají stejnou hodnotu: 1 bod. Hraje se na 8 kol, vítězí nejvyšší skóre.',
+    rulesRouletteDouble: 'Ruleta Double: losuje se cíl 1–20. Počítá se pouze zásah do double pole vylosovaného čísla. Každý platný zásah je za 1 bod. Hraje se na 8 kol, vítězí nejvyšší skóre.',
       premiumTitle: "DartScore Premium",
 premiumDesc: "Posuň svou hru na vyšší úroveň. Získej víc přehledu, pohodlí a hraj bez omezení.",
 premiumFeature1: "Bez reklam",
@@ -64,7 +69,7 @@ premiumNote: "Jednorázová platba. Žádné předplatné.",
   },
   en: {
     app: 'DartScore Pro', sound: 'Sound', voice: 'Voice', back: 'Back',
-    mode: 'Mode', classic: 'Classic', cricket: 'Cricket', around: 'Around the Clock',
+    mode: 'Mode', classic: 'Classic', cricket: 'Cricket', around: 'Around the Clock', roulette: 'Roulette', rouletteDouble: 'Roulette Double',
     start: 'Start', closing: 'Finish',
     doubleOut: 'Double-out', tripleOut: 'Triple-out', masterOut: 'Master-out',
     anyOutHint: '— if none is selected, any-out is allowed',
@@ -91,6 +96,9 @@ premiumNote: "Jednorázová platba. Žádné předplatné.",
       submitScore: 'Submit',
       roundTotalHint: 'Enter the total score for the full 3-dart round.',
       confirmCheckoutRound: 'Was the round finished with a valid double/triple/master-out throw?',
+    rouletteDrawButton: 'Draw',
+    rouletteHitButton: 'Hit +1',
+    rouletteSwitchButton: 'Switch player',
     rateAppButton: 'Do you like the app?',
     premiumInfoButton: 'What Premium includes',
     premiumMode: 'Premium Mode',
@@ -102,6 +110,8 @@ premiumNote: "Jednorázová platba. Žádné předplatné.",
       'Targets: 15–20 and 25. Single = 1 “/”, Double = 2 (✕), Triple = 3 (Ⓧ). After 3 marks the number is closed. Extra marks score points only if opponents still have the number open.',
     rulesAround:
       'Targets go 1 → 20 → Bull (25). Only hitting the current target counts. Doubles/Triples count as a hit. First to hit Bull wins.',
+    rulesRoulette: 'Roulette: target is randomly selected from 1–20, outer Bull 25 or inner Bull 50. Each player has 3 darts per turn. A hit on the selected target counts in any segment. Single, double and triple are all worth 1 point. Played over 8 rounds, highest score wins.',
+    rulesRouletteDouble: 'Roulette Double: target is randomly selected from 1–20. Only a hit in the double segment of the selected number counts. Every valid hit is worth 1 point. Played over 8 rounds, highest score wins.',
   premiumTitle: "DartScore Premium",
 premiumDesc: "Take your game to the next level. Get more control, insights and enjoy a smoother experience.",
 premiumFeature1: "No ads",
@@ -114,7 +124,7 @@ activatePremium: 'Activate Premium',
     },
   de: {
     app: 'DartScore Pro', sound: 'Ton', voice: 'Stimme', back: 'Zurück',
-    mode: 'Modus', classic: 'Klassisch', cricket: 'Cricket', around: 'Rund um die Uhr',
+    mode: 'Modus', classic: 'Klassisch', cricket: 'Cricket', around: 'Rund um die Uhr', roulette: 'Roulette', rouletteDouble: 'Roulette Double',
     start: 'Start', closing: 'Beenden',
     doubleOut: 'Double-out', tripleOut: 'Triple-out', masterOut: 'Master-out',
     anyOutHint: '— wenn nichts gewählt ist, Any-out erlaubt',
@@ -141,6 +151,9 @@ activatePremium: 'Activate Premium',
       submitScore: 'Eintragen',
       roundTotalHint: 'Gib die Gesamtpunktzahl der kompletten 3-Dart-Runde ein.',
       confirmCheckoutRound: 'Wurde die Runde mit einem gültigen Double/Triple/Master-out beendet?',
+    rouletteDrawButton: 'Auslosen',
+    rouletteHitButton: 'Treffer +1',
+    rouletteSwitchButton: 'Spieler wechseln',
     rateAppButton: 'Gefällt dir die App?',
     premiumInfoButton: 'Was enthält Premium?',
     premiumMode: 'Premium-Modus',
@@ -153,6 +166,8 @@ activatePremium: 'Activate Premium',
       'Ziele: 15–20 und 25. Single = 1 „/“, Double = 2 (✕), Triple = 3 (Ⓧ). Nach 3 Marken ist die Zahl geschlossen. Überschüsse punkten nur, wenn Gegner die Zahl nicht geschlossen haben.',
     rulesAround:
       'Ziele nacheinander 1 → 20 → Bull (25). Gewertet wird nur das aktuelle Ziel. Doppel/Triple zählen als Treffer. Sieger trifft zuerst Bull.',
+    rulesRoulette: 'Roulette: Das Ziel wird zufällig aus 1–20, kleinem Bull 25 oder großem Bull 50 gewählt. Jeder Spieler hat 3 Darts pro Runde. Ein Treffer auf das gewählte Ziel zählt in jedem Feld. Single, Double und Triple zählen jeweils 1 Punkt. Gespielt werden 8 Runden, die höchste Punktzahl gewinnt.',
+    rulesRouletteDouble: 'Roulette Double: Das Ziel wird zufällig aus 1–20 gewählt. Nur ein Treffer im Double-Feld der gewählten Zahl zählt. Jeder gültige Treffer zählt 1 Punkt. Gespielt werden 8 Runden, die höchste Punktzahl gewinnt.',
       premiumTitle: "DartScore Premium",
 premiumDesc: "Bringe dein Spiel auf das nächste Level. Mehr Übersicht, Komfort und ein besseres Spielerlebnis.",
 premiumFeature1: "Keine Werbung",
@@ -164,7 +179,7 @@ premiumNote: "Einmalige Zahlung. Kein Abo.",
   },
   es: {
     app: 'DartScore Pro', sound: 'Sonido', voice: 'Voz', back: 'Atrás',
-    mode: 'Modo', classic: 'Clásico', cricket: 'Cricket', around: 'Alrededor del reloj',
+    mode: 'Modo', classic: 'Clásico', cricket: 'Cricket', around: 'Alrededor del reloj', roulette: 'Ruleta', rouletteDouble: 'Ruleta Double',
     start: 'Inicio', closing: 'Cierre',
     doubleOut: 'Double-out', tripleOut: 'Triple-out', masterOut: 'Master-out',
     anyOutHint: '— si no se selecciona nada, se permite any-out',
@@ -191,6 +206,9 @@ premiumNote: "Einmalige Zahlung. Kein Abo.",
       submitScore: 'Guardar',
       roundTotalHint: 'Introduce la puntuación total de la ronda completa de 3 dardos.',
       confirmCheckoutRound: '¿La ronda se cerró con un tiro válido double/triple/master-out?',
+    rouletteDrawButton: 'Sortear',
+    rouletteHitButton: 'Acierto +1',
+    rouletteSwitchButton: 'Cambiar jugador',
     rateAppButton: '¿Te gusta la app?',
     premiumInfoButton: 'Qué incluye Premium',
     premiumMode: 'Modo Premium',
@@ -203,6 +221,8 @@ premiumNote: "Einmalige Zahlung. Kein Abo.",
       'Objetivos 15–20 y 25. Single = 1 “/”, Double = 2 (✕), Triple = 3 (Ⓧ). Con 3 marcas el número se cierra. Excesos puntúan solo si los rivales no lo tienen cerrado.',
     rulesAround:
       'Secuencia 1 → 20 → Bull (25). Solo cuenta el objetivo actual. Dobles/Triples cuentan como acierto. Gana quien golpea Bull antes.',
+    rulesRoulette: 'Ruleta: el objetivo se elige al azar entre 1–20, Bull exterior 25 o Bull interior 50. Cada jugador tiene 3 dardos por turno. Un acierto en el objetivo seleccionado cuenta en cualquier segmento. Simple, doble y triple valen 1 punto. Se juegan 8 rondas, gana la puntuación más alta.',
+    rulesRouletteDouble: 'Ruleta Double: el objetivo se elige al azar entre 1–20. Solo cuenta acertar el doble del número seleccionado. Cada acierto válido vale 1 punto. Se juegan 8 rondas, gana la puntuación más alta.',
       premiumTitle: "DartScore Premium",
 premiumDesc: "Lleva tu juego al siguiente nivel. Consigue más control, estadísticas y una mejor experiencia.",
 premiumFeature1: "Sin anuncios",
@@ -214,7 +234,7 @@ premiumNote: "Pago único. Sin suscripción.",
   },
   nl: {
     app: 'DartScore Pro', sound: 'Geluid', voice: 'Spraak', back: 'Terug',
-    mode: 'Modus', classic: 'Klassiek', cricket: 'Cricket', around: 'Rond de klok',
+    mode: 'Modus', classic: 'Klassiek', cricket: 'Cricket', around: 'Rond de klok', roulette: 'Roulette', rouletteDouble: 'Roulette Double',
     start: 'Start', closing: 'Einde',
     doubleOut: 'Double-out', tripleOut: 'Triple-out', masterOut: 'Master-out',
     anyOutHint: '— als niets is gekozen, any-out toegestaan',
@@ -241,6 +261,9 @@ premiumNote: "Pago único. Sin suscripción.",
       submitScore: 'Opslaan',
       roundTotalHint: 'Voer de totale score van de volledige 3-dart ronde in.',
       confirmCheckoutRound: 'Is de ronde beëindigd met een geldige double/triple/master-out worp?',
+    rouletteDrawButton: 'Loten',
+    rouletteHitButton: 'Raak +1',
+    rouletteSwitchButton: 'Speler wisselen',
     rateAppButton: 'Vind je de app leuk?',
     premiumInfoButton: 'Wat bevat Premium?',
     premiumMode: 'Premium-modus',
@@ -253,6 +276,8 @@ premiumNote: "Pago único. Sin suscripción.",
       'Doelen 15–20 en 25. Single = 1 “/”, Double = 2 (✕), Triple = 3 (Ⓧ). Na 3 tekens is het getal gesloten. Overschotten scoren alleen als tegenstanders nog open hebben.',
     rulesAround:
       'Volgorde 1 → 20 → Bull (25). Alleen het huidige doel telt. Double/Triple telt als treffer. Wie het eerst Bull raakt, wint.',
+    rulesRoulette: 'Roulette: het doel wordt willekeurig gekozen uit 1–20, outer Bull 25 of inner Bull 50. Elke speler heeft 3 darts per beurt. Een hit op het gekozen doel telt in elk segment. Single, double en triple zijn allemaal 1 punt waard. Er worden 8 rondes gespeeld, de hoogste score wint.',
+    rulesRouletteDouble: 'Roulette Double: het doel wordt willekeurig gekozen uit 1–20. Alleen een hit in het double-segment van het gekozen nummer telt. Elke geldige hit is 1 punt waard. Er worden 8 rondes gespeeld, de hoogste score wint.',
       premiumTitle: "DartScore Premium",
 premiumDesc: "Breng je spel naar een hoger niveau. Krijg meer overzicht, statistieken en speelcomfort.",
 premiumFeature1: "Geen advertenties",
@@ -264,7 +289,7 @@ premiumNote: "Eenmalige betaling. Geen abonnement.",
   },
   ru: {
     app: 'DartScore Pro', sound: 'Звук', voice: 'Голос', back: 'Назад',
-    mode: 'Режим', classic: 'Классика', cricket: 'Крикет', around: 'По кругу',
+    mode: 'Режим', classic: 'Классика', cricket: 'Крикет', around: 'По кругу', roulette: 'Рулетка', rouletteDouble: 'Рулетка Double',
     start: 'Старт', closing: 'Завершение',
     doubleOut: 'Double-out', tripleOut: 'Triple-out', masterOut: 'Master-out',
     anyOutHint: '— если ничего не выбрано, допустим любой финиш',
@@ -291,6 +316,9 @@ premiumNote: "Eenmalige betaling. Geen abonnement.",
       submitScore: 'Записать',
       roundTotalHint: 'Введите сумму за полный раунд из 3 дротиков.',
       confirmCheckoutRound: 'Раунд был завершён правильным броском double/triple/master-out?',
+    rouletteDrawButton: 'Случайная цель',
+    rouletteHitButton: 'Попадание +1',
+    rouletteSwitchButton: 'Сменить игрока',
     rateAppButton: 'Нравится приложение?',
     premiumInfoButton: 'Что включает Premium',
     premiumMode: 'Премиум-режим',
@@ -303,6 +331,8 @@ premiumNote: "Eenmalige betaling. Geen abonnement.",
       'Цели: 15–20 и 25. Single = 1 «/», Double = 2 (✕), Triple = 3 (Ⓧ). После 3 меток число закрыто. Излишки дают очки только если у соперников число не закрыто.',
     rulesAround:
       'Последовательно 1 → 20 → Bull (25). Засчитывается только текущая цель. Дабл/трипл засчитываются как попадание. Побеждает первый, кто попадёт в Bull.',
+    rulesRoulette: 'Рулетка: цель случайно выбирается из 1–20, малого Bull 25 или большого Bull 50. У игрока 3 дротика за ход. Попадание в выбранную цель засчитывается в любом секторе. Single, double и triple дают по 1 очку. Игра длится 8 раундов, побеждает лучший счёт.',
+    rulesRouletteDouble: 'Рулетка Double: цель случайно выбирается из 1–20. Засчитывается только попадание в double выбранного числа. Каждое попадание даёт 1 очко. Игра длится 8 раундов, побеждает лучший счёт.',
       premiumTitle: "DartScore Premium",
 premiumDesc: "Подними свою игру на новый уровень. Больше контроля, статистики и удобства.",
 premiumFeature1: "Без рекламы",
@@ -314,7 +344,7 @@ premiumNote: "Разовая оплата. Без подписки.",
   },
   zh: {
     app: 'DartScore Pro', sound: '声音', voice: '语音', back: '返回',
-    mode: '模式', classic: '经典', cricket: 'Cricket', around: '顺时靶位',
+    mode: '模式', classic: '经典', cricket: 'Cricket', around: '顺时靶位', roulette: '轮盘', rouletteDouble: '轮盘 Double',
     start: '开始', closing: '收尾',
     doubleOut: 'Double-out', tripleOut: 'Triple-out', masterOut: 'Master-out',
     anyOutHint: '— 若未选择，允许任意收尾',
@@ -341,6 +371,9 @@ premiumNote: "Разовая оплата. Без подписки.",
       submitScore: '提交',
       roundTotalHint: '输入完整 3 镖回合的总分。',
       confirmCheckoutRound: '本回合是否以有效的 double/triple/master-out 投镖结束？',
+    rouletteDrawButton: '抽取',
+    rouletteHitButton: '命中 +1',
+    rouletteSwitchButton: '切换玩家',
     rateAppButton: '喜欢这个应用吗？',
     premiumInfoButton: 'Premium 包含什么',
     premiumMode: '高级模式',
@@ -353,6 +386,8 @@ premiumNote: "Разовая оплата. Без подписки.",
       '目标为 15–20 和 25。Single = 1“/”，Double = 2（✕），Triple = 3（Ⓧ）。3 记号后该数关闭。多余命中仅在对手未关闭时计分。',
     rulesAround:
       '依次 1 → 20 → Bull（25）。只计算当前目标。双倍/三倍视作命中。先中 Bull 者胜。',
+    rulesRoulette: '轮盘：目标从 1–20、小牛 25 或大牛 50 中随机选择。每名玩家每回合 3 镖。命中所选目标即可得分，不区分单倍、双倍或三倍，均为 1 分。共 8 轮，最高分获胜。',
+    rulesRouletteDouble: '双倍轮盘：目标从 1–20 中随机选择。只有命中所选数字的双倍区才计分。每次有效命中为 1 分。共 8 轮，最高分获胜。',
       premiumTitle: "DartScore 高级版",
 premiumDesc: "将你的游戏提升到新的水平。获得更多控制、统计数据和更好的体验。",
 premiumFeature1: "无广告",
@@ -782,6 +817,7 @@ function App() {
 
   const [cricket, setCricket] = useState(null);
   const [around, setAround] = useState(null);
+  const [roulette, setRoulette] = useState(null);
 
   const currentPlayerIndex = order[currIdx] ?? 0;
 
@@ -846,6 +882,75 @@ function App() {
     return result;
   };
 
+  const ROULETTE_ROUNDS = 8;
+
+  const rouletteTargetsForMode = (rouletteMode = mode) => (
+    rouletteMode === 'rouletteDouble'
+      ? Array.from({ length: 20 }, (_, i) => i + 1)
+      : [...Array.from({ length: 20 }, (_, i) => i + 1), 25, 50]
+  );
+
+  const makeRouletteDeck = (rouletteMode = mode) => shuffle(rouletteTargetsForMode(rouletteMode));
+
+  const cloneRouletteState = (r) => ({
+    ...(r || {}),
+    decks: Array.isArray(r?.decks) ? r.decks.map(d => Array.isArray(d) ? [...d] : []) : [],
+    currentTargets: Array.isArray(r?.currentTargets) ? [...r.currentTargets] : []
+  });
+
+  const makeRouletteState = (rouletteMode = mode, sourcePlayers = players) => ({
+    decks: sourcePlayers.map(() => makeRouletteDeck(rouletteMode)),
+    currentTargets: sourcePlayers.map(() => null),
+    round: 1,
+    maxRounds: ROULETTE_ROUNDS
+  });
+
+  const normalizeRouletteStateForPlayers = (r, rouletteMode = mode, sourcePlayers = players) => {
+    const base = cloneRouletteState(r || makeRouletteState(rouletteMode, sourcePlayers));
+    const count = sourcePlayers.length;
+
+    while (base.decks.length < count) base.decks.push(makeRouletteDeck(rouletteMode));
+    while (base.currentTargets.length < count) base.currentTargets.push(null);
+
+    base.decks = base.decks.slice(0, count).map(d => Array.isArray(d) ? d : []);
+    base.currentTargets = base.currentTargets.slice(0, count);
+    base.maxRounds = ROULETTE_ROUNDS;
+
+    return base;
+  };
+
+  const rouletteCurrentRoundForPlayer = (pIdx, thrownList = thrown) => (
+    Math.min(Math.floor(((thrownList?.[pIdx] || 0) / 3)) + 1, ROULETTE_ROUNDS)
+  );
+
+  const isRoulettePlayerComplete = (pIdx, thrownList, r) => {
+    const maxDarts = ROULETTE_ROUNDS * 3;
+    const deckEmpty = ((r?.decks?.[pIdx] || []).length === 0);
+    const noCurrentTarget = r?.currentTargets?.[pIdx] == null;
+    return (thrownList?.[pIdx] || 0) >= maxDarts || (deckEmpty && noCurrentTarget);
+  };
+
+  const isRouletteGameComplete = (thrownList, r) => (
+    players.every((_, ix) => isRoulettePlayerComplete(ix, thrownList, r))
+  );
+
+  const finishRouletteIfComplete = (nextScores, nextThrown, nextRoulette) => {
+    if (!isRouletteGameComplete(nextThrown, nextRoulette)) return false;
+
+    let bestIdx = 0;
+    let bestScore = nextScores[0] ?? 0;
+
+    nextScores.forEach((score, ix) => {
+      if ((score ?? 0) > bestScore) {
+        bestScore = score ?? 0;
+        bestIdx = ix;
+      }
+    });
+
+    finalizeWin(bestIdx, { silentVoice: false });
+    return true;
+  };
+
   const startGame = () => {
     const baseOrder = players.map((_, i) => i);
     const teamMode = mode === 'classic' && playerMode === 'teams';
@@ -885,13 +990,22 @@ function App() {
       }));
       setCricket(init);
       setAround(null);
+      setRoulette(null);
       setScores([]);
+      setThrown(players.map(() => 0));
+      setLastTurn(players.map(() => 0));
+    } else if (mode === 'roulette' || mode === 'rouletteDouble') {
+      setRoulette(makeRouletteState(mode, players));
+      setCricket(null);
+      setAround(null);
+      setScores(players.map(() => 0));
       setThrown(players.map(() => 0));
       setLastTurn(players.map(() => 0));
     } else {
       const init = players.map(() => ({ next: 1 }));
       setAround(init);
       setCricket(null);
+      setRoulette(null);
       setScores([]);
       setThrown(players.map(() => 0));
       setLastTurn(players.map(() => 0));
@@ -1371,6 +1485,223 @@ const commitCricket = (value, mOverride) => {
       setMult(1);
     };
 
+      const rouletteDrawTarget = () => {
+        if (!(mode === 'roulette' || mode === 'rouletteDouble')) return;
+        if (winner != null) return;
+
+        const pIdx = currentPlayerIndex;
+        if (pIdx == null) return;
+        if (darts.length >= 3) return;
+
+        const nextRoulette = normalizeRouletteStateForPlayers(roulette, mode, players);
+        if (nextRoulette.currentTargets[pIdx] != null) return;
+
+        const deck = nextRoulette.decks[pIdx] || [];
+        if (deck.length === 0) return;
+
+        const prevRoulette = cloneRouletteState(roulette);
+        const prevScores = [...scores];
+        const prevThrown = [...thrown];
+        const prevLastTurn = [...lastTurn];
+        const dartsBefore = [...darts];
+        const currIdxBefore = currIdx;
+
+        const target = deck.shift();
+        nextRoulette.decks[pIdx] = deck;
+        nextRoulette.currentTargets[pIdx] = target;
+        nextRoulette.round = rouletteCurrentRoundForPlayer(pIdx);
+        nextRoulette.maxRounds = ROULETTE_ROUNDS;
+
+        pushAction({
+          type: 'draw',
+          mode,
+          pIdx,
+          prevScores,
+          prevThrown,
+          prevLastTurn,
+          prevRoulette,
+          dartsBefore,
+          currIdxBefore
+        });
+
+        setRoulette(nextRoulette);
+        setMult(1);
+      };
+
+      const rouletteMarkHit = () => {
+        if (!(mode === 'roulette' || mode === 'rouletteDouble')) return;
+        if (winner != null) return;
+
+        const pIdx = currentPlayerIndex;
+        if (pIdx == null) return;
+        if (!Array.isArray(scores) || scores[pIdx] == null) return;
+
+        const currentDarts = darts.length;
+        if (currentDarts >= 3) return;
+
+        const nextRoulette = normalizeRouletteStateForPlayers(roulette, mode, players);
+        const target = nextRoulette.currentTargets[pIdx];
+        if (target == null) return;
+
+        const prevRoulette = cloneRouletteState(roulette);
+        const prevScores = [...scores];
+        const prevThrown = [...thrown];
+        const prevLastTurn = [...lastTurn];
+        const dartsBefore = [...darts];
+        const currIdxBefore = currIdx;
+
+        const nd = [...dartsBefore, { v: target, m: mode === 'rouletteDouble' ? 2 : 1, score: 1 }];
+        const turnTotal = nd.reduce((sum, d) => sum + (d?.score || 0), 0);
+
+        const nextScores = prevScores.map((x, i) => i === pIdx ? x + 1 : x);
+        const nextThrown = prevThrown.map((x, i) => i === pIdx ? x + 1 : x);
+        const nextLastTurn = prevLastTurn.map((x, i) => i === pIdx ? turnTotal : x);
+
+        nextRoulette.currentTargets[pIdx] = null;
+
+        nextRoulette.round = rouletteCurrentRoundForPlayer(pIdx, nextThrown);
+        nextRoulette.maxRounds = ROULETTE_ROUNDS;
+
+        pushAction({
+          type: 'hit',
+          mode,
+          pIdx,
+          prevScores,
+          prevThrown,
+          prevLastTurn,
+          prevRoulette,
+          dartsBefore,
+          currIdxBefore
+        });
+
+        playHitSound();
+
+        setScores(nextScores);
+        setThrown(nextThrown);
+        setLastTurn(nextLastTurn);
+        setRoulette(nextRoulette);
+        setDarts(nd);
+        setMult(1);
+
+        finishRouletteIfComplete(nextScores, nextThrown, nextRoulette);
+      };
+
+      const rouletteMarkMiss = () => {
+        if (!(mode === 'roulette' || mode === 'rouletteDouble')) return;
+        if (winner != null) return;
+
+        const pIdx = currentPlayerIndex;
+        if (pIdx == null) return;
+
+        const currentDarts = darts.length;
+        if (currentDarts >= 3) return;
+
+        const nextRoulette = normalizeRouletteStateForPlayers(roulette, mode, players);
+        const target = nextRoulette.currentTargets[pIdx];
+        if (target == null) return;
+
+        const prevRoulette = cloneRouletteState(roulette);
+        const prevScores = [...scores];
+        const prevThrown = [...thrown];
+        const prevLastTurn = [...lastTurn];
+        const dartsBefore = [...darts];
+        const currIdxBefore = currIdx;
+
+        const nd = [...dartsBefore, { v: target, m: 1, score: 0 }];
+        const turnTotal = nd.reduce((sum, d) => sum + (d?.score || 0), 0);
+
+        const nextScores = [...prevScores];
+        const nextThrown = prevThrown.map((x, i) => i === pIdx ? x + 1 : x);
+        const nextLastTurn = prevLastTurn.map((x, i) => i === pIdx ? turnTotal : x);
+
+        if (nd.length >= 3) {
+          nextRoulette.currentTargets[pIdx] = null;
+        }
+
+        nextRoulette.round = rouletteCurrentRoundForPlayer(pIdx, nextThrown);
+        nextRoulette.maxRounds = ROULETTE_ROUNDS;
+
+        pushAction({
+          type: 'miss',
+          mode,
+          pIdx,
+          prevScores,
+          prevThrown,
+          prevLastTurn,
+          prevRoulette,
+          dartsBefore,
+          currIdxBefore
+        });
+
+        setScores(nextScores);
+        setThrown(nextThrown);
+        setLastTurn(nextLastTurn);
+        setRoulette(nextRoulette);
+        setDarts(nd.length >= 3 ? [] : nd);
+        setMult(1);
+
+        if (finishRouletteIfComplete(nextScores, nextThrown, nextRoulette)) return;
+
+        if (nd.length >= 3) {
+          scheduleNextPlayer(250);
+        }
+      };
+
+      const rouletteSwitchPlayer = () => {
+        if (!(mode === 'roulette' || mode === 'rouletteDouble')) return;
+        if (winner != null) return;
+
+        const pIdx = currentPlayerIndex;
+        if (pIdx == null) return;
+
+        const prevRoulette = cloneRouletteState(roulette);
+        const prevScores = [...scores];
+        const prevThrown = [...thrown];
+        const prevLastTurn = [...lastTurn];
+        const dartsBefore = [...darts];
+        const currIdxBefore = currIdx;
+
+        const usedDarts = Math.min(dartsBefore.length, 3);
+        const missingDarts = Math.max(0, 3 - usedDarts);
+        const turnTotal = dartsBefore.reduce((sum, d) => sum + (d?.score || 0), 0);
+
+        const nextScores = [...prevScores];
+        const nextThrown = prevThrown.map((x, i) => i === pIdx ? x + missingDarts : x);
+        const nextLastTurn = prevLastTurn.map((x, i) => i === pIdx ? turnTotal : x);
+
+        const nextRoulette = normalizeRouletteStateForPlayers(roulette, mode, players);
+        nextRoulette.currentTargets[pIdx] = null;
+        nextRoulette.round = rouletteCurrentRoundForPlayer(pIdx, nextThrown);
+        nextRoulette.maxRounds = ROULETTE_ROUNDS;
+
+        pushAction({
+          type: 'switch',
+          mode,
+          pIdx,
+          prevScores,
+          prevThrown,
+          prevLastTurn,
+          prevRoulette,
+          dartsBefore,
+          currIdxBefore
+        });
+
+        setScores(nextScores);
+        setThrown(nextThrown);
+        setLastTurn(nextLastTurn);
+        setRoulette(nextRoulette);
+        setDarts([]);
+        setMult(1);
+
+        if (finishRouletteIfComplete(nextScores, nextThrown, nextRoulette)) return;
+
+        scheduleNextPlayer(250);
+      };
+
+      const commitRoulette = () => {
+        return;
+      };
+
     const commitDart = (value, mOverride) => {
       if (winner != null) return;
       if (mode === 'classic') return commitClassic(value, mOverride);
@@ -1584,7 +1915,17 @@ const undo = () => {
         if (d.length > 0) d.pop();
         return d;
       });
-    }
+      } else if (last.mode === 'roulette' || last.mode === 'rouletteDouble') {
+        setScores(last.prevScores || scores);
+        setThrown(last.prevThrown || thrown);
+        setLastTurn(last.prevLastTurn || lastTurn);
+        setRoulette(last.prevRoulette || roulette);
+        setDarts(last.dartsBefore || []);
+
+        if (Number.isInteger(last.currIdxBefore)) {
+          setCurrIdx(last.currIdxBefore);
+        }
+      }
 
     return st.slice(0, -1);
   });
@@ -1988,6 +2329,16 @@ const buyPremium = async () => {
         return Array.isArray(s.around) && s.around.length > 0;
       }
 
+      if (s.mode === 'roulette' || s.mode === 'rouletteDouble') {
+        return !!s.roulette
+          && Array.isArray(s.scores)
+          && s.scores.length > 0
+          && (
+            Array.isArray(s.roulette.decks)
+            || Array.isArray(s.roulette.currentTargets)
+          );
+      }
+
       return false;
     };
 
@@ -2031,6 +2382,7 @@ const buyPremium = async () => {
         setPendingWin(s.pendingWin ?? null);
         setCricket(s.cricket ?? null);
         setAround(s.around ?? null);
+        setRoulette(s.roulette ?? null);
         setIsPremium(!!s.isPremium);
         setThemeColor(s.themeColor || 'default');
 
@@ -2369,11 +2721,16 @@ const buyPremium = async () => {
     lastTurn={lastTurn}
     cricket={cricket}
     around={around}
+    roulette={roulette}
     averages={averages}
     darts={darts}
     mult={mult}
     setMult={setMult}
     commitDart={commitDart}
+    rouletteDrawTarget={rouletteDrawTarget}
+    rouletteMarkHit={rouletteMarkHit}
+    rouletteMarkMiss={rouletteMarkMiss}
+    rouletteSwitchPlayer={rouletteSwitchPlayer}
       commitClassicRound={commitClassicRound}
     undo={undo}
     winner={winner}
@@ -2539,6 +2896,8 @@ function Lobby({
               <option value="classic">{t(lang, 'classic')}</option>
               <option value="cricket">{t(lang, 'cricket')}</option>
               <option value="around">{t(lang, 'around')}</option>
+              <option value="roulette">{t(lang, 'roulette')}</option>
+              <option value="rouletteDouble">{t(lang, 'rouletteDouble')}</option>
             </select>
           </div>
         </div>
@@ -3118,8 +3477,10 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
     lang, t, mode, playerMode, scoreInputMode, outDesc, isPremium,
     players, order, currIdx,
     scores, averages, thrown, lastTurn,
-    cricket, around,
-    darts, mult, setMult, commitDart, commitClassicRound, undo, winner,
+    cricket, around, roulette,
+    darts, mult, setMult, commitDart, commitClassicRound,
+    rouletteDrawTarget, rouletteMarkHit, rouletteMarkMiss, rouletteSwitchPlayer,
+    undo, winner,
     saveGame, restartGame, cardRefs, setScreen
   }) {
     const HEAD_H = 40;
@@ -3162,6 +3523,9 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
           [0],
         ];
       }
+      if (mode === 'roulette' || mode === 'rouletteDouble') {
+        return [];
+      }
       if (mode === 'around') {
         return [
           [1, 2, 3, 4, 5, 6, 7],
@@ -3170,7 +3534,6 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
           [0],
         ];
       }
-      // classic
       return [
         [1, 2, 3, 4, 5, 6, 7],
         [8, 9, 10, 11, 12, 13, 14],
@@ -3180,6 +3543,180 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
     }, [mode]);
 
     const cricketTargets = ['15', '16', '17', '18', '19', '20', 'bull'];
+
+    const hideDartControls = mode === 'roulette' || mode === 'rouletteDouble';
+
+    const rouletteTargetLabel = (target) => {
+      if (target === 25) return 'Bull 25';
+      if (target === 50) return 'Bull 50';
+      return target ?? '-';
+    };
+
+    const [rouletteDrawing, setRouletteDrawing] = React.useState(false);
+    const [rouletteSpinTarget, setRouletteSpinTarget] = React.useState(null);
+    const [rouletteAutoDrawPending, setRouletteAutoDrawPending] = React.useState(false);
+    const [rouletteAutoSwitchPending, setRouletteAutoSwitchPending] = React.useState(false);
+
+    const rouletteSpinOptions = React.useMemo(() => (
+      mode === 'rouletteDouble'
+        ? Array.from({ length: 20 }, (_, i) => i + 1)
+        : [...Array.from({ length: 20 }, (_, i) => i + 1), 25, 50]
+    ), [mode]);
+
+    const runRouletteDraw = React.useCallback(() => {
+      if (rouletteDrawing) return;
+
+      setRouletteDrawing(true);
+      setRouletteSpinTarget(rouletteSpinOptions[Math.floor(Math.random() * rouletteSpinOptions.length)]);
+
+      const interval = window.setInterval(() => {
+        setRouletteSpinTarget(rouletteSpinOptions[Math.floor(Math.random() * rouletteSpinOptions.length)]);
+      }, 90);
+
+      window.setTimeout(() => {
+        window.clearInterval(interval);
+        setRouletteDrawing(false);
+        setRouletteSpinTarget(null);
+        rouletteDrawTarget();
+      }, 3000);
+    }, [rouletteDrawing, rouletteSpinOptions, rouletteDrawTarget]);
+
+    React.useEffect(() => {
+      if (!(mode === 'roulette' || mode === 'rouletteDouble')) return;
+      if (!rouletteAutoDrawPending) return;
+      if (rouletteDrawing) return;
+      if (winner != null) return;
+
+      const pIdx = order[currIdx];
+      const currentTarget = roulette?.currentTargets?.[pIdx] ?? null;
+      const deckLeft = roulette?.decks?.[pIdx]?.length ?? 0;
+      const remainingDarts = Math.max(0, 3 - darts.length);
+
+      if (currentTarget != null || remainingDarts <= 0 || deckLeft <= 0) {
+        setRouletteAutoDrawPending(false);
+        return;
+      }
+
+      const timer = window.setTimeout(() => {
+        setRouletteAutoDrawPending(false);
+        runRouletteDraw();
+      }, 250);
+
+      return () => window.clearTimeout(timer);
+    }, [
+      mode,
+      rouletteAutoDrawPending,
+      rouletteDrawing,
+      winner,
+      order,
+      currIdx,
+      roulette,
+      darts.length,
+      runRouletteDraw
+    ]);
+
+    React.useEffect(() => {
+      if (!(mode === 'roulette' || mode === 'rouletteDouble')) return;
+      if (!rouletteAutoSwitchPending) return;
+      if (rouletteDrawing) return;
+      if (winner != null) return;
+
+      const remainingDarts = Math.max(0, 3 - darts.length);
+
+      if (remainingDarts > 0) {
+        setRouletteAutoSwitchPending(false);
+        return;
+      }
+
+      const timer = window.setTimeout(() => {
+        setRouletteAutoSwitchPending(false);
+        rouletteSwitchPlayer();
+      }, 350);
+
+      return () => window.clearTimeout(timer);
+    }, [
+      mode,
+      rouletteAutoSwitchPending,
+      rouletteDrawing,
+      winner,
+      darts.length,
+      rouletteSwitchPlayer
+    ]);
+
+    const isBotPlayer = (player) => {
+      const name = String(player?.name || '').toLowerCase();
+      return !!(
+        player?.isBot ||
+        player?.bot ||
+        player?.isRobot ||
+        player?.type === 'bot' ||
+        player?.kind === 'bot' ||
+        name.includes('bot') ||
+        name.includes('robot')
+      );
+    };
+
+    const rouletteBotHitChance = (player, rouletteMode) => {
+      const tables = {
+        easy: { miss: 0.55, single: 0.40, double: 0.04, triple: 0.01 },
+        medium: { miss: 0.18, single: 0.58, double: 0.16, triple: 0.08 },
+        hard: { miss: 0.09, single: 0.50, double: 0.24, triple: 0.17 }
+      };
+
+      const tb = tables[player?.level || 'easy'] || tables.easy;
+
+      if (rouletteMode === 'rouletteDouble') {
+        return tb.double;
+      }
+
+      return tb.single + tb.double + tb.triple;
+    };
+
+    React.useEffect(() => {
+      if (!(mode === 'roulette' || mode === 'rouletteDouble')) return;
+      if (winner != null) return;
+
+      const pIdx = order[currIdx];
+      const player = players[pIdx];
+      if (!isBotPlayer(player)) return;
+
+      const currentTarget = roulette?.currentTargets?.[pIdx] ?? null;
+      const deckLeft = roulette?.decks?.[pIdx]?.length ?? 0;
+      const remainingDarts = Math.max(0, 3 - darts.length);
+
+      let timer;
+
+      if (remainingDarts <= 0) {
+        timer = window.setTimeout(() => rouletteSwitchPlayer(), 650);
+      } else if (currentTarget == null) {
+        timer = window.setTimeout(() => {
+          if (deckLeft > 0) rouletteDrawTarget();
+          else rouletteSwitchPlayer();
+        }, 650);
+      } else {
+        const chance = rouletteBotHitChance(player, mode);
+        timer = window.setTimeout(() => {
+          if (Math.random() < chance) rouletteMarkHit();
+          else rouletteMarkMiss();
+        }, 850);
+      }
+
+      return () => {
+        if (timer) window.clearTimeout(timer);
+      };
+    }, [
+      mode,
+      winner,
+      order,
+      currIdx,
+      players,
+      roulette,
+      darts.length,
+      rouletteDrawTarget,
+      rouletteMarkHit,
+      rouletteMarkMiss,
+      rouletteSwitchPlayer
+    ]);
     const activeStyle = isPremium
       ? { outline: '2px solid #ffffff', background: 'rgba(255,255,255,0.08)' }
       : { outline: '2px solid var(--green)' };
@@ -3190,6 +3727,12 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
           {mode === 'classic' && (
             <span className="badge">
               {`${t(lang, 'outLabel')}: ${outDesc}`}
+            </span>
+          )}
+
+          {(mode === 'roulette' || mode === 'rouletteDouble') && (
+            <span className="badge">
+              {`${t(lang, 'target')}: ${rouletteTargetLabel(roulette?.currentTargets?.[order[currIdx]])} • ${Math.min(Math.floor(((thrown[order[currIdx]] || 0) / 3)) + 1, roulette?.maxRounds ?? 8)}/${roulette?.maxRounds ?? 8}`}
             </span>
           )}
 
@@ -3306,6 +3849,112 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
                         {t(lang, 'last')}: {lastTurn[teamIdx] || 0}
                       </div>
                     </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (mode === 'roulette' || mode === 'rouletteDouble') ? (
+            /* ROULETTE layout */
+            <div className="playersPane" data-premium={isPremium ? '1' : '0'}>
+              {order.map((pIdx, i) => {
+                const p = players[pIdx];
+                const active = i === currIdx && winner == null;
+                const currentDarts = active ? darts : [];
+                const currentTarget = roulette?.currentTargets?.[pIdx] ?? null;
+                const deckLeft = roulette?.decks?.[pIdx]?.length ?? 0;
+                const remainingDarts = Math.max(0, 3 - currentDarts.length);
+                const isDrawingNow = active && rouletteDrawing;
+                const displayTarget = isDrawingNow ? rouletteSpinTarget : currentTarget;
+                const canDraw = active && !rouletteDrawing && currentTarget == null && remainingDarts > 0 && deckLeft > 0;
+                const canHit = active && !rouletteDrawing && currentTarget != null && remainingDarts > 0;
+
+                return (
+                  <div
+                    key={p.id}
+                    ref={node => { if (node) cardRefs.current[pIdx] = node; }}
+                    className={'playerCard' + (active ? ' active' : '') + (winner === pIdx ? ' winner' : '')}
+                    style={active ? activeStyle : undefined}
+                  >
+                    {winner === pIdx && (
+                      <>
+                        <div className="starburst" aria-hidden="true">
+                          {Array.from({ length: 12 }).map((_, k) => (
+                            <span key={k} style={{ '--k': k }} />
+                          ))}
+                        </div>
+                        <div className="confetti" aria-hidden="true">
+                          {Array.from({ length: 50 }).map((_, k) => (
+                            <span key={k} style={{ '--i': k }} />
+                          ))}
+                        </div>
+                      </>
+                    )}
+
+                    <div className="playerHeader">
+                      <div className="playerNameText">{p.name}</div>
+                      <div className="playerStats">
+                        <span>{thrown[pIdx] || 0} {t(lang, 'darts')}</span>
+                        <span>•</span>
+                        <span>{t(lang, 'last')}: {lastTurn[pIdx] || 0}</span>
+                      </div>
+                    </div>
+
+                    <div className="playerScore">
+                      Body celkem: {scores[pIdx] ?? 0}
+                    </div>
+
+                    <div className="playerTurn">
+                      <div className="dartBox targetBox">
+                        {rouletteTargetLabel(displayTarget)}
+                      </div>
+                      {[0, 1, 2].map(ix => {
+                        const d = currentDarts[ix];
+                        return (
+                          <div key={ix} className="dartBox">
+                            {d ? (d.score > 0 ? `+${d.score}` : '0') : '-'}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {active && (
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+                        <button
+                          type="button"
+                          className="btn"
+                          onClick={runRouletteDraw}
+                          disabled={!canDraw}
+                        >
+                          {t(lang, 'rouletteDrawButton')}
+                        </button>
+
+                        <button
+                          type="button"
+                          className="btn green"
+                          onClick={() => {
+                            const isLastDart = remainingDarts <= 1;
+                            const shouldAutoDraw = remainingDarts > 1 && deckLeft > 0;
+
+                            rouletteMarkHit();
+
+                            if (shouldAutoDraw) setRouletteAutoDrawPending(true);
+                            if (isLastDart) setRouletteAutoSwitchPending(true);
+                          }}
+                          disabled={!canHit}
+                        >
+                          {t(lang, 'rouletteHitButton')}
+                        </button>
+
+                        <button
+                          type="button"
+                          className="btn ghost"
+                          onClick={rouletteSwitchPlayer}
+                          disabled={rouletteDrawing}
+                        >
+                          {t(lang, 'rouletteSwitchButton')}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -3570,7 +4219,7 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
                     {t(lang, 'roundTotalHint')}
                   </div>
                 </>
-              ) : (
+              ) : hideDartControls ? null : (
                 <>
                   {/* první řádek: DOUBLE / TRIPLE / undo */}
                   <div className="padRow">
