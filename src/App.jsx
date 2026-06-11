@@ -3061,21 +3061,34 @@ function Lobby({
                   <option value="hard">{t(lang, 'hard')}</option>
                 </select>
 
-                {mode === 'classic' && (
-                  <>
-                      <span>{t(lang, 'scoreInputType')}</span>
-                      <select
-                      className="input"
-                      value={scoreInputMode}
-                      onChange={e => setScoreInputMode(e.target.value)}
-                      style={{ height: 34, minWidth: 126 }}
-                    >
-                      <option value="darts">{t(lang, 'scoreByDarts')}</option>
-                      <option value="round">{t(lang, 'roundTotal')}</option>
-                    </select>
-                  </>
-                )}
+                
               </div>
+
+              {mode === 'classic' && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    width: '100%',
+                    flex: '1 0 100%'
+                  }}
+                >
+                  <span style={{ whiteSpace: 'nowrap' }}>
+                    {t(lang, 'scoreInputType')}
+                  </span>
+
+                  <select
+                    className="input"
+                    value={scoreInputMode}
+                    onChange={e => setScoreInputMode(e.target.value)}
+                    style={{ height: 34, minWidth: 126 }}
+                  >
+                    <option value="darts">{t(lang, 'scoreByDarts')}</option>
+                    <option value="round">{t(lang, 'roundTotal')}</option>
+                  </select>
+                </div>
+              )}
 
           </div>
         </div>
