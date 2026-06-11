@@ -34,6 +34,8 @@ const T = {
     teamB: 'Tým B',
     teamC: 'Tým C',
     teamNeedPlayers: 'Alespoň dva týmy musí mít hráče.',
+    rouletteTotalPoints: 'Body celkem',
+    scoreInputType: 'Typ počítání',
       scoreInput: 'Zadávání',
       scoreByDarts: 'Po šipkách',
       roundTotal: 'Součet kola',
@@ -90,6 +92,8 @@ premiumNote: "Jednorázová platba. Žádné předplatné.",
     teamB: 'Team B',
     teamC: 'Team C',
     teamNeedPlayers: 'At least two teams must have players.',
+    rouletteTotalPoints: 'Total points',
+    scoreInputType: 'Scoring type',
       scoreInput: 'Input',
       scoreByDarts: 'By darts',
       roundTotal: 'Round total',
@@ -145,6 +149,8 @@ activatePremium: 'Activate Premium',
     teamB: 'Team B',
     teamC: 'Team C',
     teamNeedPlayers: 'Mindestens zwei Teams müssen Spieler haben.',
+    rouletteTotalPoints: 'Punkte gesamt',
+    scoreInputType: 'Zählweise',
       scoreInput: 'Eingabe',
       scoreByDarts: 'Pro Dart',
       roundTotal: 'Rundensumme',
@@ -200,6 +206,8 @@ premiumNote: "Einmalige Zahlung. Kein Abo.",
     teamB: 'Equipo B',
     teamC: 'Equipo C',
     teamNeedPlayers: 'Al menos dos equipos deben tener jugadores.',
+    rouletteTotalPoints: 'Puntos totales',
+    scoreInputType: 'Tipo de puntuación',
       scoreInput: 'Entrada',
       scoreByDarts: 'Por dardos',
       roundTotal: 'Total ronda',
@@ -255,6 +263,8 @@ premiumNote: "Pago único. Sin suscripción.",
     teamB: 'Team B',
     teamC: 'Team C',
     teamNeedPlayers: 'Minstens twee teams moeten spelers hebben.',
+    rouletteTotalPoints: 'Totaal punten',
+    scoreInputType: 'Scoretype',
       scoreInput: 'Invoer',
       scoreByDarts: 'Per dart',
       roundTotal: 'Rondetotaal',
@@ -310,6 +320,8 @@ premiumNote: "Eenmalige betaling. Geen abonnement.",
     teamB: 'Команда B',
     teamC: 'Команда C',
     teamNeedPlayers: 'Минимум в двух командах должны быть игроки.',
+    rouletteTotalPoints: 'Всего очков',
+    scoreInputType: 'Тип подсчёта',
       scoreInput: 'Ввод',
       scoreByDarts: 'По дротикам',
       roundTotal: 'Сумма раунда',
@@ -365,6 +377,8 @@ premiumNote: "Разовая оплата. Без подписки.",
     teamB: '团队 B',
     teamC: '团队 C',
     teamNeedPlayers: '至少两个团队必须有玩家。',
+    rouletteTotalPoints: '总分',
+    scoreInputType: '计分方式',
       scoreInput: '输入',
       scoreByDarts: '按镖输入',
       roundTotal: '回合总分',
@@ -2278,7 +2292,7 @@ const buyPremium = async () => {
       players, order, currIdx,
       scores, darts, mult, actions, thrown, lastTurn,
       winner, pendingWin,
-      cricket, around,
+      cricket, around, roulette,
       isPremium, themeColor
     });
 
@@ -2456,7 +2470,10 @@ const buyPremium = async () => {
     const modeLabel = (() => {
       if (mode === 'classic') return t(lang, 'classic');
       if (mode === 'cricket') return t(lang, 'cricket');
-      return t(lang, 'around');
+      if (mode === 'around') return t(lang, 'around');
+      if (mode === 'roulette') return t(lang, 'roulette');
+      if (mode === 'rouletteDouble') return t(lang, 'rouletteDouble');
+      return '';
     })();
 
     return (
@@ -2582,7 +2599,7 @@ const buyPremium = async () => {
               </div>
             </div>
 
-            {/* 2. řádek: jazyk + hodnocení */}
+            {/* 2. řádek: lobby = jazyk + hodnocení, hra = název režimu */}
             <div
               className="controls"
               style={{
@@ -2592,7 +2609,8 @@ const buyPremium = async () => {
                 width: '100%'
               }}
             >
-              <select
+              {screen === 'lobby' ? (
+                <select
                 className="input"
                 value={lang}
                 onChange={e => setLang(e.target.value)}
@@ -2606,6 +2624,26 @@ const buyPremium = async () => {
                   <option key={code} value={code}>{LANG_LABEL[code]}</option>
                 ))}
               </select>
+              ) : (
+                <div
+                  className="input"
+                  style={{
+                    minHeight: 44,
+                    flex: '1 1 auto',
+                    minWidth: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '6px 12px',
+                    fontWeight: 800,
+                    textAlign: 'center',
+                    borderColor: 'var(--accent)',
+                    color: 'var(--accent)'
+                  }}
+                >
+                  {modeLabel}
+                </div>
+              )}
 
               {screen === 'lobby' && (
                 <button
@@ -3025,8 +3063,8 @@ function Lobby({
 
                 {mode === 'classic' && (
                   <>
-                    <span style={{ marginLeft: 6, whiteSpace: 'nowrap' }}>{t(lang, 'scoreInput')}</span>
-                    <select
+                      <span>{t(lang, 'scoreInputType')}</span>
+                      <select
                       className="input"
                       value={scoreInputMode}
                       onChange={e => setScoreInputMode(e.target.value)}
@@ -3900,7 +3938,7 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
                     </div>
 
                     <div className="playerScore">
-                      Body celkem: {scores[pIdx] ?? 0}
+                      {t(lang, 'rouletteTotalPoints')}: {scores[pIdx] ?? 0}
                     </div>
 
                     <div className="playerTurn">
@@ -4147,7 +4185,7 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
         )}
 
           {/* PAD / KEYPAD */}
-          {winner == null && (
+          {winner == null && !hideDartControls && (
             <div className="padPane">
               {mode === 'classic' && scoreInputMode === 'round' ? (
                 <>

@@ -76,7 +76,7 @@
             </activity>
         
 
-        <activity android:name="LauncherActivity"
+        <activity android:name=".UpdateLauncherActivity"
             android:alwaysRetainTaskState="true"
             android:label="@string/launcherName"
             android:exported="true">
