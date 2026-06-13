@@ -60,8 +60,8 @@ const T = {
       'Hraje se čísly 15–20 a 25. Single = 1 značka „/“, Double = 2 (✕), Triple = 3 (Ⓧ). Po 3 značkách je číslo zavřené. Přebytečné zásahy dávají body, jen pokud soupeř(i) nemají číslo zavřené.',
     rulesAround:
       'Cíle jdou postupně 1 → 20 → Bull (25). Počítá se pouze zásah aktuálního cíle. Double/Triple se počítají jako zásah. Vyhrává, kdo první trefí Bull.',
-    rulesRoulette: 'Ruleta: losuje se cíl 1–20, malý Bull 25 nebo velký Bull 50. Hráč má 3 šipky v tahu. Počítá se zásah vylosovaného cíle v libovolném poli. Single, double i triple mají stejnou hodnotu: 1 bod. Hraje se na 8 kol, vítězí nejvyšší skóre.',
-    rulesRouletteDouble: 'Ruleta Double: losuje se cíl 1–20. Počítá se pouze zásah do double pole vylosovaného čísla. Každý platný zásah je za 1 bod. Hraje se na 8 kol, vítězí nejvyšší skóre.',
+    rulesRoulette: 'Ruleta: Losuješ číslo, hráč má 3 šipky, každý zásah cíle = 1 bod, nerozlišuje se single/double/triple. Po zásahu si losuješ další cíl, po třech šipkách hraje další hráč. Přepnout hráče můžeš kdykoliv.',
+    rulesRouletteDouble: 'Ruleta Double: stejné, ale počítá se jen zásah do double segmentu vylosovaného čísla. Bull se nelosuje.',
       premiumTitle: "DartScore Premium",
 premiumDesc: "Posuň svou hru na vyšší úroveň. Získej víc přehledu, pohodlí a hraj bez omezení.",
 premiumFeature1: "Bez reklam",
@@ -116,8 +116,8 @@ premiumNote: "Jednorázová platba. Žádné předplatné.",
       'Targets: 15–20 and 25. Single = 1 “/”, Double = 2 (✕), Triple = 3 (Ⓧ). After 3 marks the number is closed. Extra marks score points only if opponents still have the number open.',
     rulesAround:
       'Targets go 1 → 20 → Bull (25). Only hitting the current target counts. Doubles/Triples count as a hit. First to hit Bull wins.',
-    rulesRoulette: 'Roulette: target is randomly selected from 1–20, outer Bull 25 or inner Bull 50. Each player has 3 darts per turn. A hit on the selected target counts in any segment. Single, double and triple are all worth 1 point. Played over 8 rounds, highest score wins.',
-    rulesRouletteDouble: 'Roulette Double: target is randomly selected from 1–20. Only a hit in the double segment of the selected number counts. Every valid hit is worth 1 point. Played over 8 rounds, highest score wins.',
+    rulesRoulette: 'Roulette: You draw a number, the player has 3 darts, each hit on the target = 1 point, single/double/triple are not distinguished. After a hit, draw another target; after three darts, the next player plays. You can switch players anytime.',
+    rulesRouletteDouble: 'Roulette Double: same, but only a hit in the double segment of the drawn number counts. Bull is not drawn.',
   premiumTitle: "DartScore Premium",
 premiumDesc: "Take your game to the next level. Get more control, insights and enjoy a smoother experience.",
 premiumFeature1: "No ads",
@@ -178,8 +178,8 @@ activatePremium: 'Activate Premium',
       'Ziele: 15–20 und 25. Single = 1 „/“, Double = 2 (✕), Triple = 3 (Ⓧ). Nach 3 Marken ist die Zahl geschlossen. Überschüsse punkten nur, wenn Gegner die Zahl nicht geschlossen haben.',
     rulesAround:
       'Ziele nacheinander 1 → 20 → Bull (25). Gewertet wird nur das aktuelle Ziel. Doppel/Triple zählen als Treffer. Sieger trifft zuerst Bull.',
-    rulesRoulette: 'Roulette: Das Ziel wird zufällig aus 1–20, kleinem Bull 25 oder großem Bull 50 gewählt. Jeder Spieler hat 3 Darts pro Runde. Ein Treffer auf das gewählte Ziel zählt in jedem Feld. Single, Double und Triple zählen jeweils 1 Punkt. Gespielt werden 8 Runden, die höchste Punktzahl gewinnt.',
-    rulesRouletteDouble: 'Roulette Double: Das Ziel wird zufällig aus 1–20 gewählt. Nur ein Treffer im Double-Feld der gewählten Zahl zählt. Jeder gültige Treffer zählt 1 Punkt. Gespielt werden 8 Runden, die höchste Punktzahl gewinnt.',
+    rulesRoulette: 'Roulette: Du ziehst eine Zahl, der Spieler hat 3 Darts, jeder Treffer auf das Ziel = 1 Punkt, Single/Double/Triple werden nicht unterschieden. Nach einem Treffer ziehst du ein neues Ziel, nach drei Darts spielt der nächste Spieler. Du kannst den Spieler jederzeit wechseln.',
+    rulesRouletteDouble: 'Roulette Double: gleiches Prinzip, aber es zählt nur ein Treffer im Double-Segment der gezogenen Zahl. Bull wird nicht gezogen.',
       premiumTitle: "DartScore Premium",
 premiumDesc: "Bringe dein Spiel auf das nächste Level. Mehr Übersicht, Komfort und ein besseres Spielerlebnis.",
 premiumFeature1: "Keine Werbung",
@@ -237,8 +237,8 @@ premiumNote: "Einmalige Zahlung. Kein Abo.",
       'Objetivos 15–20 y 25. Single = 1 “/”, Double = 2 (✕), Triple = 3 (Ⓧ). Con 3 marcas el número se cierra. Excesos puntúan solo si los rivales no lo tienen cerrado.',
     rulesAround:
       'Secuencia 1 → 20 → Bull (25). Solo cuenta el objetivo actual. Dobles/Triples cuentan como acierto. Gana quien golpea Bull antes.',
-    rulesRoulette: 'Ruleta: el objetivo se elige al azar entre 1–20, Bull exterior 25 o Bull interior 50. Cada jugador tiene 3 dardos por turno. Un acierto en el objetivo seleccionado cuenta en cualquier segmento. Simple, doble y triple valen 1 punto. Se juegan 8 rondas, gana la puntuación más alta.',
-    rulesRouletteDouble: 'Ruleta Double: el objetivo se elige al azar entre 1–20. Solo cuenta acertar el doble del número seleccionado. Cada acierto válido vale 1 punto. Se juegan 8 rondas, gana la puntuación más alta.',
+    rulesRoulette: 'Ruleta: sorteas un número, el jugador tiene 3 dardos, cada acierto en el objetivo = 1 punto, no se distingue entre single/double/triple. Después de acertar, sorteas otro objetivo; después de tres dardos juega el siguiente jugador. Puedes cambiar de jugador cuando quieras.',
+    rulesRouletteDouble: 'Ruleta Double: igual, pero solo cuenta acertar el segmento double del número sorteado. Bull no se sortea.',
       premiumTitle: "DartScore Premium",
 premiumDesc: "Lleva tu juego al siguiente nivel. Consigue más control, estadísticas y una mejor experiencia.",
 premiumFeature1: "Sin anuncios",
@@ -296,8 +296,8 @@ premiumNote: "Pago único. Sin suscripción.",
       'Doelen 15–20 en 25. Single = 1 “/”, Double = 2 (✕), Triple = 3 (Ⓧ). Na 3 tekens is het getal gesloten. Overschotten scoren alleen als tegenstanders nog open hebben.',
     rulesAround:
       'Volgorde 1 → 20 → Bull (25). Alleen het huidige doel telt. Double/Triple telt als treffer. Wie het eerst Bull raakt, wint.',
-    rulesRoulette: 'Roulette: het doel wordt willekeurig gekozen uit 1–20, outer Bull 25 of inner Bull 50. Elke speler heeft 3 darts per beurt. Een hit op het gekozen doel telt in elk segment. Single, double en triple zijn allemaal 1 punt waard. Er worden 8 rondes gespeeld, de hoogste score wint.',
-    rulesRouletteDouble: 'Roulette Double: het doel wordt willekeurig gekozen uit 1–20. Alleen een hit in het double-segment van het gekozen nummer telt. Elke geldige hit is 1 punt waard. Er worden 8 rondes gespeeld, de hoogste score wint.',
+    rulesRoulette: 'Roulette: je loot een nummer, de speler heeft 3 darts, elke hit op het doel = 1 punt, single/double/triple worden niet onderscheiden. Na een hit loot je een nieuw doel, na drie darts speelt de volgende speler. Je kunt op elk moment van speler wisselen.',
+    rulesRouletteDouble: 'Roulette Double: hetzelfde, maar alleen een hit in het double-segment van het gelote nummer telt. Bull wordt niet geloot.',
       premiumTitle: "DartScore Premium",
 premiumDesc: "Breng je spel naar een hoger niveau. Krijg meer overzicht, statistieken en speelcomfort.",
 premiumFeature1: "Geen advertenties",
@@ -355,8 +355,8 @@ premiumNote: "Eenmalige betaling. Geen abonnement.",
       'Цели: 15–20 и 25. Single = 1 «/», Double = 2 (✕), Triple = 3 (Ⓧ). После 3 меток число закрыто. Излишки дают очки только если у соперников число не закрыто.',
     rulesAround:
       'Последовательно 1 → 20 → Bull (25). Засчитывается только текущая цель. Дабл/трипл засчитываются как попадание. Побеждает первый, кто попадёт в Bull.',
-    rulesRoulette: 'Рулетка: цель случайно выбирается из 1–20, малого Bull 25 или большого Bull 50. У игрока 3 дротика за ход. Попадание в выбранную цель засчитывается в любом секторе. Single, double и triple дают по 1 очку. Игра длится 8 раундов, побеждает лучший счёт.',
-    rulesRouletteDouble: 'Рулетка Double: цель случайно выбирается из 1–20. Засчитывается только попадание в double выбранного числа. Каждое попадание даёт 1 очко. Игра длится 8 раундов, побеждает лучший счёт.',
+    rulesRoulette: 'Рулетка: ты вытягиваешь число, у игрока 3 дротика, каждое попадание в цель = 1 очко, single/double/triple не различаются. После попадания вытягивается новая цель, после трёх дротиков играет следующий игрок. Сменить игрока можно в любой момент.',
+    rulesRouletteDouble: 'Рулетка Double: то же самое, но засчитывается только попадание в double-сегмент выбранного числа. Bull не выпадает.',
       premiumTitle: "DartScore Premium",
 premiumDesc: "Подними свою игру на новый уровень. Больше контроля, статистики и удобства.",
 premiumFeature1: "Без рекламы",
@@ -414,8 +414,8 @@ premiumNote: "Разовая оплата. Без подписки.",
       '目标为 15–20 和 25。Single = 1“/”，Double = 2（✕），Triple = 3（Ⓧ）。3 记号后该数关闭。多余命中仅在对手未关闭时计分。',
     rulesAround:
       '依次 1 → 20 → Bull（25）。只计算当前目标。双倍/三倍视作命中。先中 Bull 者胜。',
-    rulesRoulette: '轮盘：目标从 1–20、小牛 25 或大牛 50 中随机选择。每名玩家每回合 3 镖。命中所选目标即可得分，不区分单倍、双倍或三倍，均为 1 分。共 8 轮，最高分获胜。',
-    rulesRouletteDouble: '双倍轮盘：目标从 1–20 中随机选择。只有命中所选数字的双倍区才计分。每次有效命中为 1 分。共 8 轮，最高分获胜。',
+    rulesRoulette: '轮盘：抽取一个数字，玩家有 3 镖，每次命中目标 = 1 分，不区分 single/double/triple。命中后抽取下一个目标，三镖后轮到下一位玩家。你可以随时切换玩家。',
+    rulesRouletteDouble: '双倍轮盘：规则相同，但只有命中抽取数字的 double 区才计分。不会抽取 Bull。',
       premiumTitle: "DartScore 高级版",
 premiumDesc: "将你的游戏提升到新的水平。获得更多控制、统计数据和更好的体验。",
 premiumFeature1: "无广告",
@@ -3441,6 +3441,12 @@ function Lobby({
 
               <dt>{t(lang, 'around')}</dt>
               <dd>{t(lang, 'rulesAround')}</dd>
+
+              <dt>{t(lang, 'roulette')}</dt>
+              <dd>{t(lang, 'rulesRoulette')}</dd>
+
+              <dt>{t(lang, 'rouletteDouble')}</dt>
+              <dd>{t(lang, 'rulesRouletteDouble')}</dd>
             </dl>
           </details>
         </div>
