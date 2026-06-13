@@ -606,7 +606,13 @@ function App() {
   const [mode, setMode] = useState('classic');
   const [startScore, setStartScore] = useState(501);
 
-  const [isPremium, setIsPremium] = useState(false);
+  const [isPremium, setIsPremium] = useState(() => {
+    try {
+      return localStorage.getItem('premium') === 'true';
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
     const restorePremium = async () => {
@@ -632,6 +638,12 @@ function App() {
 
     restorePremium();
   }, []);
+
+  useEffect(() => {
+    try {
+      if (isPremium) localStorage.setItem('premium', 'true');
+    } catch { }
+  }, [isPremium]);
 
   const [themeColor, setThemeColor] = useState('default');
 
@@ -699,7 +711,6 @@ function App() {
 
       if (s.playerMode) setPlayerMode(s.playerMode);
       if (s.players) setPlayers(s.players.map((p, ix) => ({ ...p, team: p.team || (['A', 'B', 'C'][ix % 3]) })));
-      if (typeof s.isPremium === 'boolean') setIsPremium(s.isPremium);
       if (s.themeColor) setThemeColor(s.themeColor);
     } catch { }
   }, []);
@@ -715,7 +726,7 @@ function App() {
           randomOrder, playThrough, ai,
           scoreInputMode: mode === 'classic' ? scoreInputMode : 'darts',
           playerMode, players,
-          isPremium, themeColor
+          themeColor
         })
       );
     } catch { }
@@ -723,7 +734,7 @@ function App() {
     lang, mode, startScore,
     outDouble, outTriple, outMaster,
     randomOrder, playThrough, ai, scoreInputMode, playerMode, players,
-    isPremium, themeColor
+    themeColor
   ]);
 
   /* v neklasických režimech nedovol nemožný Součet kola */
@@ -2425,7 +2436,7 @@ const buyPremium = async () => {
         setCricket(s.cricket ?? null);
         setAround(s.around ?? null);
         setRoulette(s.roulette ?? null);
-        setIsPremium(!!s.isPremium);
+        if (s.isPremium) setIsPremium(true);
         setThemeColor(s.themeColor || 'default');
 
         setShowAd(false);
