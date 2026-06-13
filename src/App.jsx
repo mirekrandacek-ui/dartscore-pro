@@ -554,32 +554,20 @@ function formatAvg(a) {
 }
 
 /* ===== AdMob interstitial handler ===== */
-const ADMOB_INTERSTITIAL_ID = "ca-app-pub-9232105399279318/3900554547";
-const ADMOB_BANNER_ID = "ca-app-pub-9232105399279318/2746750399";
-/* >>> DARTSCORE_UNIQUE_ANCHOR__INTERSTITIAL_RETURN_BOOL__B3D9 <<< */
+const ADMOB_INTERSTITIAL_SCHEME_URL = "dartscorepro://show-interstitial";
+
 async function showInterstitialAd() {
   try {
-    // Na webu tohle nemá šanci fungovat -> rovnou false
-    if (typeof window !== 'undefined' && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-      return false;
-    }
+    if (typeof window === 'undefined') return false;
+    if (!/Android/i.test(navigator.userAgent)) return false;
 
-    // dynamické volání modulu – Vite to vůbec nevidí
-    const importer = new Function("modulePath", "return import(modulePath);");
-    const mod = await importer("expo-ads-admob");
-    const { AdMobInterstitial } = mod;
-
-    await AdMobInterstitial.setAdUnitID(ADMOB_INTERSTITIAL_ID);
-    await AdMobInterstitial.requestAdAsync({ servePersonalizedAds: true });
-    await AdMobInterstitial.showAdAsync();
-
+    window.location.href = ADMOB_INTERSTITIAL_SCHEME_URL;
     return true;
   } catch (err) {
     console.warn("AdMob interstitial skipped:", err?.message || err);
     return false;
   }
 }
-/* >>> DARTSCORE_UNIQUE_ANCHOR__INTERSTITIAL_RETURN_BOOL__B3D9 <<< */
 
 /* ===== MAIN APP ===== */
 function App() {
@@ -1788,31 +1776,11 @@ const commitCricket = (value, mOverride) => {
       } catch { }
 
       setWinner(pIdx);
-if (!isPremium) {
-  // Web (Codespace) = AdMob interstitial se reálně nespustí, ale overlay musí naběhnout
-  console.log('[ADS] finalizeWin -> showing overlay', { isPremium });
-
-  setAdSecondsLeft(20);
-  setShowAd(true);
-
-  // zkus interstitial (na webu to typicky vrátí false / nic nezobrazí)
-  showInterstitialAd();
-}
-
-/* >>> DARTSCORE_UNIQUE_ANCHOR__FINALIZE_WIN_BLOCK__X92K <<< */
 
       if (!isPremium) {
-  // Web: žádný AdMob interstitial -> nezobrazuj fake pauzu
-  if (typeof window !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    // Mobilní build (až bude): tady teprve dává smysl pauza
-    setAdSecondsLeft(20);
-    setShowAd(true);
-    showInterstitialAd();
-  } else {
-    // web: nic
-    console.log('Interstitial skipped on web');
-  }
-}
+        showInterstitialAd();
+      }
+
       if (isPremium) {
         try {
           const list = JSON.parse(localStorage.getItem('finishedGames') || '[]');
