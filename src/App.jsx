@@ -664,12 +664,25 @@ function App() {
   const winAudioRef = useRef(null);
   /* persist screen */
 
+  const APP_VERSION = '1.1.16';
+  const LOBBY_DEFAULTS_VERSION = APP_VERSION;
+
   /* načti lobby z localStorage */
   useEffect(() => {
     try {
+      const defaultsVersion = localStorage.getItem('lobbyDefaultsVersion');
+
+      if (defaultsVersion !== LOBBY_DEFAULTS_VERSION) {
+        localStorage.removeItem('lobby');
+        localStorage.setItem('lobbyDefaultsVersion', LOBBY_DEFAULTS_VERSION);
+        return;
+      }
+
       const s = JSON.parse(localStorage.getItem('lobby') || '{}');
+      const nextMode = s.mode || 'classic';
+
       if (s.lang) setLang(s.lang);
-      if (s.mode) setMode(s.mode);
+      setMode(nextMode);
       if (s.startScore) setStartScore(s.startScore);
       if (typeof s.outDouble === 'boolean') setOutDouble(s.outDouble);
       if (typeof s.outTriple === 'boolean') setOutTriple(s.outTriple);
@@ -677,7 +690,13 @@ function App() {
       if (typeof s.randomOrder === 'boolean') setRandomOrder(s.randomOrder);
       if (typeof s.playThrough === 'boolean') setPlayThrough(s.playThrough);
       if (s.ai) setAi(s.ai);
-      if (s.scoreInputMode) setScoreInputMode(s.scoreInputMode);
+
+      if (nextMode === 'classic' && ['darts', 'round'].includes(s.scoreInputMode)) {
+        setScoreInputMode(s.scoreInputMode);
+      } else {
+        setScoreInputMode('darts');
+      }
+
       if (s.playerMode) setPlayerMode(s.playerMode);
       if (s.players) setPlayers(s.players.map((p, ix) => ({ ...p, team: p.team || (['A', 'B', 'C'][ix % 3]) })));
       if (typeof s.isPremium === 'boolean') setIsPremium(s.isPremium);
@@ -693,7 +712,9 @@ function App() {
         JSON.stringify({
           lang, mode, startScore,
           outDouble, outTriple, outMaster,
-          randomOrder, playThrough, ai, scoreInputMode, playerMode, players,
+          randomOrder, playThrough, ai,
+          scoreInputMode: mode === 'classic' ? scoreInputMode : 'darts',
+          playerMode, players,
           isPremium, themeColor
         })
       );
@@ -704,6 +725,13 @@ function App() {
     randomOrder, playThrough, ai, scoreInputMode, playerMode, players,
     isPremium, themeColor
   ]);
+
+  /* v neklasických režimech nedovol nemožný Součet kola */
+  useEffect(() => {
+    if (mode !== 'classic' && scoreInputMode !== 'darts') {
+      setScoreInputMode('darts');
+    }
+  }, [mode, scoreInputMode]);
 
   /* přelož auto-jména při změně jazyka */
   useEffect(() => {
