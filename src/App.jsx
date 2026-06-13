@@ -49,6 +49,8 @@ const T = {
     premiumInfoButton: 'Co obsahuje Premium',
     premiumMode: 'Premium režim',
     activatePremium: 'Aktivuj Premium',
+    premiumAlreadyOwned: 'Kámo, Premium máš už koupené 🙂',
+    gameSavedToast: 'Uloženo',
     filter: 'Filtr', all: 'Vše', week: 'Týden', month: 'Měsíc', year: 'Rok',
     h2h: 'Vzájemné zápasy', selectPlayer: 'Vyber hráče', wins: 'výhry',
     // Pravidla – plně lokalizovaná
@@ -125,6 +127,8 @@ premiumFeature4: "Custom color theme",
 premiumButton: "Unlock Premium – 2.99 €",
 premiumNote: "One-time payment. No subscription.",
 activatePremium: 'Activate Premium',
+  premiumAlreadyOwned: 'Buddy, you already own Premium 🙂',
+  gameSavedToast: 'Saved',
     },
   de: {
     app: 'DartScore Pro', sound: 'Ton', voice: 'Stimme', back: 'Zurück',
@@ -164,6 +168,8 @@ activatePremium: 'Activate Premium',
     premiumInfoButton: 'Was enthält Premium?',
     premiumMode: 'Premium-Modus',
     activatePremium: 'Premium aktivieren',
+    premiumAlreadyOwned: 'Premium gehört dir schon 🙂',
+    gameSavedToast: 'Gespeichert',
     filter: 'Filter', all: 'Alle', week: 'Woche', month: 'Monat', year: 'Jahr',
     h2h: 'Direkte Duelle', selectPlayer: 'Spieler wählen', wins: 'Siege',
     rulesClassic:
@@ -221,6 +227,8 @@ premiumNote: "Einmalige Zahlung. Kein Abo.",
     premiumInfoButton: 'Qué incluye Premium',
     premiumMode: 'Modo Premium',
     activatePremium: 'Activar Premium',
+    premiumAlreadyOwned: 'Premium ya es tuyo 🙂',
+    gameSavedToast: 'Guardado',
     filter: 'Filtro', all: 'Todo', week: 'Semana', month: 'Mes', year: 'Año',
     h2h: 'Cara a cara', selectPlayer: 'Elige jugador', wins: 'victorias',
     rulesClassic:
@@ -278,6 +286,8 @@ premiumNote: "Pago único. Sin suscripción.",
     premiumInfoButton: 'Wat bevat Premium?',
     premiumMode: 'Premium-modus',
     activatePremium: 'Premium activeren',
+    premiumAlreadyOwned: 'Premium is al van jou 🙂',
+    gameSavedToast: 'Opgeslagen',
     filter: 'Filter', all: 'Alles', week: 'Week', month: 'Maand', year: 'Jaar',
     h2h: 'Onderling', selectPlayer: 'Kies speler', wins: 'zeges',
     rulesClassic:
@@ -335,6 +345,8 @@ premiumNote: "Eenmalige betaling. Geen abonnement.",
     premiumInfoButton: 'Что включает Premium',
     premiumMode: 'Премиум-режим',
     activatePremium: 'Активировать Premium',
+    premiumAlreadyOwned: 'Premium уже у тебя 🙂',
+    gameSavedToast: 'Сохранено',
     filter: 'Фильтр', all: 'Все', week: 'Неделя', month: 'Месяц', year: 'Год',
     h2h: 'Личные встречи', selectPlayer: 'Выбери игрока', wins: 'побед',
     rulesClassic:
@@ -392,6 +404,8 @@ premiumNote: "Разовая оплата. Без подписки.",
     premiumInfoButton: 'Premium 包含什么',
     premiumMode: '高级模式',
     activatePremium: '激活 Premium',
+    premiumAlreadyOwned: '你已经拥有高级版 🙂',
+    gameSavedToast: '已保存',
     filter: '筛选', all: '全部', week: '一周', month: '一月', year: '一年',
     h2h: '对战', selectPlayer: '选玩家', wins: '胜',
     rulesClassic:
@@ -2828,7 +2842,7 @@ const buyPremium = async () => {
         });
         localStorage.setItem('finishedGames', JSON.stringify(list.slice(0, 200)));
       } catch {}
-      showToast('Uloženo');
+      showToast(t(lang, 'gameSavedToast'));
     }}
     restartGame={restartGame}
     cardRefs={cardRefs}
