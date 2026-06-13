@@ -2215,6 +2215,12 @@ const closeAdNow = () => {
 const buyPremium = async () => {
   let response;
 
+  if (isPremium) {
+    setShowAd(false);
+    showToast(t(lang, 'premiumAlreadyOwned'));
+    return;
+  }
+
   try {
     const hasWindow = typeof window !== 'undefined';
     const hasDigitalGoods =
