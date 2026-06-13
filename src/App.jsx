@@ -2247,6 +2247,19 @@ const buyPremium = async () => {
       throw new Error('Billing service is unavailable');
     }
 
+    const existingPurchases = await service.listPurchases();
+    const alreadyOwnsPremium = existingPurchases?.some(
+      purchase => purchase.sku === 'premium_unlock'
+    );
+
+    if (alreadyOwnsPremium) {
+      setIsPremium(true);
+      localStorage.setItem('premium', 'true');
+      setShowAd(false);
+      showToast(t(lang, 'premiumAlreadyOwned'));
+      return;
+    }
+
     const details = await service.getDetails(['premium_unlock']);
     if (!details || !details.length) {
       throw new Error('premium_unlock not found in Play Billing');
