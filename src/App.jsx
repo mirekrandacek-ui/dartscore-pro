@@ -2297,16 +2297,20 @@ const buyPremium = async () => {
     showToast('Premium aktivováno');
   } catch (err) {
     const msg = String(err?.message || err || '');
+    const msgLower = msg.toLowerCase();
 
     if (
-      msg.includes('already own') ||
-      msg.includes('already owned') ||
-      msg.includes('Tuto položku již vlastníte')
+      msgLower.includes('already own') ||
+      msgLower.includes('already owned') ||
+      msgLower.includes('item already owned') ||
+      msgLower.includes('tuto položku') ||
+      msgLower.includes('položku již vlastníte') ||
+      msgLower.includes('vlastn')
     ) {
       setIsPremium(true);
       localStorage.setItem('premium', 'true');      
       setShowAd(false);
-      showToast('Premium obnoveno');
+      showToast(t(lang, 'premiumAlreadyOwned'));
       return;
     }
 
