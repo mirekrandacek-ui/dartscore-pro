@@ -15,15 +15,12 @@
  */
 package com.randis2288.dartscorepro;
 
-
+import com.google.android.gms.ads.MobileAds;
 
 public class Application extends android.app.Application {
-
-  
-
   @Override
   public void onCreate() {
-      super.onCreate();
-      
+    super.onCreate();
+    MobileAds.initialize(this, initializationStatus -> { });
   }
 }
