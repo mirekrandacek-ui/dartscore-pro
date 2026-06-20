@@ -1120,6 +1120,8 @@ function App() {
 
     const hit = v * m;
     const prev = scores[scoreIdx];
+    const roundScoreBeforeDart = darts.reduce((sum, d) => sum + (d?.score || 0), 0);
+    const roundStartScore = prev + roundScoreBeforeDart;
     const tentative = prev - hit;
 
     const resetMult = () => setMult(1);
@@ -1146,6 +1148,7 @@ function App() {
         dartsBefore: [...darts],
       });
 
+      setScores(sc => sc.map((x, i) => (i === scoreIdx ? roundStartScore : x)));
       setDarts([]);
       setLastTurn(ls => ls.map((x, i) => (i === scoreIdx ? 0 : x)));
       resetMult();
@@ -1169,6 +1172,7 @@ function App() {
           dartsBefore: [...darts],
         });
 
+        setScores(sc => sc.map((x, i) => (i === scoreIdx ? roundStartScore : x)));
         setDarts([]);
         setLastTurn(ls => ls.map((x, i) => (i === scoreIdx ? 0 : x)));
         resetMult();
@@ -1390,9 +1394,11 @@ const commitCricket = (value, mOverride) => {
   const pIdx = currentPlayerIndex;
   if (pIdx == null || !cricket[pIdx]) return;
 
-  // cricket bere jen 0, 15–20, 25
+  // Cricket bere jen 0, 15–20 a bull.
+  // Single bull = 25 => 1 mark, double bull = 50 / D25 => 2 marky.
   if (v === 0) m = 1;
-  if (v === 25) m = 1;
+  if (v === 50) { v = 25; m = 2; }
+  if (v === 25) m = Math.max(1, Math.min(2, m));
   if (![0, 15, 16, 17, 18, 19, 20, 25].includes(v)) return;
 
   const prevState = deepClone(cricket);
@@ -4389,8 +4395,7 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
                                 return;
                               }
                               if (n === 25) {
-                                setMult(1);
-                                commitDart(25, 1);
+                                commitDart(25, mult);
                                 return;
                               }
                             }
