@@ -21,6 +21,10 @@ public class Application extends android.app.Application {
   @Override
   public void onCreate() {
     super.onCreate();
-    MobileAds.initialize(this, initializationStatus -> { });
+    MobileAds.initialize(
+        this,
+        initializationStatus ->
+            AdMobInterstitialManager.preload(this)
+    );
   }
 }
