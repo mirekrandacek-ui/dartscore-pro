@@ -19,6 +19,7 @@
   --accent:#16a34a;
 
   --padH: 260px;
+  --bottom-ad-space: 0px;
   /* výška hlavičky sloupce hráče v Cricketu – kvůli zarovnání */
   --cricket-head-h: 44px;
 }
@@ -35,11 +36,16 @@ body{
   display:flex;
   flex-direction:column;
   min-height:0;
-padding-top: var(--sat);
-  padding-right: var(--sar);
-  padding-bottom: var(--sab);
-  padding-left: var(--sal);
-}  
+  overflow:hidden;
+  padding-top:var(--sat);
+  padding-right:var(--sar);
+  padding-bottom:var(--sab);
+  padding-left:var(--sal);
+}
+
+.container[data-banner-visible="1"]{
+  --bottom-ad-space:56px;
+}
 
 /* TOAST */
 .toast{
@@ -168,15 +174,16 @@ input[type="text"]{color:#fff}
   flex-direction:column;
   gap:8px;
   padding:8px;
-  flex:1;
-  /* aby hra využila celý displej */
-  min-height:calc(var(--vh,1vh)*100);
+  flex:1 1 auto;
+  min-height:0;
+  overflow:hidden;
 }
 
 /* horní lišta – jeden pevný řádek */
 .gameTopBar{
   display:flex;
   align-items:center;
+  flex:0 0 auto;
   justify-content:space-between;
   gap:8px;
   flex-wrap:wrap;
