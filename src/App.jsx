@@ -2541,9 +2541,10 @@ const buyPremium = async () => {
           className="container"
           data-mode={mode}
           data-premium={isPremium ? '1' : '0'}
+          data-banner-visible={!isPremium && ADS_ENABLED ? '1' : '0'}
           style={{
             paddingTop: 'max(var(--sat, 0px), var(--sat-fallback, 28px))',
-            paddingBottom: 'var(--sab, 0px)',
+            paddingBottom: 'calc(var(--sab, 0px) + var(--bottom-ad-space, 0px))',
           }}
         >
           {/* HEADER */}
