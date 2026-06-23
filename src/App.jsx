@@ -1784,7 +1784,16 @@ const commitCricket = (value, mOverride) => {
       setWinner(pIdx);
 
       if (!isPremium) {
-        showInterstitialAd();
+        window.setTimeout(() => {
+          try {
+            if (winAudioRef.current) {
+              winAudioRef.current.pause();
+              winAudioRef.current.currentTime = 0;
+            }
+          } catch { }
+
+          showInterstitialAd();
+        }, 1000);
       }
 
       if (isPremium) {
