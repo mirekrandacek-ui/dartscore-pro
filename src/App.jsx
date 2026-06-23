@@ -554,7 +554,13 @@ function formatAvg(a) {
 }
 
 /* ===== AdMob interstitial handler ===== */
-const ADMOB_INTERSTITIAL_SCHEME_URL = "dartscorepro://show-interstitial";
+const FORCE_FREE_TEST =
+  typeof window !== 'undefined' &&
+  new URLSearchParams(window.location.search).get('forceFreeTest') === '1';
+
+const ADMOB_INTERSTITIAL_SCHEME_URL = FORCE_FREE_TEST
+  ? "dartscorepro-freetest://show-interstitial"
+  : "dartscorepro://show-interstitial";
 
 async function showInterstitialAd() {
   try {
@@ -610,6 +616,7 @@ function App() {
 
   const [isPremium, setIsPremium] = useState(() => {
     try {
+      if (FORCE_FREE_TEST) return false;
       return localStorage.getItem('premium') === 'true';
     } catch {
       return false;
@@ -619,6 +626,7 @@ function App() {
   useEffect(() => {
     const restorePremium = async () => {
       try {
+        if (FORCE_FREE_TEST) return;
         if (!window.getDigitalGoodsService) return;
 
         const service = await window.getDigitalGoodsService(
@@ -643,6 +651,7 @@ function App() {
 
   useEffect(() => {
     try {
+      if (FORCE_FREE_TEST) return;
       if (isPremium) localStorage.setItem('premium', 'true');
     } catch { }
   }, [isPremium]);
