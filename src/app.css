@@ -740,3 +740,39 @@ html, body{
   height:auto;
   min-height:0;
 }
+
+
+/* === CRICKET COMPACT KEYPAD FIX === */
+
+/* Classic zůstává beze změny. */
+.container[data-screen="game"][data-mode="cricket"] .gameWrap{
+  gap:0;
+}
+
+/* Odstup zůstane jen mezi horními tlačítky a tabulkou. */
+.container[data-screen="game"][data-mode="cricket"] .gameTopBar{
+  margin-bottom:12px;
+}
+
+/* Tabulka hráčů využije všechen zbývající prostor. */
+.container[data-screen="game"][data-mode="cricket"] .cricketWrap{
+  flex:1 1 auto;
+  min-height:0;
+  margin:0;
+}
+
+/*
+  Cricket klávesnice už nemá pevnou výšku --padH.
+  Rámeček končí těsně pod tlačítkem 0.
+*/
+.container[data-screen="game"][data-mode="cricket"] .padPane{
+  flex:0 0 auto;
+  height:auto;
+  min-height:0;
+  margin-top:0;
+}
+
+/* Odstranění zbytečné mezery pod posledním řádkem s nulou. */
+.container[data-screen="game"][data-mode="cricket"] .padPane > .padRow:last-child{
+  margin-bottom:0;
+}
