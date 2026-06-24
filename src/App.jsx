@@ -572,8 +572,6 @@ async function showInterstitialAd() {
 /* ===== MAIN APP ===== */
 function App() {
   const ADS_ENABLED = false;
-  const TEST_FREE_BANNER =
-    new URLSearchParams(window.location.search).get('testBanner') === '1';
   /* viewport fix */
     /* >>> DARTSCORE_UNIQUE_ANCHOR__VIEWPORT_FIX__START__C91E <<< */
   useEffect(() => {
@@ -2552,10 +2550,7 @@ const buyPremium = async () => {
           data-mode={mode}
           data-screen={screen}
           data-premium={isPremium ? '1' : '0'}
-          data-test-banner={TEST_FREE_BANNER ? '1' : '0'}
-          data-banner-visible={
-            !isPremium && (ADS_ENABLED || TEST_FREE_BANNER) ? '1' : '0'
-          }
+          data-banner-visible={!isPremium && ADS_ENABLED ? '1' : '0'}
           style={{
             paddingTop: 'max(var(--sat, 0px), var(--sat-fallback, 28px))',
             paddingBottom: 'calc(var(--sab, 0px) + var(--bottom-ad-space, 0px))',
