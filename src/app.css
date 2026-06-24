@@ -776,3 +776,27 @@ html, body{
 .container[data-screen="game"][data-mode="cricket"] .padPane > .padRow:last-child{
   margin-bottom:0;
 }
+
+
+/* === CRICKET KEYPAD EXACT HEIGHT === */
+/* Rámeček Cricket klávesnice končí těsně pod nulou. */
+.container[data-screen="game"][data-mode="cricket"] .padPane{
+  flex:none !important;
+  flex-basis:auto !important;
+  height:fit-content !important;
+  min-height:0 !important;
+  max-height:none !important;
+  padding:8px !important;
+  padding-bottom:8px !important;
+  margin-top:0 !important;
+  display:block;
+}
+
+.container[data-screen="game"][data-mode="cricket"] .padPane > .padRow:last-child{
+  margin-bottom:0 !important;
+}
+
+.container[data-screen="game"][data-mode="cricket"] .padPane > .padRow:last-child .key{
+  height:56px;
+  min-height:56px;
+}
