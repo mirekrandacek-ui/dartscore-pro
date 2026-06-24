@@ -2540,6 +2540,7 @@ const buyPremium = async () => {
         <div
           className="container"
           data-mode={mode}
+          data-screen={screen}
           data-premium={isPremium ? '1' : '0'}
           data-banner-visible={!isPremium && ADS_ENABLED ? '1' : '0'}
           style={{
@@ -3601,7 +3602,6 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
     saveGame, restartGame, cardRefs, setScreen
   }) {
     const HEAD_H = 40;
-    const PAD_H = 160;
     const [roundScoreInput, setRoundScoreInput] = React.useState('');
 
     const gameTeamCodes = ['A', 'B', 'C'];
@@ -4202,7 +4202,7 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
             </div>
 
             {/* Scrollovatelné sloupce hráčů */}
-            <div className="cricketScroll" style={{ paddingBottom: PAD_H }}>
+            <div className="cricketScroll">
               {order.map((pIdx, i) => {
                 const p = players[pIdx];
                 const active = i === currIdx && winner == null;

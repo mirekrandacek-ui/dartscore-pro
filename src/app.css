@@ -482,7 +482,7 @@ input[type="text"]{color:#fff}
 }
 /* Extra mezera mezi tabulkou a klávesnicí jen v Cricketu */
 .container[data-mode="cricket"] .padPane{
-  margin-top:40px;    /* tady si hraj s mezerou – 24 / 32 / 40px */
+  margin-top:0;
 }
 .padRow{
   display:flex;
@@ -681,3 +681,40 @@ html, body{
     inset 0 0 0 1px rgba(255,255,255,0.12);
 }
 
+
+
+/* === CRICKET VIEWPORT FIX === */
+.container[data-screen="game"][data-mode="cricket"] .header{
+  padding-top:6px;
+}
+
+.container[data-screen="game"][data-mode="cricket"] .cricketWrap{
+  align-items:stretch;
+  overflow:hidden;
+}
+
+.container[data-screen="game"][data-mode="cricket"] .targetsRail,
+.container[data-screen="game"][data-mode="cricket"] .playerCol{
+  height:100%;
+  min-height:0;
+}
+
+.container[data-screen="game"][data-mode="cricket"] .cricketScroll{
+  height:100%;
+  min-height:0;
+  overflow-x:auto;
+  overflow-y:hidden;
+}
+
+.container[data-screen="game"][data-mode="cricket"] .targetsRailMarks,
+.container[data-screen="game"][data-mode="cricket"] .playerColMarks{
+  flex:1 1 auto;
+  min-height:0;
+}
+
+.container[data-screen="game"][data-mode="cricket"] .targetCell,
+.container[data-screen="game"][data-mode="cricket"] .markCell{
+  flex:1 1 0;
+  height:auto;
+  min-height:0;
+}
