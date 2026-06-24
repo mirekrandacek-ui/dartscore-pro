@@ -47,6 +47,28 @@ body{
   --bottom-ad-space:56px;
 }
 
+
+/* Test skutečného prostoru banneru – aktivní pouze přes ?testBanner=1 */
+.container[data-test-banner="1"][data-banner-visible="1"]::after{
+  content:"TEST BANNER 320 × 50";
+  position:fixed;
+  left:50%;
+  bottom:max(var(--sab, 0px), 0px);
+  transform:translateX(-50%);
+  width:min(320px, calc(100vw - 16px));
+  height:50px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#fff;
+  color:#111;
+  border:1px solid #999;
+  font-size:12px;
+  font-weight:900;
+  z-index:50;
+  pointer-events:none;
+}
+
 /* TOAST */
 .toast{
   position:fixed;left:50%;bottom:16px;transform:translateX(-50%);
