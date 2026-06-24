@@ -828,8 +828,8 @@ html, body{
   min-width:0;
   text-align:right;
   white-space:nowrap;
-  font-size:clamp(9px, 2.7vw, 12px);
-  font-weight:800;
+  font-size:14px;
+  font-weight:900;
   overflow:hidden;
   text-overflow:ellipsis;
 }
