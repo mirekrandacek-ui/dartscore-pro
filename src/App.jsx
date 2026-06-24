@@ -570,8 +570,63 @@ async function showInterstitialAd() {
 }
 
 /* ===== MAIN APP ===== */
+
+function AdSenseBanner() {
+  const adRef = React.useRef(null);
+  const [adState, setAdState] = React.useState('loading');
+
+  React.useEffect(() => {
+    const node = adRef.current;
+    if (!node) return undefined;
+
+    const updateStatus = () => {
+      const status = node.getAttribute('data-ad-status');
+
+      if (status === 'filled') {
+        setAdState('filled');
+      } else if (status === 'unfilled' || status === 'unfill-optimized') {
+        setAdState('unfilled');
+      }
+    };
+
+    const observer = new MutationObserver(updateStatus);
+    observer.observe(node, {
+      attributes: true,
+      attributeFilter: ['data-ad-status']
+    });
+
+    try {
+      if (!node.getAttribute('data-adsbygoogle-status')) {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      }
+    } catch (error) {
+      console.warn('AdSense banner se nepodařilo inicializovat:', error);
+      setAdState('unfilled');
+    }
+
+    updateStatus();
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      className="adsenseBannerHost"
+      data-ad-state={adState}
+      aria-hidden={adState !== 'filled'}
+    >
+      <ins
+        ref={adRef}
+        className="adsbygoogle adsenseBannerUnit"
+        data-ad-client="ca-pub-9232105399279318"
+        data-ad-slot="1673802605"
+      />
+    </div>
+  );
+}
+
 function App() {
-  const ADS_ENABLED = false;
+  const ADS_ENABLED = true;
   /* viewport fix */
     /* >>> DARTSCORE_UNIQUE_ANCHOR__VIEWPORT_FIX__START__C91E <<< */
   useEffect(() => {
@@ -2550,10 +2605,9 @@ const buyPremium = async () => {
           data-mode={mode}
           data-screen={screen}
           data-premium={isPremium ? '1' : '0'}
-          data-banner-visible={!isPremium && ADS_ENABLED ? '1' : '0'}
           style={{
             paddingTop: 'max(var(--sat, 0px), var(--sat-fallback, 28px))',
-            paddingBottom: 'calc(var(--sab, 0px) + var(--bottom-ad-space, 0px))',
+            paddingBottom: 'var(--sab, 0px)',
           }}
         >
           {/* HEADER */}
@@ -2867,6 +2921,10 @@ const buyPremium = async () => {
     }}
   />
 )}
+          {!isPremium && ADS_ENABLED && (
+            <AdSenseBanner />
+          )}
+
           <audio ref={hitAudioRef} src="/dart-hit.mp3" preload="auto" />
           <audio ref={winAudioRef} src="/tada-fanfare-a-6313.mp3" preload="auto" />
 

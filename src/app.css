@@ -19,7 +19,6 @@
   --accent:#16a34a;
 
   --padH: 260px;
-  --bottom-ad-space: 0px;
   /* výška hlavičky sloupce hráče v Cricketu – kvůli zarovnání */
   --cricket-head-h: 44px;
 }
@@ -41,10 +40,6 @@ body{
   padding-right:var(--sar);
   padding-bottom:var(--sab);
   padding-left:var(--sal);
-}
-
-.container[data-banner-visible="1"]{
-  --bottom-ad-space:56px;
 }
 
 
@@ -816,4 +811,35 @@ html, body{
 .container[data-screen="game"][data-mode="classic"] .gameTopBar{
   justify-content:flex-end;
   margin-bottom:8px;
+}
+
+
+/* === ADSENSE FREE BANNER === */
+.adsenseBannerHost{
+  flex:0 0 56px;
+  min-height:56px;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:3px 8px;
+  overflow:hidden;
+  background:var(--bg);
+}
+
+.adsenseBannerHost[data-ad-state="unfilled"]{
+  display:none;
+}
+
+.adsenseBannerUnit{
+  display:inline-block;
+  width:320px;
+  height:50px;
+}
+
+@media (max-width:335px){
+  .adsenseBannerUnit{
+    width:300px;
+    height:50px;
+  }
 }
