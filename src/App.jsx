@@ -2537,6 +2537,14 @@ const buyPremium = async () => {
       return '';
     })();
 
+    const classicOutShortLabel = (() => {
+      const rules = [];
+      if (outDouble) rules.push('DO-OUT');
+      if (outTriple) rules.push('TR-OUT');
+      if (outMaster) rules.push('MA-OUT');
+      return rules.length ? rules.join(' / ') : 'ANY-OUT';
+    })();
+
     return (
       <ErrorBoundary>
         <div
@@ -2690,6 +2698,16 @@ const buyPremium = async () => {
                   <option key={code} value={code}>{LANG_LABEL[code]}</option>
                 ))}
               </select>
+              ) : mode === 'classic' ? (
+                <div className="input classicModeInfo">
+                  <span className="classicModeTitle">
+                    {modeLabel}
+                  </span>
+
+                  <span className="classicModeOut">
+                    {t(lang, 'outLabel')}: {classicOutShortLabel}
+                  </span>
+                </div>
               ) : (
                 <div
                   className="input"
@@ -2806,17 +2824,6 @@ const buyPremium = async () => {
     playerMode={playerMode}
       scoreInputMode={scoreInputMode}
     isPremium={isPremium}
-    outDesc={(() => {
-      if (mode !== 'classic') {
-        return mode === 'cricket' ? 'Cricket' : 'Around the Clock';
-      }
-      const arr = [];
-      if (outDouble) arr.push('Double-out');
-      if (outTriple) arr.push('Triple-out');
-      if (outMaster) arr.push('Master-out');
-      if (arr.length === 0) return 'Any-out';
-      return arr.join(' + ');
-    })()}
     players={players}
     order={order}
     currIdx={currIdx}
@@ -3597,7 +3604,7 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
   }
   /* ===== GAME SCREEN ===== */
   function Game({
-    lang, t, mode, playerMode, scoreInputMode, outDesc, isPremium,
+    lang, t, mode, playerMode, scoreInputMode, isPremium,
     players, order, currIdx,
     scores, averages, thrown, lastTurn,
     cricket, around, roulette,
@@ -3846,12 +3853,6 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
       <div className="gameWrap">
         {/* HORNÍ LIŠTA */}
         <div className="gameTopBar">
-          {mode === 'classic' && (
-            <span className="badge">
-              {`${t(lang, 'outLabel')}: ${outDesc}`}
-            </span>
-          )}
-
           {(mode === 'roulette' || mode === 'rouletteDouble') && (
             <span className="badge">
               {`${t(lang, 'target')}: ${rouletteTargetLabel(roulette?.currentTargets?.[order[currIdx]])} • ${Math.min(Math.floor(((thrown[order[currIdx]] || 0) / 3)) + 1, roulette?.maxRounds ?? 8)}/${roulette?.maxRounds ?? 8}`}
