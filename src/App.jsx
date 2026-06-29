@@ -733,7 +733,7 @@ function App() {
   const winAudioRef = useRef(null);
   /* persist screen */
 
-  const APP_VERSION = '1.1.16';
+  const APP_VERSION = '1.1.19';
   const LOBBY_DEFAULTS_VERSION = APP_VERSION;
 
   /* načti lobby z localStorage */
