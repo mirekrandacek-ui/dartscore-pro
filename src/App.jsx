@@ -626,7 +626,7 @@ function AdSenseBanner() {
 }
 
 function App() {
-  const ADS_ENABLED = true;
+  const ADS_ENABLED = false;
   /* viewport fix */
     /* >>> DARTSCORE_UNIQUE_ANCHOR__VIEWPORT_FIX__START__C91E <<< */
   useEffect(() => {
@@ -699,6 +699,14 @@ function App() {
   useEffect(() => {
     try {
       if (isPremium) localStorage.setItem('premium', 'true');
+    } catch { }
+  }, [isPremium]);
+
+  useEffect(() => {
+    try {
+      if (window.DartScoreAndroid?.setPremium) {
+        window.DartScoreAndroid.setPremium(Boolean(isPremium));
+      }
     } catch { }
   }, [isPremium]);
 
@@ -2607,7 +2615,7 @@ const buyPremium = async () => {
           data-premium={isPremium ? '1' : '0'}
           style={{
             paddingTop: 'max(var(--sat, 0px), var(--sat-fallback, 28px))',
-            paddingBottom: 'var(--sab, 0px)',
+            paddingBottom: 0,
           }}
         >
           {/* HEADER */}

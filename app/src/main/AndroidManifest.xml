@@ -21,6 +21,8 @@
      the abbreviated format. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     
         <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     
@@ -89,6 +91,19 @@
         </activity>
 
         
+
+        <activity
+            android:name=".MainWebViewActivity"
+            android:configChanges="orientation|screenSize"
+            android:exported="true"
+            android:hardwareAccelerated="true"
+            android:screenOrientation="portrait"
+            android:theme="@android:style/Theme.Material.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
 
         <activity android:name=".UpdateLauncherActivity"
             android:alwaysRetainTaskState="true"
