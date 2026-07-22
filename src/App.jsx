@@ -3729,13 +3729,35 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
         .map(x => x.idx)
     );
 
-    const submitRoundScore = () => {
+    const submitRoundScore = React.useCallback(() => {
       if (roundScoreInput === '') return;
+
       const n = Number(roundScoreInput);
       if (!Number.isInteger(n) || n < 0 || n > 180) return;
+
       commitClassicRound(n);
       setRoundScoreInput('');
-    };
+    }, [roundScoreInput, commitClassicRound]);
+
+    const pressRoundScoreDigit = React.useCallback((digit) => {
+      const d = String(digit);
+
+      setRoundScoreInput(prev => {
+        const nextRaw = `${prev}${d}`.replace(/^0+(?=\d)/, '');
+        const next = nextRaw.slice(0, 3);
+
+        if (!/^\d{1,3}$/.test(next)) return prev;
+
+        const n = Number(next);
+        if (!Number.isInteger(n) || n < 0 || n > 180) return prev;
+
+        return next;
+      });
+    }, []);
+
+    const roundScoreBackspace = React.useCallback(() => {
+      setRoundScoreInput(prev => prev.slice(0, -1));
+    }, []);
 
     // keypad layout
     const keypad = React.useMemo(() => {
@@ -4367,69 +4389,109 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
             <div className="padPane">
               {mode === 'classic' && scoreInputMode === 'round' ? (
                 <>
-                  <div className="padRow">
-                    <input
-                      className="input"
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      placeholder="0–180"
-                      value={roundScoreInput}
-                      onChange={e => {
-                        const clean = e.target.value.replace(/\D/g, '').slice(0, 3);
-                        setRoundScoreInput(clean);
-                      }}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') submitRoundScore();
-                      }}
-                      style={{
-                        height: 44,
-                        flex: 1,
-                        minWidth: 0,
-                        textAlign: 'center',
-                        fontSize: 20,
-                        fontWeight: 900
-                      }}
-                    />
-
-                    <button
-                      type="button"
-                      className="btn green"
-                      onClick={submitRoundScore}
-                      style={{ height: 44, minWidth: 86 }}
-                    >
-                      {t(lang, 'submitScore')}
-                    </button>
-
-                    <button
-                      type="button"
-                      className="multBtn backspace"
-                      onClick={undo}
-                      title={t(lang, 'undo')}
-                      aria-label={t(lang, 'undo')}
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        className="iconBackspace"
-                        aria-hidden="true"
-                      >
-                        <path
-                          d="M7 5L3 12l4 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H7z"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        />
-                        <path
-                          d="M12 9l4 4m0-4-4 4"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </button>
+                  <div
+                    className="input"
+                    aria-label="Round total"
+                    style={{
+                      height: 44,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      textAlign: 'center',
+                      fontSize: 22,
+                      fontWeight: 900,
+                      marginBottom: 8,
+                      userSelect: 'none'
+                    }}
+                  >
+                    {roundScoreInput || '0–180'}
                   </div>
+
+                  {[
+                    [1, 2, 3],
+                    [4, 5, 6],
+                    [7, 8, 9],
+                    ['backspace', 0, 'ok']
+                  ].map((row, rIdx) => (
+                    <div key={`round-row-${rIdx}`} className="padRow">
+                      {row.map(key => {
+                        if (key === 'backspace') {
+                          return (
+                            <button
+                              key="round-backspace"
+                              type="button"
+                              className="multBtn backspace"
+                              onClick={roundScoreBackspace}
+                              title="Backspace"
+                              aria-label="Backspace"
+                              style={{ flex: 1, minWidth: 0 }}
+                            >
+                              <svg
+                                viewBox="0 0 24 24"
+                                className="iconBackspace"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  d="M7 5L3 12l4 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H7z"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                />
+                                <path
+                                  d="M12 9l4 4m0-4-4 4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            </button>
+                          );
+                        }
+
+                        if (key === 'ok') {
+                          return (
+                            <button
+                              key="round-ok"
+                              type="button"
+                              className="btn green"
+                              onClick={submitRoundScore}
+                              disabled={roundScoreInput === ''}
+                              style={{
+                                flex: 1,
+                                minWidth: 0,
+                                height: 44,
+                                fontSize: 18,
+                                fontWeight: 900,
+                                opacity: roundScoreInput === '' ? 0.55 : 1
+                              }}
+                            >
+                              OK
+                            </button>
+                          );
+                        }
+
+                        return (
+                          <button
+                            key={`round-${key}`}
+                            type="button"
+                            className="btn"
+                            onClick={() => pressRoundScoreDigit(key)}
+                            style={{
+                              flex: 1,
+                              minWidth: 0,
+                              height: 44,
+                              fontSize: 20,
+                              fontWeight: 900
+                            }}
+                          >
+                            {key}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
 
                   <div style={{ fontSize: 12, opacity: .75, textAlign: 'center', paddingTop: 4 }}>
                     {t(lang, 'roundTotalHint')}
