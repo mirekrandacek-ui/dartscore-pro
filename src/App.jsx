@@ -4390,25 +4390,35 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
               {mode === 'classic' && scoreInputMode === 'round' ? (
                 <>
                   <div
-                    className="btn"
+                    className="roundTotalDisplay"
                     aria-label="Round total"
                     style={{
                       height: 44,
+                      width: '100%',
+                      maxWidth: '100%',
+                      minWidth: 0,
+                      flex: '0 0 100%',
+                      boxSizing: 'border-box',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       textAlign: 'center',
-                      fontSize: 22,
+                      fontSize: 'clamp(14px, 5vw, 22px)',
+                      lineHeight: 1,
                       fontWeight: 900,
                       marginBottom: 8,
+                      padding: '0 8px',
                       userSelect: 'none',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
                       background: 'var(--accent)',
                       color: '#fff',
                       border: '3px solid #000',
                       boxShadow: '0 0 0 1px rgba(255,255,255,0.15)'
                     }}
                   >
-                    {roundScoreInput || '0–180'}
+                    {roundScoreInput || '0 – 180'}
                   </div>
 
                   {[
