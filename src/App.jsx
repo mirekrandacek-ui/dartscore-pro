@@ -4403,8 +4403,9 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
                       alignItems: 'center',
                       justifyContent: 'center',
                       textAlign: 'center',
-                      fontSize: 'clamp(14px, 5vw, 22px)',
+                      fontSize: 13,
                       lineHeight: 1,
+                      letterSpacing: '-0.04em',
                       fontWeight: 900,
                       marginBottom: 8,
                       padding: '0 8px',
@@ -4478,7 +4479,9 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
                                 height: 44,
                                 fontSize: 18,
                                 fontWeight: 900,
-                                opacity: roundScoreInput === '' ? 0.55 : 1,
+                                opacity: 1,
+                                background: 'var(--accent)',
+                                color: '#fff',
                                 border: '3px solid #000',
                                 boxShadow: '0 0 0 1px rgba(255,255,255,0.15)'
                               }}
