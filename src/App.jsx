@@ -1905,6 +1905,9 @@ useEffect(() => { pendingWinRef.current = pendingWin; }, [pendingWin]);
 const winnerRef = useRef(winner);
 useEffect(() => { winnerRef.current = winner; }, [winner]);
 
+const playerModeRef = useRef(playerMode);
+useEffect(() => { playerModeRef.current = playerMode; }, [playerMode]);
+
 const turnTimerRef = useRef(null);
 const turnLockRef = useRef(false);
 
@@ -1920,7 +1923,30 @@ const nextPlayerSafe = () => {
     const len = ord.length || 0;
     if (len < 1) return 0;
 
-    const next = (i + 1) % len;
+    let next = (i + 1) % len;
+
+    // Classic X01 týmová hra:
+    // order může obsahovat hráče, ale aktivní karta je tým.
+    // Proto při posunu tahu přeskoč hráče stejného týmu
+    // a po posledním týmu se vrať na první tým.
+    if (
+      modeRef.current === 'classic' &&
+      playerModeRef.current === 'teams'
+    ) {
+      const currentPIdx = ord[i];
+      const currentScoreIdx = scoreIndexForPlayer(currentPIdx);
+
+      for (let step = 1; step <= len; step += 1) {
+        const candidate = (i + step) % len;
+        const candidatePIdx = ord[candidate];
+        const candidateScoreIdx = scoreIndexForPlayer(candidatePIdx);
+
+        if (candidateScoreIdx !== currentScoreIdx) {
+          next = candidate;
+          break;
+        }
+      }
+    }
 
     // playThrough win po dokončení kola (použij refy, ne closure)
     if (
@@ -2060,12 +2086,18 @@ const averages = useMemo(() => {
 
 const cardRefs = useRef({});
 useEffect(() => {
-  const activeIdx = order[currIdx];
-  const el = cardRefs.current[activeIdx];
+  const activePlayerIdx = order[currIdx];
+
+  const activeCardIdx =
+    mode === 'classic' && playerMode === 'teams'
+      ? scoreIndexForPlayer(activePlayerIdx)
+      : activePlayerIdx;
+
+  const el = cardRefs.current[activeCardIdx];
   if (el && el.scrollIntoView) {
     el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
   }
-}, [order, currIdx, mode]);
+}, [order, currIdx, mode, playerMode]);
 
     /* BOT TURN (AI) – beze změny logiky, necháváme, funguje */
 
