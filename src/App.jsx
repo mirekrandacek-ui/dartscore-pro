@@ -4390,7 +4390,7 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
               {mode === 'classic' && scoreInputMode === 'round' ? (
                 <>
                   <div
-                    className="input"
+                    className="btn"
                     aria-label="Round total"
                     style={{
                       height: 44,
@@ -4401,7 +4401,11 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
                       fontSize: 22,
                       fontWeight: 900,
                       marginBottom: 8,
-                      userSelect: 'none'
+                      userSelect: 'none',
+                      background: 'var(--accent)',
+                      color: '#fff',
+                      border: '3px solid #000',
+                      boxShadow: '0 0 0 1px rgba(255,255,255,0.15)'
                     }}
                   >
                     {roundScoreInput || '0–180'}
@@ -4464,7 +4468,9 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
                                 height: 44,
                                 fontSize: 18,
                                 fontWeight: 900,
-                                opacity: roundScoreInput === '' ? 0.55 : 1
+                                opacity: roundScoreInput === '' ? 0.55 : 1,
+                                border: '3px solid #000',
+                                boxShadow: '0 0 0 1px rgba(255,255,255,0.15)'
                               }}
                             >
                               OK
