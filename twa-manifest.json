@@ -2,7 +2,7 @@
   "packageId": "com.randis2288.dartscorepro",
   "host": "dartscore-pro.vercel.app",
   "name": "DartScore Pro",
-  "launcherName": "DartScore",
+  "launcherName": "DartScore Pro",
   "display": "standalone",
   "themeColor": "#111827",
   "themeColorDark": "#000000",
