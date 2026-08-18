@@ -113,9 +113,10 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT,
-                Gravity.BOTTOM
+                Gravity.TOP
             )
         );
+        adHost.bringToFront();
 
         setContentView(root);
 
@@ -154,9 +155,11 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             "var b=ev.target&&ev.target.closest?ev.target.closest('button'):null;" +
             "if(!b||!window.DartScoreAndroid)return;" +
             "var txt=(b.innerText||b.textContent||'').toLowerCase();" +
-            "if(txt.indexOf('premium')>=0||txt.indexOf('obnov')>=0||txt.indexOf('restore')>=0){" +
+            "var isRestore=txt.indexOf('obnov')>=0||txt.indexOf('restore')>=0;" +
+            "var isBuy=txt.indexOf('aktivuj')>=0||txt.indexOf('activate')>=0||txt.indexOf('odemknout')>=0||txt.indexOf('unlock')>=0||txt.indexOf('koupit')>=0||txt.indexOf('buy')>=0||txt.indexOf('freischalten')>=0||txt.indexOf('activar')>=0||txt.indexOf('activeren')>=0||txt.indexOf('актив')>=0||txt.indexOf('解锁')>=0||txt.indexOf('激活')>=0;" +
+            "if(isRestore||isBuy){" +
             "ev.preventDefault();ev.stopImmediatePropagation();" +
-            "if(txt.indexOf('obnov')>=0||txt.indexOf('restore')>=0){window.DartScoreAndroid.restorePremium();}" +
+            "if(isRestore){window.DartScoreAndroid.restorePremium();}" +
             "else{window.DartScoreAndroid.buyPremium();}" +
             "}" +
             "},true);" +
@@ -219,7 +222,7 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 adHeightPx,
-                Gravity.BOTTOM
+                Gravity.TOP
             )
         );
 
@@ -236,7 +239,7 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 adHeightPx,
-                Gravity.BOTTOM
+                Gravity.TOP
             )
         );
 
