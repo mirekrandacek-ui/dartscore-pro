@@ -1027,3 +1027,145 @@ html, body{
   }
 }
 
+/* === COMPACT CLASSIC / AROUND CARDS UI ONLY ===
+   UI-only player card patch for Classic and Around the Clock.
+   No keypad, roulette, game logic, Android, billing, ads, Premium or voice changes. */
+.container[data-screen="game"][data-mode="classic"] .gameTopBar,
+.container[data-screen="game"][data-mode="around"] .gameTopBar{
+  margin-bottom:6px;
+}
+
+.classicAroundPane{
+  gap:6px;
+}
+
+.classicAroundPane .playerCard{
+  padding:8px;
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) auto;
+  grid-template-areas:
+    "head score"
+    "turn turn";
+  column-gap:8px;
+  row-gap:4px;
+  align-items:center;
+}
+
+.classicAroundPane .playerHeader{
+  grid-area:head;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:center;
+  gap:2px;
+}
+
+.classicAroundPane .playerNameText{
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:18px;
+  line-height:1.05;
+}
+
+.classicAroundPane .playerStats{
+  gap:4px;
+  flex-wrap:wrap;
+  font-size:12px;
+  line-height:1.1;
+}
+
+.classicAroundPane .playerScore{
+  grid-area:score;
+  justify-self:end;
+  font-size:42px;
+  line-height:1;
+  letter-spacing:-0.03em;
+}
+
+.classicAroundPane .playerTurn{
+  grid-area:turn;
+  margin-top:2px;
+  gap:4px;
+}
+
+.classicAroundPane .classicTurn{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(42px, 1fr)) minmax(78px, 1.3fr);
+}
+
+.classicAroundPane .aroundTurn{
+  display:grid;
+  grid-template-columns:minmax(64px, 1.25fr) repeat(3, minmax(42px, 1fr));
+}
+
+.classicAroundPane .dartBox{
+  min-width:0;
+  height:40px;
+  padding:0 6px;
+  border-radius:8px;
+  font-size:20px;
+}
+
+.classicAroundPane .aroundTargetBox{
+  height:44px;
+  font-size:26px;
+  border-width:2px;
+}
+
+.classicAroundPane .lastTotal{
+  min-width:0;
+  height:40px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 6px;
+  border-radius:8px;
+  font-size:13px;
+  white-space:nowrap;
+}
+
+@media (max-width: 360px){
+  .classicAroundPane .playerCard{
+    padding:7px;
+    column-gap:6px;
+  }
+
+  .classicAroundPane .playerNameText{
+    font-size:16px;
+  }
+
+  .classicAroundPane .playerStats{
+    font-size:11px;
+  }
+
+  .classicAroundPane .playerScore{
+    font-size:38px;
+  }
+
+  .classicAroundPane .dartBox{
+    height:38px;
+    font-size:18px;
+  }
+
+  .classicAroundPane .aroundTargetBox{
+    height:42px;
+    font-size:24px;
+  }
+
+  .classicAroundPane .lastTotal{
+    height:38px;
+    font-size:12px;
+  }
+}
+
+/* Around has no large score column, so do not reserve empty space for it. */
+.container[data-screen="game"][data-mode="around"] .classicAroundPane .playerCard{
+  grid-template-columns:1fr;
+  grid-template-areas:
+    "head"
+    "turn";
+}
+

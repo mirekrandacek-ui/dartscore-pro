@@ -4208,7 +4208,7 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
             </div>
           ) : mode !== 'cricket' ? (
           /* CLASSIC / AROUND */
-          <div className="playersPane" data-premium={isPremium ? '1' : '0'}>
+          <div className="playersPane classicAroundPane" data-premium={isPremium ? '1' : '0'}>
             {order.map((pIdx, i) => {
               const p = players[pIdx];
               const active = i === currIdx && winner == null;
@@ -4261,7 +4261,7 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
                       <div className="playerScore">
                         {scores[pIdx] ?? 0}
                       </div>
-                      <div className="playerTurn">
+                      <div className="playerTurn classicTurn">
                         {[0, 1, 2].map(ix => {
                           const d = currentDarts[ix];
                           return (
@@ -4276,8 +4276,8 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
                       </div>
                     </>
                   ) : (
-                    <div className="playerTurn">
-                      <div className="dartBox targetBox">
+                    <div className="playerTurn aroundTurn">
+                      <div className="dartBox targetBox aroundTargetBox">
                         {around?.[pIdx]?.next ?? 1}
                       </div>
                       {[0, 1, 2].map(ix => {
