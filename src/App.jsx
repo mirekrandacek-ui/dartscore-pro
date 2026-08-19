@@ -4102,7 +4102,7 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
             </div>
           ) : (mode === 'roulette' || mode === 'rouletteDouble') ? (
             /* ROULETTE layout */
-            <div className="playersPane" data-premium={isPremium ? '1' : '0'}>
+            <div className="playersPane roulettePane" data-premium={isPremium ? '1' : '0'}>
               {order.map((pIdx, i) => {
                 const p = players[pIdx];
                 const active = i === currIdx && winner == null;
@@ -4146,12 +4146,12 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
                       </div>
                     </div>
 
-                    <div className="playerScore">
+                    <div className="playerScore rouletteScore">
                       {t(lang, 'rouletteTotalPoints')}: {scores[pIdx] ?? 0}
                     </div>
 
-                    <div className="playerTurn">
-                      <div className="dartBox targetBox">
+                    <div className="playerTurn rouletteTurn">
+                      <div className="dartBox targetBox rouletteTargetBox">
                         {rouletteTargetLabel(displayTarget)}
                       </div>
                       {[0, 1, 2].map(ix => {
@@ -4165,7 +4165,7 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
                     </div>
 
                     {active && (
-                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+                      <div className="rouletteControls">
                         <button
                           type="button"
                           className="btn"

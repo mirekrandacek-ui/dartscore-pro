@@ -928,3 +928,102 @@ html, body{
   }
 }
 
+/* === COMPACT ROULETTE UI ONLY ===
+   UI-only layout patch for Roulette and Roulette Double.
+   No game logic changes. */
+.roulettePane{
+  gap:6px;
+}
+
+.roulettePane .playerCard{
+  padding:8px;
+}
+
+.roulettePane .playerHeader{
+  gap:6px;
+}
+
+.roulettePane .playerNameText{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.roulettePane .playerStats{
+  font-size:12px;
+  white-space:nowrap;
+}
+
+.rouletteScore{
+  margin-top:4px;
+  font-size:18px;
+  line-height:1.1;
+  font-weight:900;
+}
+
+.rouletteTurn{
+  gap:4px;
+  margin-top:6px;
+}
+
+.rouletteTurn .dartBox{
+  min-width:42px;
+  height:40px;
+  padding:0 6px;
+  border-radius:8px;
+  font-size:20px;
+}
+
+.rouletteTurn .rouletteTargetBox{
+  flex:1 1 auto;
+  min-width:90px;
+  height:54px;
+  font-size:30px;
+  border-width:2px;
+}
+
+.rouletteControls{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:6px;
+  margin-top:8px;
+}
+
+.rouletteControls .btn{
+  min-width:0;
+  min-height:42px;
+  padding:0 6px;
+  font-size:13px;
+  font-weight:900;
+  line-height:1.1;
+  white-space:normal;
+}
+
+@media (max-width: 360px){
+  .rouletteScore{
+    font-size:16px;
+  }
+
+  .rouletteTurn .dartBox{
+    min-width:36px;
+    height:38px;
+    font-size:18px;
+  }
+
+  .rouletteTurn .rouletteTargetBox{
+    min-width:76px;
+    height:50px;
+    font-size:26px;
+  }
+
+  .rouletteControls{
+    gap:4px;
+  }
+
+  .rouletteControls .btn{
+    min-height:40px;
+    font-size:12px;
+  }
+}
+
