@@ -462,7 +462,16 @@ const defaultNameFor = (lang, n) => ({
 const autoNameRx = [/^Hráč (\d+)$/, /^Player (\d+)$/, /^Spieler (\d+)$/, /^Jugador (\d+)$/, /^Speler (\d+)$/, /^Игрок (\d+)$/, /^玩家 (\d+)$/];
 
 function speak(lang, text, enabled) {
-  if (!enabled || typeof window === 'undefined' || !window.speechSynthesis) return;
+  if (!enabled || typeof window === 'undefined') return;
+
+  try {
+    if (window.DartScoreAndroid?.speak) {
+      window.DartScoreAndroid.speak(String(text), lang || 'cs');
+      return;
+    }
+  } catch { }
+
+  if (!window.speechSynthesis) return;
 
   const synth = window.speechSynthesis;
   const utter = new SpeechSynthesisUtterance(String(text));
@@ -1834,7 +1843,7 @@ const commitCricket = (value, mOverride) => {
     };
 
     const finalizeWin = (pIdx, opts = {}) => {
-      if (!opts.silentVoice) {
+      if (!opts.silentVoice && mode === 'classic') {
         speak(lang, 'Vítěz!', voiceOn);
       }
       try {

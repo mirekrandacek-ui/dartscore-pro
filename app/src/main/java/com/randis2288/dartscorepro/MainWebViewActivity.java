@@ -6,6 +6,7 @@ import android.content.pm.ApplicationInfo;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.view.Gravity;
 import android.view.View;
 import android.webkit.JavascriptInterface;
@@ -37,6 +38,7 @@ import com.google.android.gms.ads.AdView;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 public class MainWebViewActivity extends Activity implements PurchasesUpdatedListener {
     private static final String START_URL = "https://dartscore-pro.vercel.app/";
@@ -53,6 +55,9 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private FrameLayout adHost;
     private AdView adView;
     private boolean bannerLoaded = false;
+
+    private TextToSpeech textToSpeech;
+    private boolean ttsReady = false;
 
     private BillingClient billingClient;
     private boolean billingConnecting = false;
@@ -79,6 +84,10 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         settings.setMediaPlaybackRequiresUserGesture(false);
 
         webView.addJavascriptInterface(new DartScoreBridge(), "DartScoreAndroid");
+
+        textToSpeech = new TextToSpeech(this, status -> {
+            ttsReady = status == TextToSpeech.SUCCESS;
+        });
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -503,6 +512,50 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         nativeToast("Nákup selhal: " + billingResult.getDebugMessage());
     }
 
+
+    private Locale localeForSpeech(String lang) {
+        if (lang == null) return Locale.getDefault();
+
+        switch (lang) {
+            case "cs":
+                return new Locale("cs", "CZ");
+            case "en":
+                return Locale.US;
+            case "de":
+                return Locale.GERMANY;
+            case "es":
+                return new Locale("es", "ES");
+            case "nl":
+                return new Locale("nl", "NL");
+            case "ru":
+                return new Locale("ru", "RU");
+            case "zh":
+                return Locale.CHINA;
+            default:
+                return Locale.getDefault();
+        }
+    }
+
+    private void speakNative(String text, String lang) {
+        if (!ttsReady || textToSpeech == null) return;
+        if (text == null || text.trim().isEmpty()) return;
+
+        Locale locale = localeForSpeech(lang);
+        int result = textToSpeech.setLanguage(locale);
+
+        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+            textToSpeech.setLanguage(Locale.getDefault());
+        }
+
+        textToSpeech.stop();
+        textToSpeech.speak(
+            text,
+            TextToSpeech.QUEUE_FLUSH,
+            null,
+            "dartscore-pro-" + System.currentTimeMillis()
+        );
+    }
+
     @Override
     public void onBackPressed() {
         if (webView != null && webView.canGoBack()) {
@@ -523,6 +576,11 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             billingClient.endConnection();
         }
 
+        if (textToSpeech != null) {
+            textToSpeech.stop();
+            textToSpeech.shutdown();
+        }
+
         super.onDestroy();
     }
 
@@ -540,6 +598,11 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         @JavascriptInterface
         public void restorePremium() {
             runOnUiThread(() -> restorePremiumInternal(true));
+        }
+
+        @JavascriptInterface
+        public void speak(String text, String lang) {
+            runOnUiThread(() -> speakNative(text, lang));
         }
     }
 }

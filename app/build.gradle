@@ -67,8 +67,8 @@ android {
         applicationId "com.randis2288.dartscorepro"
         minSdkVersion 23
         targetSdkVersion 36
-        versionCode 59
-        versionName "1.1.25"
+        versionCode 60
+        versionName "1.1.26"
 
         resValue "string", "appName", twaManifest.name
         resValue "string", "launcherName", twaManifest.launcherName
