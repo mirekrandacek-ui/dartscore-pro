@@ -2,6 +2,7 @@ package com.randis2288.dartscorepro;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.pm.ApplicationInfo;
 import android.graphics.Color;
 import android.net.Uri;
@@ -35,6 +36,15 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
 
+import com.google.android.play.core.appupdate.AppUpdateInfo;
+import com.google.android.play.core.appupdate.AppUpdateManager;
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
+import com.google.android.play.core.appupdate.AppUpdateOptions;
+import com.google.android.play.core.install.InstallStateUpdatedListener;
+import com.google.android.play.core.install.model.AppUpdateType;
+import com.google.android.play.core.install.model.InstallStatus;
+import com.google.android.play.core.install.model.UpdateAvailability;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -46,6 +56,8 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
 
     private static final String PROD_BANNER_ID = "ca-app-pub-9232105399279318/2746750399";
     private static final String TEST_BANNER_ID = "ca-app-pub-3940256099942544/6300978111";
+
+    private static final int IN_APP_UPDATE_REQUEST_CODE = 610;
 
     // Od v12 už testujeme skutečné Premium chování.
     private static final boolean FORCE_FREE_BANNER_TEST = false;
@@ -63,6 +75,10 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private boolean billingConnecting = false;
     private final List<Runnable> pendingBillingActions = new ArrayList<>();
     private ProductDetails premiumProductDetails;
+
+    private AppUpdateManager appUpdateManager;
+    private InstallStateUpdatedListener updateInstallListener;
+    private boolean updateFlowStarted = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -129,6 +145,7 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
 
         setContentView(root);
 
+        initInAppUpdate();
         initBilling();
         setPremiumState(false);
         webView.loadUrl(START_URL);
@@ -253,6 +270,84 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         );
 
         adView.loadAd(new AdRequest.Builder().build());
+    }
+
+
+    private void initInAppUpdate() {
+        appUpdateManager = AppUpdateManagerFactory.create(this);
+
+        updateInstallListener = state -> {
+            if (state.installStatus() == InstallStatus.DOWNLOADED) {
+                completeFlexibleUpdate();
+            }
+        };
+
+        appUpdateManager.registerListener(updateInstallListener);
+        checkForAppUpdate();
+    }
+
+    private void checkForAppUpdate() {
+        if (appUpdateManager == null) return;
+
+        appUpdateManager.getAppUpdateInfo()
+            .addOnSuccessListener(appUpdateInfo -> {
+                if (appUpdateInfo.installStatus() == InstallStatus.DOWNLOADED) {
+                    completeFlexibleUpdate();
+                    return;
+                }
+
+                if (updateFlowStarted) return;
+
+                if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                    && appUpdateInfo.isUpdateTypeAllowed(
+                        AppUpdateOptions.defaultOptions(AppUpdateType.FLEXIBLE)
+                    )) {
+                    startFlexibleUpdate(appUpdateInfo);
+                }
+            });
+    }
+
+    private void startFlexibleUpdate(AppUpdateInfo appUpdateInfo) {
+        try {
+            updateFlowStarted = true;
+
+            appUpdateManager.startUpdateFlowForResult(
+                appUpdateInfo,
+                this,
+                AppUpdateOptions.defaultOptions(AppUpdateType.FLEXIBLE),
+                IN_APP_UPDATE_REQUEST_CODE
+            );
+        } catch (IntentSender.SendIntentException e) {
+            updateFlowStarted = false;
+            nativeToast("Aktualizaci nejde spustit.");
+        }
+    }
+
+    private void completeFlexibleUpdate() {
+        if (appUpdateManager == null) return;
+
+        nativeToast("Aktualizace je stažená. Dokončuji instalaci…");
+
+        if (root != null) {
+            root.postDelayed(() -> appUpdateManager.completeUpdate(), 1200);
+        } else {
+            appUpdateManager.completeUpdate();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        checkForAppUpdate();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == IN_APP_UPDATE_REQUEST_CODE) {
+            updateFlowStarted = false;
+        }
     }
 
     private void initBilling() {
@@ -568,6 +663,10 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
 
     @Override
     protected void onDestroy() {
+        if (appUpdateManager != null && updateInstallListener != null) {
+            appUpdateManager.unregisterListener(updateInstallListener);
+        }
+
         if (adView != null) {
             adView.destroy();
         }
