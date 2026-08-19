@@ -4395,7 +4395,7 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
 
           {/* PAD / KEYPAD */}
           {winner == null && !hideDartControls && (
-            <div className="padPane">
+            <div className={`padPane ${mode === 'classic' && scoreInputMode === 'round' ? 'roundTotalKeypad' : 'dartKeypad'}`}>
               {mode === 'classic' && scoreInputMode === 'round' ? (
                 <>
                   <div

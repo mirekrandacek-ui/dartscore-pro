@@ -843,3 +843,88 @@ html, body{
     height:50px;
   }
 }
+
+/* === COMPACT DART KEYPAD UI ONLY ===
+   UI-only patch for Classic, Around the Clock and Cricket.
+   Does not target round-total keypad. */
+.padPane.dartKeypad{
+  padding:6px;
+}
+
+.padPane.dartKeypad .padRow{
+  gap:2px;
+  margin-bottom:2px;
+}
+
+.padPane.dartKeypad .padRow:last-child{
+  margin-bottom:0;
+}
+
+.padPane.dartKeypad .key{
+  border-radius:7px;
+  font-size:30px;
+  line-height:1;
+  box-shadow:none;
+}
+
+.padPane.dartKeypad .multBtn{
+  border-radius:7px;
+  box-shadow:none;
+}
+
+/* Classic + Around: keep the same keypad box, reduce internal waste. */
+.container:not([data-mode="cricket"]) .padPane.dartKeypad{
+  gap:2px;
+  padding:6px;
+}
+
+.container:not([data-mode="cricket"]) .padPane.dartKeypad > .padRow:first-child{
+  gap:2px;
+}
+
+.container:not([data-mode="cricket"]) .padPane.dartKeypad > .padRow:not(:first-child) .key{
+  font-size:clamp(28px, 4.5vh, 36px);
+}
+
+/* Keep multiplier row readable but compact. */
+.container:not([data-mode="cricket"]) .padPane.dartKeypad .multBtn{
+  height:42px;
+  font-size:15px;
+}
+
+/* Cricket: compact inner gaps and larger number buttons. */
+.container[data-mode="cricket"] .padPane.dartKeypad{
+  padding:6px !important;
+}
+
+.container[data-mode="cricket"] .padPane.dartKeypad > .padRow:first-child{
+  gap:2px;
+  margin-bottom:2px;
+}
+
+.container[data-mode="cricket"] .padPane.dartKeypad > .padRow:not(:first-child){
+  gap:2px;
+}
+
+.container[data-mode="cricket"] .padPane.dartKeypad > .padRow:not(:first-child) .key{
+  height:56px;
+  font-size:30px;
+  border-radius:7px;
+}
+
+.container[data-mode="cricket"] .padPane.dartKeypad > .padRow:last-child .key{
+  height:56px !important;
+  min-height:56px !important;
+  font-size:30px;
+}
+
+@media (max-width: 360px){
+  .container:not([data-mode="cricket"]) .padPane.dartKeypad > .padRow:not(:first-child) .key{
+    font-size:26px;
+  }
+
+  .container[data-mode="cricket"] .padPane.dartKeypad > .padRow:not(:first-child) .key{
+    font-size:26px;
+  }
+}
+
