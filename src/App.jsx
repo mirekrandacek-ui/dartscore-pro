@@ -1156,11 +1156,16 @@ function App() {
   }
 
   const anyOutSelected = outDouble || outTriple || outMaster;
-  const isFinishAllowed = (m) => {
+  const isFinishAllowed = (m, v) => {
     if (!anyOutSelected) return true;
-    if (m === 2 && outDouble) return true;
+
+    // Bullseye 50 counts as double bull / D25 for checkout rules.
+    // Outer bull 25 stays single and does not finish double-out.
+    const isBullseyeCheckout = v === 50;
+
+    if ((m === 2 || isBullseyeCheckout) && outDouble) return true;
     if (m === 3 && outTriple) return true;
-    if ((m === 2 || m === 3) && outMaster) return true;
+    if ((m === 2 || m === 3 || isBullseyeCheckout) && outMaster) return true;
     return false;
   };
   const isBustLeavingOne = (newScore) => (anyOutSelected ? newScore === 1 : false);
@@ -1231,7 +1236,7 @@ function App() {
     // === FINISH (na 0) ===
     if (tentative === 0) {
       // pokud out není povolený, je to bust
-      if (!isFinishAllowed(m)) {
+      if (!isFinishAllowed(m, v)) {
         speak(lang, t(lang, 'bust'), voiceOn);
 
         pushAction({
@@ -2137,22 +2142,27 @@ useEffect(() => {
       const chooseTargetClassic = () => {
         const myScore = scores[pIdx];
 
-        const finishAllowed = (m) => {
+        const finishAllowed = (m, v) => {
           if (!anyOutSelected) return true;
-          if (m === 2 && outDouble) return true;
+
+          // Bullseye 50 counts as double bull / D25 for checkout rules.
+          const isBullseyeCheckout = v === 50;
+
+          if ((m === 2 || isBullseyeCheckout) && outDouble) return true;
           if (m === 3 && outTriple) return true;
-          if ((m === 2 || m === 3) && outMaster) return true;
+          if ((m === 2 || m === 3 || isBullseyeCheckout) && outMaster) return true;
           return false;
         };
 
         const checkouts = [
+          { v: 50, m: 1, need: 50 },
           { v: 20, m: 2, need: 40 }, { v: 10, m: 2, need: 20 },
           { v: 12, m: 2, need: 24 }, { v: 16, m: 2, need: 32 },
           { v: 8, m: 2, need: 16 }, { v: 6, m: 2, need: 12 },
           { v: 4, m: 2, need: 8 }, { v: 2, m: 2, need: 4 }
         ];
         for (const co of checkouts) {
-          if (myScore === co.need && finishAllowed(co.m)) return co;
+          if (myScore === co.need && finishAllowed(co.m, co.v)) return co;
         }
 
         if (myScore <= 62) {
