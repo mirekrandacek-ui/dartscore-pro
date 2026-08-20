@@ -1169,3 +1169,67 @@ html, body{
     "turn";
 }
 
+
+/* === FREE GAME LAYOUT WITH NATIVE TOP BANNER ===
+   Free users have less visible height because the native AdMob banner sits above the game.
+   Keep the whole dart keypad visible, especially the 25 / 0 / 50 row. */
+.container[data-screen="game"][data-premium="0"]{
+  --padH:240px;
+}
+
+.container[data-screen="game"][data-premium="0"] .gameWrap{
+  gap:6px;
+  padding:6px 8px 26px 8px;
+}
+
+.container[data-screen="game"][data-premium="0"] .gameTopBar{
+  margin-bottom:4px;
+}
+
+.container[data-screen="game"][data-premium="0"] .classicAroundPane{
+  gap:5px;
+}
+
+.container[data-screen="game"][data-premium="0"] .classicAroundPane .playerCard{
+  padding:6px 8px;
+  row-gap:3px;
+}
+
+.container[data-screen="game"][data-premium="0"] .classicAroundPane .playerNameText{
+  font-size:17px;
+}
+
+.container[data-screen="game"][data-premium="0"] .classicAroundPane .playerStats{
+  font-size:11px;
+}
+
+.container[data-screen="game"][data-premium="0"] .classicAroundPane .playerScore{
+  font-size:38px;
+}
+
+.container[data-screen="game"][data-premium="0"] .classicAroundPane .dartBox,
+.container[data-screen="game"][data-premium="0"] .classicAroundPane .lastTotal{
+  height:36px;
+}
+
+.container[data-screen="game"][data-premium="0"] .padPane.dartKeypad{
+  padding:5px;
+}
+
+.container[data-screen="game"][data-premium="0"] .padPane.dartKeypad .multBtn{
+  height:38px;
+}
+
+.container[data-screen="game"][data-premium="0"] .padPane.dartKeypad .key{
+  font-size:clamp(26px, 4.1vh, 34px);
+}
+
+@media (max-height:720px){
+  .container[data-screen="game"][data-premium="0"]{
+    --padH:220px;
+  }
+
+  .container[data-screen="game"][data-premium="0"] .gameWrap{
+    padding-bottom:24px;
+  }
+}
