@@ -70,6 +70,8 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
 
     private TextToSpeech textToSpeech;
     private boolean ttsReady = false;
+    private String pendingSpeechText;
+    private String pendingSpeechLang;
 
     private BillingClient billingClient;
     private boolean billingConnecting = false;
@@ -102,7 +104,19 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         webView.addJavascriptInterface(new DartScoreBridge(), "DartScoreAndroid");
 
         textToSpeech = new TextToSpeech(this, status -> {
-            ttsReady = status == TextToSpeech.SUCCESS;
+            runOnUiThread(() -> {
+                ttsReady = status == TextToSpeech.SUCCESS;
+
+                if (ttsReady && pendingSpeechText != null) {
+                    String text = pendingSpeechText;
+                    String lang = pendingSpeechLang;
+
+                    pendingSpeechText = null;
+                    pendingSpeechLang = null;
+
+                    speakNative(text, lang);
+                }
+            });
         });
 
         webView.setWebViewClient(new WebViewClient() {
@@ -632,8 +646,13 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     }
 
     private void speakNative(String text, String lang) {
-        if (!ttsReady || textToSpeech == null) return;
         if (text == null || text.trim().isEmpty()) return;
+
+        if (!ttsReady || textToSpeech == null) {
+            pendingSpeechText = text;
+            pendingSpeechLang = lang;
+            return;
+        }
 
         Locale locale = localeForSpeech(lang);
         int result = textToSpeech.setLanguage(locale);
@@ -674,6 +693,9 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         if (billingClient != null && billingClient.isReady()) {
             billingClient.endConnection();
         }
+
+        pendingSpeechText = null;
+        pendingSpeechLang = null;
 
         if (textToSpeech != null) {
             textToSpeech.stop();
