@@ -1174,7 +1174,7 @@ html, body{
    Free users have less visible height because the native AdMob banner sits above the game.
    Keep the whole dart keypad visible, especially the 25 / 0 / 50 row. */
 .container[data-screen="game"][data-premium="0"]{
-  --padH:240px;
+  --padH:290px;
 }
 
 .container[data-screen="game"][data-premium="0"] .gameWrap{
@@ -1226,10 +1226,10 @@ html, body{
 
 @media (max-height:720px){
   .container[data-screen="game"][data-premium="0"]{
-    --padH:220px;
+    --padH:270px;
   }
 
   .container[data-screen="game"][data-premium="0"] .gameWrap{
-    padding-bottom:24px;
+    padding-bottom:16px;
   }
 }
