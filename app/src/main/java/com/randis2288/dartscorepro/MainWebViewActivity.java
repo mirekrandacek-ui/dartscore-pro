@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.Voice;
 import android.view.Gravity;
 import android.view.View;
 import android.webkit.JavascriptInterface;
@@ -622,27 +623,58 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     }
 
 
-    private Locale localeForSpeech(String lang) {
-        if (lang == null) return Locale.getDefault();
+    private String languageTagForSpeech(String lang) {
+        if (lang == null) return "cs-CZ";
 
-        switch (lang) {
+        switch (lang.trim()) {
             case "cs":
-                return new Locale("cs", "CZ");
+                return "cs-CZ";
             case "en":
-                return Locale.US;
+                return "en-US";
             case "de":
-                return Locale.GERMANY;
+                return "de-DE";
             case "es":
-                return new Locale("es", "ES");
+                return "es-ES";
             case "nl":
-                return new Locale("nl", "NL");
+                return "nl-NL";
             case "ru":
-                return new Locale("ru", "RU");
+                return "ru-RU";
             case "zh":
-                return Locale.CHINA;
+                return "zh-CN";
             default:
-                return Locale.getDefault();
+                return "cs-CZ";
         }
+    }
+
+    private Locale localeForSpeech(String lang) {
+        return Locale.forLanguageTag(languageTagForSpeech(lang));
+    }
+
+    private Voice chooseVoiceForLocale(Locale locale) {
+        if (textToSpeech == null || locale == null || textToSpeech.getVoices() == null) {
+            return null;
+        }
+
+        String requestedTag = locale.toLanguageTag();
+        String requestedLanguage = locale.getLanguage();
+        Voice sameLanguageVoice = null;
+
+        for (Voice voice : textToSpeech.getVoices()) {
+            if (voice == null || voice.getLocale() == null) continue;
+
+            Locale voiceLocale = voice.getLocale();
+            String voiceTag = voiceLocale.toLanguageTag();
+
+            if (requestedTag.equalsIgnoreCase(voiceTag)) {
+                return voice;
+            }
+
+            if (sameLanguageVoice == null && requestedLanguage.equalsIgnoreCase(voiceLocale.getLanguage())) {
+                sameLanguageVoice = voice;
+            }
+        }
+
+        return sameLanguageVoice;
     }
 
     private void speakNative(String text, String lang) {
@@ -659,6 +691,11 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
 
         if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
             textToSpeech.setLanguage(Locale.getDefault());
+        } else {
+            Voice voice = chooseVoiceForLocale(locale);
+            if (voice != null) {
+                textToSpeech.setVoice(voice);
+            }
         }
 
         textToSpeech.stop();
