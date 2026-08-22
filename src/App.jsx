@@ -460,57 +460,38 @@ const defaultNameFor = (lang, n) => ({
   zh: `玩家 ${n}`
 }[lang] || `Player ${n}`);
 const autoNameRx = [/^Hráč (\d+)$/, /^Player (\d+)$/, /^Spieler (\d+)$/, /^Jugador (\d+)$/, /^Speler (\d+)$/, /^Игрок (\d+)$/, /^玩家 (\d+)$/];
+const bundledAsset = (name) => `${import.meta.env.BASE_URL}${String(name).replace(/^\/+/, '')}`;
 
-function speak(lang, text, enabled) {
+let activeVoiceAudio = null;
+
+function playOfflineVoice(lang, clip, enabled) {
   if (!enabled || typeof window === 'undefined') return;
 
+  const supportedLanguage = ['cs', 'en', 'de', 'es', 'nl', 'ru', 'zh'].includes(lang)
+    ? lang
+    : 'en';
+
   try {
-    if (window.DartScoreAndroid?.speak) {
-      window.DartScoreAndroid.speak(String(text), lang || 'cs');
-      return;
+    if (activeVoiceAudio) {
+      activeVoiceAudio.pause();
+      activeVoiceAudio.currentTime = 0;
     }
+
+    const audio = new Audio(bundledAsset(`voices/${supportedLanguage}/${clip}.mp3`));
+    activeVoiceAudio = audio;
+    audio.play().catch(() => {});
   } catch { }
+}
 
-  if (!window.speechSynthesis) return;
+function speakScore(lang, score, enabled) {
+  const value = Number(score);
+  if (!Number.isInteger(value) || value < 0 || value > 180) return;
+  playOfflineVoice(lang, `score-${String(value).padStart(3, '0')}`, enabled);
+}
 
-  const synth = window.speechSynthesis;
-  const utter = new SpeechSynthesisUtterance(String(text));
-
-  const langMap = {
-    cs: 'cs-CZ',
-    en: 'en-US',
-    de: 'de-DE',
-    es: 'es-ES',
-    nl: 'nl-NL',
-    ru: 'ru-RU',
-    zh: 'zh-CN'
-  };
-
-  const targetLang = langMap[lang] || 'en-US';
-  utter.lang = targetLang;
-
-  // pokus o výběr ženského hlasu pro daný jazyk
-  const pickVoice = () => {
-    const voices = synth.getVoices() || [];
-    if (!voices.length) return null;
-
-    const sameLang = voices.filter(v =>
-      v.lang && v.lang.toLowerCase().startsWith(targetLang.slice(0, 2).toLowerCase())
-    );
-
-    // preferuj ženské hlasy podle názvu
-    const female = sameLang.find(v =>
-      /female|frau|woman|frau|frauensprache|žena/i.test(v.name)
-    );
-
-    return female || sameLang[0] || voices[0] || null;
-  };
-
-  const voice = pickVoice();
-  if (voice) utter.voice = voice;
-
-  synth.cancel();
-  synth.speak(utter);
+function speakCue(lang, cue, enabled) {
+  if (cue !== 'bust' && cue !== 'winner') return;
+  playOfflineVoice(lang, cue, enabled);
 }
 
 /* Cricket značky */
@@ -1212,7 +1193,7 @@ function App() {
 
     // === BUST (přestřel / nebo zbyde 1 při out pravidlech) ===
     if (tentative < 0 || isBustLeavingOne(tentative)) {
-      speak(lang, t(lang, 'bust'), voiceOn);
+      speakCue(lang, 'bust', voiceOn);
       playHitSound();
 
       pushAction({
@@ -1237,7 +1218,7 @@ function App() {
     if (tentative === 0) {
       // pokud out není povolený, je to bust
       if (!isFinishAllowed(m, v)) {
-        speak(lang, t(lang, 'bust'), voiceOn);
+        speakCue(lang, 'bust', voiceOn);
 
         pushAction({
           type: 'bust',
@@ -1295,7 +1276,7 @@ function App() {
         ));
 
         // otoč hráče až po krátké pauze, ale vizuálně kolo ukonči
-        speak(lang, total === 0 ? t(lang, 'zeroWord') : total, voiceOn);
+        speakScore(lang, total, voiceOn);
         advanceTurn();
         return [];
       });
@@ -1333,7 +1314,7 @@ function App() {
       setLastTurn(ls => ls.map((x, i) => (i === scoreIdx ? total : x)));
 
       if (nd.length >= 3) {
-        speak(lang, total === 0 ? t(lang, 'zeroWord') : total, voiceOn);
+        speakScore(lang, total, voiceOn);
         advanceTurn();
         return [];
       }
@@ -1363,7 +1344,7 @@ function App() {
     };
 
     const doBust = () => {
-      speak(lang, t(lang, 'bust'), voiceOn);
+      speakCue(lang, 'bust', voiceOn);
       playHitSound();
 
       pushAction({
@@ -1426,7 +1407,7 @@ function App() {
             ? { pIdx: scoreIdx, dartsUsed: 3 }
             : prevBest
         ));
-        speak(lang, total === 0 ? t(lang, 'zeroWord') : total, voiceOn);
+        speakScore(lang, total, voiceOn);
         advanceTurn();
       } else {
         finalizeWin(scoreIdx);
@@ -1457,7 +1438,7 @@ function App() {
     setLastTurn(ls => ls.map((x, i) => (i === scoreIdx ? total : x)));
     setDarts([]);
 
-    speak(lang, total === 0 ? t(lang, 'zeroWord') : total, voiceOn);
+    speakScore(lang, total, voiceOn);
     resetMult();
     advanceTurn();
   };
@@ -1849,7 +1830,7 @@ const commitCricket = (value, mOverride) => {
 
     const finalizeWin = (pIdx, opts = {}) => {
       if (!opts.silentVoice && mode === 'classic') {
-        speak(lang, 'Vítěz!', voiceOn);
+        speakCue(lang, 'winner', voiceOn);
       }
       try {
         if (winAudioRef.current) {
@@ -2984,8 +2965,8 @@ const buyPremium = async () => {
             <AdSenseBanner />
           )}
 
-          <audio ref={hitAudioRef} src="/dart-hit.mp3" preload="auto" />
-          <audio ref={winAudioRef} src="/tada-fanfare-a-6313.mp3" preload="auto" />
+          <audio ref={hitAudioRef} src={bundledAsset('dart-hit.mp3')} preload="auto" />
+          <audio ref={winAudioRef} src={bundledAsset('tada-fanfare-a-6313.mp3')} preload="auto" />
 
         {/* FULLSCREEN OVERLAY PO VÝHŘE */}
         {false && (

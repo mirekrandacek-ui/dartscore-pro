@@ -8,3 +8,6 @@ android/
 .env
 .env.local
 .DS_Store
+.piper-venv/
+.voice-models/
+voice-samples/

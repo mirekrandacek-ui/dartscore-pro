@@ -67,8 +67,8 @@ android {
         applicationId "com.randis2288.dartscorepro"
         minSdkVersion 23
         targetSdkVersion 36
-        versionCode 67
-        versionName "1.1.33"
+        versionCode 68
+        versionName "1.1.34"
 
         resValue "string", "appName", twaManifest.name
         resValue "string", "launcherName", twaManifest.launcherName
@@ -117,6 +117,32 @@ android {
     lintOptions {
         checkReleaseBuilds false
     }
+
+    sourceSets {
+        main {
+            assets.srcDir "$buildDir/generated/offlineWebAssets"
+        }
+    }
+}
+
+tasks.register('buildOfflineWeb', Exec) {
+    workingDir rootProject.projectDir
+    commandLine 'npm', 'run', 'build'
+    inputs.files fileTree(rootProject.projectDir) {
+        include 'index.html'
+        include 'vite.config.js'
+        include 'package.json'
+        include 'package-lock.json'
+        include 'src/**'
+        include 'public/**'
+    }
+    outputs.dir "$rootProject.projectDir/dist"
+}
+
+tasks.register('syncOfflineWeb', Sync) {
+    dependsOn tasks.named('buildOfflineWeb')
+    from "$rootProject.projectDir/dist"
+    into "$buildDir/generated/offlineWebAssets/web"
 }
 
 task generateShorcutsFile {
@@ -154,7 +180,7 @@ task generateShorcutsFile {
     shortcutsFile.text = xmlWriter.toString() + '\n'
 }
 
-preBuild.dependsOn(generateShorcutsFile)
+preBuild.dependsOn(generateShorcutsFile, tasks.named('syncOfflineWeb'))
 
 repositories {
     

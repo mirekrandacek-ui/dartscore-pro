@@ -7,8 +7,6 @@ import android.content.pm.ApplicationInfo;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.speech.tts.TextToSpeech;
-import android.speech.tts.Voice;
 import android.view.Gravity;
 import android.view.View;
 import android.webkit.JavascriptInterface;
@@ -49,10 +47,9 @@ import com.google.android.play.core.install.model.UpdateAvailability;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 public class MainWebViewActivity extends Activity implements PurchasesUpdatedListener {
-    private static final String START_URL = "https://dartscore-pro.vercel.app/";
+    private static final String START_URL = "file:///android_asset/web/index.html";
     private static final String PREMIUM_PRODUCT_ID = "premium_unlock";
 
     private static final String PROD_BANNER_ID = "ca-app-pub-9232105399279318/2746750399";
@@ -68,12 +65,6 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private FrameLayout adHost;
     private AdView adView;
     private boolean bannerLoaded = false;
-
-    private TextToSpeech textToSpeech;
-    private boolean ttsReady = false;
-    private String pendingSpeechText;
-    private String pendingSpeechLang;
-    private String activeSpeechLanguageTag;
 
     private BillingClient billingClient;
     private boolean billingConnecting = false;
@@ -104,8 +95,6 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         settings.setMediaPlaybackRequiresUserGesture(false);
 
         webView.addJavascriptInterface(new DartScoreBridge(), "DartScoreAndroid");
-
-        initTextToSpeech();
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -610,140 +599,6 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     }
 
 
-    private void initTextToSpeech() {
-        ttsReady = false;
-
-        textToSpeech = new TextToSpeech(this, status -> {
-            runOnUiThread(() -> {
-                ttsReady = status == TextToSpeech.SUCCESS;
-
-                if (ttsReady && pendingSpeechText != null) {
-                    String text = pendingSpeechText;
-                    String lang = pendingSpeechLang;
-
-                    pendingSpeechText = null;
-                    pendingSpeechLang = null;
-
-                    speakNative(text, lang);
-                }
-            });
-        });
-    }
-
-    private void restartTextToSpeech(String text, String lang) {
-        pendingSpeechText = text;
-        pendingSpeechLang = lang;
-        ttsReady = false;
-        activeSpeechLanguageTag = null;
-
-        if (textToSpeech != null) {
-            textToSpeech.stop();
-            textToSpeech.shutdown();
-            textToSpeech = null;
-        }
-
-        initTextToSpeech();
-    }
-
-    private String languageTagForSpeech(String lang) {
-        if (lang == null) return "cs-CZ";
-
-        switch (lang.trim()) {
-            case "cs":
-                return "cs-CZ";
-            case "en":
-                return "en-US";
-            case "de":
-                return "de-DE";
-            case "es":
-                return "es-ES";
-            case "nl":
-                return "nl-NL";
-            case "ru":
-                return "ru-RU";
-            case "zh":
-                return "zh-CN";
-            default:
-                return "cs-CZ";
-        }
-    }
-
-    private Locale localeForSpeech(String lang) {
-        return Locale.forLanguageTag(languageTagForSpeech(lang));
-    }
-
-    private Voice chooseVoiceForLocale(Locale locale) {
-        if (textToSpeech == null || locale == null || textToSpeech.getVoices() == null) {
-            return null;
-        }
-
-        String requestedTag = locale.toLanguageTag();
-        String requestedLanguage = locale.getLanguage();
-        Voice sameLanguageVoice = null;
-
-        for (Voice voice : textToSpeech.getVoices()) {
-            if (voice == null || voice.getLocale() == null) continue;
-
-            Locale voiceLocale = voice.getLocale();
-            String voiceTag = voiceLocale.toLanguageTag();
-
-            if (requestedTag.equalsIgnoreCase(voiceTag)) {
-                return voice;
-            }
-
-            if (sameLanguageVoice == null && requestedLanguage.equalsIgnoreCase(voiceLocale.getLanguage())) {
-                sameLanguageVoice = voice;
-            }
-        }
-
-        return sameLanguageVoice;
-    }
-
-    private void speakNative(String text, String lang) {
-        if (text == null || text.trim().isEmpty()) return;
-
-        if (!ttsReady || textToSpeech == null) {
-            pendingSpeechText = text;
-            pendingSpeechLang = lang;
-            return;
-        }
-
-        String requestedLanguageTag = languageTagForSpeech(lang);
-
-        if (activeSpeechLanguageTag != null
-            && !activeSpeechLanguageTag.equalsIgnoreCase(requestedLanguageTag)) {
-            restartTextToSpeech(text, lang);
-            return;
-        }
-
-        Locale locale = Locale.forLanguageTag(requestedLanguageTag);
-
-        textToSpeech.stop();
-
-        int result = textToSpeech.setLanguage(locale);
-
-        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-            textToSpeech.setLanguage(Locale.getDefault());
-        } else {
-            Voice voice = chooseVoiceForLocale(locale);
-            if (voice != null) {
-                int voiceResult = textToSpeech.setVoice(voice);
-                if (voiceResult == TextToSpeech.ERROR) {
-                    textToSpeech.setLanguage(locale);
-                }
-            }
-        }
-
-        activeSpeechLanguageTag = requestedLanguageTag;
-
-        textToSpeech.speak(
-            text,
-            TextToSpeech.QUEUE_FLUSH,
-            null,
-            "dartscore-pro-" + System.currentTimeMillis()
-        );
-    }
-
     @Override
     public void onBackPressed() {
         if (webView != null && webView.canGoBack()) {
@@ -768,15 +623,6 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             billingClient.endConnection();
         }
 
-        pendingSpeechText = null;
-        pendingSpeechLang = null;
-        activeSpeechLanguageTag = null;
-
-        if (textToSpeech != null) {
-            textToSpeech.stop();
-            textToSpeech.shutdown();
-        }
-
         super.onDestroy();
     }
 
@@ -796,9 +642,5 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             runOnUiThread(() -> restorePremiumInternal(true));
         }
 
-        @JavascriptInterface
-        public void speak(String text, String lang) {
-            runOnUiThread(() -> speakNative(text, lang));
-        }
     }
 }
