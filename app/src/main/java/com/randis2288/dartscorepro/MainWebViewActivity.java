@@ -73,6 +73,7 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private boolean ttsReady = false;
     private String pendingSpeechText;
     private String pendingSpeechLang;
+    private String activeSpeechLanguageTag;
 
     private BillingClient billingClient;
     private boolean billingConnecting = false;
@@ -104,21 +105,7 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
 
         webView.addJavascriptInterface(new DartScoreBridge(), "DartScoreAndroid");
 
-        textToSpeech = new TextToSpeech(this, status -> {
-            runOnUiThread(() -> {
-                ttsReady = status == TextToSpeech.SUCCESS;
-
-                if (ttsReady && pendingSpeechText != null) {
-                    String text = pendingSpeechText;
-                    String lang = pendingSpeechLang;
-
-                    pendingSpeechText = null;
-                    pendingSpeechLang = null;
-
-                    speakNative(text, lang);
-                }
-            });
-        });
+        initTextToSpeech();
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -623,6 +610,41 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     }
 
 
+    private void initTextToSpeech() {
+        ttsReady = false;
+
+        textToSpeech = new TextToSpeech(this, status -> {
+            runOnUiThread(() -> {
+                ttsReady = status == TextToSpeech.SUCCESS;
+
+                if (ttsReady && pendingSpeechText != null) {
+                    String text = pendingSpeechText;
+                    String lang = pendingSpeechLang;
+
+                    pendingSpeechText = null;
+                    pendingSpeechLang = null;
+
+                    speakNative(text, lang);
+                }
+            });
+        });
+    }
+
+    private void restartTextToSpeech(String text, String lang) {
+        pendingSpeechText = text;
+        pendingSpeechLang = lang;
+        ttsReady = false;
+        activeSpeechLanguageTag = null;
+
+        if (textToSpeech != null) {
+            textToSpeech.stop();
+            textToSpeech.shutdown();
+            textToSpeech = null;
+        }
+
+        initTextToSpeech();
+    }
+
     private String languageTagForSpeech(String lang) {
         if (lang == null) return "cs-CZ";
 
@@ -686,7 +708,18 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             return;
         }
 
-        Locale locale = localeForSpeech(lang);
+        String requestedLanguageTag = languageTagForSpeech(lang);
+
+        if (activeSpeechLanguageTag != null
+            && !activeSpeechLanguageTag.equalsIgnoreCase(requestedLanguageTag)) {
+            restartTextToSpeech(text, lang);
+            return;
+        }
+
+        Locale locale = Locale.forLanguageTag(requestedLanguageTag);
+
+        textToSpeech.stop();
+
         int result = textToSpeech.setLanguage(locale);
 
         if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
@@ -694,11 +727,15 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         } else {
             Voice voice = chooseVoiceForLocale(locale);
             if (voice != null) {
-                textToSpeech.setVoice(voice);
+                int voiceResult = textToSpeech.setVoice(voice);
+                if (voiceResult == TextToSpeech.ERROR) {
+                    textToSpeech.setLanguage(locale);
+                }
             }
         }
 
-        textToSpeech.stop();
+        activeSpeechLanguageTag = requestedLanguageTag;
+
         textToSpeech.speak(
             text,
             TextToSpeech.QUEUE_FLUSH,
@@ -733,6 +770,7 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
 
         pendingSpeechText = null;
         pendingSpeechLang = null;
+        activeSpeechLanguageTag = null;
 
         if (textToSpeech != null) {
             textToSpeech.stop();
@@ -756,11 +794,6 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         @JavascriptInterface
         public void restorePremium() {
             runOnUiThread(() -> restorePremiumInternal(true));
-        }
-
-        @JavascriptInterface
-        public void speak(String text, String lang) {
-            runOnUiThread(() -> speakNative(text, lang));
         }
     }
 }
