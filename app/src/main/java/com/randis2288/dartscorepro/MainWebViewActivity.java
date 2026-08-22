@@ -795,5 +795,10 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         public void restorePremium() {
             runOnUiThread(() -> restorePremiumInternal(true));
         }
+
+        @JavascriptInterface
+        public void speak(String text, String lang) {
+            runOnUiThread(() -> speakNative(text, lang));
+        }
     }
 }
