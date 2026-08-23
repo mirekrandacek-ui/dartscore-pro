@@ -59,6 +59,7 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private static final String TEST_BANNER_ID = "ca-app-pub-3940256099942544/6300978111";
 
     private static final int IN_APP_UPDATE_REQUEST_CODE = 610;
+    private static final int TTS_INSTALL_REQUEST_CODE = 611;
 
     // Od v12 už testujeme skutečné Premium chování.
     private static final boolean FORCE_FREE_BANNER_TEST = false;
@@ -74,6 +75,7 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private String pendingSpeechText;
     private String pendingSpeechLang;
     private String activeSpeechLanguageTag;
+    private String lastTtsInstallPromptLanguageTag;
 
     private BillingClient billingClient;
     private boolean billingConnecting = false;
@@ -277,14 +279,6 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
 
     private void initInAppUpdate() {
         appUpdateManager = AppUpdateManagerFactory.create(this);
-
-        updateInstallListener = state -> {
-            if (state.installStatus() == InstallStatus.DOWNLOADED) {
-                completeFlexibleUpdate();
-            }
-        };
-
-        appUpdateManager.registerListener(updateInstallListener);
         checkForAppUpdate();
     }
 
@@ -293,47 +287,37 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
 
         appUpdateManager.getAppUpdateInfo()
             .addOnSuccessListener(appUpdateInfo -> {
-                if (appUpdateInfo.installStatus() == InstallStatus.DOWNLOADED) {
-                    completeFlexibleUpdate();
+                int availability = appUpdateInfo.updateAvailability();
+
+                if (availability == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS) {
+                    startImmediateUpdate(appUpdateInfo);
                     return;
                 }
 
                 if (updateFlowStarted) return;
 
-                if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                if (availability == UpdateAvailability.UPDATE_AVAILABLE
                     && appUpdateInfo.isUpdateTypeAllowed(
-                        AppUpdateOptions.defaultOptions(AppUpdateType.FLEXIBLE)
+                        AppUpdateOptions.defaultOptions(AppUpdateType.IMMEDIATE)
                     )) {
-                    startFlexibleUpdate(appUpdateInfo);
+                    startImmediateUpdate(appUpdateInfo);
                 }
             });
     }
 
-    private void startFlexibleUpdate(AppUpdateInfo appUpdateInfo) {
+    private void startImmediateUpdate(AppUpdateInfo appUpdateInfo) {
         try {
             updateFlowStarted = true;
 
             appUpdateManager.startUpdateFlowForResult(
                 appUpdateInfo,
                 this,
-                AppUpdateOptions.defaultOptions(AppUpdateType.FLEXIBLE),
+                AppUpdateOptions.defaultOptions(AppUpdateType.IMMEDIATE),
                 IN_APP_UPDATE_REQUEST_CODE
             );
         } catch (IntentSender.SendIntentException e) {
             updateFlowStarted = false;
             nativeToast("Aktualizaci nejde spustit.");
-        }
-    }
-
-    private void completeFlexibleUpdate() {
-        if (appUpdateManager == null) return;
-
-        nativeToast("Aktualizace je stažená. Dokončuji instalaci…");
-
-        if (root != null) {
-            root.postDelayed(() -> appUpdateManager.completeUpdate(), 1200);
-        } else {
-            appUpdateManager.completeUpdate();
         }
     }
 
@@ -349,6 +333,25 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
 
         if (requestCode == IN_APP_UPDATE_REQUEST_CODE) {
             updateFlowStarted = false;
+
+            if (resultCode != RESULT_OK) {
+                nativeToast("Aktualizace nebyla dokončena.");
+            }
+            return;
+        }
+
+        if (requestCode == TTS_INSTALL_REQUEST_CODE) {
+            lastTtsInstallPromptLanguageTag = null;
+            activeSpeechLanguageTag = null;
+            ttsReady = false;
+
+            if (textToSpeech != null) {
+                textToSpeech.stop();
+                textToSpeech.shutdown();
+                textToSpeech = null;
+            }
+
+            initTextToSpeech();
         }
     }
 
@@ -699,6 +702,36 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         return sameLanguageVoice;
     }
 
+    private String languageDisplayName(String languageTag) {
+        Locale locale = Locale.forLanguageTag(languageTag);
+        String displayName = locale.getDisplayLanguage(locale);
+
+        if (displayName == null || displayName.trim().isEmpty()) {
+            return languageTag;
+        }
+
+        return displayName;
+    }
+
+    private void promptInstallTtsData(String languageTag) {
+        nativeToast("Hlas pro jazyk " + languageDisplayName(languageTag)
+            + " v telefonu chybí. Stáhni hlasová data.");
+
+        if (languageTag != null
+            && languageTag.equalsIgnoreCase(lastTtsInstallPromptLanguageTag)) {
+            return;
+        }
+
+        lastTtsInstallPromptLanguageTag = languageTag;
+
+        try {
+            Intent installIntent = new Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
+            startActivityForResult(installIntent, TTS_INSTALL_REQUEST_CODE);
+        } catch (Exception e) {
+            nativeToast("Instalaci hlasů nejde otevřít. Zkontroluj Převod textu na řeč v Androidu.");
+        }
+    }
+
     private void speakNative(String text, String lang) {
         if (text == null || text.trim().isEmpty()) return;
 
@@ -722,15 +755,20 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
 
         int result = textToSpeech.setLanguage(locale);
 
-        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-            textToSpeech.setLanguage(Locale.getDefault());
-        } else {
-            Voice voice = chooseVoiceForLocale(locale);
-            if (voice != null) {
-                int voiceResult = textToSpeech.setVoice(voice);
-                if (voiceResult == TextToSpeech.ERROR) {
-                    textToSpeech.setLanguage(locale);
-                }
+        if (result == TextToSpeech.LANG_MISSING_DATA
+            || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+            pendingSpeechText = text;
+            pendingSpeechLang = lang;
+            activeSpeechLanguageTag = null;
+            promptInstallTtsData(requestedLanguageTag);
+            return;
+        }
+
+        Voice voice = chooseVoiceForLocale(locale);
+        if (voice != null) {
+            int voiceResult = textToSpeech.setVoice(voice);
+            if (voiceResult == TextToSpeech.ERROR) {
+                textToSpeech.setLanguage(locale);
             }
         }
 
