@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - release/v71-play-console-cleanup
+  pull_request:
+    branches:
+      - release/v70-tts-data-immediate-update
   workflow_dispatch:
 
 jobs:
