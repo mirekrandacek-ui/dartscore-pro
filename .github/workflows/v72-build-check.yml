@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - release/v72-rollback-v70
+  pull_request:
+    branches:
+      - release/v70-tts-data-immediate-update
   workflow_dispatch:
 
 jobs:
