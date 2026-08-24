@@ -47,7 +47,6 @@ def twaManifest = [
     // 'customtabs' and 'webview'.
     fallbackType: 'customtabs',
     enableSiteSettingsShortcut: 'true',
-    orientation: 'portrait',
 ]
 
 android {
@@ -67,8 +66,8 @@ android {
         applicationId "com.randis2288.dartscorepro"
         minSdkVersion 23
         targetSdkVersion 36
-        versionCode 70
-        versionName "1.1.36"
+        versionCode 71
+        versionName "1.1.37"
 
         resValue "string", "appName", twaManifest.name
         resValue "string", "launcherName", twaManifest.launcherName
@@ -99,12 +98,13 @@ android {
         resValue "string", "generatorApp", twaManifest.generatorApp
         resValue "string", "fallbackType", twaManifest.fallbackType
         resValue "bool", "enableSiteSettingsShortcut", twaManifest.enableSiteSettingsShortcut
-        resValue "string", "orientation", twaManifest.orientation
     }
 
     buildTypes {
         release {
             minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
             signingConfig signingConfigs.release
         }
     }
@@ -161,12 +161,10 @@ repositories {
 }
 
 dependencies {
+    implementation 'androidx.core:core:1.17.0'
     implementation 'com.google.android.play:app-update:2.1.0'
     implementation 'com.google.android.gms:play-services-ads:24.9.0'
     implementation 'com.android.billingclient:billing:9.1.0'
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    
-    
-        implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.6.2'
-    
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.7.2'
 }
