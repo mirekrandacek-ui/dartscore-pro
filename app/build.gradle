@@ -50,7 +50,7 @@ def twaManifest = [
 ]
 
 android {
-    compileSdkVersion 36
+    compileSdk 36
     namespace "com.randis2288.dartscorepro"
 
     signingConfigs {
@@ -64,8 +64,8 @@ android {
 
     defaultConfig {
         applicationId "com.randis2288.dartscorepro"
-        minSdkVersion 23
-        targetSdkVersion 36
+        minSdk 23
+        targetSdk 36
         versionCode 71
         versionName "1.1.37"
 
@@ -114,7 +114,7 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    lintOptions {
+    lint {
         checkReleaseBuilds false
     }
 }
@@ -157,7 +157,6 @@ task generateShorcutsFile {
 preBuild.dependsOn(generateShorcutsFile)
 
 repositories {
-    
 }
 
 dependencies {
