@@ -1,0 +1,95 @@
+name: Patch interstitial after 3 games
+
+on:
+  push:
+    branches:
+      - fix/interstitial-after-3-games
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-build:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: fix/interstitial-after-3-games
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Apply interstitial cadence patch
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          p = Path('src/App.jsx')
+          s = p.read_text(encoding='utf-8')
+
+          def replace_once(old, new, label):
+              global s
+              count = s.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected 1 occurrence, found {count}')
+              s = s.replace(old, new, 1)
+
+          replace_once(
+          """  const [winner, setWinner] = useState(null);\n  const [pendingWin, setPendingWin] = useState(null);\n\n  const [cricket, setCricket] = useState(null);""",
+          """  const [winner, setWinner] = useState(null);\n  const [pendingWin, setPendingWin] = useState(null);\n\n  // Interstitial cadence: a game counts only after at least 3 completed visits.\n  // Show one interstitial on Start/Restart after every 3 counted games.\n  const playedVisitsRef = useRef(0);\n  const playedGamesSinceAdRef = useRef(0);\n\n  const [cricket, setCricket] = useState(null);""",
+          'add counters')
+
+          replace_once(
+          """    if (teamMode && !teamOrder) {\n      alert(t(lang, 'teamNeedPlayers'));\n      return;\n    }\n\n    const ord = teamMode""",
+          """    if (teamMode && !teamOrder) {\n      alert(t(lang, 'teamNeedPlayers'));\n      return;\n    }\n\n    const completedVisits = playedVisitsRef.current;\n    playedVisitsRef.current = 0;\n\n    if (!isPremium && completedVisits >= 3) {\n      playedGamesSinceAdRef.current += 1;\n\n      if (playedGamesSinceAdRef.current >= 3) {\n        playedGamesSinceAdRef.current = 0;\n        showInterstitialAd();\n      }\n    }\n\n    const ord = teamMode""",
+          'gate ad on Start/Restart')
+
+          replace_once(
+          """const nextPlayerSafe = () => {\n  if (turnLockRef.current) return;           // HARD GUARD: nedovol 2× přepnutí v jednom \"tahu\"\n  turnLockRef.current = true;\n\n  setCurrIdx((i) => {""",
+          """const nextPlayerSafe = () => {\n  if (turnLockRef.current) return;           // HARD GUARD: nedovol 2× přepnutí v jednom \"tahu\"\n  turnLockRef.current = true;\n\n  const ordNow = orderRef.current || [];\n  if (ordNow.length < 1) {\n    turnLockRef.current = false;\n    return;\n  }\n\n  playedVisitsRef.current += 1;\n\n  setCurrIdx((i) => {""",
+          'count completed visits')
+
+          replace_once(
+          """      finalizeWin(pendingWinRef.current.pIdx);\n      setPendingWin(null);""",
+          """      finalizeWin(pendingWinRef.current.pIdx, { visitAlreadyCounted: true });\n      setPendingWin(null);""",
+          'avoid double count in play-through')
+
+          replace_once(
+          """      setWinner(pIdx);\n\n      if (!isPremium) {\n        window.setTimeout(() => {\n          try {\n            if (winAudioRef.current) {\n              winAudioRef.current.pause();\n              winAudioRef.current.currentTime = 0;\n            }\n          } catch { }\n\n          showInterstitialAd();\n        }, 1000);\n      }\n\n      if (isPremium) {""",
+          """      setWinner(pIdx);\n\n      if (!opts.visitAlreadyCounted) {\n        playedVisitsRef.current += 1;\n      }\n\n      if (isPremium) {""",
+          'remove ad from winner and count winning visit')
+
+          p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Verify diff
+        shell: bash
+        run: |
+          git diff --check
+          git diff -- src/App.jsx
+          test "$(git diff --name-only | tr '\n' ' ')" = "src/App.jsx "
+          grep -q "playedGamesSinceAdRef.current >= 3" src/App.jsx
+          test "$(grep -c 'showInterstitialAd();' src/App.jsx)" -eq 1
+
+      - name: Commit patch and remove temporary workflow
+        shell: bash
+        run: |
+          rm .github/workflows/patch-interstitial-after-3-games.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/App.jsx .github/workflows/patch-interstitial-after-3-games.yml
+          git commit -m "Move interstitial to every third played game"
+          git push origin HEAD:fix/interstitial-after-3-games
