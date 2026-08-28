@@ -79,10 +79,13 @@ jobs:
         shell: bash
         run: |
           git diff --check
-          git diff -- src/App.jsx
           test "$(git diff --name-only | tr '\n' ' ')" = "src/App.jsx "
           grep -q "playedGamesSinceAdRef.current >= 3" src/App.jsx
-          test "$(grep -c 'showInterstitialAd();' src/App.jsx)" -eq 1
+          grep -q "finalizeWin(pendingWinRef.current.pIdx, { visitAlreadyCounted: true })" src/App.jsx
+          if sed -n '/const finalizeWin =/,/if (isPremium)/p' src/App.jsx | grep -q 'showInterstitialAd();'; then
+            echo "Interstitial is still called from finalizeWin"
+            exit 1
+          fi
 
       - name: Commit patch and remove temporary workflow
         shell: bash
