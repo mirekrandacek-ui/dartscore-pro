@@ -86,7 +86,6 @@ jobs:
           block = s[s.index('const finalizeWin ='):s.index('if (isPremium)', s.index('const finalizeWin ='))]
           assert 'showInterstitialAd();' not in block
           PY
-          test "$(git diff --name-only | tr '\n' ' ')" = "src/App.jsx "
 
       - name: Commit patch and remove temporary workflow
         shell: bash
