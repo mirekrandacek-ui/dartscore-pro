@@ -75,17 +75,37 @@ jobs:
       - name: Build web app
         run: npm run build
 
-      - name: Verify diff
+      - name: Verify patch exactly
         shell: bash
         run: |
           git diff --check
-          test "$(git diff --name-only | tr '\n' ' ')" = "src/App.jsx "
-          grep -q "playedGamesSinceAdRef.current >= 3" src/App.jsx
-          grep -q "finalizeWin(pendingWinRef.current.pIdx, { visitAlreadyCounted: true })" src/App.jsx
-          if sed -n '/const finalizeWin =/,/if (isPremium)/p' src/App.jsx | grep -q 'showInterstitialAd();'; then
-            echo "Interstitial is still called from finalizeWin"
-            exit 1
-          fi
+          python3 <<'PY'
+          from pathlib import Path
+          s = Path('src/App.jsx').read_text(encoding='utf-8')
+
+          required = [
+              'const playedVisitsRef = useRef(0);',
+              'const playedGamesSinceAdRef = useRef(0);',
+              'if (!isPremium && completedVisits >= 3)',
+              'if (playedGamesSinceAdRef.current >= 3)',
+              'finalizeWin(pendingWinRef.current.pIdx, { visitAlreadyCounted: true });',
+              'if (!opts.visitAlreadyCounted) {',
+          ]
+          for item in required:
+              if item not in s:
+                  raise SystemExit(f'Missing required patch: {item}')
+
+          start = s.index('const finalizeWin =')
+          end = s.index('if (isPremium)', start)
+          finalize_block = s[start:end]
+          if 'showInterstitialAd();' in finalize_block:
+              raise SystemExit('Interstitial is still called from finalizeWin')
+
+          if s.count('playedGamesSinceAdRef.current += 1;') != 1:
+              raise SystemExit('Played-game counter increment is not unique')
+
+          print('Patch verification OK')
+          PY
 
       - name: Commit patch and remove temporary workflow
         shell: bash
