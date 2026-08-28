@@ -942,6 +942,11 @@ function App() {
   const [winner, setWinner] = useState(null);
   const [pendingWin, setPendingWin] = useState(null);
 
+  // Interstitial cadence: a game counts only after at least 3 completed visits.
+  // Show one interstitial on Start/Restart after every 3 counted games.
+  const playedVisitsRef = useRef(0);
+  const playedGamesSinceAdRef = useRef(0);
+
   const [cricket, setCricket] = useState(null);
   const [around, setAround] = useState(null);
   const [roulette, setRoulette] = useState(null);
@@ -1086,6 +1091,18 @@ function App() {
     if (teamMode && !teamOrder) {
       alert(t(lang, 'teamNeedPlayers'));
       return;
+    }
+
+    const completedVisits = playedVisitsRef.current;
+    playedVisitsRef.current = 0;
+
+    if (!isPremium && completedVisits >= 3) {
+      playedGamesSinceAdRef.current += 1;
+
+      if (playedGamesSinceAdRef.current >= 3) {
+        playedGamesSinceAdRef.current = 0;
+        showInterstitialAd();
+      }
     }
 
     const ord = teamMode
@@ -1860,17 +1877,8 @@ const commitCricket = (value, mOverride) => {
 
       setWinner(pIdx);
 
-      if (!isPremium) {
-        window.setTimeout(() => {
-          try {
-            if (winAudioRef.current) {
-              winAudioRef.current.pause();
-              winAudioRef.current.currentTime = 0;
-            }
-          } catch { }
-
-          showInterstitialAd();
-        }, 1000);
+      if (!opts.visitAlreadyCounted) {
+        playedVisitsRef.current += 1;
       }
 
       if (isPremium) {
@@ -1932,6 +1940,14 @@ const nextPlayerSafe = () => {
   if (turnLockRef.current) return;           // HARD GUARD: nedovol 2× přepnutí v jednom "tahu"
   turnLockRef.current = true;
 
+  const ordNow = orderRef.current || [];
+  if (ordNow.length < 1) {
+    turnLockRef.current = false;
+    return;
+  }
+
+  playedVisitsRef.current += 1;
+
   setCurrIdx((i) => {
     const ord = orderRef.current || [];
     const len = ord.length || 0;
@@ -1970,7 +1986,7 @@ const nextPlayerSafe = () => {
       pendingWinRef.current &&
       winnerRef.current == null
     ) {
-      finalizeWin(pendingWinRef.current.pIdx);
+      finalizeWin(pendingWinRef.current.pIdx, { visitAlreadyCounted: true });
       setPendingWin(null);
     }
 
