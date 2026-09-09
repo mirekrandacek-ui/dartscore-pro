@@ -35,7 +35,7 @@ jobs:
           s = Path('src/App.jsx').read_text(encoding='utf-8')
           c = Path('src/app.css').read_text(encoding='utf-8')
           assert '<select' not in s and '</select>' not in s
-          assert s.count('<ThemedSelect') == 9
+          assert s.count('<ThemedSelect') == 10
           assert 'rouletteDrawBtn' in s and 'rouletteHitBtn' in s and 'rouletteSwitchBtn' in s
           assert "marginBottom: '12px'" in s
           assert '.themedSelectMenu' in c
