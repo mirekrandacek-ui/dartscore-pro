@@ -50,5 +50,4 @@ jobs:
           git commit -m "Show third Classic dart briefly and color keypad actions"
           git rm .github/scripts/patch_classic_delay_keypad_colors.py .github/workflows/patch-classic-delay-keypad-colors.yml
           git commit -m "Remove temporary keypad patch helpers"
-          git pull --rebase origin ui/classic-delay-keypad-colors
           git push origin ui/classic-delay-keypad-colors
