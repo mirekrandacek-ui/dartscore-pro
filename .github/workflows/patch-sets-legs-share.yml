@@ -1,0 +1,61 @@
+name: Patch sets legs share
+on:
+  push:
+    branches: [feature/classic-sets-legs-share]
+    paths:
+      - '.github/workflows/patch-sets-legs-share.yml'
+      - '.github/scripts/patch_sets_legs_share.py'
+permissions:
+  contents: write
+jobs:
+  patch-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Apply patch
+        run: python .github/scripts/patch_sets_legs_share.py
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Verify integration
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          app=Path('src/App.jsx').read_text(encoding='utf-8')
+          css=Path('src/app.css').read_text(encoding='utf-8')
+          checks = [
+            "const [legsToWinSet, setLegsToWinSet] = useState(1)",
+            "const [setsToWin, setSetsToWin] = useState(1)",
+            "const completeClassicLeg = (scoreIdx, opts = {}) =>",
+            "completeClassicLeg(pendingWinRef.current.pIdx, { visitAlreadyCounted: true })",
+            "https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro",
+            "Array.from({ length: 21 }, (_, ix) => ix + 1)",
+            "classicSetsWon={classicSetsWon}",
+            "classicLegsWon={classicLegsWon}",
+            "classicMatchProgress",
+            "shareIconBtn",
+          ]
+          for c in checks:
+            assert c in app or c in css, c
+          assert app.count('completeClassicLeg(scoreIdx);') == 2
+          assert 'finalizeWin(scoreIdx);' not in app
+          for label in ["sets: 'Sety'", "legs: 'Legy'", "sets: 'Sets'", "legs: 'Legs'", "sets: 'Sätze'"]:
+            assert label in app, label
+          assert '.matchFormatControls' in css
+          print('integration verification OK')
+          PY
+      - name: Commit clean result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/App.jsx src/app.css
+          git commit -m "Add Classic sets legs and app sharing"
+          git rm .github/scripts/patch_sets_legs_share.py .github/workflows/patch-sets-legs-share.yml .github/workflows/inspect-sets-legs.yml
+          git commit -m "Remove temporary sets legs helpers"
+          git restore dist || true
+          git push origin HEAD:feature/classic-sets-legs-share
