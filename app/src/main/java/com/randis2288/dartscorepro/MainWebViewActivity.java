@@ -7,10 +7,12 @@ import android.content.pm.ApplicationInfo;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.Voice;
 import android.view.Gravity;
 import android.view.View;
+import android.view.WindowInsets;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
@@ -69,6 +71,8 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private FrameLayout adHost;
     private AdView adView;
     private boolean bannerLoaded = false;
+    private int bannerHeightPx = 0;
+    private int bottomSystemInsetPx = 0;
 
     private TextToSpeech textToSpeech;
     private boolean ttsReady = false;
@@ -142,12 +146,23 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT,
-                Gravity.TOP
+                Gravity.BOTTOM
             )
         );
         adHost.bringToFront();
 
+        root.setOnApplyWindowInsetsListener((v, insets) -> {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                bottomSystemInsetPx = insets.getInsets(WindowInsets.Type.navigationBars()).bottom;
+            } else {
+                bottomSystemInsetPx = insets.getSystemWindowInsetBottom();
+            }
+            updateBannerLayout();
+            return insets;
+        });
+
         setContentView(root);
+        root.requestApplyInsets();
 
         initInAppUpdate();
         initBilling();
@@ -225,10 +240,12 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private void setPremiumState(boolean isPremium) {
         if (!FORCE_FREE_BANNER_TEST && isPremium) {
             adHost.setVisibility(View.GONE);
+            updateBannerLayout();
             return;
         }
 
         adHost.setVisibility(View.VISIBLE);
+        updateBannerLayout();
 
         if (!bannerLoaded) {
             bannerLoaded = true;
@@ -247,14 +264,8 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         );
 
         int adHeightPx = adSize.getHeightInPixels(this);
-
-        adHost.setLayoutParams(
-            new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                adHeightPx,
-                Gravity.TOP
-            )
-        );
+        bannerHeightPx = adHeightPx;
+        updateBannerLayout();
 
         adView = new AdView(this);
         adView.setAdSize(adSize);
@@ -269,11 +280,35 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 adHeightPx,
-                Gravity.TOP
+                Gravity.CENTER
             )
         );
 
         adView.loadAd(new AdRequest.Builder().build());
+    }
+
+    private void updateBannerLayout() {
+        if (root == null || webView == null || adHost == null) return;
+
+        int visibleBannerHeight =
+            adHost.getVisibility() == View.VISIBLE ? bannerHeightPx : 0;
+
+        FrameLayout.LayoutParams hostParams = new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            visibleBannerHeight > 0
+                ? visibleBannerHeight
+                : FrameLayout.LayoutParams.WRAP_CONTENT,
+            Gravity.BOTTOM
+        );
+        hostParams.bottomMargin = bottomSystemInsetPx;
+        adHost.setLayoutParams(hostParams);
+
+        FrameLayout.LayoutParams webParams =
+            (FrameLayout.LayoutParams) webView.getLayoutParams();
+        webParams.bottomMargin = visibleBannerHeight > 0
+            ? visibleBannerHeight + bottomSystemInsetPx
+            : 0;
+        webView.setLayoutParams(webParams);
     }
 
 
