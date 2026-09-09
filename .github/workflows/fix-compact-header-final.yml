@@ -1,0 +1,49 @@
+name: Fix compact game header final
+on:
+  push:
+    branches: [ui/compact-game-header-fix]
+    paths:
+      - '.github/workflows/fix-compact-header-final.yml'
+      - '.github/scripts/fix_compact_header_final.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Apply patch
+        run: python .github/scripts/fix_compact_header_final.py
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Verify
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s = Path('src/App.jsx').read_text(encoding='utf-8')
+          assert 'classicOutShortLabel={classicOutShortLabel}' in s
+          assert "isPremium, classicOutShortLabel," in s
+          assert "t(lang, 'roundCount')" in s
+          assert "${t(lang, 'target')}: ${rouletteTargetLabel" not in s
+          assert "roundCount: 'Počet kol'" in s
+          assert s.count('roundCount:') == 7
+          print('verification OK')
+          PY
+      - name: Commit clean result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/App.jsx
+          git commit -m "Fix Classic header and show roulette round count"
+          git rm .github/scripts/fix_compact_header_final.py .github/workflows/fix-compact-header-final.yml
+          git commit -m "Remove temporary compact header helpers"
+          git push
