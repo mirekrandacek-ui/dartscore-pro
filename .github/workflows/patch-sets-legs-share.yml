@@ -16,6 +16,18 @@ jobs:
         with:
           node-version: 20
           cache: npm
+      - name: Fix patch anchor for current Classic guard
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('.github/scripts/patch_sets_legs_share.py')
+          s=p.read_text(encoding='utf-8')
+          old='''"  const commitClassic = (value, mOverride) => {\\n    let v = value;",\n"  const commitClassic = (value, mOverride) => {\\n    if (classicLegTransition) return;\\n    let v = value;"'''
+          new='''"  const commitClassic = (value, mOverride) => {\\n    if (darts.length >= 3) return;\\n\\n    let v = value;",\n"  const commitClassic = (value, mOverride) => {\\n    if (classicLegTransition) return;\\n    if (darts.length >= 3) return;\\n\\n    let v = value;"'''
+          if old not in s:
+              raise SystemExit('script Classic anchor definition not found')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
+          PY
       - name: Apply patch
         run: python .github/scripts/patch_sets_legs_share.py
       - name: Install dependencies
