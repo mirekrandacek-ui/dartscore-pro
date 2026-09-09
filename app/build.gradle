@@ -67,8 +67,8 @@ android {
         applicationId "com.randis2288.dartscorepro"
         minSdkVersion 23
         targetSdkVersion 36
-        versionCode 70
-        versionName "1.1.36"
+        versionCode 73
+        versionName "1.1.39"
 
         resValue "string", "appName", twaManifest.name
         resValue "string", "launcherName", twaManifest.launcherName
@@ -129,7 +129,6 @@ task generateShorcutsFile {
     }
 
     def shortcutsFile = new File("$projectDir/src/main/res/xml", "shortcuts.xml")
-
     def xmlWriter = new StringWriter()
     def xmlMarkup = new MarkupBuilder(new IndentPrinter(xmlWriter, "    ", true))
 
