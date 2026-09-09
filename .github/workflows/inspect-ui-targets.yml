@@ -1,0 +1,27 @@
+name: Inspect UI targets
+
+on:
+  push:
+    branches:
+      - ui/banner-dropdown-roulette-premium
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui/banner-dropdown-roulette-premium
+      - name: Inspect targets
+        shell: bash
+        run: |
+          echo '=== SELECTS ==='
+          grep -n -B 4 -A 12 '<select' src/App.jsx || true
+          echo '=== ROULETTE BUTTONS ==='
+          grep -n -B 12 -A 18 "rouletteDrawButton\|rouletteHitButton\|rouletteSwitchButton" src/App.jsx || true
+          echo '=== PREMIUM FEATURE4 ==='
+          grep -n -B 16 -A 20 "premiumFeature4" src/App.jsx || true
+          echo '=== CSS SELECT/INPUT/THEME ==='
+          grep -n -B 8 -A 18 "\.input\|select\|premium\|roulette" src/app.css || true
+          echo '=== JAVA BANNER ==='
+          grep -n -B 18 -A 35 "Gravity.TOP\|adHost\|loadBanner" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java || true
