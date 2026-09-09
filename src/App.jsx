@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import './app.css';
 
 /* ===== Ikona reproduktoru ===== */
@@ -438,6 +439,137 @@ const LANG_LABEL = {
 };
 
 const t = (lang, key) => (T[lang] && T[lang][key]) || T.cs[key] || key;
+
+
+const ThemedSelect = ({
+  value,
+  onChange,
+  children,
+  className = '',
+  style = {},
+  title,
+  disabled = false
+}) => {
+  const [open, setOpen] = useState(false);
+  const [menuStyle, setMenuStyle] = useState(null);
+  const triggerRef = useRef(null);
+  const menuRef = useRef(null);
+
+  const options = React.Children.toArray(children)
+    .filter(child => React.isValidElement(child) && child.type === 'option')
+    .map(child => ({
+      value: child.props.value ?? '',
+      label: child.props.children,
+      disabled: !!child.props.disabled
+    }));
+
+  const selected = options.find(opt => String(opt.value) === String(value)) || options[0];
+
+  const positionMenu = () => {
+    const el = triggerRef.current;
+    if (!el) return;
+
+    const rect = el.getBoundingClientRect();
+    const gap = 6;
+    const edge = 8;
+    const desiredHeight = Math.min(280, Math.max(44, options.length * 42 + 8));
+    const roomBelow = window.innerHeight - rect.bottom - edge;
+    const roomAbove = rect.top - edge;
+    const openUp = roomBelow < Math.min(desiredHeight, 180) && roomAbove > roomBelow;
+    const maxHeight = Math.max(80, Math.min(desiredHeight, openUp ? roomAbove - gap : roomBelow - gap));
+    const width = Math.max(rect.width, 150);
+    const left = Math.max(edge, Math.min(rect.left, window.innerWidth - width - edge));
+    const top = openUp
+      ? Math.max(edge, rect.top - gap - maxHeight)
+      : Math.min(window.innerHeight - edge - maxHeight, rect.bottom + gap);
+
+    setMenuStyle({ left, top, width, maxHeight });
+  };
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    positionMenu();
+
+    const closeIfOutside = event => {
+      const target = event.target;
+      if (triggerRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+    const reposition = () => positionMenu();
+
+    document.addEventListener('pointerdown', closeIfOutside, true);
+    window.addEventListener('resize', reposition);
+    window.addEventListener('scroll', reposition, true);
+
+    return () => {
+      document.removeEventListener('pointerdown', closeIfOutside, true);
+      window.removeEventListener('resize', reposition);
+      window.removeEventListener('scroll', reposition, true);
+    };
+  }, [open, options.length]);
+
+  const choose = option => {
+    if (option.disabled) return;
+    onChange?.({ target: { value: option.value } });
+    setOpen(false);
+  };
+
+  const wrapperStyle = {
+    minWidth: style?.minWidth,
+    width: style?.width,
+    flex: style?.flex
+  };
+
+  return (
+    <span className="themedSelectWrap" style={wrapperStyle}>
+      <button
+        ref={triggerRef}
+        type="button"
+        className={`${className} themedSelectTrigger`.trim()}
+        style={style}
+        title={title}
+        disabled={disabled}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => {
+          if (disabled) return;
+          setOpen(prev => !prev);
+        }}
+      >
+        <span className="themedSelectValue">{selected?.label}</span>
+        <span className={`themedSelectChevron ${open ? 'open' : ''}`} aria-hidden="true">⌄</span>
+      </button>
+
+      {open && menuStyle && createPortal(
+        <div
+          ref={menuRef}
+          className="themedSelectMenu"
+          style={menuStyle}
+          role="listbox"
+        >
+          {options.map((option, index) => {
+            const isSelected = String(option.value) === String(value);
+            return (
+              <button
+                key={`${String(option.value)}-${index}`}
+                type="button"
+                className={`themedSelectOption ${isSelected ? 'selected' : ''}`}
+                disabled={option.disabled}
+                role="option"
+                aria-selected={isSelected}
+                onClick={() => choose(option)}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>,
+        document.body
+      )}
+    </span>
+  );
+};
 
 /* ===== Utils ===== */
 const deepClone = (obj) => {
@@ -2808,7 +2940,7 @@ const buyPremium = async () => {
               }}
             >
               {screen === 'lobby' ? (
-                <select
+                <ThemedSelect
                 className="input"
                 value={lang}
                 onChange={e => setLang(e.target.value)}
@@ -2821,7 +2953,7 @@ const buyPremium = async () => {
                 {['cs', 'en', 'de', 'es', 'nl', 'ru', 'zh'].map(code => (
                   <option key={code} value={code}>{LANG_LABEL[code]}</option>
                 ))}
-              </select>
+              </ThemedSelect>
               ) : mode === 'classic' ? (
                 <div className="input classicModeInfo">
                   <span className="classicModeTitle">
@@ -3126,7 +3258,7 @@ function Lobby({
         <div className="lobbyCard">
           <div className="lobbyControls">
             <span>{t(lang, 'mode')}</span>
-            <select
+            <ThemedSelect
               className="input"
               value={mode}
               onChange={e => setMode(e.target.value)}
@@ -3137,7 +3269,7 @@ function Lobby({
               <option value="around">{t(lang, 'around')}</option>
               <option value="roulette">{t(lang, 'roulette')}</option>
               <option value="rouletteDouble">{t(lang, 'rouletteDouble')}</option>
-            </select>
+            </ThemedSelect>
           </div>
         </div>
 
@@ -3220,7 +3352,7 @@ function Lobby({
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
               <span>{t(lang, 'order')}</span>
 
-              <select
+              <ThemedSelect
                 className="input"
                 value={randomOrder ? 'random' : 'fixed'}
                 onChange={e => setRandomOrder(e.target.value === 'random')}
@@ -3228,7 +3360,7 @@ function Lobby({
               >
                 <option value="fixed">{t(lang, 'fixed')}</option>
                 <option value="random">{t(lang, 'random')}</option>
-              </select>
+              </ThemedSelect>
 
               {mode === 'classic' && (
                 <label
@@ -3250,7 +3382,7 @@ function Lobby({
 
               <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10 }}>
                 <span>{t(lang, 'robot')}</span>
-                <select
+                <ThemedSelect
                   className="input"
                   value={ai}
                   onChange={e => setAi(e.target.value)}
@@ -3260,7 +3392,7 @@ function Lobby({
                   <option value="easy">{t(lang, 'easy')}</option>
                   <option value="medium">{t(lang, 'medium')}</option>
                   <option value="hard">{t(lang, 'hard')}</option>
-                </select>
+                </ThemedSelect>
 
                 
               </div>
@@ -3279,7 +3411,7 @@ function Lobby({
                     {t(lang, 'scoreInputType')}
                   </span>
 
-                  <select
+                  <ThemedSelect
                     className="input"
                     value={scoreInputMode}
                     onChange={e => setScoreInputMode(e.target.value)}
@@ -3287,7 +3419,7 @@ function Lobby({
                   >
                     <option value="darts">{t(lang, 'scoreByDarts')}</option>
                     <option value="round">{t(lang, 'roundTotal')}</option>
-                  </select>
+                  </ThemedSelect>
                 </div>
               )}
 
@@ -3344,7 +3476,7 @@ function Lobby({
     <div>{t(lang, 'premiumFeature1')}</div>
     <div>{t(lang, 'premiumFeature2')}</div>
     <div>{t(lang, 'premiumFeature3')}</div>
-    <div>{t(lang, 'premiumFeature4')}</div>
+    <div style={{ marginBottom: '12px' }}>{t(lang, 'premiumFeature4')}</div>
   </div>
 )}
           {isPremium && (
@@ -3469,7 +3601,7 @@ function Lobby({
             {mode === 'classic' && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
                 <span style={{ fontSize: 12, opacity: .85 }}>{t(lang, 'playerModeLabel')}</span>
-                <select
+                <ThemedSelect
                   className="input"
                   value={playerMode}
                   onChange={e => setPlayerMode(e.target.value)}
@@ -3477,7 +3609,7 @@ function Lobby({
                 >
                   <option value="individual">{t(lang, 'individualPlayers')}</option>
                   <option value="teams">{t(lang, 'teamPlayers')}</option>
-                </select>
+                </ThemedSelect>
               </div>
             )}
 
@@ -3495,7 +3627,7 @@ function Lobby({
 
                 {mode === 'classic' && playerMode === 'teams' && (
                   <div style={{ minWidth: 92 }}>
-                    <select
+                    <ThemedSelect
                       className="input"
                       value={p.team || (['A', 'B', 'C'][i % 3])}
                       onChange={e => setPlayers(ps => ps.map((x, ix) => ix === i ? { ...x, team: e.target.value } : x))}
@@ -3505,7 +3637,7 @@ function Lobby({
                       <option value="A">{t(lang, 'teamA')}</option>
                       <option value="B">{t(lang, 'teamB')}</option>
                       <option value="C">{t(lang, 'teamC')}</option>
-                    </select>
+                    </ThemedSelect>
                   </div>
                 )}
 
@@ -3662,12 +3794,12 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
               {t(lang, 'filter')}:
-              <select className="input" value={filter} onChange={e => setFilter(e.target.value)} style={{ height: 30 }}>
+              <ThemedSelect className="input" value={filter} onChange={e => setFilter(e.target.value)} style={{ height: 30 }}>
                 <option value="all">{t(lang, 'all')}</option>
                 <option value="week">{t(lang, 'week')}</option>
                 <option value="month">{t(lang, 'month')}</option>
                 <option value="year">{t(lang, 'year')}</option>
-              </select>
+              </ThemedSelect>
             </label>
 
             <button
@@ -3682,15 +3814,15 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
 
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
           <strong>{t(lang, 'h2h')}:</strong>
-          <select className="input" value={p1} onChange={e => setP1(e.target.value)} style={{ height: 30 }}>
+          <ThemedSelect className="input" value={p1} onChange={e => setP1(e.target.value)} style={{ height: 30 }}>
             <option value="">{t(lang, 'selectPlayer')}</option>
             {allPlayers.map(n => <option key={`p1-${n}`} value={n}>{n}</option>)}
-          </select>
+          </ThemedSelect>
           <span>vs</span>
-          <select className="input" value={p2} onChange={e => setP2(e.target.value)} style={{ height: 30 }}>
+          <ThemedSelect className="input" value={p2} onChange={e => setP2(e.target.value)} style={{ height: 30 }}>
             <option value="">{t(lang, 'selectPlayer')}</option>
             {allPlayers.map(n => <option key={`p2-${n}`} value={n}>{n}</option>)}
-          </select>
+          </ThemedSelect>
           {h2h && (
             <span style={{ fontSize: 12, opacity: .9 }}>
               {p1}: {h2h.p1wins} {t(lang, 'wins')} • {p2}: {h2h.p2wins} {t(lang, 'wins')} • {h2h.games} {t(lang, 'game')}
@@ -4194,7 +4326,7 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
                       <div className="rouletteControls">
                         <button
                           type="button"
-                          className="btn"
+                          className="btn rouletteDrawBtn"
                           onClick={runRouletteDraw}
                           disabled={!canDraw}
                         >
@@ -4203,7 +4335,7 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
 
                         <button
                           type="button"
-                          className="btn green"
+                          className="btn rouletteHitBtn"
                           onClick={() => {
                             const isLastDart = remainingDarts <= 1;
                             const shouldAutoDraw = remainingDarts > 1 && deckLeft > 0;
@@ -4220,7 +4352,7 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
 
                         <button
                           type="button"
-                          className="btn ghost"
+                          className="btn rouletteSwitchBtn"
                           onClick={rouletteSwitchPlayer}
                           disabled={rouletteDrawing}
                         >
