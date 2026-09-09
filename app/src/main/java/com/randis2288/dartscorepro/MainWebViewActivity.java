@@ -64,7 +64,7 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private static final int TTS_INSTALL_REQUEST_CODE = 611;
 
     // Od v12 už testujeme skutečné Premium chování.
-    private static final boolean FORCE_FREE_BANNER_TEST = false;
+    private static final boolean FORCE_FREE_BANNER_TEST = true;
 
     private WebView webView;
     private FrameLayout root;
@@ -153,7 +153,10 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
 
         root.setOnApplyWindowInsetsListener((v, insets) -> {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                bottomSystemInsetPx = insets.getInsets(WindowInsets.Type.navigationBars()).bottom;
+                int navBottom = insets.getInsets(WindowInsets.Type.navigationBars()).bottom;
+                int gestureBottom = insets.getInsets(WindowInsets.Type.mandatorySystemGestures()).bottom;
+                int cutoutBottom = insets.getInsets(WindowInsets.Type.displayCutout()).bottom;
+                bottomSystemInsetPx = Math.max(navBottom, Math.max(gestureBottom, cutoutBottom));
             } else {
                 bottomSystemInsetPx = insets.getSystemWindowInsetBottom();
             }
@@ -272,7 +275,7 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
 
         boolean isDebug =
             (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
-        adView.setAdUnitId(isDebug ? TEST_BANNER_ID : PROD_BANNER_ID);
+        adView.setAdUnitId((isDebug || FORCE_FREE_BANNER_TEST) ? TEST_BANNER_ID : PROD_BANNER_ID);
 
         adHost.removeAllViews();
         adHost.addView(
