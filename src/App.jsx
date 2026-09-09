@@ -35,7 +35,10 @@ const T = {
     teamB: 'Tým B',
     teamC: 'Tým C',
     teamNeedPlayers: 'Alespoň dva týmy musí mít hráče.',
-    rouletteTotalPoints: 'Body celkem',
+    rouletteTotalPoints: 'Body celkem', roundCount: 'Počet kol',
+    sets: 'Sety', legs: 'Legy', shareApp: 'Sdílet aplikaci',
+    shareText: 'DartScore Pro – počítadlo šipek', linkCopied: 'Odkaz zkopírován',
+    legWon: 'Leg pro', setWon: 'Set pro',
     scoreInputType: 'Typ počítání',
       scoreInput: 'Zadávání',
       scoreByDarts: 'Po šipkách',
@@ -95,7 +98,10 @@ premiumNote: "Jednorázová platba. Žádné předplatné.",
     teamB: 'Team B',
     teamC: 'Team C',
     teamNeedPlayers: 'At least two teams must have players.',
-    rouletteTotalPoints: 'Total points',
+    rouletteTotalPoints: 'Total points', roundCount: 'Rounds',
+    sets: 'Sets', legs: 'Legs', shareApp: 'Share app',
+    shareText: 'DartScore Pro – darts scorer', linkCopied: 'Link copied',
+    legWon: 'Leg for', setWon: 'Set for',
     scoreInputType: 'Scoring type',
       scoreInput: 'Input',
       scoreByDarts: 'By darts',
@@ -154,7 +160,10 @@ activatePremium: 'Activate Premium',
     teamB: 'Team B',
     teamC: 'Team C',
     teamNeedPlayers: 'Mindestens zwei Teams müssen Spieler haben.',
-    rouletteTotalPoints: 'Punkte gesamt',
+    rouletteTotalPoints: 'Punkte gesamt', roundCount: 'Runden',
+    sets: 'Sätze', legs: 'Legs', shareApp: 'App teilen',
+    shareText: 'DartScore Pro – Darts-Zähler', linkCopied: 'Link kopiert',
+    legWon: 'Leg für', setWon: 'Satz für',
     scoreInputType: 'Zählweise',
       scoreInput: 'Eingabe',
       scoreByDarts: 'Pro Dart',
@@ -213,7 +222,10 @@ premiumNote: "Einmalige Zahlung. Kein Abo.",
     teamB: 'Equipo B',
     teamC: 'Equipo C',
     teamNeedPlayers: 'Al menos dos equipos deben tener jugadores.',
-    rouletteTotalPoints: 'Puntos totales',
+    rouletteTotalPoints: 'Puntos totales', roundCount: 'Rondas',
+    sets: 'Sets', legs: 'Legs', shareApp: 'Compartir app',
+    shareText: 'DartScore Pro – marcador de dardos', linkCopied: 'Enlace copiado',
+    legWon: 'Leg para', setWon: 'Set para',
     scoreInputType: 'Tipo de puntuación',
       scoreInput: 'Entrada',
       scoreByDarts: 'Por dardos',
@@ -272,7 +284,10 @@ premiumNote: "Pago único. Sin suscripción.",
     teamB: 'Team B',
     teamC: 'Team C',
     teamNeedPlayers: 'Minstens twee teams moeten spelers hebben.',
-    rouletteTotalPoints: 'Totaal punten',
+    rouletteTotalPoints: 'Totaal punten', roundCount: 'Rondes',
+    sets: 'Sets', legs: 'Legs', shareApp: 'App delen',
+    shareText: 'DartScore Pro – dartscore', linkCopied: 'Link gekopieerd',
+    legWon: 'Leg voor', setWon: 'Set voor',
     scoreInputType: 'Scoretype',
       scoreInput: 'Invoer',
       scoreByDarts: 'Per dart',
@@ -331,7 +346,10 @@ premiumNote: "Eenmalige betaling. Geen abonnement.",
     teamB: 'Команда B',
     teamC: 'Команда C',
     teamNeedPlayers: 'Минимум в двух командах должны быть игроки.',
-    rouletteTotalPoints: 'Всего очков',
+    rouletteTotalPoints: 'Всего очков', roundCount: 'Раунды',
+    sets: 'Сеты', legs: 'Леги', shareApp: 'Поделиться',
+    shareText: 'DartScore Pro – счётчик дартса', linkCopied: 'Ссылка скопирована',
+    legWon: 'Лег для', setWon: 'Сет для',
     scoreInputType: 'Тип подсчёта',
       scoreInput: 'Ввод',
       scoreByDarts: 'По дротикам',
@@ -390,7 +408,7 @@ premiumNote: "Разовая оплата. Без подписки.",
     teamB: '团队 B',
     teamC: '团队 C',
     teamNeedPlayers: '至少两个团队必须有玩家。',
-    rouletteTotalPoints: '总分',
+    rouletteTotalPoints: '总分', roundCount: '轮数',
     scoreInputType: '计分方式',
       scoreInput: '输入',
       scoreByDarts: '按镖输入',
@@ -866,6 +884,14 @@ function App() {
   const [outTriple, setOutTriple] = useState(false);
   const [outMaster, setOutMaster] = useState(false);
 
+  // Classic match format: first to N legs wins a set; first to N sets wins the match.
+  const [legsToWinSet, setLegsToWinSet] = useState(1);
+  const [setsToWin, setSetsToWin] = useState(1);
+  const [classicLegsWon, setClassicLegsWon] = useState([]);
+  const [classicSetsWon, setClassicSetsWon] = useState([]);
+  const [classicLegStarterIdx, setClassicLegStarterIdx] = useState(0);
+  const [classicLegTransition, setClassicLegTransition] = useState(false);
+
   const [randomOrder, setRandomOrder] = useState(false);
   const [playThrough, setPlayThrough] = useState(false);
 
@@ -905,6 +931,8 @@ function App() {
       if (typeof s.outDouble === 'boolean') setOutDouble(s.outDouble);
       if (typeof s.outTriple === 'boolean') setOutTriple(s.outTriple);
       if (typeof s.outMaster === 'boolean') setOutMaster(s.outMaster);
+      if (Number.isInteger(s.legsToWinSet) && s.legsToWinSet >= 1 && s.legsToWinSet <= 21) setLegsToWinSet(s.legsToWinSet);
+      if (Number.isInteger(s.setsToWin) && s.setsToWin >= 1 && s.setsToWin <= 21) setSetsToWin(s.setsToWin);
       if (typeof s.randomOrder === 'boolean') setRandomOrder(s.randomOrder);
       if (typeof s.playThrough === 'boolean') setPlayThrough(s.playThrough);
       if (s.ai) setAi(s.ai);
@@ -929,6 +957,7 @@ function App() {
         JSON.stringify({
           lang, mode, startScore,
           outDouble, outTriple, outMaster,
+          legsToWinSet, setsToWin,
           randomOrder, playThrough, ai,
           scoreInputMode: mode === 'classic' ? scoreInputMode : 'darts',
           playerMode, players,
@@ -939,6 +968,7 @@ function App() {
   }, [
     lang, mode, startScore,
     outDouble, outTriple, outMaster,
+    legsToWinSet, setsToWin,
     randomOrder, playThrough, ai, scoreInputMode, playerMode, players,
     themeColor
   ]);
@@ -1257,6 +1287,10 @@ function App() {
       setScores(sc);
       setThrown(dartsCnt);
       setLastTurn(last);
+      setClassicLegsWon(Array.from({ length: scoreSlots }, () => 0));
+      setClassicSetsWon(Array.from({ length: scoreSlots }, () => 0));
+      setClassicLegStarterIdx(0);
+      setClassicLegTransition(false);
       setCricket(null);
       setAround(null);
     } else if (mode === 'cricket') {
@@ -1334,6 +1368,9 @@ function App() {
 
   /* ===== Classic commit ===== */
   const commitClassic = (value, mOverride) => {
+    if (classicLegTransition) return;
+    if (darts.length >= 3) return;
+
     let v = value;
     let m = (mOverride ?? mult);
 
@@ -1352,11 +1389,11 @@ function App() {
 
     const resetMult = () => setMult(1);
 
-    const advanceTurn = () => {
+    const advanceTurn = (delay = 250) => {
       // žádný scheduleNextPlayer – ať to nepadá, přepnutí je tady vždy definované
       setTimeout(() => {
         try { nextPlayer(); } catch (e) { console.error('nextPlayer failed:', e); }
-      }, 250);
+      }, delay);
     };
 
     // === BUST (přestřel / nebo zbyde 1 při out pravidlech) ===
@@ -1452,7 +1489,7 @@ function App() {
       if (!playThrough) {
         // finalizeWin musí být mimo setState callback (kvůli čitelnosti),
         // ale tady je bezpečné – je to “okamžitý finish”
-        finalizeWin(scoreIdx);
+        completeClassicLeg(scoreIdx);
       }
 
       resetMult();
@@ -1483,8 +1520,8 @@ function App() {
 
       if (nd.length >= 3) {
         speak(lang, total === 0 ? t(lang, 'zeroWord') : total, voiceOn);
-        advanceTurn();
-        return [];
+        advanceTurn(500);
+        return nd;
       }
 
       return nd;
@@ -1493,6 +1530,7 @@ function App() {
     resetMult();
   };
   const commitClassicRound = (roundScore) => {
+    if (classicLegTransition) return;
     const total = Number(roundScore);
     if (!Number.isInteger(total) || total < 0 || total > 180) return;
 
@@ -1578,7 +1616,7 @@ function App() {
         speak(lang, total === 0 ? t(lang, 'zeroWord') : total, voiceOn);
         advanceTurn();
       } else {
-        finalizeWin(scoreIdx);
+        completeClassicLeg(scoreIdx);
       }
 
       resetMult();
@@ -2043,6 +2081,71 @@ const commitCricket = (value, mOverride) => {
       }
     };
 
+    const completeClassicLeg = (scoreIdx, opts = {}) => {
+      if (mode !== 'classic' || winner != null || classicLegTransition) return;
+
+      const scoreSlots = playerMode === 'teams' ? 3 : players.length;
+      const safeLegsToWin = Math.min(21, Math.max(1, Number(legsToWinSet) || 1));
+      const safeSetsToWin = Math.min(21, Math.max(1, Number(setsToWin) || 1));
+      const nextLegs = Array.from({ length: scoreSlots }, (_, ix) => classicLegsWon[ix] || 0);
+      const nextSets = Array.from({ length: scoreSlots }, (_, ix) => classicSetsWon[ix] || 0);
+
+      nextLegs[scoreIdx] = (nextLegs[scoreIdx] || 0) + 1;
+      let wonSet = false;
+
+      if (nextLegs[scoreIdx] >= safeLegsToWin) {
+        wonSet = true;
+        nextSets[scoreIdx] = (nextSets[scoreIdx] || 0) + 1;
+        nextLegs.fill(0);
+      }
+
+      setClassicLegsWon(nextLegs);
+      setClassicSetsWon(nextSets);
+
+      if ((nextSets[scoreIdx] || 0) >= safeSetsToWin) {
+        finalizeWin(scoreIdx, opts);
+        return;
+      }
+
+      setClassicLegTransition(true);
+      const winnerName = playerMode === 'teams'
+        ? teamNameByIndex(scoreIdx)
+        : (players[scoreIdx]?.name || t(lang, 'player'));
+      showToast(`${t(lang, wonSet ? 'setWon' : 'legWon')} ${winnerName}`);
+
+      let nextStarter = 0;
+      if (order.length > 0) {
+        if (playerMode !== 'teams') {
+          nextStarter = (classicLegStarterIdx + 1) % order.length;
+        } else {
+          const currentStartPlayer = order[classicLegStarterIdx] ?? order[0];
+          const currentStartScoreIdx = scoreIndexForPlayer(currentStartPlayer);
+          nextStarter = classicLegStarterIdx;
+          for (let step = 1; step <= order.length; step += 1) {
+            const candidate = (classicLegStarterIdx + step) % order.length;
+            const candidatePlayer = order[candidate];
+            if (scoreIndexForPlayer(candidatePlayer) !== currentStartScoreIdx) {
+              nextStarter = candidate;
+              break;
+            }
+          }
+        }
+      }
+
+      window.setTimeout(() => {
+        setScores(Array.from({ length: scoreSlots }, () => startScore));
+        setThrown(Array.from({ length: scoreSlots }, () => 0));
+        setLastTurn(Array.from({ length: scoreSlots }, () => 0));
+        setActions([]);
+        setDarts([]);
+        setMult(1);
+        setPendingWin(null);
+        setCurrIdx(nextStarter);
+        setClassicLegStarterIdx(nextStarter);
+        setClassicLegTransition(false);
+      }, 700);
+    };
+
    /* >>> DARTSCORE_UNIQUE_ANCHOR__TURN_SWITCH_HELPERS__START__7C2A <<< */
 const orderRef = useRef(order);
 useEffect(() => { orderRef.current = order; }, [order]);
@@ -2118,7 +2221,7 @@ const nextPlayerSafe = () => {
       pendingWinRef.current &&
       winnerRef.current == null
     ) {
-      finalizeWin(pendingWinRef.current.pIdx, { visitAlreadyCounted: true });
+      completeClassicLeg(pendingWinRef.current.pIdx, { visitAlreadyCounted: true });
       setPendingWin(null);
     }
 
@@ -2608,6 +2711,7 @@ const buyPremium = async () => {
       lang, soundOn, voiceOn,
       mode, startScore,
       outDouble, outTriple, outMaster,
+      legsToWinSet, setsToWin, classicLegsWon, classicSetsWon, classicLegStarterIdx,
       randomOrder, playThrough, ai,
       scoreInputMode, playerMode,
       players, order, currIdx,
@@ -2702,6 +2806,8 @@ const buyPremium = async () => {
         setLang(s.lang || lang);
         setMode(s.mode || 'classic');
         setStartScore(s.startScore || 501);
+        setLegsToWinSet(Number.isInteger(s.legsToWinSet) ? Math.min(21, Math.max(1, s.legsToWinSet)) : 1);
+        setSetsToWin(Number.isInteger(s.setsToWin) ? Math.min(21, Math.max(1, s.setsToWin)) : 1);
         if (s.scoreInputMode) setScoreInputMode(s.scoreInputMode);
         if (s.playerMode) setPlayerMode(s.playerMode);
         setPlayers(s.players);
@@ -2715,6 +2821,11 @@ const buyPremium = async () => {
         setLastTurn(s.lastTurn || []);
         setWinner(s.winner ?? null);
         setPendingWin(s.pendingWin ?? null);
+        const savedScoreSlots = (s.mode === 'classic' && s.playerMode === 'teams') ? 3 : (s.players?.length || 0);
+        setClassicLegsWon(Array.from({ length: savedScoreSlots }, (_, ix) => s.classicLegsWon?.[ix] || 0));
+        setClassicSetsWon(Array.from({ length: savedScoreSlots }, (_, ix) => s.classicSetsWon?.[ix] || 0));
+        setClassicLegStarterIdx(Number.isInteger(s.classicLegStarterIdx) ? Math.max(0, Math.min(s.classicLegStarterIdx, Math.max(0, (s.order?.length || 1) - 1))) : 0);
+        setClassicLegTransition(false);
         setCricket(s.cricket ?? null);
         setAround(s.around ?? null);
         setRoulette(s.roulette ?? null);
@@ -2759,6 +2870,7 @@ const buyPremium = async () => {
       lang, soundOn, voiceOn,
       mode, startScore,
       outDouble, outTriple, outMaster,
+      legsToWinSet, setsToWin, classicLegsWon, classicSetsWon, classicLegStarterIdx,
       randomOrder, playThrough, ai,
       scoreInputMode, playerMode,
       players, order, currIdx,
@@ -2929,63 +3041,32 @@ const buyPremium = async () => {
               </div>
             </div>
 
-            {/* 2. řádek: lobby = jazyk + hodnocení, hra = název režimu */}
-            <div
-              className="controls"
-              style={{
-                display: 'flex',
-                alignItems: 'stretch',
-                gap: 8,
-                width: '100%'
-              }}
-            >
-              {screen === 'lobby' ? (
-                <ThemedSelect
-                className="input"
-                value={lang}
-                onChange={e => setLang(e.target.value)}
+            {/* 2. řádek je jen v lobby. Ve hře šetříme výšku pro hráče. */}
+            {screen === 'lobby' && (
+              <div
+                className="controls"
                 style={{
-                  height: 44,
-                  minWidth: 150,
-                  flex: '0 0 auto'
+                  display: 'flex',
+                  alignItems: 'stretch',
+                  gap: 8,
+                  width: '100%'
                 }}
               >
-                {['cs', 'en', 'de', 'es', 'nl', 'ru', 'zh'].map(code => (
-                  <option key={code} value={code}>{LANG_LABEL[code]}</option>
-                ))}
-              </ThemedSelect>
-              ) : mode === 'classic' ? (
-                <div className="input classicModeInfo">
-                  <span className="classicModeTitle">
-                    {modeLabel}
-                  </span>
-
-                  <span className="classicModeOut">
-                    {t(lang, 'outLabel')}: {classicOutShortLabel}
-                  </span>
-                </div>
-              ) : (
-                <div
+                <ThemedSelect
                   className="input"
+                  value={lang}
+                  onChange={e => setLang(e.target.value)}
                   style={{
-                    minHeight: 44,
-                    flex: '1 1 auto',
-                    minWidth: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '6px 12px',
-                    fontWeight: 800,
-                    textAlign: 'center',
-                    borderColor: 'var(--accent)',
-                    color: 'var(--accent)'
+                    height: 44,
+                    minWidth: 150,
+                    flex: '0 0 auto'
                   }}
                 >
-                  {modeLabel}
-                </div>
-              )}
+                  {['cs', 'en', 'de', 'es', 'nl', 'ru', 'zh'].map(code => (
+                    <option key={code} value={code}>{LANG_LABEL[code]}</option>
+                  ))}
+                </ThemedSelect>
 
-              {screen === 'lobby' && (
                 <button
                   type="button"
                   className="btn"
@@ -3008,8 +3089,8 @@ const buyPremium = async () => {
                 >
                   ⭐ {t(lang, 'rateAppButton')}
                 </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
         {screen === 'lobby' ? (
@@ -3021,6 +3102,8 @@ const buyPremium = async () => {
       outDouble={outDouble} setOutDouble={setOutDouble}
       outTriple={outTriple} setOutTriple={setOutTriple}
       outMaster={outMaster} setOutMaster={setOutMaster}
+      legsToWinSet={legsToWinSet} setLegsToWinSet={setLegsToWinSet}
+      setsToWin={setsToWin} setSetsToWin={setSetsToWin}
       randomOrder={randomOrder} setRandomOrder={setRandomOrder}
       playThrough={playThrough} setPlayThrough={setPlayThrough}
       ai={ai} setAi={setAi}
@@ -3080,6 +3163,11 @@ const buyPremium = async () => {
     playerMode={playerMode}
       scoreInputMode={scoreInputMode}
     isPremium={isPremium}
+    classicOutShortLabel={classicOutShortLabel}
+    legsToWinSet={legsToWinSet}
+    setsToWin={setsToWin}
+    classicLegsWon={classicLegsWon}
+    classicSetsWon={classicSetsWon}
     players={players}
     order={order}
     currIdx={currIdx}
@@ -3236,6 +3324,8 @@ function Lobby({
     outDouble, setOutDouble,
     outTriple, setOutTriple,
     outMaster, setOutMaster,
+    legsToWinSet, setLegsToWinSet,
+    setsToWin, setSetsToWin,
     randomOrder, setRandomOrder,
     playThrough, setPlayThrough,
     ai, setAi,
@@ -3251,25 +3341,80 @@ function Lobby({
     themeColor, setThemeColor
   }) {
     const [showPremiumDetails, setShowPremiumDetails] = useState(false);
+    const matchOptions = Array.from({ length: 21 }, (_, ix) => ix + 1);
+
+    const shareApp = async () => {
+      const url = 'https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro';
+      const payload = { title: 'DartScore Pro', text: t(lang, 'shareText'), url };
+      try {
+        if (navigator.share) {
+          await navigator.share(payload);
+          return;
+        }
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(url);
+          showToast(t(lang, 'linkCopied'));
+          return;
+        }
+        window.prompt(t(lang, 'shareApp'), url);
+      } catch (e) {
+        if (e?.name === 'AbortError') return;
+        try {
+          await navigator.clipboard?.writeText?.(url);
+          showToast(t(lang, 'linkCopied'));
+        } catch {
+          window.prompt(t(lang, 'shareApp'), url);
+        }
+      }
+    };
+
     return (
       <div className="lobbyWrap">
 
-        {/* Režim */}
+        {/* Režim + zápasový formát + sdílení v jednom kompaktním řádku */}
         <div className="lobbyCard">
-          <div className="lobbyControls">
-            <span>{t(lang, 'mode')}</span>
-            <ThemedSelect
-              className="input"
-              value={mode}
-              onChange={e => setMode(e.target.value)}
-              style={{ height: 34 }}
-            >
-              <option value="classic">{t(lang, 'classic')}</option>
-              <option value="cricket">{t(lang, 'cricket')}</option>
-              <option value="around">{t(lang, 'around')}</option>
-              <option value="roulette">{t(lang, 'roulette')}</option>
-              <option value="rouletteDouble">{t(lang, 'rouletteDouble')}</option>
-            </ThemedSelect>
+          <div className="lobbyControls lobbyModeRow">
+            <div className="lobbyModeGroup">
+              <span>{t(lang, 'mode')}</span>
+              <ThemedSelect
+                className="input"
+                value={mode}
+                onChange={e => setMode(e.target.value)}
+                style={{ height: 34 }}
+              >
+                <option value="classic">{t(lang, 'classic')}</option>
+                <option value="cricket">{t(lang, 'cricket')}</option>
+                <option value="around">{t(lang, 'around')}</option>
+                <option value="roulette">{t(lang, 'roulette')}</option>
+                <option value="rouletteDouble">{t(lang, 'rouletteDouble')}</option>
+              </ThemedSelect>
+            </div>
+
+            {mode === 'classic' && (
+              <div className="matchFormatControls">
+                <label className="matchFormatItem">
+                  <span>{t(lang, 'legs')}</span>
+                  <ThemedSelect className="input matchCountSelect" value={legsToWinSet} onChange={e => setLegsToWinSet(Number(e.target.value))}>
+                    {matchOptions.map(n => <option key={`legs-${n}`} value={n}>{n}</option>)}
+                  </ThemedSelect>
+                </label>
+                <label className="matchFormatItem">
+                  <span>{t(lang, 'sets')}</span>
+                  <ThemedSelect className="input matchCountSelect" value={setsToWin} onChange={e => setSetsToWin(Number(e.target.value))}>
+                    {matchOptions.map(n => <option key={`sets-${n}`} value={n}>{n}</option>)}
+                  </ThemedSelect>
+                </label>
+              </div>
+            )}
+
+            <button type="button" className="shareIconBtn" onClick={shareApp} title={t(lang, 'shareApp')} aria-label={t(lang, 'shareApp')}>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="18" cy="5" r="2.5" />
+                <circle cx="6" cy="12" r="2.5" />
+                <circle cx="18" cy="19" r="2.5" />
+                <path d="M8.2 10.9 15.8 6.2M8.2 13.1l7.6 4.7" />
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -3864,7 +4009,8 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
   }
   /* ===== GAME SCREEN ===== */
   function Game({
-    lang, t, mode, playerMode, scoreInputMode, isPremium,
+    lang, t, mode, playerMode, scoreInputMode, isPremium, classicOutShortLabel,
+    legsToWinSet, setsToWin, classicLegsWon, classicSetsWon,
     players, order, currIdx,
     scores, averages, thrown, lastTurn,
     cricket, around, roulette,
@@ -4133,44 +4279,34 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
       : { outline: '2px solid var(--green)' };
     return (
       <div className="gameWrap">
-        {/* HORNÍ LIŠTA */}
-        <div className="gameTopBar">
-          {(mode === 'roulette' || mode === 'rouletteDouble') && (
-            <span className="badge">
-              {`${t(lang, 'target')}: ${rouletteTargetLabel(roulette?.currentTargets?.[order[currIdx]])} • ${Math.min(Math.floor(((thrown[order[currIdx]] || 0) / 3)) + 1, roulette?.maxRounds ?? 8)}/${roulette?.maxRounds ?? 8}`}
-            </span>
-          )}
+        {/* KOMPAKTNÍ HERNÍ LIŠTA: jen užitečný stav + textové akce */}
+        <div className="gameTopBar compactGameTopBar">
+          <div className="gameTopStatus">
+            {mode === 'classic' && (
+              <span className="gameTopInfo">
+                {t(lang, 'outLabel')}: {classicOutShortLabel}
+              </span>
+            )}
 
-          <div
-            className="gameTopBtns"
-            style={{ display: 'flex', gap: 8, flexWrap: 'nowrap' }}
-          >
-            <button
-              type="button"
-              className="btn"
-              onClick={restartGame}
-              style={{ whiteSpace: 'nowrap', minWidth: 80 }}
-            >
+            {(mode === 'roulette' || mode === 'rouletteDouble') && (
+              <span className="gameTopInfo">
+                {`${t(lang, 'roundCount')}: ${Math.min(Math.floor(((thrown[order[currIdx]] || 0) / 3)) + 1, roulette?.maxRounds ?? 8)}/${roulette?.maxRounds ?? 8}`}
+              </span>
+            )}
+          </div>
+
+          <div className="gameTopBtns compactGameActions">
+            <button type="button" className="gameTextAction" onClick={restartGame}>
               {t(lang, 'restart') ?? 'Restart'}
             </button>
 
             {isPremium && (
-              <button
-                type="button"
-                className="btn"
-                onClick={saveGame}
-                style={{ whiteSpace: 'nowrap', minWidth: 80 }}
-              >
+              <button type="button" className="gameTextAction" onClick={saveGame}>
                 {t(lang, 'saveGame') ?? 'Uložit hru'}
               </button>
             )}
 
-            <button
-              type="button"
-              className="btn ghost"
-              onClick={() => setScreen('lobby')}
-              style={{ whiteSpace: 'nowrap', minWidth: 80 }}
-            >
+            <button type="button" className="gameTextAction" onClick={() => setScreen('lobby')}>
               {t(lang, 'back') ?? 'Zpět'}
             </button>
           </div>
@@ -4213,7 +4349,12 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
                     )}
 
                     <div className="playerHeader">
-                      <div className="playerNameText">{teamName}</div>
+                      <div className="playerTitleLine">
+                        <div className="playerNameText">{teamName}</div>
+                        <div className="classicMatchProgress">
+                          {t(lang, 'sets')} {classicSetsWon?.[teamIdx] || 0}/{setsToWin} · {t(lang, 'legs')} {classicLegsWon?.[teamIdx] || 0}/{legsToWinSet}
+                        </div>
+                      </div>
 
                       <div className="playerStats">
                         <span>{thrown[teamIdx] || 0} {t(lang, 'darts')}</span>
@@ -4395,7 +4536,14 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
                   )}
 
                   <div className="playerHeader">
-                    <div className="playerNameText">{p.name}</div>
+                    <div className="playerTitleLine">
+                      <div className="playerNameText">{p.name}</div>
+                      {mode === 'classic' && (
+                        <div className="classicMatchProgress">
+                          {t(lang, 'sets')} {classicSetsWon?.[pIdx] || 0}/{setsToWin} · {t(lang, 'legs')} {classicLegsWon?.[pIdx] || 0}/{legsToWinSet}
+                        </div>
+                      )}
+                    </div>
 
                     {mode === 'classic' ? (
                       <div className="playerStats">

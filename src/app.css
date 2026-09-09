@@ -1338,3 +1338,185 @@ html, body{
 .rouletteControls .rouletteSwitchBtn:disabled{
   filter:saturate(.72) brightness(.78);
 }
+
+
+/* === COMPACT GAME HEADER === */
+.container[data-screen="game"] .header{
+  gap:0;
+  padding-bottom:6px;
+}
+
+.compactGameTopBar{
+  min-height:32px;
+  margin-bottom:4px;
+  padding:4px 8px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#171a1f;
+  gap:6px 12px;
+  flex-wrap:wrap;
+}
+
+.gameTopStatus{
+  display:flex;
+  align-items:center;
+  min-width:0;
+}
+
+.gameTopInfo{
+  color:var(--accent);
+  font-size:13px;
+  line-height:1.15;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.compactGameActions{
+  display:flex;
+  align-items:center;
+  gap:0;
+  margin-left:auto;
+  min-width:0;
+}
+
+.gameTextAction{
+  appearance:none;
+  -webkit-appearance:none;
+  border:0;
+  background:transparent;
+  color:var(--accent);
+  padding:2px 7px;
+  margin:0;
+  font:inherit;
+  font-size:13px;
+  line-height:1.2;
+  font-weight:800;
+  cursor:pointer;
+  white-space:nowrap;
+}
+
+.gameTextAction + .gameTextAction{
+  border-left:1px solid var(--line);
+}
+
+.gameTextAction:active{
+  opacity:.65;
+}
+
+/* Cricket měl vlastní starší 12px mezeru. Kompaktní lišta má všude stejnou výšku. */
+.container[data-screen="game"][data-mode="cricket"] .compactGameTopBar{
+  margin-bottom:4px;
+}
+
+@media (max-width:420px){
+  .compactGameTopBar{
+    padding:4px 6px;
+  }
+  .gameTopInfo,
+  .gameTextAction{
+    font-size:12px;
+  }
+  .gameTextAction{
+    padding-left:5px;
+    padding-right:5px;
+  }
+}
+
+
+/* === FIXED KEYPAD ACTION COLORS === */
+.padPane.dartKeypad .multBtn.mult-2{
+  background:linear-gradient(180deg,#fde047,#eab308) !important;
+  border-color:#facc15 !important;
+  color:#171717 !important;
+}
+.padPane.dartKeypad .multBtn.mult-3{
+  background:linear-gradient(180deg,#3b82f6,#1d4ed8) !important;
+  border-color:#60a5fa !important;
+  color:#fff !important;
+}
+.padPane.dartKeypad .multBtn.backspace{
+  background:linear-gradient(180deg,#ef4444,#b91c1c) !important;
+  border-color:#f87171 !important;
+  color:#fff !important;
+}
+.padPane.dartKeypad .multBtn.mult-2.active,
+.padPane.dartKeypad .multBtn.mult-3.active{
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.8) !important;
+}
+
+
+/* === CLASSIC SETS / LEGS + SHARE === */
+.lobbyModeRow{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  width:100%;
+  flex-wrap:wrap;
+}
+.lobbyModeGroup,
+.matchFormatControls,
+.matchFormatItem{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.matchFormatControls{
+  margin-left:auto;
+  flex-wrap:wrap;
+}
+.matchFormatItem{
+  color:#fff;
+  font-weight:800;
+  font-size:13px;
+}
+.matchCountSelect{
+  min-width:58px;
+  height:34px;
+  padding-left:8px;
+  padding-right:8px;
+}
+.shareIconBtn{
+  width:36px;
+  height:34px;
+  margin-left:2px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid var(--accent);
+  border-radius:9px;
+  background:#171a1f;
+  color:var(--accent);
+  padding:0;
+  cursor:pointer;
+  flex:0 0 auto;
+}
+.shareIconBtn svg{
+  width:21px;
+  height:21px;
+  fill:currentColor;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+}
+.shareIconBtn svg path{ fill:none; }
+.playerTitleLine{
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+  min-width:0;
+  flex-wrap:wrap;
+}
+.classicMatchProgress{
+  color:var(--accent);
+  font-size:12px;
+  line-height:1.1;
+  font-weight:900;
+  white-space:nowrap;
+}
+@media (max-width:520px){
+  .matchFormatControls{
+    margin-left:0;
+  }
+  .lobbyModeGroup{ flex:1 1 auto; }
+  .shareIconBtn{ margin-left:auto; }
+}
