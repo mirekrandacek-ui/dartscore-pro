@@ -1334,6 +1334,8 @@ function App() {
 
   /* ===== Classic commit ===== */
   const commitClassic = (value, mOverride) => {
+    if (darts.length >= 3) return;
+
     let v = value;
     let m = (mOverride ?? mult);
 
@@ -1352,11 +1354,11 @@ function App() {
 
     const resetMult = () => setMult(1);
 
-    const advanceTurn = () => {
+    const advanceTurn = (delay = 250) => {
       // žádný scheduleNextPlayer – ať to nepadá, přepnutí je tady vždy definované
       setTimeout(() => {
         try { nextPlayer(); } catch (e) { console.error('nextPlayer failed:', e); }
-      }, 250);
+      }, delay);
     };
 
     // === BUST (přestřel / nebo zbyde 1 při out pravidlech) ===
@@ -1483,8 +1485,8 @@ function App() {
 
       if (nd.length >= 3) {
         speak(lang, total === 0 ? t(lang, 'zeroWord') : total, voiceOn);
-        advanceTurn();
-        return [];
+        advanceTurn(500);
+        return nd;
       }
 
       return nd;
