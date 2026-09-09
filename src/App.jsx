@@ -35,7 +35,7 @@ const T = {
     teamB: 'Tým B',
     teamC: 'Tým C',
     teamNeedPlayers: 'Alespoň dva týmy musí mít hráče.',
-    rouletteTotalPoints: 'Body celkem',
+    rouletteTotalPoints: 'Body celkem', roundCount: 'Počet kol',
     scoreInputType: 'Typ počítání',
       scoreInput: 'Zadávání',
       scoreByDarts: 'Po šipkách',
@@ -95,7 +95,7 @@ premiumNote: "Jednorázová platba. Žádné předplatné.",
     teamB: 'Team B',
     teamC: 'Team C',
     teamNeedPlayers: 'At least two teams must have players.',
-    rouletteTotalPoints: 'Total points',
+    rouletteTotalPoints: 'Total points', roundCount: 'Rounds',
     scoreInputType: 'Scoring type',
       scoreInput: 'Input',
       scoreByDarts: 'By darts',
@@ -154,7 +154,7 @@ activatePremium: 'Activate Premium',
     teamB: 'Team B',
     teamC: 'Team C',
     teamNeedPlayers: 'Mindestens zwei Teams müssen Spieler haben.',
-    rouletteTotalPoints: 'Punkte gesamt',
+    rouletteTotalPoints: 'Punkte gesamt', roundCount: 'Runden',
     scoreInputType: 'Zählweise',
       scoreInput: 'Eingabe',
       scoreByDarts: 'Pro Dart',
@@ -213,7 +213,7 @@ premiumNote: "Einmalige Zahlung. Kein Abo.",
     teamB: 'Equipo B',
     teamC: 'Equipo C',
     teamNeedPlayers: 'Al menos dos equipos deben tener jugadores.',
-    rouletteTotalPoints: 'Puntos totales',
+    rouletteTotalPoints: 'Puntos totales', roundCount: 'Rondas',
     scoreInputType: 'Tipo de puntuación',
       scoreInput: 'Entrada',
       scoreByDarts: 'Por dardos',
@@ -272,7 +272,7 @@ premiumNote: "Pago único. Sin suscripción.",
     teamB: 'Team B',
     teamC: 'Team C',
     teamNeedPlayers: 'Minstens twee teams moeten spelers hebben.',
-    rouletteTotalPoints: 'Totaal punten',
+    rouletteTotalPoints: 'Totaal punten', roundCount: 'Rondes',
     scoreInputType: 'Scoretype',
       scoreInput: 'Invoer',
       scoreByDarts: 'Per dart',
@@ -331,7 +331,7 @@ premiumNote: "Eenmalige betaling. Geen abonnement.",
     teamB: 'Команда B',
     teamC: 'Команда C',
     teamNeedPlayers: 'Минимум в двух командах должны быть игроки.',
-    rouletteTotalPoints: 'Всего очков',
+    rouletteTotalPoints: 'Всего очков', roundCount: 'Раунды',
     scoreInputType: 'Тип подсчёта',
       scoreInput: 'Ввод',
       scoreByDarts: 'По дротикам',
@@ -390,7 +390,7 @@ premiumNote: "Разовая оплата. Без подписки.",
     teamB: '团队 B',
     teamC: '团队 C',
     teamNeedPlayers: '至少两个团队必须有玩家。',
-    rouletteTotalPoints: '总分',
+    rouletteTotalPoints: '总分', roundCount: '轮数',
     scoreInputType: '计分方式',
       scoreInput: '输入',
       scoreByDarts: '按镖输入',
@@ -3049,6 +3049,7 @@ const buyPremium = async () => {
     playerMode={playerMode}
       scoreInputMode={scoreInputMode}
     isPremium={isPremium}
+    classicOutShortLabel={classicOutShortLabel}
     players={players}
     order={order}
     currIdx={currIdx}
@@ -3833,7 +3834,7 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
   }
   /* ===== GAME SCREEN ===== */
   function Game({
-    lang, t, mode, playerMode, scoreInputMode, isPremium,
+    lang, t, mode, playerMode, scoreInputMode, isPremium, classicOutShortLabel,
     players, order, currIdx,
     scores, averages, thrown, lastTurn,
     cricket, around, roulette,
@@ -4113,7 +4114,7 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
 
             {(mode === 'roulette' || mode === 'rouletteDouble') && (
               <span className="gameTopInfo">
-                {`${t(lang, 'target')}: ${rouletteTargetLabel(roulette?.currentTargets?.[order[currIdx]])} • ${Math.min(Math.floor(((thrown[order[currIdx]] || 0) / 3)) + 1, roulette?.maxRounds ?? 8)}/${roulette?.maxRounds ?? 8}`}
+                {`${t(lang, 'roundCount')}: ${Math.min(Math.floor(((thrown[order[currIdx]] || 0) / 3)) + 1, roulette?.maxRounds ?? 8)}/${roulette?.maxRounds ?? 8}`}
               </span>
             )}
           </div>
