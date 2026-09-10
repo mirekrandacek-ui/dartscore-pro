@@ -813,9 +813,12 @@ function App() {
     setTimeout(() => setToast(null), 1600);
   };
 
-  const [lang, setLang] = useState(
-    ((navigator.language || 'cs').slice(0, 2)) || 'cs'
-  );
+  const [lang, setLang] = useState(() => {
+    const detectedLang = ((navigator.language || 'en').slice(0, 2)).toLowerCase();
+    return ['cs', 'en', 'de', 'es', 'nl', 'ru', 'zh'].includes(detectedLang)
+      ? detectedLang
+      : 'en';
+  });
   const [soundOn, setSoundOn] = useState(true);
   const [voiceOn, setVoiceOn] = useState(true);
 
