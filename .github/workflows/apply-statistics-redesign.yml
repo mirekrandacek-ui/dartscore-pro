@@ -26,6 +26,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Prepare patcher dashboard source
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/apply-statistics-redesign.mjs')
+          s = p.read_text()
+          start = s.index("const dashboard = `")
+          end = s.index(";\nreplaceBetween(\"  function SavedGames({\"", start)
+          s = s[:start] + "const dashboard = fs.readFileSync('scripts/statistics-dashboard.txt', 'utf8')" + s[end:]
+          p.write_text(s)
+          PY
+
       - name: Apply focused patch
         run: node scripts/apply-statistics-redesign.mjs
 
