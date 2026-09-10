@@ -85,10 +85,10 @@ const CHECKOUT_DARTS = [
   ...CHECKOUT_DOUBLE_PREF.map((v, i) => ({ v, m: 2, score: v * 2, label: 'D' + v, setupRank: 55 + i }))
 ];
 const checkoutFinishAllowed = (dart, rules) => {
-  const restricted = rules.double || rules.triple || rules.master;
+  const restricted = rules.double || rules.triple;
   if (!restricted) return true;
-  if ((dart.m === 2 || dart.v === 50) && (rules.double || rules.master)) return true;
-  if (dart.m === 3 && (rules.triple || rules.master)) return true;
+  if ((dart.m === 2 || dart.v === 50) && rules.double) return true;
+  if (dart.m === 3 && rules.triple) return true;
   return false;
 };
 const checkoutFinishRank = (dart, rules) => {
@@ -101,7 +101,7 @@ const checkoutFinishRank = (dart, rules) => {
     const ix = CHECKOUT_TRIPLE_PREF.indexOf(dart.v);
     return 8 + (ix < 0 ? 25 : ix) * 2;
   }
-  if (!rules.double && !rules.triple && !rules.master && dart.m === 1) {
+  if (!rules.double && !rules.triple && dart.m === 1) {
     return 4 + Math.max(0, 20 - dart.v);
   }
   return 100;
@@ -112,7 +112,7 @@ const getCheckoutHint = (score, dartsLeft, rules = {}) => {
   const left = Math.min(3, Math.max(0, Number(dartsLeft) || 0));
   if (!Number.isInteger(target) || target <= 0 || left < 1) return '';
 
-  const key = [target, left, rules.double ? 1 : 0, rules.triple ? 1 : 0, rules.master ? 1 : 0].join('|');
+  const key = [target, left, rules.double ? 1 : 0, rules.triple ? 1 : 0].join('|');
   if (checkoutHintCache.has(key)) return checkoutHintCache.get(key);
 
   const finals = CHECKOUT_DARTS.filter(d => checkoutFinishAllowed(d, rules));
@@ -125,14 +125,24 @@ const getCheckoutHint = (score, dartsLeft, rules = {}) => {
     const final = route[route.length - 1];
     if (!checkoutFinishAllowed(final, rules)) return;
     const setupCost = route.slice(0, -1).reduce((sum, d) => sum + d.setupRank, 0);
-    const cost = setupCost + checkoutFinishRank(final, rules);
+    let cost = ((route.length - 1) * 100) + setupCost + checkoutFinishRank(final, rules);
+
+    if (route.length > 1) {
+      const first = route[0];
+      // Prefer a treble first. Avoid opening with Bull when a natural treble route exists.
+      if (first.m === 3) cost -= 20;
+      if (first.v === 50) {
+        const tripleOnly = rules.triple && !rules.double;
+        cost += tripleOnly ? 250 : 80;
+      }
+    }
     if (cost < bestCost) {
       bestCost = cost;
       best = route;
     }
   };
 
-  for (let len = 1; len <= left && !best; len += 1) {
+  for (let len = 1; len <= left; len += 1) {
     if (len === 1) {
       finals.forEach(f => consider([f]));
     } else if (len === 2) {
@@ -203,7 +213,7 @@ const T = {
       roundTotal: 'Součet kola',
       submitScore: 'Zapsat',
       roundTotalHint: 'Zadej součet za celé kolo po 3 šipkách.',
-      confirmCheckoutRound: 'Bylo kolo zavřeno správným double/triple/master-out hodem?',
+      confirmCheckoutRound: 'Bylo kolo zavřeno správným double/triple hodem?',
     rouletteDrawButton: 'Losovat',
     rouletteHitButton: 'Zásah +1',
     rouletteSwitchButton: 'Přepnout hráče',
@@ -217,7 +227,7 @@ const T = {
     h2h: 'Vzájemné zápasy', selectPlayer: 'Vyber hráče', wins: 'výhry',
     // Pravidla – plně lokalizovaná
     rulesClassic:
-      'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Cíl: přesně na 0. Volitelné: Double-out / Triple-out / Master-out (pokud nic, pak libovolné ukončení). Přestřelení nebo zbyde 1 (pokud je aktivní některé out pravidlo) = bez skóre.',
+      'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Cíl: přesně na 0. Volitelné: Double-out / Triple-out (pokud nic, pak libovolné ukončení). Přestřelení nebo zbyde 1 (pokud je aktivní některé out pravidlo) = bez skóre.',
     rulesCricket:
       'Hraje se čísly 15–20 a 25. Single = 1 značka „/“, Double = 2 (✕), Triple = 3 (Ⓧ). Po 3 značkách je číslo zavřené. Přebytečné zásahy dávají body, jen pokud soupeř(i) nemají číslo zavřené.',
     rulesAround:
@@ -267,7 +277,7 @@ premiumNote: "Jednorázová platba. Žádné předplatné.",
       roundTotal: 'Round total',
       submitScore: 'Submit',
       roundTotalHint: 'Enter the total score for the full 3-dart round.',
-      confirmCheckoutRound: 'Was the round finished with a valid double/triple/master-out throw?',
+      confirmCheckoutRound: 'Was the round finished with a valid double/triple throw?',
     rouletteDrawButton: 'Draw',
     rouletteHitButton: 'Hit +1',
     rouletteSwitchButton: 'Switch player',
@@ -277,7 +287,7 @@ premiumNote: "Jednorázová platba. Žádné předplatné.",
     filter: 'Filter', all: 'All', week: 'Week', month: 'Month', year: 'Year',
     h2h: 'Head-to-Head', selectPlayer: 'Select player', wins: 'wins',
     rulesClassic:
-      'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Goal: finish exactly on 0. Optional: Double-out / Triple-out / Master-out (if none, any-out allowed). Overshoot or leaving 1 (when any out-rule is active) = bust.',
+      'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Goal: finish exactly on 0. Optional: Double-out / Triple-out (if none, any-out allowed). Overshoot or leaving 1 (when any out-rule is active) = bust.',
     rulesCricket:
       'Targets: 15–20 and 25. Single = 1 “/”, Double = 2 (✕), Triple = 3 (Ⓧ). After 3 marks the number is closed. Extra marks score points only if opponents still have the number open.',
     rulesAround:
@@ -330,7 +340,7 @@ activatePremium: 'Activate Premium',
       roundTotal: 'Rundensumme',
       submitScore: 'Eintragen',
       roundTotalHint: 'Gib die Gesamtpunktzahl der kompletten 3-Dart-Runde ein.',
-      confirmCheckoutRound: 'Wurde die Runde mit einem gültigen Double/Triple/Master-out beendet?',
+      confirmCheckoutRound: 'Wurde die Runde mit einem gültigen Double/Triple beendet?',
     rouletteDrawButton: 'Auslosen',
     rouletteHitButton: 'Treffer +1',
     rouletteSwitchButton: 'Spieler wechseln',
@@ -343,7 +353,7 @@ activatePremium: 'Activate Premium',
     filter: 'Filter', all: 'Alle', week: 'Woche', month: 'Monat', year: 'Jahr',
     h2h: 'Direkte Duelle', selectPlayer: 'Spieler wählen', wins: 'Siege',
     rulesClassic:
-      'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Ziel: exakt 0. Optional: Double-out / Triple-out / Master-out (wenn nichts gewählt, any-out). Überschießen oder 1 übrig (bei aktivem Out-Regel) = bust.',
+      'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Ziel: exakt 0. Optional: Double-out / Triple-out (wenn nichts gewählt, any-out). Überschießen oder 1 übrig (bei aktivem Out-Regel) = bust.',
     rulesCricket:
       'Ziele: 15–20 und 25. Single = 1 „/“, Double = 2 (✕), Triple = 3 (Ⓧ). Nach 3 Marken ist die Zahl geschlossen. Überschüsse punkten nur, wenn Gegner die Zahl nicht geschlossen haben.',
     rulesAround:
@@ -393,7 +403,7 @@ premiumNote: "Einmalige Zahlung. Kein Abo.",
       roundTotal: 'Total ronda',
       submitScore: 'Guardar',
       roundTotalHint: 'Introduce la puntuación total de la ronda completa de 3 dardos.',
-      confirmCheckoutRound: '¿La ronda se cerró con un tiro válido double/triple/master-out?',
+      confirmCheckoutRound: '¿La ronda se cerró con un tiro válido double/triple?',
     rouletteDrawButton: 'Sortear',
     rouletteHitButton: 'Acierto +1',
     rouletteSwitchButton: 'Cambiar jugador',
@@ -406,7 +416,7 @@ premiumNote: "Einmalige Zahlung. Kein Abo.",
     filter: 'Filtro', all: 'Todo', week: 'Semana', month: 'Mes', year: 'Año',
     h2h: 'Cara a cara', selectPlayer: 'Elige jugador', wins: 'victorias',
     rulesClassic:
-      'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Objetivo: llegar a 0 exacto. Opcional: Double-out / Triple-out / Master-out (si no hay, any-out). Pasarse o quedar en 1 (con reglas activas) = sin puntuación.',
+      'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Objetivo: llegar a 0 exacto. Opcional: Double-out / Triple-out (si no hay, any-out). Pasarse o quedar en 1 (con reglas activas) = sin puntuación.',
     rulesCricket:
       'Objetivos 15–20 y 25. Single = 1 “/”, Double = 2 (✕), Triple = 3 (Ⓧ). Con 3 marcas el número se cierra. Excesos puntúan solo si los rivales no lo tienen cerrado.',
     rulesAround:
@@ -456,7 +466,7 @@ premiumNote: "Pago único. Sin suscripción.",
       roundTotal: 'Rondetotaal',
       submitScore: 'Opslaan',
       roundTotalHint: 'Voer de totale score van de volledige 3-dart ronde in.',
-      confirmCheckoutRound: 'Is de ronde beëindigd met een geldige double/triple/master-out worp?',
+      confirmCheckoutRound: 'Is de ronde beëindigd met een geldige double/triple worp?',
     rouletteDrawButton: 'Loten',
     rouletteHitButton: 'Raak +1',
     rouletteSwitchButton: 'Speler wisselen',
@@ -469,7 +479,7 @@ premiumNote: "Pago único. Sin suscripción.",
     filter: 'Filter', all: 'Alles', week: 'Week', month: 'Maand', year: 'Jaar',
     h2h: 'Onderling', selectPlayer: 'Kies speler', wins: 'zeges',
     rulesClassic:
-      'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Doel: exact 0. Optioneel: Double-out / Triple-out / Master-out (geen keuze = any-out). Overschieten of 1 over (met regel actief) = bust.',
+      'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Doel: exact 0. Optioneel: Double-out / Triple-out (geen keuze = any-out). Overschieten of 1 over (met regel actief) = bust.',
     rulesCricket:
       'Doelen 15–20 en 25. Single = 1 “/”, Double = 2 (✕), Triple = 3 (Ⓧ). Na 3 tekens is het getal gesloten. Overschotten scoren alleen als tegenstanders nog open hebben.',
     rulesAround:
@@ -519,7 +529,7 @@ premiumNote: "Eenmalige betaling. Geen abonnement.",
       roundTotal: 'Сумма раунда',
       submitScore: 'Записать',
       roundTotalHint: 'Введите сумму за полный раунд из 3 дротиков.',
-      confirmCheckoutRound: 'Раунд был завершён правильным броском double/triple/master-out?',
+      confirmCheckoutRound: 'Раунд был завершён правильным броском double/triple?',
     rouletteDrawButton: 'Случайная цель',
     rouletteHitButton: 'Попадание +1',
     rouletteSwitchButton: 'Сменить игрока',
@@ -532,7 +542,7 @@ premiumNote: "Eenmalige betaling. Geen abonnement.",
     filter: 'Фильтр', all: 'Все', week: 'Неделя', month: 'Месяц', year: 'Год',
     h2h: 'Личные встречи', selectPlayer: 'Выбери игрока', wins: 'побед',
     rulesClassic:
-      'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Цель: ровно 0. Опции: Double-out / Triple-out / Master-out (если не выбрано, любой финиш). Перебор или 1 при активных правилах = без очков.',
+      'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Цель: ровно 0. Опции: Double-out / Triple-out (если не выбрано, любой финиш). Перебор или 1 при активных правилах = без очков.',
     rulesCricket:
       'Цели: 15–20 и 25. Single = 1 «/», Double = 2 (✕), Triple = 3 (Ⓧ). После 3 меток число закрыто. Излишки дают очки только если у соперников число не закрыто.',
     rulesAround:
@@ -581,7 +591,7 @@ premiumNote: "Разовая оплата. Без подписки.",
       roundTotal: '回合总分',
       submitScore: '提交',
       roundTotalHint: '输入完整 3 镖回合的总分。',
-      confirmCheckoutRound: '本回合是否以有效的 double/triple/master-out 投镖结束？',
+      confirmCheckoutRound: '本回合是否以有效的 double/triple 投镖结束？',
     rouletteDrawButton: '抽取',
     rouletteHitButton: '命中 +1',
     rouletteSwitchButton: '切换玩家',
@@ -594,7 +604,7 @@ premiumNote: "Разовая оплата. Без подписки.",
     filter: '筛选', all: '全部', week: '一周', month: '一月', year: '一年',
     h2h: '对战', selectPlayer: '选玩家', wins: '胜',
     rulesClassic:
-      'Single = ×1, Double = ×2, Triple = ×3，Bull 25/50。目标：正好到 0。可选规则：Double-out / Triple-out / Master-out（未选则任意收尾）。超分或剩 1（在启用规则时）= 爆掉。',
+      'Single = ×1, Double = ×2, Triple = ×3，Bull 25/50。目标：正好到 0。可选规则：Double-out / Triple-out（未选则任意收尾）。超分或剩 1（在启用规则时）= 爆掉。',
     rulesCricket:
       '目标为 15–20 和 25。Single = 1“/”，Double = 2（✕），Triple = 3（Ⓧ）。3 记号后该数关闭。多余命中仅在对手未关闭时计分。',
     rulesAround:
@@ -1051,7 +1061,8 @@ function App() {
 
   const [outDouble, setOutDouble] = useState(true);
   const [outTriple, setOutTriple] = useState(false);
-  const [outMaster, setOutMaster] = useState(false);
+  // Double + Triple together behaves as Master-out; neither selected is Any-out.
+  const outMaster = outDouble && outTriple;
 
   // Classic match format: first to N legs wins a set; first to N sets wins the match.
   const [legsToWinSet, setLegsToWinSet] = useState(1);
@@ -1099,7 +1110,6 @@ function App() {
       if (s.startScore) setStartScore(s.startScore);
       if (typeof s.outDouble === 'boolean') setOutDouble(s.outDouble);
       if (typeof s.outTriple === 'boolean') setOutTriple(s.outTriple);
-      if (typeof s.outMaster === 'boolean') setOutMaster(s.outMaster);
       if (Number.isInteger(s.legsToWinSet) && s.legsToWinSet >= 1 && s.legsToWinSet <= 21) setLegsToWinSet(s.legsToWinSet);
       if (Number.isInteger(s.setsToWin) && s.setsToWin >= 1 && s.setsToWin <= 21) setSetsToWin(s.setsToWin);
       if (typeof s.randomOrder === 'boolean') setRandomOrder(s.randomOrder);
@@ -1507,7 +1517,7 @@ function App() {
     return arr;
   }
 
-  const anyOutSelected = outDouble || outTriple || outMaster;
+  const anyOutSelected = outDouble || outTriple;
   const isFinishAllowed = (m, v) => {
     if (!anyOutSelected) return true;
 
@@ -1517,7 +1527,6 @@ function App() {
 
     if ((m === 2 || isBullseyeCheckout) && outDouble) return true;
     if (m === 3 && outTriple) return true;
-    if ((m === 2 || m === 3 || isBullseyeCheckout) && outMaster) return true;
     return false;
   };
   const isBustLeavingOne = (newScore) => (anyOutSelected ? newScore === 1 : false);
@@ -2958,7 +2967,6 @@ const buyPremium = async () => {
       const rules = [];
       if (outDouble) rules.push('DO-OUT');
       if (outTriple) rules.push('TR-OUT');
-      if (outMaster) rules.push('MA-OUT');
       return rules.length ? rules.join(' / ') : 'ANY-OUT';
     })();
 
@@ -3146,7 +3154,6 @@ const buyPremium = async () => {
       startScore={startScore} setStartScore={setStartScore}
       outDouble={outDouble} setOutDouble={setOutDouble}
       outTriple={outTriple} setOutTriple={setOutTriple}
-      outMaster={outMaster} setOutMaster={setOutMaster}
       legsToWinSet={legsToWinSet} setLegsToWinSet={setLegsToWinSet}
       setsToWin={setsToWin} setSetsToWin={setSetsToWin}
       randomOrder={randomOrder} setRandomOrder={setRandomOrder}
@@ -3371,7 +3378,6 @@ function Lobby({
     startScore, setStartScore,
     outDouble, setOutDouble,
     outTriple, setOutTriple,
-    outMaster, setOutMaster,
     legsToWinSet, setLegsToWinSet,
     setsToWin, setSetsToWin,
     randomOrder, setRandomOrder,
@@ -3516,19 +3522,6 @@ function Lobby({
                 {t(lang, 'tripleOut')}
               </label>
 
-              <label className={`tab ${outMaster ? 'active' : ''}`}>
-                <input
-                  type="checkbox"
-                  checked={outMaster}
-                  onChange={e => setOutMaster(e.target.checked)}
-                  style={{ marginRight: 6 }}
-                />
-                {t(lang, 'masterOut')}
-              </label>
-
-              <div style={{ opacity: .8, fontSize: 12 }}>
-                {t(lang, 'anyOutHint')}
-              </div>
             </div>
           </div>
         )}
