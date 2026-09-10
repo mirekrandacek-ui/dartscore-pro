@@ -3347,6 +3347,10 @@ function Lobby({
       const url = 'https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro';
       const payload = { title: 'DartScore Pro', text: t(lang, 'shareText'), url };
       try {
+        if (window.DartScoreAndroid?.shareApp) {
+          window.DartScoreAndroid.shareApp(payload.title, payload.text, payload.url);
+          return;
+        }
         if (navigator.share) {
           await navigator.share(payload);
           return;
