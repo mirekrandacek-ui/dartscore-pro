@@ -693,7 +693,7 @@ premiumNote: "Разовая оплата. Без подписки.",
 premiumDesc: "将你的游戏提升到新的水平。获得更多控制、统计数据和更好的体验。",
 premiumFeature1: "无广告",
 premiumFeature2: "保存游戏",
-premiumFeature3: "玩家统计",
+premiumFeature3: "支持后续开发",
 premiumFeature4: "自定义颜色主题",
 premiumButton: "解锁高级版 – €2.99",
 premiumNote: "一次性付款，无订阅。",
@@ -2353,7 +2353,7 @@ const commitCricket = (value, mOverride) => {
         playedVisitsRef.current += 1;
       }
 
-      if (isPremium) {
+      {
         try {
           const list = JSON.parse(localStorage.getItem('finishedGames') || '[]');
           const gameRecord = {
@@ -4056,7 +4056,7 @@ function Lobby({
           </details>
         </div>
         {/* >>> DARTSCORE_UNIQUE_ANCHOR__RULES_BLOCK__END__9F31 <<< */}
-        {isPremium && <StatisticsDashboard lang={lang} t={t} showToast={showToast} />}
+        <StatisticsDashboard lang={lang} t={t} showToast={showToast} />
       </div>
     );
   }
