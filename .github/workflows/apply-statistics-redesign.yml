@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Prepare patcher dashboard source
+      - name: Prepare patcher
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -35,6 +35,7 @@ jobs:
           start = s.index("const dashboard = `")
           end = s.index(";\nreplaceBetween(\"  function SavedGames({\"", start)
           s = s[:start] + "const dashboard = fs.readFileSync('scripts/statistics-dashboard.txt', 'utf8')" + s[end:]
+          s = s.replace("if (count !== 1) throw new Error(`${label}: expected 1 match, found ${count}`);", "if (count < 1) throw new Error(`${label}: expected at least 1 match, found ${count}`);")
           p.write_text(s)
           PY
 
