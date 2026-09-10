@@ -813,9 +813,12 @@ function App() {
     setTimeout(() => setToast(null), 1600);
   };
 
-  const [lang, setLang] = useState(
-    ((navigator.language || 'cs').slice(0, 2)) || 'cs'
-  );
+  const [lang, setLang] = useState(() => {
+    const detectedLang = ((navigator.language || 'en').slice(0, 2)).toLowerCase();
+    return ['cs', 'en', 'de', 'es', 'nl', 'ru', 'zh'].includes(detectedLang)
+      ? detectedLang
+      : 'en';
+  });
   const [soundOn, setSoundOn] = useState(true);
   const [voiceOn, setVoiceOn] = useState(true);
 
@@ -3347,6 +3350,10 @@ function Lobby({
       const url = 'https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro';
       const payload = { title: 'DartScore Pro', text: t(lang, 'shareText'), url };
       try {
+        if (window.DartScoreAndroid?.shareApp) {
+          window.DartScoreAndroid.shareApp(payload.title, payload.text, payload.url);
+          return;
+        }
         if (navigator.share) {
           await navigator.share(payload);
           return;
