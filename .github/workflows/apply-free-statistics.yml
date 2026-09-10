@@ -1,0 +1,41 @@
+name: Apply free statistics
+
+on:
+  push:
+    branches:
+      - preview/statistics-redesign
+
+permissions:
+  contents: write
+
+jobs:
+  apply-build:
+    if: ${{ !contains(github.event.head_commit.message, '[free-statistics-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: preview/statistics-redesign
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply focused patch
+        run: node scripts/apply-free-statistics.mjs
+
+      - name: Build
+        run: npm run build
+
+      - name: Commit patched app
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/App.jsx
+          git commit -m "feat: make statistics available to free users [free-statistics-applied]"
+          git push origin HEAD:preview/statistics-redesign
