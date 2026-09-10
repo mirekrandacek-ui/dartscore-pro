@@ -472,6 +472,8 @@ premiumNote: "Разовая оплата. Без подписки.",
     order: '顺序', fixed: '固定', random: '随机', playThrough: '打完整轮',
     robot: '机器人', off: '关', easy: '简单', medium: '中等', hard: '困难',
     beginner: '初学者', expert: '专家',
+    sets: '盘', legs: '局',
+    legWon: '局胜：', setWon: '盘胜：',
     startGame: '▶ 开始游戏', continueGame: '继续游戏', saveGame: '保存对局', restart: '重新开始',
     rules: '规则', addPlayer: '添加玩家',
     saved: '已保存的对局', share: '分享', clear: '全部清除',
@@ -535,7 +537,7 @@ const LANG_LABEL = {
   zh: '中文'
 };
 
-const t = (lang, key) => (T[lang] && T[lang][key]) || T.cs[key] || key;
+const t = (lang, key) => (T[lang] && T[lang][key]) || T.en[key] || key;
 
 
 const ThemedSelect = ({
