@@ -64,7 +64,7 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private static final int TTS_INSTALL_REQUEST_CODE = 611;
 
     // Od v12 už testujeme skutečné Premium chování.
-    private static final boolean FORCE_FREE_BANNER_TEST = true;
+    private static final boolean FORCE_FREE_BANNER_TEST = false;
 
     private WebView webView;
     private FrameLayout root;
@@ -626,6 +626,27 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         });
     }
 
+    private void shareAppNative(String title, String text, String url) {
+        String safeTitle = (title == null || title.trim().isEmpty()) ? "DartScore Pro" : title.trim();
+        String safeText = text == null ? "" : text.trim();
+        String safeUrl = (url == null || url.trim().isEmpty())
+            ? "https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro"
+            : url.trim();
+
+        String message = safeText.isEmpty() ? safeUrl : safeText + "\n" + safeUrl;
+
+        Intent sendIntent = new Intent(Intent.ACTION_SEND);
+        sendIntent.setType("text/plain");
+        sendIntent.putExtra(Intent.EXTRA_SUBJECT, safeTitle);
+        sendIntent.putExtra(Intent.EXTRA_TEXT, message);
+
+        try {
+            startActivity(Intent.createChooser(sendIntent, null));
+        } catch (Exception e) {
+            nativeToast("Sdílení nejde otevřít.");
+        }
+    }
+
     private void nativeToast(String message) {
         runOnUiThread(() ->
             Toast.makeText(this, message, Toast.LENGTH_LONG).show()
@@ -870,6 +891,11 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         @JavascriptInterface
         public void restorePremium() {
             runOnUiThread(() -> restorePremiumInternal(true));
+        }
+
+        @JavascriptInterface
+        public void shareApp(String title, String text, String url) {
+            runOnUiThread(() -> shareAppNative(title, text, url));
         }
 
         @JavascriptInterface
