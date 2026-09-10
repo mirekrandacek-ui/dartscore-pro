@@ -11,16 +11,16 @@ function replaceOnce(needle, replacement, label) {
   src = src.replace(needle, replacement);
 }
 
-const helper = String.raw`
+const helper = `
 /* ===== Checkout hint: display-only helper, does not alter scoring ===== */
 const CHECKOUT_DOUBLE_PREF = [20, 16, 18, 12, 10, 8, 14, 6, 4, 2, 1, 15, 13, 11, 9, 7, 5, 3, 17, 19];
 const CHECKOUT_TRIPLE_PREF = Array.from({ length: 20 }, (_, i) => 20 - i);
 const CHECKOUT_DARTS = [
-  ...CHECKOUT_TRIPLE_PREF.map((v, i) => ({ v, m: 3, score: v * 3, label: T${v}, setupRank: i })),
+  ...CHECKOUT_TRIPLE_PREF.map((v, i) => ({ v, m: 3, score: v * 3, label: 'T' + v, setupRank: i })),
   { v: 50, m: 1, score: 50, label: 'Bull', setupRank: 12 },
-  ...Array.from({ length: 20 }, (_, i) => 20 - i).map((v, i) => ({ v, m: 1, score: v, label: ${v}, setupRank: 30 + i })),
+  ...Array.from({ length: 20 }, (_, i) => 20 - i).map((v, i) => ({ v, m: 1, score: v, label: String(v), setupRank: 30 + i })),
   { v: 25, m: 1, score: 25, label: '25', setupRank: 42 },
-  ...CHECKOUT_DOUBLE_PREF.map((v, i) => ({ v, m: 2, score: v * 2, label: D${v}, setupRank: 55 + i }))
+  ...CHECKOUT_DOUBLE_PREF.map((v, i) => ({ v, m: 2, score: v * 2, label: 'D' + v, setupRank: 55 + i }))
 ];
 const checkoutFinishAllowed = (dart, rules) => {
   const restricted = rules.double || rules.triple || rules.master;
@@ -39,7 +39,6 @@ const checkoutFinishRank = (dart, rules) => {
     const ix = CHECKOUT_TRIPLE_PREF.indexOf(dart.v);
     return 8 + (ix < 0 ? 25 : ix) * 2;
   }
-  // Any-out only: prefer a clean single finish over exotic setup darts.
   if (!rules.double && !rules.triple && !rules.master && dart.m === 1) {
     return 4 + Math.max(0, 20 - dart.v);
   }
@@ -51,7 +50,7 @@ const getCheckoutHint = (score, dartsLeft, rules = {}) => {
   const left = Math.min(3, Math.max(0, Number(dartsLeft) || 0));
   if (!Number.isInteger(target) || target <= 0 || left < 1) return '';
 
-  const key = ${target}|${left}|${rules.double ? 1 : 0}${rules.triple ? 1 : 0}${rules.master ? 1 : 0};
+  const key = [target, left, rules.double ? 1 : 0, rules.triple ? 1 : 0, rules.master ? 1 : 0].join('|');
   if (checkoutHintCache.has(key)) return checkoutHintCache.get(key);
 
   const finals = CHECKOUT_DARTS.filter(d => checkoutFinishAllowed(d, rules));
@@ -71,8 +70,6 @@ const getCheckoutHint = (score, dartsLeft, rules = {}) => {
     }
   };
 
-  // Prefer the shortest possible checkout. Within that length, choose a
-  // route biased toward common scoring trebles and comfortable doubles.
   for (let len = 1; len <= left && !best; len += 1) {
     if (len === 1) {
       finals.forEach(f => consider([f]));
@@ -101,13 +98,9 @@ const getCheckoutHint = (score, dartsLeft, rules = {}) => {
 };
 `;
 
-// The placeholder character \u0001 lets this temporary patch script contain
-// template literals without Node evaluating them here.
-const helperFixed = helper.replace(/\u0001/g, '`');
-
 replaceOnce(
   '\n\n/* ===== Ikona reproduktoru ===== */',
-  `\n${helperFixed}\n/* ===== Ikona reproduktoru ===== */`,
+  `\n${helper}\n/* ===== Ikona reproduktoru ===== */`,
   'insert checkout helper'
 );
 
