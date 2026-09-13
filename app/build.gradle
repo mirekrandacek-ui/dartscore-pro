@@ -67,8 +67,8 @@ android {
         applicationId "com.randis2288.dartscorepro"
         minSdkVersion 23
         targetSdkVersion 36
-        versionCode 75
-        versionName "1.1.41"
+        versionCode 77
+        versionName "1.1.43"
 
         resValue "string", "appName", twaManifest.name
         resValue "string", "launcherName", twaManifest.launcherName
@@ -134,22 +134,22 @@ task generateShorcutsFile {
 
     xmlMarkup
         .'shortcuts'('xmlns:android': 'http://schemas.android.com/apk/res/android') {
-            twaManifest.shortcuts.eachWithIndex { s, i ->
+            twaManifest.shortcuts.eachWithIndex { shortcut, index ->
                 'shortcut'(
-                        'android:shortcutId': 'shortcut' + i,
+                        'android:shortcutId': 'shortcut' + index,
                         'android:enabled': 'true',
-                        'android:icon': '@drawable/' + s.icon,
-                        'android:shortcutShortLabel': '@string/shortcut_short_name_' + i,
-                        'android:shortcutLongLabel': '@string/shortcut_name_' + i) {
+                        'android:icon': '@drawable/' + shortcut.icon,
+                        'android:shortcutShortLabel': '@string/shortcut_short_name_' + index,
+                        'android:shortcutLongLabel': '@string/shortcut_name_' + index) {
                     'intent'(
-                            'android:action': 'android.intent.action.MAIN',
-                            'android:targetPackage': twaManifest.applicationId,
-                            'android:targetClass': twaManifest.applicationId + '.LauncherActivity',
-                            'android:data': s.url)
+                        'android:action': 'android.intent.action.MAIN',
+                        'android:targetPackage': twaManifest.applicationId,
+                        'android:targetClass': twaManifest.applicationId + '.LauncherActivity',
+                        'android:data': shortcut.url)
                     'categories'('android:name': 'android.intent.category.LAUNCHER')
                 }
-            }
         }
+    }
     shortcutsFile.text = xmlWriter.toString() + '\n'
 }
 
@@ -162,10 +162,8 @@ repositories {
 dependencies {
     implementation 'com.google.android.play:app-update:2.1.0'
     implementation 'com.google.android.gms:play-services-ads:24.9.0'
+    implementation 'com.google.android.ump:user-messaging-platform:4.0.0'
     implementation 'com.android.billingclient:billing:9.1.0'
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    
-    
-        implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.6.2'
-    
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.6.2'
 }
