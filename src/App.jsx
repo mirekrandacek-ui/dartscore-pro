@@ -4073,7 +4073,83 @@ function Lobby({
     const [p1, setP1] = useState('');
     const [p2, setP2] = useState('');
 
-    const L = (cs, en) => lang === 'cs' ? cs : en;
+    const STATS_I18N = {
+      cs: {
+        statistics: 'Statistiky', noSaved: 'Zatím nejsou odehrané žádné uložené zápasy.', overview: 'Přehled', h2h: 'Vzájemné zápasy',
+        all: 'Vše', week: 'Týden', month: 'Měsíc', year: 'Rok', avg3: 'Průměr / 3 šipky', first9: 'Prvních 9', checkoutPct: 'Checkout %',
+        checkoutPending: 'Přesná evidence pokusů bude doplněna', highestCheckout: 'Nejvyšší checkout', scoring: 'Náhozy', performance: 'Výkony',
+        bestLeg: 'Nejlepší leg (šipky)', avgDartsLeg: 'Průměr šipek / leg', highestScore: 'Nejvyšší nához', winRate: 'Úspěšnost výher',
+        matches: 'vzájemných zápasů', legs: 'Legy', sets: 'Sety', last5: 'Forma posledních 5', avgTrend: 'Trend průměru',
+        matchHistory: 'Historie vzájemných zápasů', won: 'vyhrál', checkout: 'Checkout',
+        detailed: ({ detailed, total }) => `Detailní metriky jsou dostupné u ${detailed} z ${total} zápasů. Starší zápasy zůstávají započítané do výher.`,
+        older: 'Starší zápasy jsou započítané do H2H skóre a úspěšnosti výher. Detailní metriky se plní jen u nově uložených zápasů.'
+      },
+      en: {
+        statistics: 'Statistics', noSaved: 'No saved matches yet.', overview: 'Overview', h2h: 'Head-to-Head',
+        all: 'All', week: 'Week', month: 'Month', year: 'Year', avg3: '3-dart AVG', first9: 'First 9', checkoutPct: 'Checkout %',
+        checkoutPending: 'Exact attempt tracking pending', highestCheckout: 'Highest checkout', scoring: 'Scoring', performance: 'Performance',
+        bestLeg: 'Best leg (darts)', avgDartsLeg: 'Avg darts / leg', highestScore: 'Highest score', winRate: 'Win rate',
+        matches: 'matches', legs: 'Legs', sets: 'Sets', last5: 'Last 5 form', avgTrend: 'AVG trend',
+        matchHistory: 'Match history', won: 'won', checkout: 'Checkout',
+        detailed: ({ detailed, total }) => `Detailed metrics are available for ${detailed} of ${total} matches. Older matches still count toward wins.`,
+        older: 'Older matches count toward H2H score and win rate. Detailed metrics populate for newly saved matches.'
+      },
+      de: {
+        statistics: 'Statistiken', noSaved: 'Noch keine gespeicherten Spiele.', overview: 'Übersicht', h2h: 'Direkte Duelle',
+        all: 'Alle', week: 'Woche', month: 'Monat', year: 'Jahr', avg3: '3-Dart-Schnitt', first9: 'Erste 9', checkoutPct: 'Checkout %',
+        checkoutPending: 'Exakte Versuchsstatistik folgt', highestCheckout: 'Höchstes Checkout', scoring: 'Scoring', performance: 'Leistung',
+        bestLeg: 'Bestes Leg (Darts)', avgDartsLeg: 'Ø Darts / Leg', highestScore: 'Höchster Score', winRate: 'Siegquote',
+        matches: 'direkte Duelle', legs: 'Legs', sets: 'Sätze', last5: 'Form letzte 5', avgTrend: 'AVG-Trend',
+        matchHistory: 'Duell-Historie', won: 'gewann', checkout: 'Checkout',
+        detailed: ({ detailed, total }) => `Detaillierte Werte sind für ${detailed} von ${total} Spielen verfügbar. Ältere Spiele zählen weiter für Siege.`,
+        older: 'Ältere Spiele zählen für H2H und Siegquote. Detailwerte werden nur bei neu gespeicherten Spielen erfasst.'
+      },
+      es: {
+        statistics: 'Estadísticas', noSaved: 'Aún no hay partidas guardadas.', overview: 'Resumen', h2h: 'Cara a cara',
+        all: 'Todo', week: 'Semana', month: 'Mes', year: 'Año', avg3: 'Promedio / 3 dardos', first9: 'Primeros 9', checkoutPct: 'Checkout %',
+        checkoutPending: 'El registro exacto de intentos se añadirá', highestCheckout: 'Checkout más alto', scoring: 'Puntuación', performance: 'Rendimiento',
+        bestLeg: 'Mejor leg (dardos)', avgDartsLeg: 'Prom. dardos / leg', highestScore: 'Puntuación más alta', winRate: 'Porcentaje de victorias',
+        matches: 'enfrentamientos', legs: 'Legs', sets: 'Sets', last5: 'Forma últimos 5', avgTrend: 'Tendencia AVG',
+        matchHistory: 'Historial de enfrentamientos', won: 'ganó', checkout: 'Checkout',
+        detailed: ({ detailed, total }) => `Las métricas detalladas están disponibles en ${detailed} de ${total} partidas. Las anteriores siguen contando para las victorias.`,
+        older: 'Las partidas anteriores cuentan para el H2H y el porcentaje de victorias. Las métricas detalladas solo se guardan en partidas nuevas.'
+      },
+      nl: {
+        statistics: 'Statistieken', noSaved: 'Nog geen opgeslagen wedstrijden.', overview: 'Overzicht', h2h: 'Onderling',
+        all: 'Alles', week: 'Week', month: 'Maand', year: 'Jaar', avg3: 'Gem. / 3 darts', first9: 'Eerste 9', checkoutPct: 'Checkout %',
+        checkoutPending: 'Exacte pogingregistratie volgt', highestCheckout: 'Hoogste checkout', scoring: 'Scores', performance: 'Prestaties',
+        bestLeg: 'Beste leg (darts)', avgDartsLeg: 'Gem. darts / leg', highestScore: 'Hoogste score', winRate: 'Winstpercentage',
+        matches: 'onderlinge wedstrijden', legs: 'Legs', sets: 'Sets', last5: 'Vorm laatste 5', avgTrend: 'AVG-trend',
+        matchHistory: 'Onderlinge historie', won: 'won', checkout: 'Checkout',
+        detailed: ({ detailed, total }) => `Gedetailleerde statistieken zijn beschikbaar voor ${detailed} van ${total} wedstrijden. Oudere wedstrijden blijven meetellen voor winst.`,
+        older: 'Oudere wedstrijden tellen mee voor H2H en winstpercentage. Detailstatistieken worden alleen bij nieuwe wedstrijden opgeslagen.'
+      },
+      ru: {
+        statistics: 'Статистика', noSaved: 'Сохранённых матчей пока нет.', overview: 'Обзор', h2h: 'Личные встречи',
+        all: 'Все', week: 'Неделя', month: 'Месяц', year: 'Год', avg3: 'Среднее / 3 дротика', first9: 'Первые 9', checkoutPct: 'Checkout %',
+        checkoutPending: 'Точный учёт попыток будет добавлен', highestCheckout: 'Максимальный checkout', scoring: 'Наборы', performance: 'Результаты',
+        bestLeg: 'Лучший лег (дротики)', avgDartsLeg: 'Ср. дротиков / лег', highestScore: 'Максимальный набор', winRate: 'Процент побед',
+        matches: 'очных матчей', legs: 'Леги', sets: 'Сеты', last5: 'Форма за 5 матчей', avgTrend: 'Тренд среднего',
+        matchHistory: 'История личных встреч', won: 'победил', checkout: 'Checkout',
+        detailed: ({ detailed, total }) => `Подробная статистика доступна для ${detailed} из ${total} матчей. Старые матчи по-прежнему учитываются в победах.`,
+        older: 'Старые матчи учитываются в H2H и проценте побед. Подробные метрики сохраняются только для новых матчей.'
+      },
+      zh: {
+        statistics: '统计', noSaved: '暂无已保存的比赛。', overview: '概览', h2h: '对战',
+        all: '全部', week: '一周', month: '一月', year: '一年', avg3: '3镖平均', first9: '前9镖', checkoutPct: '结镖率',
+        checkoutPending: '精确尝试次数统计稍后加入', highestCheckout: '最高结镖', scoring: '得分', performance: '表现',
+        bestLeg: '最佳局（镖数）', avgDartsLeg: '平均镖数 / 局', highestScore: '最高得分', winRate: '胜率',
+        matches: '场对战', legs: '局', sets: '盘', last5: '最近5场状态', avgTrend: '平均分趋势',
+        matchHistory: '对战记录', won: '获胜', checkout: '结镖',
+        detailed: ({ detailed, total }) => `详细数据适用于 ${detailed}/${total} 场比赛。旧比赛仍计入胜场。`,
+        older: '旧比赛仍计入对战比分和胜率。详细数据仅记录新保存的比赛。'
+      }
+    };
+    const S = (key, vars) => {
+      const pack = STATS_I18N[lang] || STATS_I18N.en;
+      const value = pack[key] ?? STATS_I18N.en[key] ?? key;
+      return typeof value === 'function' ? value(vars || {}) : value;
+    };
     const now = Date.now();
     const cutoff = {
       all: 0,
@@ -4174,22 +4250,22 @@ function Lobby({
     );
 
     if (!allPlayers.length) {
-      return <div className="lobbyCard"><strong>{L('Statistiky','Statistics')}</strong><div style={{ opacity:.7, marginTop:8 }}>{L('Zatím nejsou odehrané žádné uložené zápasy.','No saved matches yet.')}</div></div>;
+      return <div className="lobbyCard"><strong>{S('statistics')}</strong><div style={{ opacity:.7, marginTop:8 }}>{S('noSaved')}</div></div>;
     }
 
     return (
       <div className="lobbyCard">
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, flexWrap:'wrap', marginBottom:10 }}>
-          <strong style={{ fontSize:18 }}>📊 {L('Statistiky','Statistics')}</strong>
+          <strong style={{ fontSize:18 }}>📊 {S('statistics')}</strong>
           <div style={{ display:'flex', gap:6 }}>
-            <button type="button" className={`tab ${view === 'overview' ? 'active' : ''}`} onClick={() => setView('overview')}>{L('Přehled','Overview')}</button>
-            <button type="button" className={`tab ${view === 'h2h' ? 'active' : ''}`} onClick={() => setView('h2h')}>Head to Head</button>
+            <button type="button" className={`tab ${view === 'overview' ? 'active' : ''}`} onClick={() => setView('overview')}>{S('overview')}</button>
+            <button type="button" className={`tab ${view === 'h2h' ? 'active' : ''}`} onClick={() => setView('h2h')}>{S('h2h')}</button>
           </div>
         </div>
 
         <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center', marginBottom:12 }}>
           <ThemedSelect className="input" value={filter} onChange={e => setFilter(e.target.value)} style={{ height:32, minWidth:105 }}>
-            <option value="all">{L('Vše','All')}</option><option value="week">{L('Týden','Week')}</option><option value="month">{L('Měsíc','Month')}</option><option value="year">{L('Rok','Year')}</option>
+            <option value="all">{S('all')}</option><option value="week">{S('week')}</option><option value="month">{S('month')}</option><option value="year">{S('year')}</option>
           </ThemedSelect>
           {view === 'overview' ? (
             <ThemedSelect className="input" value={player} onChange={e => setPlayer(e.target.value)} style={{ height:32, minWidth:140 }}>{allPlayers.map(n => <option key={n} value={n}>{n}</option>)}</ThemedSelect>
@@ -4205,57 +4281,57 @@ function Lobby({
         {view === 'overview' ? (
           <>
             <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-              {metricCard(fmt(overview.avg3), '3-dart AVG')}
-              {metricCard(fmt(overview.first9Avg), 'First 9')}
-              {metricCard(pct(overview.checkoutPct), 'Checkout %', L('Přesná evidence pokusů bude doplněna','Exact attempt tracking pending'))}
-              {metricCard(overview.highestCheckout ?? '—', L('Nejvyšší checkout','Highest checkout'))}
+              {metricCard(fmt(overview.avg3), S('avg3'))}
+              {metricCard(fmt(overview.first9Avg), S('first9'))}
+              {metricCard(pct(overview.checkoutPct), S('checkoutPct'), S('checkoutPending'))}
+              {metricCard(overview.highestCheckout ?? '—', S('highestCheckout'))}
             </div>
-            <div style={{ marginTop:14 }}><strong>{L('Scoring','Scoring')}</strong><div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:6, marginTop:8, textAlign:'center' }}>
+            <div style={{ marginTop:14 }}><strong>{S('scoring')}</strong><div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:6, marginTop:8, textAlign:'center' }}>
               {[['60+',overview.score60],['100+',overview.score100],['140+',overview.score140],['180',overview.score180]].map(([k,v]) => <div key={k} style={{ padding:8, border:'1px solid var(--line)', borderRadius:10 }}><div style={{ fontWeight:900, fontSize:18 }}>{v}</div><div style={{ fontSize:11, opacity:.7 }}>{k}</div></div>)}
             </div></div>
-            <div style={{ marginTop:14 }}><strong>{L('Výkony','Performance')}</strong>
-              {compareRow(overview.bestLeg ?? '—', L('Nejlepší leg (šipky)','Best leg (darts)'), overview.matches ? `${overview.wins}/${overview.matches}` : '—')}
-              {compareRow(fmt(overview.avgDartsPerLeg), L('Průměr šipek / leg','Avg darts / leg'), pct(overview.winRate))}
-              {compareRow(overview.highestScore ?? '—', L('Nejvyšší nához','Highest score'), L('Win rate','Win rate'))}
+            <div style={{ marginTop:14 }}><strong>{S('performance')}</strong>
+              {compareRow(overview.bestLeg ?? '—', S('bestLeg'), overview.matches ? `${overview.wins}/${overview.matches}` : '—')}
+              {compareRow(fmt(overview.avgDartsPerLeg), S('avgDartsLeg'), pct(overview.winRate))}
+              {compareRow(overview.highestScore ?? '—', S('highestScore'), S('winRate'))}
             </div>
-            {overview.detailedMatches < overview.matches && <div style={{ marginTop:10, fontSize:11, opacity:.65 }}>{L(`Detailní metriky jsou dostupné u ${overview.detailedMatches} z ${overview.matches} zápasů. Starší zápasy zůstávají započítané do výher.`,`Detailed metrics are available for ${overview.detailedMatches} of ${overview.matches} matches. Older matches still count toward wins.`)}</div>}
+            {overview.detailedMatches < overview.matches && <div style={{ marginTop:10, fontSize:11, opacity:.65 }}>{S('detailed', { detailed: overview.detailedMatches, total: overview.matches })}</div>}
           </>
         ) : (
           <>
             <div style={{ textAlign:'center', padding:'6px 0 12px' }}>
-              <div style={{ fontSize:13, opacity:.75 }}>{h2hGames.length} {L('vzájemných zápasů','matches')}</div>
+              <div style={{ fontSize:13, opacity:.75 }}>{h2hGames.length} {S('matches')}</div>
               <div style={{ fontSize:30, fontWeight:900, marginTop:2 }}><span>{p1}</span> <span style={{ color:'var(--accent)' }}>{p1Wins} : {p2Wins}</span> <span>{p2}</span></div>
-              <div style={{ display:'flex', justifyContent:'center', gap:24, marginTop:4, fontSize:12 }}><strong>{pct(h1.winRate)}</strong><span style={{ opacity:.55 }}>Win rate</span><strong>{pct(h2.winRate)}</strong></div>
+              <div style={{ display:'flex', justifyContent:'center', gap:24, marginTop:4, fontSize:12 }}><strong>{pct(h1.winRate)}</strong><span style={{ opacity:.55 }}>{S('winRate')}</span><strong>{pct(h2.winRate)}</strong></div>
             </div>
 
             <div style={{ marginTop:4 }}>
-              {compareRow(h1.legsWon, 'Legs', h2.legsWon)}
-              {compareRow(h1.setsWon, 'Sets', h2.setsWon)}
-              {compareRow(fmt(h1.avg3), '3-dart AVG', fmt(h2.avg3))}
-              {compareRow(fmt(h1.first9Avg), 'First 9', fmt(h2.first9Avg))}
-              {compareRow(pct(h1.checkoutPct), 'Checkout %', pct(h2.checkoutPct))}
-              {compareRow(h1.highestCheckout ?? '—', L('Nejvyšší checkout','Highest checkout'), h2.highestCheckout ?? '—')}
+              {compareRow(h1.legsWon, S('legs'), h2.legsWon)}
+              {compareRow(h1.setsWon, S('sets'), h2.setsWon)}
+              {compareRow(fmt(h1.avg3), S('avg3'), fmt(h2.avg3))}
+              {compareRow(fmt(h1.first9Avg), S('first9'), fmt(h2.first9Avg))}
+              {compareRow(pct(h1.checkoutPct), S('checkoutPct'), pct(h2.checkoutPct))}
+              {compareRow(h1.highestCheckout ?? '—', S('highestCheckout'), h2.highestCheckout ?? '—')}
               {compareRow(h1.score180, '180s', h2.score180)}
             </div>
 
-            <div style={{ marginTop:14 }}><strong>{L('Forma posledních 5','Last 5 form')}</strong>
+            <div style={{ marginTop:14 }}><strong>{S('last5')}</strong>
               <div style={{ display:'flex', alignItems:'center', gap:8, marginTop:8, flexWrap:'wrap' }}>
                 {form.length ? form.map((x,i) => <span key={i} style={{ width:30, height:30, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', fontWeight:900, background:x === 'W' ? 'rgba(34,197,94,.22)' : 'rgba(239,68,68,.22)', border:'1px solid var(--line)' }}>{x}</span>) : <span style={{ opacity:.65 }}>—</span>}
                 {form.length > 0 && <span style={{ fontSize:12, opacity:.7 }}>{p1}: {form.filter(x => x === 'W').length}–{form.filter(x => x === 'L').length}</span>}
               </div>
             </div>
 
-            <div style={{ marginTop:14 }}><strong>{L('Trend AVG','AVG trend')}</strong>{sparkline(trend) || <div style={{ opacity:.65, marginTop:8 }}>—</div>}</div>
+            <div style={{ marginTop:14 }}><strong>{S('avgTrend')}</strong>{sparkline(trend) || <div style={{ opacity:.65, marginTop:8 }}>—</div>}</div>
 
-            {h1.detailedMatches < h2hGames.length && <div style={{ marginTop:8, fontSize:11, opacity:.65 }}>{L('Starší zápasy jsou započítané do H2H skóre a win rate. Detailní metriky se plní jen u nově uložených zápasů.','Older matches count toward H2H score and win rate. Detailed metrics populate for newly saved matches.')}</div>}
+            {h1.detailedMatches < h2hGames.length && <div style={{ marginTop:8, fontSize:11, opacity:.65 }}>{S('older')}</div>}
 
-            <div style={{ marginTop:16 }}><strong>{L('Historie vzájemných zápasů','Match history')}</strong>
+            <div style={{ marginTop:16 }}><strong>{S('matchHistory')}</strong>
               <div style={{ marginTop:8, display:'grid', gap:7 }}>
                 {h2hGames.length ? h2hGames.map((g,idx) => {
                   const s1=(g.playerStats||[]).find(s=>s.name===p1), s2=(g.playerStats||[]).find(s=>s.name===p2);
                   return <details key={`${g.ts}-${idx}`} style={{ border:'1px solid var(--line)', borderRadius:10, padding:'8px 10px', background:'rgba(255,255,255,.02)' }}>
-                    <summary style={{ cursor:'pointer', fontWeight:800 }}>{new Date(g.ts).toLocaleDateString()} · {g.winner === p1 ? p1 : p2} {L('vyhrál','won')}</summary>
-                    <div style={{ marginTop:8 }}>{compareRow(fmt(s1?.avg3), 'AVG', fmt(s2?.avg3))}{compareRow(fmt(s1?.first9Avg), 'First 9', fmt(s2?.first9Avg))}{compareRow(s1?.legsWon ?? '—', 'Legs', s2?.legsWon ?? '—')}{compareRow(s1?.setsWon ?? '—', 'Sets', s2?.setsWon ?? '—')}{compareRow(s1?.highestCheckout ?? '—', L('Checkout','Checkout'), s2?.highestCheckout ?? '—')}</div>
+                    <summary style={{ cursor:'pointer', fontWeight:800 }}>{new Date(g.ts).toLocaleDateString()} · {g.winner === p1 ? p1 : p2} {S('won')}</summary>
+                    <div style={{ marginTop:8 }}>{compareRow(fmt(s1?.avg3), 'AVG', fmt(s2?.avg3))}{compareRow(fmt(s1?.first9Avg), S('first9'), fmt(s2?.first9Avg))}{compareRow(s1?.legsWon ?? '—', S('legs'), s2?.legsWon ?? '—')}{compareRow(s1?.setsWon ?? '—', S('sets'), s2?.setsWon ?? '—')}{compareRow(s1?.highestCheckout ?? '—', S('checkout'), s2?.highestCheckout ?? '—')}</div>
                   </details>;
                 }) : <div style={{ opacity:.65 }}>—</div>}
               </div>
