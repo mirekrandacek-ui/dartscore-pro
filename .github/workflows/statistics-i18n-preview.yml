@@ -1,0 +1,49 @@
+name: Statistics i18n preview
+
+on:
+  push:
+    branches:
+      - preview/statistics-i18n
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-build:
+    if: ${{ !contains(github.event.head_commit.message, '[statistics-i18n-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: preview/statistics-i18n
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Apply statistics translations
+        run: python3 tools/apply-statistics-i18n.py
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web preview
+        run: npm run build
+
+      - name: Commit preview source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/App.jsx
+          git commit -m "feat: localize statistics in all app languages [statistics-i18n-applied]"
+          git push origin HEAD:preview/statistics-i18n
+
+      - name: Upload preview build
+        uses: actions/upload-artifact@v4
+        with:
+          name: dartscore-statistics-i18n-preview
+          path: dist
