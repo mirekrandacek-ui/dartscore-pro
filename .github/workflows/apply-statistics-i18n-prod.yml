@@ -1,0 +1,33 @@
+name: Apply statistics i18n to production
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-statistics-i18n-prod.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Apply translations
+        run: python3 tools/apply-statistics-i18n-prod.py
+      - name: Build web
+        run: |
+          npm ci
+          npm run build
+      - name: Commit translated statistics
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/App.jsx
+          git commit -m 'feat: localize statistics in all app languages [production]' || exit 0
+          git push origin main
