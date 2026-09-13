@@ -1,9 +1,9 @@
-name: v77 UMP consent build
+name: v78 final combined test
 
 on:
   push:
     branches:
-      - release/v77-ump-consent
+      - release/v78-final-test
   workflow_dispatch:
 
 jobs:
@@ -25,6 +25,15 @@ jobs:
       - name: Install Android SDK 36
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
+      - name: Apply offline WebView client
+        run: python3 tools/apply-v78-offline-client.py
+
+      - name: Verify combined source
+        run: |
+          grep -q "new OfflineWebViewClient" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
+          grep -q "user-messaging-platform:4.0.0" app/build.gradle
+          grep -q "versionCode 78" app/build.gradle
+
       - name: Build release bundle
         run: |
           chmod +x gradlew
@@ -34,5 +43,5 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: dartscore-pro-v77-ump-consent-aab
+          name: dartscore-pro-v78-final-test-aab
           path: app/build/outputs/bundle/release/app-release.aab
