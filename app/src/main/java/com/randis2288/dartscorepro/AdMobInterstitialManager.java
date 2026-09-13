@@ -13,6 +13,8 @@ import com.google.android.gms.ads.FullScreenContentCallback;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.interstitial.InterstitialAd;
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
+import com.google.android.ump.ConsentInformation;
+import com.google.android.ump.UserMessagingPlatform;
 
 public final class AdMobInterstitialManager {
     private static final String TAG = "DartScoreAdMob";
@@ -30,7 +32,18 @@ public final class AdMobInterstitialManager {
     private AdMobInterstitialManager() {
     }
 
+    private static boolean canRequestAds(Context context) {
+        ConsentInformation consentInformation =
+            UserMessagingPlatform.getConsentInformation(context.getApplicationContext());
+        return consentInformation.canRequestAds();
+    }
+
     public static synchronized void preload(Context context) {
+        if (!canRequestAds(context)) {
+            Log.d(TAG, "Interstitial preload skipped until UMP allows ad requests.");
+            return;
+        }
+
         long now = SystemClock.elapsedRealtime();
 
         if (interstitialAd != null &&
@@ -90,6 +103,11 @@ public final class AdMobInterstitialManager {
         Activity activity,
         Runnable onFinished
     ) {
+        if (!canRequestAds(activity)) {
+            Log.d(TAG, "Interstitial show skipped until UMP allows ad requests.");
+            return false;
+        }
+
         long now = SystemClock.elapsedRealtime();
 
         if (interstitialAd == null ||
