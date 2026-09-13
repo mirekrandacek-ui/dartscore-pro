@@ -1,12 +1,9 @@
-name: v72 build check
+name: v77 UMP consent build
 
 on:
   push:
     branches:
-      - release/v72-rollback-v70
-  pull_request:
-    branches:
-      - release/v70-tts-data-immediate-update
+      - release/v77-ump-consent
   workflow_dispatch:
 
 jobs:
@@ -37,5 +34,5 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: dartscore-pro-v72-aab
+          name: dartscore-pro-v77-ump-consent-aab
           path: app/build/outputs/bundle/release/app-release.aab
