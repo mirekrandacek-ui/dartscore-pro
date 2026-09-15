@@ -38,7 +38,48 @@ const BOT_TARGETS = [
   ...Array.from({ length: 20 }, (_, i) => ({ v: 20 - i, m: 3 })),
   { v: 25, m: 1 }, { v: 50, m: 1 }
 ];
-const botChooseClassic = (score, dartsLeft, rules) => {
+const BOT_SCORING_AIMS = {
+  beginner: [
+    [{ v: 20, m: 1 }, 0.28], [{ v: 19, m: 1 }, 0.16], [{ v: 18, m: 1 }, 0.13],
+    [{ v: 17, m: 1 }, 0.11], [{ v: 16, m: 1 }, 0.09], [{ v: 15, m: 1 }, 0.07],
+    [{ v: 14, m: 1 }, 0.05], [{ v: 13, m: 1 }, 0.04], [{ v: 12, m: 1 }, 0.04],
+    [{ v: 11, m: 1 }, 0.03]
+  ],
+  easy: [
+    [{ v: 20, m: 1 }, 0.60], [{ v: 19, m: 1 }, 0.15], [{ v: 18, m: 1 }, 0.10],
+    [{ v: 17, m: 1 }, 0.07], [{ v: 20, m: 3 }, 0.05], [{ v: 16, m: 1 }, 0.03]
+  ],
+  medium: [
+    [{ v: 20, m: 3 }, 0.40], [{ v: 20, m: 1 }, 0.35], [{ v: 19, m: 3 }, 0.10],
+    [{ v: 19, m: 1 }, 0.10], [{ v: 18, m: 1 }, 0.05]
+  ],
+  hard: [
+    [{ v: 20, m: 3 }, 0.70], [{ v: 19, m: 3 }, 0.12], [{ v: 20, m: 1 }, 0.12],
+    [{ v: 18, m: 3 }, 0.06]
+  ],
+  expert: [
+    [{ v: 20, m: 3 }, 0.88], [{ v: 19, m: 3 }, 0.07], [{ v: 20, m: 1 }, 0.05]
+  ]
+};
+const BOT_CHECKOUT_PLAN_CHANCE = {
+  beginner: 0.08,
+  easy: 0.22,
+  medium: 0.55,
+  hard: 0.85,
+  expert: 1
+};
+const botWeightedTarget = (weighted) => {
+  const roll = Math.random();
+  let acc = 0;
+  for (const [target, weight] of weighted) {
+    acc += weight;
+    if (roll <= acc) return target;
+  }
+  return weighted[weighted.length - 1][0];
+};
+const botScoringTarget = (level = 'easy') =>
+  botWeightedTarget(BOT_SCORING_AIMS[level] || BOT_SCORING_AIMS.easy);
+const botChooseClassic = (score, dartsLeft, rules, level = 'easy') => {
   const restricted = rules.double || rules.triple || rules.master;
   const allowed = ({ v, m }) => !restricted ||
     ((m === 2 || v === 50) && (rules.double || rules.master)) ||
@@ -59,16 +100,20 @@ const botChooseClassic = (score, dartsLeft, rules) => {
     }));
     return memo.get(key);
   };
-  // Prefer a single setup when it leaves a checkout within this visit.
-  if (dartsLeft > 1 && score <= dartsLeft * 60) {
+  const planChance = BOT_CHECKOUT_PLAN_CHANCE[level] ?? BOT_CHECKOUT_PLAN_CHANCE.easy;
+  // Lower levels do not calculate professional checkout routes on every visit.
+  if (dartsLeft > 1 && score <= dartsLeft * 60 && Math.random() < planChance) {
     const setup = BOT_TARGETS.find(t => safe(score - t.v * t.m) && canFinish(score - t.v * t.m, dartsLeft - 1));
     if (setup) return setup;
   }
-  // Outside checkout range, score heavily; near a finish leave a usable out.
-  if (score > 80) return { v: 20, m: 3 };
-  for (const final of finals) {
-    const setup = BOT_TARGETS.find(t => t.m === 1 && t.v <= 20 && score - t.v === final.v * final.m);
-    if (setup) return setup;
+  // Scoring phase: each level has its own human-like mix of intended targets.
+  if (score > 80) return botScoringTarget(level);
+  // Near a finish, stronger bots are more likely to leave a deliberate out.
+  if (Math.random() < planChance) {
+    for (const final of finals) {
+      const setup = BOT_TARGETS.find(t => t.m === 1 && t.v <= 20 && score - t.v === final.v * final.m);
+      if (setup) return setup;
+    }
   }
   return BOT_TARGETS.find(t => t.m === 1 && safe(score - t.v)) || { v: 1, m: 1 };
 };
@@ -2711,7 +2756,7 @@ useEffect(() => {
         let target;
         if (mode === 'classic') {
           target = botChooseClassic(scores[scoreIndexForPlayer(pIdx)], 3 - darts.length,
-            { double: outDouble, triple: outTriple, master: outMaster });
+            { double: outDouble, triple: outTriple, master: outMaster }, p.level);
         } else if (mode === 'cricket') {
           const values = [20, 19, 18, 17, 16, 15, 25];
           const key = v => v === 25 ? 'bull' : String(v);
@@ -2722,6 +2767,10 @@ useEffect(() => {
           target = { v: Math.min(25, around?.[pIdx]?.next > 20 ? 25 : around?.[pIdx]?.next ?? 1), m: 1 };
         }
         let { v, m } = botScatter(target, p.level, botFormRef.current[p.id]);
+        // A true beginner should not repeatedly luck into T20 while simply scoring.
+        if (mode === 'classic' && p.level === 'beginner' && scores[scoreIndexForPlayer(pIdx)] > 80 && v === 20 && m === 3) {
+          m = 1;
+        }
         // Cricket represents double bull as 25 × 2.
         if (mode === 'cricket' && v === 50) { v = 25; m = 2; }
         if (mode === 'cricket' && v < 15) { v = 0; m = 1; }
