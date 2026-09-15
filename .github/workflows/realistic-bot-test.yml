@@ -1,0 +1,57 @@
+name: Realistic bot test
+on:
+  push:
+    branches: [fix/realistic-three-level-bots]
+    paths:
+      - '.github/scripts/patch_realistic_bots.py'
+      - '.github/workflows/realistic-bot-test.yml'
+permissions:
+  contents: write
+jobs:
+  patch-simulate-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Apply App integration patch
+        run: python .github/scripts/patch_realistic_bots.py
+      - name: Simulate pub-player bots
+        run: node scripts/simulate-bots.mjs
+      - name: Install dependencies
+        run: npm ci
+      - name: Build web app
+        run: npm run build
+      - name: Verify three-level integration
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          app = Path('src/App.jsx').read_text(encoding='utf-8')
+          engine = Path('src/botEngine.js').read_text(encoding='utf-8')
+          assert app.count('<option value="beginner">') == 1
+          assert app.count('<option value="medium">') == 1
+          assert app.count('<option value="hard">') == 1
+          assert '<option value="easy">' not in app
+          assert '<option value="expert">' not in app
+          assert 'botScatter(' not in app
+          assert 'botChooseClassic(' not in app
+          assert "if (score > 80) return { v: 20, m: 3 }" not in app
+          for fn in ['botThrowClassic', 'botThrowCricket', 'botThrowAround', 'normalizeBotLevel']:
+              assert fn in app and fn in engine, fn
+          assert "if (level === 'easy') return 'beginner'" in engine
+          assert "if (level === 'expert') return 'hard'" in engine
+          print('three-level bot integration OK')
+          PY
+          git diff --check
+      - name: Commit tested integration and remove temporary helpers
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/App.jsx src/botEngine.js scripts/simulate-bots.mjs
+          git commit -m "Use realistic three-level pub bots" || true
+          git rm -f .github/scripts/patch_realistic_bots.py .github/workflows/realistic-bot-test.yml
+          git commit -m "Remove temporary realistic bot helpers"
+          git restore dist || true
+          git push origin HEAD:fix/realistic-three-level-bots
