@@ -3,10 +3,26 @@ import re
 
 path = Path('src/App.jsx')
 app = path.read_text(encoding='utf-8')
+engine_path = Path('src/botEngine.js')
+engine = engine_path.read_text(encoding='utf-8')
+
+# 0) Roulette also used the old board scatter helper. Route it through the same engine.
+roulette_engine = '''export const botThrowRoulette = ({ target, doubleOnly = false, level = 'beginner', form = 1, rng = Math.random }) => {
+  const normalized = normalizeBotLevel(level);
+  return resolveAim({ v: Number(target) || 0, m: doubleOnly ? 2 : 1 }, normalized, form, rng);
+};
+
+'''
+anchor = 'export const BOT_PROFILE_SUMMARY = {'
+if 'export const botThrowRoulette' not in engine:
+    if anchor not in engine:
+        raise SystemExit('bot engine summary anchor missing')
+    engine = engine.replace(anchor, roulette_engine + anchor, 1)
+engine_path.write_text(engine, encoding='utf-8')
 
 # 1) Import the new pure bot engine.
 old = "import './app.css';\n"
-new = "import './app.css';\nimport { botThrowAround, botThrowClassic, botThrowCricket, normalizeBotLevel } from './botEngine.js';\n"
+new = "import './app.css';\nimport { botThrowAround, botThrowClassic, botThrowCricket, botThrowRoulette, normalizeBotLevel } from './botEngine.js';\n"
 if old not in app:
     raise SystemExit('app.css import anchor missing')
 app = app.replace(old, new, 1)
@@ -96,6 +112,13 @@ app, count = re.subn(pattern, replacement, app, count=1, flags=re.S)
 if count != 1:
     raise SystemExit(f'bot runtime block count={count}')
 
+# 5) Roulette had a separate bot effect; preserve it using the new three-level resolver.
+old = "          const hit = botScatter({ v: currentTarget, m: mode === 'rouletteDouble' ? 2 : 1 }, player.level);"
+new = "          const hit = botThrowRoulette({ target: currentTarget, doubleOnly: mode === 'rouletteDouble', level: player.level });"
+if old not in app:
+    raise SystemExit('roulette bot scatter anchor missing')
+app = app.replace(old, new, 1)
+
 # Guardrails: old deterministic T20/scatter implementation must be gone.
 for forbidden in ['botScatter(', 'botChooseClassic(', "<option value=\"easy\">", "<option value=\"expert\">"]:
     if forbidden in app:
@@ -105,6 +128,7 @@ for required in [
     "botThrowClassic({",
     "botThrowCricket({ cricket, pIdx, level, form })",
     "botThrowAround({ next: around?.[pIdx]?.next ?? 1, level, form })",
+    "botThrowRoulette({ target: currentTarget",
     "<option value=\"beginner\">",
     "<option value=\"medium\">",
     "<option value=\"hard\">",
