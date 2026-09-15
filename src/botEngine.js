@@ -14,7 +14,7 @@ const DOUBLE_PREF = [20, 16, 18, 12, 10, 8, 6, 4, 2, 1, 14, 15, 17, 19, 13, 11, 
 
 const PROFILES = {
   beginner: {
-    doubleHit: 0.07,
+    doubleHit: 0.08,
     tripleHit: 0.012,
     singleHit: 0.36,
     singleNeighbor: 0.28,
@@ -51,7 +51,7 @@ const PROFILES = {
   },
   hard: {
     doubleHit: 0.27,
-    tripleHit: 0.13,
+    tripleHit: 0.16,
     singleHit: 0.72,
     singleNeighbor: 0.18,
     singleRandom: 0.08,
@@ -296,6 +296,11 @@ export const botThrowAround = ({ next, level = 'beginner', form = 1, rng = Math.
     { value: randomSingle(rng), weight: 20 },
     { value: { v: 0, m: 1 }, weight: 10 },
   ], rng);
+};
+
+export const botThrowRoulette = ({ target, doubleOnly = false, level = 'beginner', form = 1, rng = Math.random }) => {
+  const normalized = normalizeBotLevel(level);
+  return resolveAim({ v: Number(target) || 0, m: doubleOnly ? 2 : 1 }, normalized, form, rng);
 };
 
 export const BOT_PROFILE_SUMMARY = {

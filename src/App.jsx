@@ -1,77 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import './app.css';
-
-/* ===== Robot: target selection is separate from board scatter ===== */
-const BOT_LEVELS = {
-  beginner: { radial: 22, angular: 0.25 },
-  easy: { radial: 18, angular: 0.19 },
-  medium: { radial: 14.5, angular: 0.155 },
-  hard: { radial: 11, angular: 0.12 },
-  expert: { radial: 8.3, angular: 0.095 }
-};
-const BOT_BOARD = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
-const botNormal = () => Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(2 * Math.PI * Math.random());
-const botScatter = (target, level = 'easy', form = 1) => {
-  const profile = BOT_LEVELS[level] || BOT_LEVELS.easy;
-  const radial = profile.radial * form;
-  // Board radii in mm: bull 6.35/15.9, treble 99–107, double 162–170.
-  let radius, angle;
-  if (target.v === 25 || target.v === 50) {
-    const x = botNormal() * radial;
-    const y = botNormal() * radial;
-    radius = Math.hypot(x, y);
-    angle = Math.atan2(x, y);
-  } else {
-    radius = Math.abs((target.m === 3 ? 103 : target.m === 2 ? 166 : 132) + botNormal() * radial);
-    angle = BOT_BOARD.indexOf(target.v) * Math.PI / 10 + botNormal() * profile.angular * form;
-  }
-  if (radius > 170) return { v: 0, m: 1 };
-  if (radius < 6.35) return { v: 50, m: 1 };
-  if (radius < 15.9) return { v: 25, m: 1 };
-  const sector = ((Math.round(angle / (Math.PI / 10)) % 20) + 20) % 20;
-  return { v: BOT_BOARD[sector], m: radius >= 162 ? 2 : radius >= 99 && radius <= 107 ? 3 : 1 };
-};
-const BOT_TARGETS = [
-  ...Array.from({ length: 20 }, (_, i) => ({ v: 20 - i, m: 1 })),
-  ...[20, 16, 18, 12, 10, 8, 6, 4, 2, 1, 14, 15, 17, 19, 13, 11, 9, 7, 5, 3].map(v => ({ v, m: 2 })),
-  ...Array.from({ length: 20 }, (_, i) => ({ v: 20 - i, m: 3 })),
-  { v: 25, m: 1 }, { v: 50, m: 1 }
-];
-const botChooseClassic = (score, dartsLeft, rules) => {
-  const restricted = rules.double || rules.triple || rules.master;
-  const allowed = ({ v, m }) => !restricted ||
-    ((m === 2 || v === 50) && (rules.double || rules.master)) ||
-    (m === 3 && (rules.triple || rules.master));
-  const finals = BOT_TARGETS.filter(allowed);
-  const direct = finals.find(t => t.v * t.m === score);
-  if (direct) return direct;
-  const safe = n => n > 0 && (!restricted || n !== 1);
-  const memo = new Map();
-  const canFinish = (n, left) => {
-    if (left < 1 || n > left * 60) return false;
-    if (finals.some(t => t.v * t.m === n)) return true;
-    if (left === 1) return false;
-    const key = `${n}:${left}`;
-    if (!memo.has(key)) memo.set(key, BOT_TARGETS.some(t => {
-      const rest = n - t.v * t.m;
-      return safe(rest) && canFinish(rest, left - 1);
-    }));
-    return memo.get(key);
-  };
-  // Prefer a single setup when it leaves a checkout within this visit.
-  if (dartsLeft > 1 && score <= dartsLeft * 60) {
-    const setup = BOT_TARGETS.find(t => safe(score - t.v * t.m) && canFinish(score - t.v * t.m, dartsLeft - 1));
-    if (setup) return setup;
-  }
-  // Outside checkout range, score heavily; near a finish leave a usable out.
-  if (score > 80) return { v: 20, m: 3 };
-  for (const final of finals) {
-    const setup = BOT_TARGETS.find(t => t.m === 1 && t.v <= 20 && score - t.v === final.v * final.m);
-    if (setup) return setup;
-  }
-  return BOT_TARGETS.find(t => t.m === 1 && safe(score - t.v)) || { v: 1, m: 1 };
-};
+import { botThrowAround, botThrowClassic, botThrowCricket, botThrowRoulette, normalizeBotLevel } from './botEngine.js';
 
 
 /* ===== Checkout hint: display-only helper, does not alter scoring ===== */
@@ -1153,7 +1083,7 @@ function App() {
   const [randomOrder, setRandomOrder] = useState(false);
   const [playThrough, setPlayThrough] = useState(false);
 
-  const [ai, setAi] = useState('off'); // off | easy | medium | hard
+  const [ai, setAi] = useState('off'); // off | beginner | medium | hard
   const [scoreInputMode, setScoreInputMode] = useState('darts'); // darts | round
   const [playerMode, setPlayerMode] = useState('individual'); // individual | teams
 
@@ -1192,7 +1122,7 @@ function App() {
       if (Number.isInteger(s.setsToWin) && s.setsToWin >= 1 && s.setsToWin <= 21) setSetsToWin(s.setsToWin);
       if (typeof s.randomOrder === 'boolean') setRandomOrder(s.randomOrder);
       if (typeof s.playThrough === 'boolean') setPlayThrough(s.playThrough);
-      if (s.ai) setAi(s.ai);
+      if (s.ai) setAi(s.ai === 'off' ? 'off' : normalizeBotLevel(s.ai));
 
       if (nextMode === 'classic' && ['darts', 'round'].includes(s.scoreInputMode)) {
         setScoreInputMode(s.scoreInputMode);
@@ -1201,7 +1131,7 @@ function App() {
       }
 
       if (s.playerMode) setPlayerMode(s.playerMode);
-      if (s.players) setPlayers(s.players.map((p, ix) => ({ ...p, team: p.team || (['A', 'B', 'C'][ix % 3]) })));
+      if (s.players) setPlayers(s.players.map((p, ix) => ({ ...p, level: p.bot ? normalizeBotLevel(p.level) : p.level, team: p.team || (['A', 'B', 'C'][ix % 3]) })));
       if (s.themeColor) setThemeColor(s.themeColor);
     } catch { }
   }, []);
@@ -1266,7 +1196,7 @@ function App() {
             name: `🤖 ${t(lang, 'robot')} (${t(lang, ai)})`,
             color: colors[ps.length % colors.length],
             bot: true,
-            level: ai
+            level: normalizeBotLevel(ai)
           }
         ];
       }
@@ -2708,25 +2638,25 @@ useEffect(() => {
 
       const timer = window.setTimeout(() => {
         if (botFormRef.current[p.id] == null) botFormRef.current[p.id] = 0.94 + Math.random() * 0.12;
-        let target;
+        const form = botFormRef.current[p.id];
+        const level = normalizeBotLevel(p.level);
+        let hit;
+
         if (mode === 'classic') {
-          target = botChooseClassic(scores[scoreIndexForPlayer(pIdx)], 3 - darts.length,
-            { double: outDouble, triple: outTriple, master: outMaster });
+          hit = botThrowClassic({
+            score: scores[scoreIndexForPlayer(pIdx)],
+            dartsLeft: 3 - darts.length,
+            rules: { double: outDouble, triple: outTriple, master: outMaster },
+            level,
+            form,
+          });
         } else if (mode === 'cricket') {
-          const values = [20, 19, 18, 17, 16, 15, 25];
-          const key = v => v === 25 ? 'bull' : String(v);
-          const v = values.find(v => (cricket?.[pIdx]?.marks?.[key(v)] ?? 0) < 3) ??
-            values.find(v => cricket?.some((pl, ix) => ix !== pIdx && (pl.marks?.[key(v)] ?? 0) < 3)) ?? 20;
-          target = { v, m: v === 25 ? 1 : 3 };
+          hit = botThrowCricket({ cricket, pIdx, level, form });
         } else {
-          target = { v: Math.min(25, around?.[pIdx]?.next > 20 ? 25 : around?.[pIdx]?.next ?? 1), m: 1 };
+          hit = botThrowAround({ next: around?.[pIdx]?.next ?? 1, level, form });
         }
-        let { v, m } = botScatter(target, p.level, botFormRef.current[p.id]);
-        // Cricket represents double bull as 25 × 2.
-        if (mode === 'cricket' && v === 50) { v = 25; m = 2; }
-        if (mode === 'cricket' && v < 15) { v = 0; m = 1; }
-        if (mode === 'around' && v === 50) { v = 25; m = 1; }
-        commitDart(v, m);
+
+        commitDart(hit.v, hit.m);
       }, 800);
       return () => window.clearTimeout(timer);
     }, [screen, currIdx, order, players, winner, mode, scores, darts,
@@ -3736,10 +3666,8 @@ function Lobby({
                 >
                   <option value="off">{t(lang, 'off')}</option>
                   <option value="beginner">{t(lang, 'beginner')}</option>
-                  <option value="easy">{t(lang, 'easy')}</option>
                   <option value="medium">{t(lang, 'medium')}</option>
                   <option value="hard">{t(lang, 'hard')}</option>
-                  <option value="expert">{t(lang, 'expert')}</option>
                 </ThemedSelect>
 
                 
@@ -4505,7 +4433,7 @@ function Lobby({
         }, 650);
       } else {
         timer = window.setTimeout(() => {
-          const hit = botScatter({ v: currentTarget, m: mode === 'rouletteDouble' ? 2 : 1 }, player.level);
+          const hit = botThrowRoulette({ target: currentTarget, doubleOnly: mode === 'rouletteDouble', level: player.level });
           if ((hit.v === currentTarget || (currentTarget === 25 && hit.v === 50)) &&
               (mode !== 'rouletteDouble' || hit.m === 2)) rouletteMarkHit();
           else rouletteMarkMiss();
