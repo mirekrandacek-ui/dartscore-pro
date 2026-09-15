@@ -1,0 +1,55 @@
+name: Final realistic bot flow
+on:
+  push:
+    branches: [fix/final-realistic-bot-flow]
+    paths:
+      - '.github/scripts/patch_final_robot_flow.py'
+      - '.github/workflows/patch-final-realistic-bot-flow.yml'
+permissions:
+  contents: write
+jobs:
+  patch-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Apply realistic bot patch
+        run: python .github/scripts/patch_final_robot_flow.py
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Verify bot integration
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s = Path('src/App.jsx').read_text(encoding='utf-8')
+          required = [
+            'const BOT_SCORING_AIMS = {',
+            'beginner: 0.08',
+            'easy: 0.22',
+            'medium: 0.55',
+            'hard: 0.85',
+            'expert: 1',
+            "if (score > 80) return botScoringTarget(level);",
+            '{ double: outDouble, triple: outTriple, master: outMaster }, p.level);',
+            "p.level === 'beginner'",
+          ]
+          for item in required:
+            assert item in s, item
+          assert "if (score > 80) return { v: 20, m: 3 };" not in s
+          print('bot integration verification OK')
+          PY
+      - name: Commit clean result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/App.jsx
+          git commit -m "Make bot levels human-like and varied"
+          git rm -f .github/scripts/patch_final_robot_flow.py .github/workflows/patch-final-realistic-bot-flow.yml
+          git commit -m "Remove temporary bot patch helpers"
+          git restore dist || true
+          git push origin HEAD:fix/final-realistic-bot-flow
