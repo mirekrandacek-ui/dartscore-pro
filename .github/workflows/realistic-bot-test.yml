@@ -4,6 +4,7 @@ on:
     branches: [fix/realistic-three-level-bots]
     paths:
       - '.github/scripts/patch_realistic_bots.py'
+      - '.github/scripts/tune_realistic_bots.py'
       - '.github/workflows/realistic-bot-test.yml'
 permissions:
   contents: write
@@ -16,6 +17,8 @@ jobs:
         with:
           node-version: 20
           cache: npm
+      - name: Tune realistic difficulty targets
+        run: python .github/scripts/tune_realistic_bots.py
       - name: Apply App integration patch
         run: python .github/scripts/patch_realistic_bots.py
       - name: Simulate pub-player bots
@@ -38,10 +41,12 @@ jobs:
           assert 'botScatter(' not in app
           assert 'botChooseClassic(' not in app
           assert "if (score > 80) return { v: 20, m: 3 }" not in app
-          for fn in ['botThrowClassic', 'botThrowCricket', 'botThrowAround', 'normalizeBotLevel']:
+          for fn in ['botThrowClassic', 'botThrowCricket', 'botThrowAround', 'botThrowRoulette', 'normalizeBotLevel']:
               assert fn in app and fn in engine, fn
           assert "if (level === 'easy') return 'beginner'" in engine
           assert "if (level === 'expert') return 'hard'" in engine
+          assert 'doubleHit: 0.08' in engine
+          assert 'tripleHit: 0.16' in engine
           print('three-level bot integration OK')
           PY
           git diff --check
@@ -51,7 +56,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/App.jsx src/botEngine.js scripts/simulate-bots.mjs
           git commit -m "Use realistic three-level pub bots" || true
-          git rm -f .github/scripts/patch_realistic_bots.py .github/workflows/realistic-bot-test.yml
+          git rm -f .github/scripts/patch_realistic_bots.py .github/scripts/tune_realistic_bots.py .github/workflows/realistic-bot-test.yml
           git commit -m "Remove temporary realistic bot helpers"
           git restore dist || true
           git push origin HEAD:fix/realistic-three-level-bots
