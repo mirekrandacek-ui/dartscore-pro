@@ -24,7 +24,9 @@ function playClassic(level, seed, keepVisits = false) {
   const rules = { double: true, triple: false, master: false };
   const form = 0.94 + rng() * 0.12;
 
-  while (score > 0 && darts < 240) {
+  // A weak pub player can spend a long time on doubles. Keep a generous cap so
+  // the simulation measures that tail instead of hiding it.
+  while (score > 0 && darts < 600) {
     const turnStart = score;
     const visit = [];
     for (let d = 0; d < 3 && score > 0; d += 1) {
@@ -80,7 +82,7 @@ function playAround(level, seed) {
     const hit = botThrowAround({ next, level, form, rng });
     darts += 1;
     if (next <= 20 && hit.v === next) next += 1;
-    else if (next === 21 && hit.v === 25) next = 26;
+    else if (next === 25 && hit.v === 25) next = 26;
     if (next === 21) next = 25;
   }
   return darts;
@@ -92,13 +94,14 @@ const around = {};
 
 for (const [li, level] of LEVELS.entries()) {
   const classicRuns = Array.from({ length: 3000 }, (_, i) => playClassic(level, 100000 * (li + 1) + i));
-  if (classicRuns.some(x => !x.finished)) throw new Error(`${level}: unfinished Classic simulation`);
+  if (classicRuns.some(x => !x.finished)) throw new Error(`${level}: unfinished Classic simulation even after 600 darts`);
   const darts = classicRuns.map(x => x.darts);
   const t20s = classicRuns.map(x => x.t20);
   classic[level] = {
     meanDarts: mean(darts),
     p10: percentile(darts, 0.10),
     p90: percentile(darts, 0.90),
+    p99: percentile(darts, 0.99),
     matchAvg3: 501 / mean(darts) * 3,
     t20PerLeg: mean(t20s),
     zeroT20Share: t20s.filter(x => x === 0).length / t20s.length,
@@ -125,7 +128,7 @@ assert(around.beginner.meanDarts > around.medium.meanDarts && around.medium.mean
 console.log('\n=== REALISTIC BOT SIMULATION ===');
 for (const level of LEVELS) {
   const c = classic[level];
-  console.log(`${level.padEnd(9)} Classic 501 DO: mean ${c.meanDarts.toFixed(1)} darts, p10–p90 ${c.p10}–${c.p90}, match avg ${c.matchAvg3.toFixed(1)}, T20/leg ${c.t20PerLeg.toFixed(2)}, no-T20 legs ${(c.zeroT20Share * 100).toFixed(0)}%`);
+  console.log(`${level.padEnd(9)} Classic 501 DO: mean ${c.meanDarts.toFixed(1)} darts, p10–p90 ${c.p10}–${c.p90}, p99 ${c.p99}, match avg ${c.matchAvg3.toFixed(1)}, T20/leg ${c.t20PerLeg.toFixed(2)}, no-T20 legs ${(c.zeroT20Share * 100).toFixed(0)}%`);
   console.log(`${' '.repeat(9)} Cricket close: mean ${cricket[level].meanDarts.toFixed(1)} darts (${cricket[level].p10}–${cricket[level].p90})`);
   console.log(`${' '.repeat(9)} Around: mean ${around[level].meanDarts.toFixed(1)} darts (${around[level].p10}–${around[level].p90})`);
 }
