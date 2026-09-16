@@ -20,6 +20,8 @@ plugins {
     id 'com.android.application'
 }
 
+apply plugin: 'com.google.gms.google-services'
+
 def twaManifest = [
     applicationId: 'com.randis2288.dartscorepro',
     hostName: 'dartscore-pro.vercel.app',
@@ -138,7 +140,7 @@ task generateShorcutsFile {
                         'android:enabled': 'true',
                         'android:icon': '@drawable/' + shortcut.icon,
                         'android:shortcutShortLabel': '@string/shortcut_short_name_' + index,
-                        'android:shortcutLongLabel': '@string/shortcut_name_' + index) {
+                        'android:shortcutLongLabel': '@string/shortcut_long_label_' + index) {
                     'intent'(
                         'android:action': 'android.intent.action.MAIN',
                         'android:targetPackage': twaManifest.applicationId,
@@ -163,6 +165,8 @@ repositories {
 }
 
 dependencies {
+    implementation platform('com.google.firebase:firebase-bom:34.19.0')
+    implementation 'com.google.firebase:firebase-analytics'
     implementation 'com.google.android.play:app-update:2.1.0'
     implementation 'com.google.android.gms:play-services-ads:24.9.0'
     implementation 'com.google.android.ump:user-messaging-platform:4.0.0'
