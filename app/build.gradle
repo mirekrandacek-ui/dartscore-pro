@@ -92,7 +92,7 @@ android {
         resValue "integer", "splashScreenFadeOutDuration", twaManifest.splashScreenFadeOutDuration.toString()
         resValue "string", "generatorApp", twaManifest.generatorApp
         resValue "string", "fallbackType", twaManifest.fallbackType
-        resValue "bool", "enableSiteSettingsShortcut", twaManifest.enableSiteSettingsShortcut
+        resValue "bool", "enableNotification", twaManifest.enableNotifications.toString()
         resValue "string", "orientation", twaManifest.orientation
     }
 
@@ -140,7 +140,7 @@ task generateShorcutsFile {
                         'android:enabled': 'true',
                         'android:icon': '@drawable/' + shortcut.icon,
                         'android:shortcutShortLabel': '@string/shortcut_short_name_' + index,
-                        'android:shortcutLongLabel': '@string/shortcut_long_label_' + index) {
+                        'android:shortcutLongLabel': '@string/shortcut_name_' + index) {
                     'intent'(
                         'android:action': 'android.intent.action.MAIN',
                         'android:targetPackage': twaManifest.applicationId,
