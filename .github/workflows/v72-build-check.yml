@@ -1,9 +1,9 @@
-name: v79 final i18n test
+name: v80 final i18n test
 
 on:
   push:
     branches:
-      - release/v79-final-i18n-test
+      - release/v80-final-i18n-test
   workflow_dispatch:
 
 jobs:
@@ -23,7 +23,7 @@ jobs:
       - name: Bring in tested statistics translations
         run: |
           git fetch origin preview/statistics-i18n:refs/remotes/origin/preview/statistics-i18n
-          git show origin/preview/statistics-i18n:src/App.jsx > src/App.jsx
+          git show 54629103847c1a930d91ae6cd4477691f3efd478:src/App.jsx > src/App.jsx
 
       - name: Build translated web bundle
         run: |
@@ -44,18 +44,18 @@ jobs:
       - name: Install Android SDK 36
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
-      - name: Prepare v79 Android test build
+      - name: Prepare v80 Android test build
         run: |
-          sed -i 's/versionCode 78/versionCode 79/' app/build.gradle
-          sed -i 's/versionName "1.1.44"/versionName "1.1.45"/' app/build.gradle
+          sed -i 's/versionCode 78/versionCode 80/' app/build.gradle
+          sed -i 's/versionName "1.1.44"/versionName "1.1.46"/' app/build.gradle
           python3 tools/apply-v78-offline-client.py
 
       - name: Verify combined source
         run: |
           grep -q "new OfflineWebViewClient" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
           grep -q "user-messaging-platform:4.0.0" app/build.gradle
-          grep -q "versionCode 79" app/build.gradle
-          grep -q "versionName \"1.1.45\"" app/build.gradle
+          grep -q "versionCode 80" app/build.gradle
+          grep -q "versionName \"1.1.46\"" app/build.gradle
           grep -q "const STATS_I18N" src/App.jsx
 
       - name: Build release bundle
@@ -67,5 +67,5 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: dartscore-pro-v79-final-i18n-test-aab
+          name: dartscore-pro-v80-final-i18n-test-aab
           path: app/build/outputs/bundle/release/app-release.aab
