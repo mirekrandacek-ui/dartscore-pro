@@ -1435,6 +1435,22 @@ function App() {
   };
 
   const startGame = () => {
+    try {
+      let previousGame = null;
+      if (screen === 'game') {
+        previousGame = normalizeSavedGame(makeSnapshot());
+      } else {
+        previousGame = normalizeSavedGame(
+          JSON.parse(localStorage.getItem('savedGame') || '{}')
+        );
+      }
+
+      window.DartScoreAnalytics?.abandonGame(
+        previousGame,
+        screen === 'game' ? 'restart' : 'new_game'
+      );
+    } catch { }
+
     const baseOrder = players.map((_, i) => i);
     const teamMode = mode === 'classic' && playerMode === 'teams';
     const teamOrder = teamMode ? buildTeamOrder(players) : null;
