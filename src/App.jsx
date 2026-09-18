@@ -2292,7 +2292,7 @@ const commitCricket = (value, mOverride) => {
         speak(lang, 'Vítěz!', voiceOn);
       }
       try {
-        if (winAudioRef.current) {
+        if (soundOn && winAudioRef.current) {
           winAudioRef.current.currentTime = 0;
           winAudioRef.current.play();
         }
@@ -4256,6 +4256,11 @@ function Lobby({
   }) {
     const HEAD_H = 40;
     const [roundScoreInput, setRoundScoreInput] = React.useState('');
+    const inputLocked = Boolean(players[order[currIdx]]?.bot);
+
+    React.useEffect(() => {
+      if (inputLocked) setRoundScoreInput('');
+    }, [inputLocked]);
 
     const gameTeamCodes = ['A', 'B', 'C'];
 
@@ -4937,7 +4942,14 @@ function Lobby({
 
           {/* PAD / KEYPAD */}
           {winner == null && !hideDartControls && (
-            <div className={`padPane ${mode === 'classic' && scoreInputMode === 'round' ? 'roundTotalKeypad' : 'dartKeypad'}`}>
+            <div
+              className={`padPane ${mode === 'classic' && scoreInputMode === 'round' ? 'roundTotalKeypad' : 'dartKeypad'}`}
+              aria-disabled={inputLocked}
+              style={{
+                pointerEvents: inputLocked ? 'none' : 'auto',
+                opacity: inputLocked ? 0.5 : 1
+              }}
+            >
               {mode === 'classic' && scoreInputMode === 'round' ? (
                 <>
                   <div
