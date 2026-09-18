@@ -45,7 +45,7 @@ const gameSignature = (snapshot) => {
   ].join('::');
 };
 
-const sendNativeAnalyticsEvent = (eventName, params = {}) => {
+const sendNativeAnalyticsEvent = (eventName, params = {}, immediate = false) => {
   try {
     if (!window.DartScoreAndroid) return;
 
@@ -58,6 +58,11 @@ const sendNativeAnalyticsEvent = (eventName, params = {}) => {
     });
 
     const url = `dartscorepro://show-interstitial?${query.toString()}`;
+    if (immediate) {
+      window.location.href = url;
+      return;
+    }
+
     setTimeout(() => {
       try {
         window.location.href = url;
@@ -217,7 +222,8 @@ const installStorageAnalytics = () => {
           {
             product_id: 'premium_unlock',
             previous_plan_tier: 'free'
-          }
+          },
+          true
         );
 
         try {
