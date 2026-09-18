@@ -129,6 +129,16 @@ const markGameCompleted = (record) => {
   } catch { }
 };
 
+if (typeof window !== 'undefined') {
+  window.DartScoreAnalytics = {
+    abandonGame(snapshot, reason = 'new_game') {
+      if (!snapshot || snapshot.winner != null || progressOf(snapshot) <= 0) return false;
+      markGameAbandoned(snapshot, reason);
+      return true;
+    }
+  };
+}
+
 const installStorageAnalytics = () => {
   const originalSetItem = Storage.prototype.setItem;
 
@@ -166,10 +176,6 @@ const installStorageAnalytics = () => {
         const firstActiveGame = !activeSignature;
         const resetAfterProgress = previousProgress > 0 && nextProgress === 0;
         const switchedGame = previousSignature && nextSignature && previousSignature !== nextSignature && nextProgress === 0;
-
-        if (activeSignature && (resetAfterProgress || switchedGame)) {
-          markGameAbandoned(previous, switchedGame ? 'new_game' : 'restart');
-        }
 
         if (firstActiveGame || resetAfterProgress || switchedGame) {
           markGameStarted(next, nextProgress > 0);
