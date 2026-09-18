@@ -3733,7 +3733,14 @@ function Lobby({
             <button
   type="button"
   className="btn"
-  onClick={() => setShowPremiumDetails(s => !s)}
+  onClick={() => {
+    if (!showPremiumDetails) {
+      window.DartScoreAnalytics?.track('premium_screen_viewed', {
+        plan_tier: isPremium ? 'premium' : 'free'
+      });
+    }
+    setShowPremiumDetails(s => !s);
+  }}
   style={{
     minWidth: 90,
     fontWeight: 800,
@@ -3746,6 +3753,7 @@ function Lobby({
             <button
               type="button"
               className="btn"
+              data-analytics-action="premium_purchase_started"
               onClick={buyPremium}           
               style={{
                 minWidth: 90,
