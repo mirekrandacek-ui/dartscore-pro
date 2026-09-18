@@ -904,6 +904,11 @@ async function showInterstitialAd() {
     if (typeof window === 'undefined') return false;
     if (!/Android/i.test(navigator.userAgent)) return false;
 
+    window.DartScoreAnalytics?.track('interstitial_requested', {
+      ad_format: 'interstitial',
+      plan_tier: localStorage.getItem('premium') === 'true' ? 'premium' : 'free'
+    });
+
     window.location.href = ADMOB_INTERSTITIAL_SCHEME_URL;
     return true;
   } catch (err) {
