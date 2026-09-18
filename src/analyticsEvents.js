@@ -83,6 +83,28 @@ const markGameStarted = (snapshot, isResume = false) => {
   });
 };
 
+const markGameAbandoned = (snapshot, reason = 'new_game') => {
+  let durationSec;
+  try {
+    const startedAt = Number(sessionStorage.getItem(ANALYTICS_STARTED_AT_KEY));
+    if (Number.isFinite(startedAt) && startedAt > 0) {
+      durationSec = Math.max(0, Math.round((Date.now() - startedAt) / 1000));
+    }
+  } catch { }
+
+  sendNativeAnalyticsEvent('game_abandoned', {
+    game_type: snapshot?.mode || 'unknown',
+    player_count: participantCount(snapshot),
+    player_mode: snapshot?.playerMode || 'individual',
+    plan_tier: currentPlanTier(),
+    start_score: snapshot?.mode === 'classic' ? snapshot?.startScore : undefined,
+    ai_level: snapshot?.ai && snapshot.ai !== 'off' ? snapshot.ai : undefined,
+    duration_sec: durationSec,
+    abandon_reason: reason,
+    progress: progressOf(snapshot)
+  });
+};
+
 const markGameCompleted = (record) => {
   let durationSec;
   try {
@@ -144,6 +166,10 @@ const installStorageAnalytics = () => {
         const firstActiveGame = !activeSignature;
         const resetAfterProgress = previousProgress > 0 && nextProgress === 0;
         const switchedGame = previousSignature && nextSignature && previousSignature !== nextSignature && nextProgress === 0;
+
+        if (activeSignature && (resetAfterProgress || switchedGame)) {
+          markGameAbandoned(previous, switchedGame ? 'new_game' : 'restart');
+        }
 
         if (firstActiveGame || resetAfterProgress || switchedGame) {
           markGameStarted(next, nextProgress > 0);
