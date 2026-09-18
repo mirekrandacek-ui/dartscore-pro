@@ -3054,6 +3054,10 @@ const buyPremium = async () => {
     const rateApp = () => {
       const url = 'https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro';
 
+      window.DartScoreAnalytics?.track('rate_app_clicked', {
+        source: 'lobby'
+      });
+
       try {
         window.open(url, '_blank', 'noopener,noreferrer');
       } catch {
@@ -3507,6 +3511,11 @@ function Lobby({
     const shareApp = async () => {
       const url = 'https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro';
       const payload = { title: 'DartScore Pro', text: t(lang, 'shareText'), url };
+
+      window.DartScoreAnalytics?.track('app_share_clicked', {
+        source: 'lobby'
+      });
+
       try {
         if (window.DartScoreAndroid?.shareApp) {
           window.DartScoreAndroid.shareApp(payload.title, payload.text, payload.url);
