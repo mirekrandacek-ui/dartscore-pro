@@ -3507,6 +3507,8 @@ function Lobby({
   }) {
     const [showPremiumDetails, setShowPremiumDetails] = useState(false);
     const matchOptions = Array.from({ length: 21 }, (_, ix) => ix + 1);
+    const isNativeAndroidApp =
+      typeof window !== 'undefined' && Boolean(window.DartScoreAndroid);
 
     const shareApp = async () => {
       const url = 'https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro';
@@ -4022,6 +4024,77 @@ function Lobby({
           </details>
         </div>
         {/* >>> DARTSCORE_UNIQUE_ANCHOR__RULES_BLOCK__END__9F31 <<< */}
+
+        {!isNativeAndroidApp && (
+          <section className="webPublisherContent" aria-labelledby="dartscore-web-about">
+            {lang === 'cs' ? (
+              <>
+                <h1 id="dartscore-web-about">DartScore Pro – počítadlo skóre pro šipky</h1>
+                <p>
+                  DartScore Pro je praktické počítadlo pro domácí trénink i zápasy více hráčů.
+                  Aplikace počítá skóre, hlídá pořadí hráčů a u podporovaných režimů pomáhá
+                  s průběhem hry, takže se můžete soustředit na samotné házení.
+                </p>
+                <h2>Co v DartScore Pro najdeš</h2>
+                <p>
+                  Můžeš hrát klasické X01 se skóre 101 až 901, Cricket, Around the Clock
+                  a režimy Roulette. U X01 lze nastavit Double Out nebo Triple Out,
+                  počet legů a setů, pevné či náhodné pořadí a také zadávání po jednotlivých
+                  šipkách nebo celkového náhozu za kolo.
+                </p>
+                <p>
+                  Pro samostatný trénink je k dispozici robot s několika úrovněmi obtížnosti.
+                  Při hře více lidí můžeš spravovat hráče, pořadí a týmový režim. DartScore Pro
+                  uchovává rozehranou hru a statistiky na zařízení, aby ses mohl ke hře vrátit.
+                </p>
+                <h2>Jak začít</h2>
+                <p>
+                  Vyber herní režim, nastav pravidla, přidej hráče a stiskni Start.
+                  Podrobnější vysvětlení režimů a bodování najdeš v průvodci.
+                </p>
+                <nav className="webPublisherLinks" aria-label="Informace o DartScore Pro">
+                  <a href="/how-to-play/">Jak hrát a počítat skóre</a>
+                  <a href="/about/">O DartScore Pro</a>
+                  <a href="/privacy/">Zásady ochrany soukromí</a>
+                </nav>
+              </>
+            ) : (
+              <>
+                <h1 id="dartscore-web-about">DartScore Pro – darts scoring companion</h1>
+                <p>
+                  DartScore Pro is a practical darts scorer for home practice and multiplayer
+                  matches. It keeps track of scores and player order and guides supported game
+                  modes so players can focus on throwing rather than manual arithmetic.
+                </p>
+                <h2>What you can do</h2>
+                <p>
+                  Play classic X01 with starting scores from 101 to 901, Cricket, Around the
+                  Clock and Roulette modes. X01 supports configurable finishing rules,
+                  legs and sets, fixed or random order, and score entry by individual darts
+                  or by the total score for a round.
+                </p>
+                <p>
+                  Solo players can practise against a computer opponent with several
+                  difficulty levels. Multiplayer games support player management, ordering
+                  and team play. DartScore Pro also keeps unfinished games and match
+                  statistics on the device so you can continue later.
+                </p>
+                <h2>Getting started</h2>
+                <p>
+                  Choose a game mode, set the rules, add players and press Start.
+                  The detailed guide explains the supported modes, scoring and common
+                  finishing rules.
+                </p>
+                <nav className="webPublisherLinks" aria-label="DartScore Pro information">
+                  <a href="/how-to-play/">How to play and score darts</a>
+                  <a href="/about/">About DartScore Pro</a>
+                  <a href="/privacy/">Privacy Policy</a>
+                </nav>
+              </>
+            )}
+          </section>
+        )}
+
         <StatisticsDashboard lang={lang} t={t} showToast={showToast} />
       </div>
     );
