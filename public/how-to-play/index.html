@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="index,follow" />
+  <meta name="description" content="A practical guide to scoring X01, Cricket and Around the Clock with DartScore Pro, including finishing rules, turns and score entry." />
+  <link rel="canonical" href="https://dartscore-pro.vercel.app/how-to-play/" />
+  <title>How to play darts with DartScore Pro</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#090d12;color:#edf2f7}
+    *{box-sizing:border-box} body{margin:0;background:#090d12;color:#edf2f7}
+    main{max-width:900px;margin:0 auto;padding:38px 22px 64px}
+    h1{margin:0 0 12px;font-size:2rem} h2{margin:30px 0 10px;color:#7dd3fc} h3{margin:20px 0 8px}
+    p,li{line-height:1.7;color:#d7dee7} a{color:#67e8f9}
+    nav{display:flex;flex-wrap:wrap;gap:12px;margin:0 0 26px}
+    .note{background:#111821;border:1px solid #253140;border-radius:14px;padding:18px;margin:18px 0}
+  </style>
+</head>
+<body>
+<main>
+  <nav><a href="/">Open DartScore Pro</a><a href="/about/">About</a><a href="/privacy/">Privacy Policy</a></nav>
+  <h1>How to play and score darts with DartScore Pro</h1>
+  <p>DartScore Pro provides the scoreboard and turn tracking; the players still decide the targets and throw the darts. Before starting, choose the game mode, add the players, configure the match rules and press Start.</p>
+
+  <h2>X01: 101, 301, 501 and longer games</h2>
+  <p>In X01 every player begins with the selected starting score. The value of each valid throw is subtracted from the remaining total. The aim is to reach exactly zero before the other player or team.</p>
+  <p>A single scores the number shown on the board, a double scores twice that number and a triple scores three times the number. The outer bull scores 25 and the inner bull scores 50.</p>
+
+  <h3>Finishing rules</h3>
+  <p>With an unrestricted finish, a player can reach zero with any valid final dart. When Double Out is selected, the final dart must finish the leg on a double or the inner bull. When Triple Out is selected, the final dart must satisfy the selected triple finishing condition. DartScore Pro uses the match settings selected before the game when it validates the finish.</p>
+
+  <h3>Busts</h3>
+  <p>If a visit would take the score below zero, or would otherwise make a finish invalid under the selected finishing rule, the visit is treated according to X01 bust rules and the player's score is not allowed to continue into an impossible state.</p>
+
+  <h3>Legs and sets</h3>
+  <p>A leg is one complete race from the starting score to zero. A match can be configured to require multiple legs and, when sets are used, multiple sets. DartScore Pro keeps the current leg and set state together with the active player.</p>
+
+  <h2>Cricket</h2>
+  <p>Cricket focuses on 15, 16, 17, 18, 19, 20 and Bull. A single counts as one mark, a double as two marks and a triple as three marks. A number is closed after three marks.</p>
+  <p>Once you have closed a number, additional hits can score points while an opponent still has that number open. Bull follows the same mark idea: the outer bull counts as one mark and the inner bull as two. A player normally needs to close all required targets and satisfy the points condition to win.</p>
+
+  <h2>Around the Clock</h2>
+  <p>Around the Clock is a target-progression game. Players work through the board in numerical order and finish with Bull. Instead of reducing a starting score, the important information is the next target each player needs to hit. DartScore Pro keeps that target visible and advances it after a valid hit.</p>
+
+  <h2>Roulette modes</h2>
+  <p>Roulette modes add a changing target to the session. The app draws or presents the required target and tracks whether the current player hits or misses it. This creates a practice format in which players cannot simply repeat the same preferred segment.</p>
+
+  <h2>Entering scores</h2>
+  <p>For classic X01, DartScore Pro supports score entry by individual darts and a round-total method. Individual-dart entry is useful when you want the app to know each hit. Round-total entry is faster when a player already knows the total value of the three-dart visit.</p>
+  <div class="note">
+    <strong>Tip:</strong> Check the active player before confirming a visit. The app deliberately keeps turn order visible so a score is not accidentally entered for the wrong person.
+  </div>
+
+  <h2>Playing against the robot</h2>
+  <p>When practising alone, choose one of the available robot difficulty levels. The computer opponent provides an automated score progression so a single player can practise match rhythm rather than only throwing isolated groups of darts.</p>
+
+  <h2>Team play</h2>
+  <p>In supported X01 games, players can be assigned to teams. Team play is useful for doubles-style home matches because the scoreboard can keep the player sequence and team result together instead of requiring a separate paper calculation.</p>
+
+  <h2>Saving and continuing</h2>
+  <p>DartScore Pro stores relevant game state locally on the device. If a match is interrupted, an unfinished game can be continued when that saved state is available. Local match records are also used for statistics and recent-performance views.</p>
+
+  <h2>Before the first throw</h2>
+  <ol>
+    <li>Select the game mode.</li>
+    <li>Choose the starting score or mode-specific settings.</li>
+    <li>Set legs, sets and finishing rules where applicable.</li>
+    <li>Add players or teams and choose their order.</li>
+    <li>Choose a robot difficulty if you are practising alone.</li>
+    <li>Press Start and enter each visit as the game progresses.</li>
+  </ol>
+
+  <p>For more information about the app itself, see <a href="/about/">About DartScore Pro</a>.</p>
+</main>
+</body>
+</html>

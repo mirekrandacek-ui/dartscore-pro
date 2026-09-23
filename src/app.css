@@ -1520,3 +1520,45 @@ html, body{
   .lobbyModeGroup{ flex:1 1 auto; }
   .shareIconBtn{ margin-left:auto; }
 }
+
+
+/* Public web content used only outside the native Android app. */
+.webPublisherContent{
+  flex:0 0 auto;
+  margin:0;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:#11161d;
+  color:#e5e7eb;
+}
+.webPublisherContent h1{
+  margin:0 0 10px;
+  font-size:20px;
+  line-height:1.25;
+}
+.webPublisherContent h2{
+  margin:16px 0 6px;
+  font-size:16px;
+  color:#dbeafe;
+}
+.webPublisherContent p{
+  margin:0 0 9px;
+  color:#cbd5e1;
+  font-size:14px;
+  line-height:1.55;
+}
+.webPublisherLinks{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px 12px;
+  margin-top:14px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+}
+.webPublisherLinks a{
+  color:#7dd3fc;
+  font-weight:800;
+  text-decoration:underline;
+  text-underline-offset:3px;
+}
