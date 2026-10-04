@@ -1,9 +1,9 @@
-name: v81 analytics events
+name: v82 Unity mediation
 
 on:
   push:
     branches:
-      - release/v81-analytics-events
+      - release/v82-unity-mediation
   workflow_dispatch:
 
 jobs:
@@ -46,10 +46,10 @@ jobs:
       - name: Install Android SDK 36
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
-      - name: Prepare v81 Android test build
+      - name: Prepare v82 Android test build
         run: |
-          sed -i 's/versionCode 78/versionCode 81/' app/build.gradle
-          sed -i 's/versionName "1.1.44"/versionName "1.1.47"/' app/build.gradle
+          sed -i 's/versionCode 78/versionCode 82/' app/build.gradle
+          sed -i 's/versionName "1.1.44"/versionName "1.1.48"/' app/build.gradle
           python3 tools/apply-v78-offline-client.py
 
       - name: Verify combined source
@@ -59,7 +59,7 @@ jobs:
           grep -q "analytics_event" app/src/main/java/com/randis2288/dartscorepro/AdMobInterstitialActivity.java
           grep -q "game_started" src/analyticsEvents.js
           grep -q "game_completed" src/analyticsEvents.js
-          grep -q "versionCode 81" app/build.gradle
+          grep -q "versionCode 82" app/build.gradle
           grep -q "versionName \"1.1.47\"" app/build.gradle
           grep -q "const STATS_I18N" src/App.jsx
 
@@ -72,5 +72,5 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: DartScorePro_v81_1.1.47
+          name: DartScorePro_v82_1.1.48
           path: app/build/outputs/bundle/release/app-release.aab
