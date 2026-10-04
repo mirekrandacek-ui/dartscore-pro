@@ -44,6 +44,10 @@ import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.LoadAdError;
 
+import com.google.android.ump.ConsentInformation;
+import com.google.android.ump.ConsentRequestParameters;
+import com.google.android.ump.UserMessagingPlatform;
+
 import com.google.android.play.core.appupdate.AppUpdateInfo;
 import com.google.android.play.core.appupdate.AppUpdateManager;
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
@@ -96,6 +100,10 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private AppUpdateManager appUpdateManager;
     private InstallStateUpdatedListener updateInstallListener;
     private boolean updateFlowStarted = false;
+
+    private ConsentInformation consentInformation;
+    private boolean adsReady = false;
+    private boolean currentPremiumState = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -175,6 +183,7 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         root.requestApplyInsets();
 
         initInAppUpdate();
+        initConsentAndAds();
         initBilling();
         setPremiumState(false);
         webView.loadUrl(START_URL);
@@ -204,6 +213,17 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             "var css='.toast{bottom:90px!important;}';" +
             "var st=document.getElementById('native-admob-toast-offset');" +
             "if(!st){st=document.createElement('style');st.id='native-admob-toast-offset';st.textContent=css;document.head.appendChild(st);}" +
+            "if(window.DartScoreAndroid&&window.DartScoreAndroid.isPrivacyOptionsRequired&&window.DartScoreAndroid.isPrivacyOptionsRequired()){" +
+            "var nav=document.querySelector('.webPublisherLinks');" +
+            "if(nav&&!document.getElementById('native-privacy-options')){" +
+            "var a=document.createElement('a');a.id='native-privacy-options';a.href='#';" +
+            "var l=(document.documentElement.lang||navigator.language||'en').toLowerCase();" +
+            "var labels={cs:'Nastavení soukromí',de:'Datenschutzeinstellungen',es:'Opciones de privacidad',nl:'Privacykeuzes',ru:'Настройки конфиденциальности',zh:'隐私选项',en:'Privacy choices'};" +
+            "a.textContent=labels[l.slice(0,2)]||labels.en;" +
+            "a.addEventListener('click',function(ev){ev.preventDefault();window.DartScoreAndroid.showPrivacyOptions();});" +
+            "nav.appendChild(a);" +
+            "}" +
+            "}else{var p=document.getElementById('native-privacy-options');if(p)p.remove();}" +
             "if(!window.__dspNativeBillingHook){" +
             "window.__dspNativeBillingHook=true;" +
             "document.addEventListener('click',function(ev){" +
@@ -248,8 +268,11 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     }
 
     private void setPremiumState(boolean isPremium) {
-        if (!FORCE_FREE_BANNER_TEST && isPremium) {
+        currentPremiumState = isPremium;
+
+        if ((!FORCE_FREE_BANNER_TEST && isPremium) || !adsReady) {
             adHost.setVisibility(View.GONE);
+            bannerHeightPx = 0;
             updateBannerLayout();
             return;
         }
@@ -384,6 +407,118 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         webView.setLayoutParams(webParams);
     }
 
+
+    private void initConsentAndAds() {
+        consentInformation = UserMessagingPlatform.getConsentInformation(this);
+
+        ConsentRequestParameters params =
+            new ConsentRequestParameters.Builder().build();
+
+        // Google recommends refreshing consent information on every app launch.
+        consentInformation.requestConsentInfoUpdate(
+            this,
+            params,
+            () -> {
+                refreshPrivacyOptionsEntryPoint();
+
+                // Cached valid consent can already allow requests at this point.
+                initializeAdsIfAllowed();
+
+                UserMessagingPlatform.loadAndShowConsentFormIfRequired(
+                    this,
+                    formError -> {
+                        refreshPrivacyOptionsEntryPoint();
+
+                        if (formError != null && !consentInformation.canRequestAds()) {
+                            nativeToast(
+                                "Souhlas pro reklamy se nepodařilo načíst: " +
+                                formError.getMessage()
+                            );
+                        }
+
+                        initializeAdsIfAllowed();
+                    }
+                );
+            },
+            requestConsentError -> {
+                refreshPrivacyOptionsEntryPoint();
+
+                // If a previous consent decision is still valid, ads may continue.
+                initializeAdsIfAllowed();
+
+                if (!consentInformation.canRequestAds()) {
+                    nativeToast(
+                        "Reklamy čekají na souhlas: " +
+                        requestConsentError.getMessage()
+                    );
+                }
+            }
+        );
+
+        // After requestConsentInfoUpdate() has been called, cached valid consent
+        // may already permit ads and avoids unnecessary startup latency.
+        initializeAdsIfAllowed();
+    }
+
+    private void initializeAdsIfAllowed() {
+        if (consentInformation == null || !consentInformation.canRequestAds()) {
+            return;
+        }
+
+        Application application = (Application) getApplication();
+        application.initializeMobileAdsAfterConsent(
+            () -> runOnUiThread(() -> {
+                adsReady = true;
+                setPremiumState(currentPremiumState);
+            })
+        );
+    }
+
+    private void refreshPrivacyOptionsEntryPoint() {
+        if (webView == null) return;
+        webView.post(() -> injectWebFixes(webView));
+    }
+
+    private boolean isPrivacyOptionsRequired() {
+        return consentInformation != null
+            && consentInformation.getPrivacyOptionsRequirementStatus()
+                == ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED;
+    }
+
+    private void showPrivacyOptionsNative() {
+        if (consentInformation == null) return;
+
+        UserMessagingPlatform.showPrivacyOptionsForm(
+            this,
+            formError -> {
+                refreshPrivacyOptionsEntryPoint();
+
+                if (formError != null) {
+                    nativeToast(
+                        "Nastavení soukromí nejde otevřít: " +
+                        formError.getMessage()
+                    );
+                }
+
+                if (consentInformation.canRequestAds()) {
+                    initializeAdsIfAllowed();
+                } else {
+                    adsReady = false;
+                    bannerLoaded = false;
+                    bannerHeightPx = 0;
+
+                    if (adView != null) {
+                        adView.destroy();
+                        adView = null;
+                    }
+
+                    adHost.removeAllViews();
+                    adHost.setVisibility(View.GONE);
+                    updateBannerLayout();
+                }
+            }
+        );
+    }
 
     private void initInAppUpdate() {
         appUpdateManager = AppUpdateManagerFactory.create(this);
@@ -961,6 +1096,16 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         @JavascriptInterface
         public void restorePremium() {
             runOnUiThread(() -> restorePremiumInternal(true));
+        }
+
+        @JavascriptInterface
+        public boolean isPrivacyOptionsRequired() {
+            return MainWebViewActivity.this.isPrivacyOptionsRequired();
+        }
+
+        @JavascriptInterface
+        public void showPrivacyOptions() {
+            runOnUiThread(MainWebViewActivity.this::showPrivacyOptionsNative);
         }
 
         @JavascriptInterface
