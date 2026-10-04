@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - release/v81-analytics-events
+      - feature/v82-unity-mediation
   workflow_dispatch:
 
 jobs:
