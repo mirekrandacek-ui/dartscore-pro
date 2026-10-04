@@ -35,9 +35,11 @@ import com.android.billingclient.api.QueryProductDetailsParams;
 import com.android.billingclient.api.QueryProductDetailsResult;
 import com.android.billingclient.api.QueryPurchasesParams;
 
+import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.LoadAdError;
 
 import com.google.android.play.core.appupdate.AppUpdateInfo;
 import com.google.android.play.core.appupdate.AppUpdateManager;
@@ -249,7 +251,9 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             return;
         }
 
-        adHost.setVisibility(View.VISIBLE);
+        // Keep the banner host collapsed until an ad actually loads.
+        // This prevents an empty grey bar when there is no fill or mediation fails.
+        adHost.setVisibility(View.GONE);
         updateBannerLayout();
 
         if (!bannerLoaded) {
@@ -278,6 +282,37 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         boolean isDebug =
             (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
         adView.setAdUnitId(isDebug ? TEST_BANNER_ID : PROD_BANNER_ID);
+
+        adView.setAdListener(new AdListener() {
+            @Override
+            public void onAdLoaded() {
+                adHost.setVisibility(View.VISIBLE);
+                updateBannerLayout();
+                Toast.makeText(
+                    MainWebViewActivity.this,
+                    "Banner loaded",
+                    Toast.LENGTH_SHORT
+                ).show();
+            }
+
+            @Override
+            public void onAdFailedToLoad(LoadAdError adError) {
+                adHost.setVisibility(View.GONE);
+                bannerHeightPx = 0;
+                updateBannerLayout();
+
+                String message =
+                    "Banner failed: code=" + adError.getCode() +
+                    ", domain=" + adError.getDomain() +
+                    ", message=" + adError.getMessage();
+
+                Toast.makeText(
+                    MainWebViewActivity.this,
+                    message,
+                    Toast.LENGTH_LONG
+                ).show();
+            }
+        });
 
         adHost.removeAllViews();
         adHost.addView(
