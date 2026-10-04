@@ -63,8 +63,10 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private static final int IN_APP_UPDATE_REQUEST_CODE = 610;
     private static final int TTS_INSTALL_REQUEST_CODE = 611;
 
-    // Od v12 už testujeme skutečné Premium chování.
-    private static final boolean FORCE_FREE_BANNER_TEST = false;
+    // INTERNAL TEST v82 ONLY: show the native banner even on Premium devices.
+    // Keep the real ad unit so AdMob mediation (including Unity) is exercised.
+    // The phone MUST be registered as an AdMob test device before installing this build.
+    private static final boolean FORCE_FREE_BANNER_TEST = true;
 
     private WebView webView;
     private FrameLayout root;
@@ -275,7 +277,7 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
 
         boolean isDebug =
             (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
-        adView.setAdUnitId((isDebug || FORCE_FREE_BANNER_TEST) ? TEST_BANNER_ID : PROD_BANNER_ID);
+        adView.setAdUnitId(isDebug ? TEST_BANNER_ID : PROD_BANNER_ID);
 
         adHost.removeAllViews();
         adHost.addView(
