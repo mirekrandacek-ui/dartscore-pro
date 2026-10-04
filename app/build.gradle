@@ -106,6 +106,9 @@ android {
         release {
             minifyEnabled true
             signingConfig signingConfigs.release
+            ndk {
+                debugSymbolLevel 'SYMBOL_TABLE'
+            }
         }
     }
 
