@@ -43,6 +43,7 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.LoadAdError;
+import com.google.android.gms.ads.MobileAds;
 
 import com.google.android.ump.ConsentInformation;
 import com.google.android.ump.ConsentRequestParameters;
@@ -104,6 +105,10 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private ConsentInformation consentInformation;
     private boolean adsReady = false;
     private boolean currentPremiumState = false;
+
+    // INTERNAL TEST v86 ONLY: launch Ad Inspector programmatically once
+    // after Mobile Ads initialization so we can inspect Unity mediation.
+    private boolean adInspectorOpened = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -470,7 +475,31 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             () -> runOnUiThread(() -> {
                 adsReady = true;
                 setPremiumState(currentPremiumState);
+
+                // Let the banner request start first, then open Ad Inspector.
+                root.postDelayed(this::openAdInspectorOnce, 1500);
             })
+        );
+    }
+
+    private void openAdInspectorOnce() {
+        if (adInspectorOpened || !adsReady || isFinishing()) {
+            return;
+        }
+
+        adInspectorOpened = true;
+
+        MobileAds.openAdInspector(
+            this,
+            error -> {
+                if (error != null) {
+                    adInspectorOpened = false;
+                    nativeToast(
+                        "Ad Inspector nejde otevřít: " +
+                        error.getCode() + " – " + error.getMessage()
+                    );
+                }
+            }
         );
     }
 
