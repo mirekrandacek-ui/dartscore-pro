@@ -1,9 +1,9 @@
-name: v85 UMP consent and symbols
+name: v86 Ad Inspector
 
 on:
   push:
     branches:
-      - release/v85-ump-symbols
+      - release/v86-ad-inspector
   workflow_dispatch:
 
 jobs:
@@ -46,10 +46,10 @@ jobs:
       - name: Install Android SDK 36
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
-      - name: Prepare v85 Android test build
+      - name: Prepare v86 Android test build
         run: |
-          sed -i 's/versionCode 78/versionCode 85/' app/build.gradle
-          sed -i 's/versionName "1.1.44"/versionName "1.1.51"/' app/build.gradle
+          sed -i 's/versionCode 78/versionCode 86/' app/build.gradle
+          sed -i 's/versionName "1.1.44"/versionName "1.1.52"/' app/build.gradle
           python3 tools/apply-v78-offline-client.py
 
       - name: Verify combined source
@@ -59,14 +59,15 @@ jobs:
           grep -q "analytics_event" app/src/main/java/com/randis2288/dartscorepro/AdMobInterstitialActivity.java
           grep -q "game_started" src/analyticsEvents.js
           grep -q "game_completed" src/analyticsEvents.js
-          grep -q "versionCode 85" app/build.gradle
-          grep -q "versionName \"1.1.51\"" app/build.gradle
+          grep -q "versionCode 86" app/build.gradle
+          grep -q "versionName \"1.1.52\"" app/build.gradle
           grep -q "const STATS_I18N" src/App.jsx
           grep -q "requestConsentInfoUpdate" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
           grep -q "loadAndShowConsentFormIfRequired" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
           grep -q "canRequestAds()" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
           grep -q "initializeMobileAdsAfterConsent" app/src/main/java/com/randis2288/dartscorepro/Application.java
           grep -q "debugSymbolLevel 'SYMBOL_TABLE'" app/build.gradle
+          grep -q "openAdInspector" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
 
       - name: Build release bundle
         run: |
@@ -82,5 +83,5 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: DartScorePro_v85_1.1.51
+          name: DartScorePro_v86_1.1.52
           path: app/build/outputs/bundle/release/app-release.aab
