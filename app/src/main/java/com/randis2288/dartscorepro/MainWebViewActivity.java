@@ -1,6 +1,9 @@
 package com.randis2288.dartscorepro;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.ApplicationInfo;
@@ -301,16 +304,46 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
                 bannerHeightPx = 0;
                 updateBannerLayout();
 
-                String message =
+                String summary =
                     "Banner failed: code=" + adError.getCode() +
                     ", domain=" + adError.getDomain() +
                     ", message=" + adError.getMessage();
 
+                String responseDetails = adError.getResponseInfo() != null
+                    ? adError.getResponseInfo().toString()
+                    : "ResponseInfo: null";
+
+                String diagnosticReport =
+                    summary + "\n\n" +
+                    "=== MEDIATION RESPONSE INFO ===\n" +
+                    responseDetails;
+
                 Toast.makeText(
                     MainWebViewActivity.this,
-                    message,
+                    summary,
                     Toast.LENGTH_LONG
                 ).show();
+
+                new AlertDialog.Builder(MainWebViewActivity.this)
+                    .setTitle("Banner diagnostics")
+                    .setMessage(diagnosticReport)
+                    .setPositiveButton("OK", null)
+                    .setNeutralButton("Kopírovat", (dialog, which) -> {
+                        ClipboardManager clipboard =
+                            (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                        clipboard.setPrimaryClip(
+                            ClipData.newPlainText(
+                                "DartScore Pro banner diagnostics",
+                                diagnosticReport
+                            )
+                        );
+                        Toast.makeText(
+                            MainWebViewActivity.this,
+                            "Diagnostika zkopírována",
+                            Toast.LENGTH_SHORT
+                        ).show();
+                    })
+                    .show();
             }
         });
 
