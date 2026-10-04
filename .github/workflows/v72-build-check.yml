@@ -1,9 +1,9 @@
-name: v82 Unity mediation
+name: Native symbols verification
 
 on:
   push:
     branches:
-      - release/v82-unity-mediation
+      - feature/v83-native-symbols
   workflow_dispatch:
 
 jobs:
@@ -72,5 +72,5 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: DartScorePro_v82_1.1.48
+          name: DartScorePro_symbols_check
           path: app/build/outputs/bundle/release/app-release.aab
