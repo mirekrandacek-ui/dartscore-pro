@@ -21,7 +21,6 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
@@ -81,8 +80,7 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     // INTERNAL TEST v82 ONLY: show the native banner even on Premium devices.
     // Keep the real ad unit so AdMob mediation (including Unity) is exercised.
     // The phone MUST be registered as an AdMob test device before installing this build.
-    private static final boolean FORCE_FREE_BANNER_TEST = true;
-    private static final boolean ENABLE_AD_INSPECTOR_BUTTON = true;
+    private static final boolean FORCE_FREE_BANNER_TEST = false;
 
     private WebView webView;
     private FrameLayout root;
@@ -189,33 +187,6 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             updateBannerLayout();
             return insets;
         });
-
-        if (ENABLE_AD_INSPECTOR_BUTTON) {
-            Button inspectorButton = new Button(this);
-            inspectorButton.setText("AD INSPECTOR");
-            inspectorButton.setTextSize(10f);
-            inspectorButton.setAlpha(0.78f);
-            inspectorButton.setOnClickListener(v -> openAdInspectorNow());
-
-            FrameLayout.LayoutParams inspectorParams =
-                new FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.WRAP_CONTENT,
-                    FrameLayout.LayoutParams.WRAP_CONTENT,
-                    Gravity.TOP | Gravity.END
-                );
-
-            int marginPx =
-                (int) (8 * getResources().getDisplayMetrics().density);
-            inspectorParams.setMargins(
-                marginPx,
-                marginPx,
-                marginPx,
-                marginPx
-            );
-
-            root.addView(inspectorButton, inspectorParams);
-            inspectorButton.bringToFront();
-        }
 
         setContentView(root);
         root.requestApplyInsets();
