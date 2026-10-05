@@ -1,5 +1,6 @@
 const ANALYTICS_ACTIVE_KEY = 'dspAnalyticsGameActive';
 const ANALYTICS_STARTED_AT_KEY = 'dspAnalyticsGameStartedAt';
+const ANALYTICS_PREMIUM_PURCHASE_STARTED_KEY = 'dspPremiumPurchaseStarted';
 
 const safeJson = (value, fallback = null) => {
   try {
@@ -44,7 +45,7 @@ const gameSignature = (snapshot) => {
   ].join('::');
 };
 
-const sendNativeAnalyticsEvent = (eventName, params = {}) => {
+const sendNativeAnalyticsEvent = (eventName, params = {}, immediate = false) => {
   try {
     if (!window.DartScoreAndroid) return;
 
@@ -57,6 +58,11 @@ const sendNativeAnalyticsEvent = (eventName, params = {}) => {
     });
 
     const url = `dartscorepro://show-interstitial?${query.toString()}`;
+    if (immediate) {
+      window.location.href = url;
+      return;
+    }
+
     setTimeout(() => {
       try {
         window.location.href = url;
@@ -80,6 +86,28 @@ const markGameStarted = (snapshot, isResume = false) => {
     start_score: snapshot?.mode === 'classic' ? snapshot?.startScore : undefined,
     ai_level: snapshot?.ai && snapshot.ai !== 'off' ? snapshot.ai : undefined,
     is_resume: isResume ? 1 : 0
+  });
+};
+
+const markGameAbandoned = (snapshot, reason = 'new_game') => {
+  let durationSec;
+  try {
+    const startedAt = Number(sessionStorage.getItem(ANALYTICS_STARTED_AT_KEY));
+    if (Number.isFinite(startedAt) && startedAt > 0) {
+      durationSec = Math.max(0, Math.round((Date.now() - startedAt) / 1000));
+    }
+  } catch { }
+
+  sendNativeAnalyticsEvent('game_abandoned', {
+    game_type: snapshot?.mode || 'unknown',
+    player_count: participantCount(snapshot),
+    player_mode: snapshot?.playerMode || 'individual',
+    plan_tier: currentPlanTier(),
+    start_score: snapshot?.mode === 'classic' ? snapshot?.startScore : undefined,
+    ai_level: snapshot?.ai && snapshot.ai !== 'off' ? snapshot.ai : undefined,
+    duration_sec: durationSec,
+    abandon_reason: reason,
+    progress: progressOf(snapshot)
   });
 };
 
@@ -107,6 +135,39 @@ const markGameCompleted = (record) => {
   } catch { }
 };
 
+if (typeof window !== 'undefined') {
+  window.DartScoreAnalytics = {
+    track(eventName, params = {}) {
+      sendNativeAnalyticsEvent(eventName, params);
+      return true;
+    },
+    abandonGame(snapshot, reason = 'new_game') {
+      if (!snapshot || snapshot.winner != null || progressOf(snapshot) <= 0) return false;
+      markGameAbandoned(snapshot, reason);
+      return true;
+    }
+  };
+}
+
+
+const installPremiumAnalytics = () => {
+  document.addEventListener('click', event => {
+    try {
+      const button = event.target?.closest?.('[data-analytics-action]');
+      if (!button) return;
+
+      const action = button.getAttribute('data-analytics-action');
+      if (action === 'premium_purchase_started') {
+        sessionStorage.setItem(ANALYTICS_PREMIUM_PURCHASE_STARTED_KEY, String(Date.now()));
+        sendNativeAnalyticsEvent('premium_purchase_started', {
+          plan_tier: currentPlanTier(),
+          product_id: 'premium_unlock'
+        });
+      }
+    } catch { }
+  }, true);
+};
+
 const installStorageAnalytics = () => {
   const originalSetItem = Storage.prototype.setItem;
 
@@ -116,7 +177,7 @@ const installStorageAnalytics = () => {
 
     try {
       isLocalStorage = this === window.localStorage;
-      if (isLocalStorage && (key === 'savedGame' || key === 'finishedGames')) {
+      if (isLocalStorage && (key === 'savedGame' || key === 'finishedGames' || key === 'premium')) {
         oldValue = this.getItem(key);
       }
     } catch { }
@@ -150,6 +211,26 @@ const installStorageAnalytics = () => {
         }
       }
 
+      if (key === 'premium' && value === 'true' && oldValue !== 'true') {
+        let purchaseStarted = false;
+        try {
+          purchaseStarted = Boolean(sessionStorage.getItem(ANALYTICS_PREMIUM_PURCHASE_STARTED_KEY));
+        } catch { }
+
+        sendNativeAnalyticsEvent(
+          purchaseStarted ? 'premium_purchase_completed' : 'premium_activated',
+          {
+            product_id: 'premium_unlock',
+            previous_plan_tier: 'free'
+          },
+          true
+        );
+
+        try {
+          sessionStorage.removeItem(ANALYTICS_PREMIUM_PURCHASE_STARTED_KEY);
+        } catch { }
+      }
+
       if (key === 'finishedGames') {
         const previousList = safeJson(oldValue, []);
         const nextList = safeJson(value, []);
@@ -166,4 +247,5 @@ const installStorageAnalytics = () => {
   };
 };
 
+installPremiumAnalytics();
 installStorageAnalytics();
