@@ -909,6 +909,12 @@ async function showInterstitialAd() {
       plan_tier: localStorage.getItem('premium') === 'true' ? 'premium' : 'free'
     });
 
+    if (window.DartScoreAndroid?.showInterstitial) {
+      window.DartScoreAndroid.showInterstitial();
+      return true;
+    }
+
+    // Fallback for Android shells without the native JS bridge.
     window.location.href = ADMOB_INTERSTITIAL_SCHEME_URL;
     return true;
   } catch (err) {
