@@ -24,7 +24,8 @@ jobs:
 
       - name: Verify production UI files are untouched
         run: |
-          git diff --exit-code 531705f126e694eb88e27d02a79e4358369520fa --             src/app.css             src/main.jsx             src/analyticsEvents.js             src/botEngine.js             package.json             vite.config.js
+          git diff --exit-code 531705f126e694eb88e27d02a79e4358369520fa --             src/app.css             src/main.jsx             src/analyticsEvents.js             src/botEngine.js             package.json             vite.config.js \
+            index.html
           git show 531705f126e694eb88e27d02a79e4358369520fa:src/App.jsx > /tmp/App.prod.jsx
           python3 tools/apply-v92-interstitial.py /tmp/App.prod.jsx /tmp/App.expected.jsx
           cmp /tmp/App.expected.jsx src/App.jsx
