@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - release/v88-interstitial-cadence
+  pull_request:
+    branches:
+      - release/v86-ad-inspector
   workflow_dispatch:
 
 jobs:
