@@ -1,6 +1,9 @@
 package com.randis2288.dartscorepro;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.ApplicationInfo;
@@ -35,9 +38,15 @@ import com.android.billingclient.api.QueryProductDetailsParams;
 import com.android.billingclient.api.QueryProductDetailsResult;
 import com.android.billingclient.api.QueryPurchasesParams;
 
+import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.LoadAdError;
+
+import com.google.android.ump.ConsentInformation;
+import com.google.android.ump.ConsentRequestParameters;
+import com.google.android.ump.UserMessagingPlatform;
 
 import com.google.android.play.core.appupdate.AppUpdateInfo;
 import com.google.android.play.core.appupdate.AppUpdateManager;
@@ -63,8 +72,10 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private static final int IN_APP_UPDATE_REQUEST_CODE = 610;
     private static final int TTS_INSTALL_REQUEST_CODE = 611;
 
-    // Od v12 už testujeme skutečné Premium chování.
-    private static final boolean FORCE_FREE_BANNER_TEST = false;
+    // INTERNAL TEST v82 ONLY: show the native banner even on Premium devices.
+    // Keep the real ad unit so AdMob mediation (including Unity) is exercised.
+    // The phone MUST be registered as an AdMob test device before installing this build.
+    private static final boolean FORCE_FREE_BANNER_TEST = true;
 
     private WebView webView;
     private FrameLayout root;
@@ -89,6 +100,10 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private AppUpdateManager appUpdateManager;
     private InstallStateUpdatedListener updateInstallListener;
     private boolean updateFlowStarted = false;
+
+    private ConsentInformation consentInformation;
+    private boolean adsReady = false;
+    private boolean currentPremiumState = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -168,6 +183,7 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         root.requestApplyInsets();
 
         initInAppUpdate();
+        initConsentAndAds();
         initBilling();
         setPremiumState(false);
         webView.loadUrl(START_URL);
@@ -197,6 +213,17 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             "var css='.toast{bottom:90px!important;}';" +
             "var st=document.getElementById('native-admob-toast-offset');" +
             "if(!st){st=document.createElement('style');st.id='native-admob-toast-offset';st.textContent=css;document.head.appendChild(st);}" +
+            "if(window.DartScoreAndroid&&window.DartScoreAndroid.isPrivacyOptionsRequired&&window.DartScoreAndroid.isPrivacyOptionsRequired()){" +
+            "var nav=document.querySelector('.webPublisherLinks');" +
+            "if(nav&&!document.getElementById('native-privacy-options')){" +
+            "var a=document.createElement('a');a.id='native-privacy-options';a.href='#';" +
+            "var l=(document.documentElement.lang||navigator.language||'en').toLowerCase();" +
+            "var labels={cs:'Nastavení soukromí',de:'Datenschutzeinstellungen',es:'Opciones de privacidad',nl:'Privacykeuzes',ru:'Настройки конфиденциальности',zh:'隐私选项',en:'Privacy choices'};" +
+            "a.textContent=labels[l.slice(0,2)]||labels.en;" +
+            "a.addEventListener('click',function(ev){ev.preventDefault();window.DartScoreAndroid.showPrivacyOptions();});" +
+            "nav.appendChild(a);" +
+            "}" +
+            "}else{var p=document.getElementById('native-privacy-options');if(p)p.remove();}" +
             "if(!window.__dspNativeBillingHook){" +
             "window.__dspNativeBillingHook=true;" +
             "document.addEventListener('click',function(ev){" +
@@ -241,13 +268,18 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     }
 
     private void setPremiumState(boolean isPremium) {
-        if (!FORCE_FREE_BANNER_TEST && isPremium) {
+        currentPremiumState = isPremium;
+
+        if ((!FORCE_FREE_BANNER_TEST && isPremium) || !adsReady) {
             adHost.setVisibility(View.GONE);
+            bannerHeightPx = 0;
             updateBannerLayout();
             return;
         }
 
-        adHost.setVisibility(View.VISIBLE);
+        // Keep the banner host collapsed until an ad actually loads.
+        // This prevents an empty grey bar when there is no fill or mediation fails.
+        adHost.setVisibility(View.GONE);
         updateBannerLayout();
 
         if (!bannerLoaded) {
@@ -275,7 +307,68 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
 
         boolean isDebug =
             (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
-        adView.setAdUnitId((isDebug || FORCE_FREE_BANNER_TEST) ? TEST_BANNER_ID : PROD_BANNER_ID);
+        adView.setAdUnitId(isDebug ? TEST_BANNER_ID : PROD_BANNER_ID);
+
+        adView.setAdListener(new AdListener() {
+            @Override
+            public void onAdLoaded() {
+                adHost.setVisibility(View.VISIBLE);
+                updateBannerLayout();
+                Toast.makeText(
+                    MainWebViewActivity.this,
+                    "Banner loaded",
+                    Toast.LENGTH_SHORT
+                ).show();
+            }
+
+            @Override
+            public void onAdFailedToLoad(LoadAdError adError) {
+                adHost.setVisibility(View.GONE);
+                bannerHeightPx = 0;
+                updateBannerLayout();
+
+                String summary =
+                    "Banner failed: code=" + adError.getCode() +
+                    ", domain=" + adError.getDomain() +
+                    ", message=" + adError.getMessage();
+
+                String responseDetails = adError.getResponseInfo() != null
+                    ? adError.getResponseInfo().toString()
+                    : "ResponseInfo: null";
+
+                String diagnosticReport =
+                    summary + "\n\n" +
+                    "=== MEDIATION RESPONSE INFO ===\n" +
+                    responseDetails;
+
+                Toast.makeText(
+                    MainWebViewActivity.this,
+                    summary,
+                    Toast.LENGTH_LONG
+                ).show();
+
+                new AlertDialog.Builder(MainWebViewActivity.this)
+                    .setTitle("Banner diagnostics")
+                    .setMessage(diagnosticReport)
+                    .setPositiveButton("OK", null)
+                    .setNeutralButton("Kopírovat", (dialog, which) -> {
+                        ClipboardManager clipboard =
+                            (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                        clipboard.setPrimaryClip(
+                            ClipData.newPlainText(
+                                "DartScore Pro banner diagnostics",
+                                diagnosticReport
+                            )
+                        );
+                        Toast.makeText(
+                            MainWebViewActivity.this,
+                            "Diagnostika zkopírována",
+                            Toast.LENGTH_SHORT
+                        ).show();
+                    })
+                    .show();
+            }
+        });
 
         adHost.removeAllViews();
         adHost.addView(
@@ -314,6 +407,118 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         webView.setLayoutParams(webParams);
     }
 
+
+    private void initConsentAndAds() {
+        consentInformation = UserMessagingPlatform.getConsentInformation(this);
+
+        ConsentRequestParameters params =
+            new ConsentRequestParameters.Builder().build();
+
+        // Google recommends refreshing consent information on every app launch.
+        consentInformation.requestConsentInfoUpdate(
+            this,
+            params,
+            () -> {
+                refreshPrivacyOptionsEntryPoint();
+
+                // Cached valid consent can already allow requests at this point.
+                initializeAdsIfAllowed();
+
+                UserMessagingPlatform.loadAndShowConsentFormIfRequired(
+                    this,
+                    formError -> {
+                        refreshPrivacyOptionsEntryPoint();
+
+                        if (formError != null && !consentInformation.canRequestAds()) {
+                            nativeToast(
+                                "Souhlas pro reklamy se nepodařilo načíst: " +
+                                formError.getMessage()
+                            );
+                        }
+
+                        initializeAdsIfAllowed();
+                    }
+                );
+            },
+            requestConsentError -> {
+                refreshPrivacyOptionsEntryPoint();
+
+                // If a previous consent decision is still valid, ads may continue.
+                initializeAdsIfAllowed();
+
+                if (!consentInformation.canRequestAds()) {
+                    nativeToast(
+                        "Reklamy čekají na souhlas: " +
+                        requestConsentError.getMessage()
+                    );
+                }
+            }
+        );
+
+        // After requestConsentInfoUpdate() has been called, cached valid consent
+        // may already permit ads and avoids unnecessary startup latency.
+        initializeAdsIfAllowed();
+    }
+
+    private void initializeAdsIfAllowed() {
+        if (consentInformation == null || !consentInformation.canRequestAds()) {
+            return;
+        }
+
+        Application application = (Application) getApplication();
+        application.initializeMobileAdsAfterConsent(
+            () -> runOnUiThread(() -> {
+                adsReady = true;
+                setPremiumState(currentPremiumState);
+            })
+        );
+    }
+
+    private void refreshPrivacyOptionsEntryPoint() {
+        if (webView == null) return;
+        webView.post(() -> injectWebFixes(webView));
+    }
+
+    private boolean isPrivacyOptionsRequired() {
+        return consentInformation != null
+            && consentInformation.getPrivacyOptionsRequirementStatus()
+                == ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED;
+    }
+
+    private void showPrivacyOptionsNative() {
+        if (consentInformation == null) return;
+
+        UserMessagingPlatform.showPrivacyOptionsForm(
+            this,
+            formError -> {
+                refreshPrivacyOptionsEntryPoint();
+
+                if (formError != null) {
+                    nativeToast(
+                        "Nastavení soukromí nejde otevřít: " +
+                        formError.getMessage()
+                    );
+                }
+
+                if (consentInformation.canRequestAds()) {
+                    initializeAdsIfAllowed();
+                } else {
+                    adsReady = false;
+                    bannerLoaded = false;
+                    bannerHeightPx = 0;
+
+                    if (adView != null) {
+                        adView.destroy();
+                        adView = null;
+                    }
+
+                    adHost.removeAllViews();
+                    adHost.setVisibility(View.GONE);
+                    updateBannerLayout();
+                }
+            }
+        );
+    }
 
     private void initInAppUpdate() {
         appUpdateManager = AppUpdateManagerFactory.create(this);
@@ -891,6 +1096,16 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         @JavascriptInterface
         public void restorePremium() {
             runOnUiThread(() -> restorePremiumInternal(true));
+        }
+
+        @JavascriptInterface
+        public boolean isPrivacyOptionsRequired() {
+            return MainWebViewActivity.this.isPrivacyOptionsRequired();
+        }
+
+        @JavascriptInterface
+        public void showPrivacyOptions() {
+            runOnUiThread(MainWebViewActivity.this::showPrivacyOptionsNative);
         }
 
         @JavascriptInterface
