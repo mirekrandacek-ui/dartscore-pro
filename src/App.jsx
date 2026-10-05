@@ -909,6 +909,11 @@ async function showInterstitialAd() {
       plan_tier: localStorage.getItem('premium') === 'true' ? 'premium' : 'free'
     });
 
+    if (window.DartScoreAndroid?.showInterstitial) {
+      window.DartScoreAndroid.showInterstitial();
+      return true;
+    }
+
     window.location.href = ADMOB_INTERSTITIAL_SCHEME_URL;
     return true;
   } catch (err) {
@@ -1049,7 +1054,11 @@ function App() {
 
   useEffect(() => {
     try {
-      if (isPremium) localStorage.setItem('premium', 'true');
+      if (isPremium) {
+        localStorage.setItem('premium', 'true');
+        localStorage.setItem(INTERSTITIAL_START_COUNT_KEY, '0');
+        localStorage.setItem(INTERSTITIAL_PENDING_KEY, 'false');
+      }
     } catch { }
   }, [isPremium]);
 
@@ -1298,10 +1307,51 @@ function App() {
   const [winner, setWinner] = useState(null);
   const [pendingWin, setPendingWin] = useState(null);
 
-  // Interstitial cadence: a game counts only after at least 3 completed visits.
-  // Show one interstitial on Start/Restart after every 3 counted games.
-  const playedVisitsRef = useRef(0);
-  const playedGamesSinceAdRef = useRef(0);
+  // Free interstitial cadence:
+  // every third explicit Lobby Start arms one interstitial.
+  // The count and pending state persist across app restarts.
+  const INTERSTITIAL_START_COUNT_KEY = 'interstitialStartCount';
+  const INTERSTITIAL_PENDING_KEY = 'interstitialPending';
+  const interstitialShowScheduledRef = useRef(false);
+
+  const readInterstitialStartCount = () => {
+    try {
+      const value = Number.parseInt(
+        localStorage.getItem(INTERSTITIAL_START_COUNT_KEY) || '0',
+        10
+      );
+      if (!Number.isFinite(value)) return 0;
+      return Math.min(2, Math.max(0, value));
+    } catch {
+      return 0;
+    }
+  };
+
+  const isInterstitialPending = () => {
+    try {
+      return localStorage.getItem(INTERSTITIAL_PENDING_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  };
+
+  const markLobbyStartForInterstitial = () => {
+    if (isPremium || isInterstitialPending()) return;
+
+    const nextCount = readInterstitialStartCount() + 1;
+
+    try {
+      if (nextCount >= 3) {
+        localStorage.setItem(INTERSTITIAL_START_COUNT_KEY, '0');
+        localStorage.setItem(INTERSTITIAL_PENDING_KEY, 'true');
+      } else {
+        localStorage.setItem(
+          INTERSTITIAL_START_COUNT_KEY,
+          String(nextCount)
+        );
+      }
+    } catch { }
+  };
 
   const [cricket, setCricket] = useState(null);
   const [around, setAround] = useState(null);
@@ -1439,7 +1489,7 @@ function App() {
     return true;
   };
 
-  const startGame = () => {
+  const startGame = (countAsLobbyStart = true) => {
     try {
       let previousGame = null;
       if (screen === 'game') {
@@ -1465,16 +1515,8 @@ function App() {
       return;
     }
 
-    const completedVisits = playedVisitsRef.current;
-    playedVisitsRef.current = 0;
-
-    if (!isPremium && completedVisits >= 3) {
-      playedGamesSinceAdRef.current += 1;
-
-      if (playedGamesSinceAdRef.current >= 3) {
-        playedGamesSinceAdRef.current = 0;
-        showInterstitialAd();
-      }
+    if (countAsLobbyStart) {
+      markLobbyStartForInterstitial();
     }
 
     const ord = teamMode
@@ -1540,7 +1582,7 @@ function App() {
     setScreen('game');
   };
 
-  const restartGame = () => startGame();
+  const restartGame = () => startGame(false);
 
   function shuffle(a) {
     const arr = [...a];
@@ -2287,6 +2329,56 @@ const commitCricket = (value, mOverride) => {
       return commitAround(value, mOverride);
     };
 
+    const showPendingInterstitialAfterFanfare = () => {
+      if (isPremium || !isInterstitialPending()) return;
+      if (interstitialShowScheduledRef.current) return;
+
+      interstitialShowScheduledRef.current = true;
+
+      let fired = false;
+      let fallbackTimer = null;
+
+      const fire = async () => {
+        if (fired) return;
+        fired = true;
+
+        if (fallbackTimer != null) {
+          window.clearTimeout(fallbackTimer);
+        }
+
+        const requested = await showInterstitialAd();
+
+        if (requested) {
+          try {
+            localStorage.setItem(INTERSTITIAL_PENDING_KEY, 'false');
+            localStorage.setItem(INTERSTITIAL_START_COUNT_KEY, '0');
+          } catch { }
+        }
+
+        interstitialShowScheduledRef.current = false;
+      };
+
+      const fanfare = soundOn ? winAudioRef.current : null;
+
+      if (!fanfare) {
+        window.setTimeout(fire, 250);
+        return;
+      }
+
+      fanfare.addEventListener(
+        'ended',
+        () => window.setTimeout(fire, 150),
+        { once: true }
+      );
+
+      const durationMs =
+        Number.isFinite(fanfare.duration) && fanfare.duration > 0
+          ? Math.ceil(fanfare.duration * 1000) + 1000
+          : 7000;
+
+      fallbackTimer = window.setTimeout(fire, durationMs);
+    };
+
     const finalizeWin = (pIdx, opts = {}) => {
       if (!opts.silentVoice && mode === 'classic') {
         speak(lang, 'Vítěz!', voiceOn);
@@ -2299,10 +2391,7 @@ const commitCricket = (value, mOverride) => {
       } catch { }
 
       setWinner(pIdx);
-
-      if (!opts.visitAlreadyCounted) {
-        playedVisitsRef.current += 1;
-      }
+      showPendingInterstitialAfterFanfare();
 
       {
         try {
@@ -2449,8 +2538,6 @@ const nextPlayerSafe = () => {
     return;
   }
 
-  playedVisitsRef.current += 1;
-
   setCurrIdx((i) => {
     const ord = orderRef.current || [];
     const len = ord.length || 0;
@@ -2489,7 +2576,7 @@ const nextPlayerSafe = () => {
       pendingWinRef.current &&
       winnerRef.current == null
     ) {
-      completeClassicLeg(pendingWinRef.current.pIdx, { visitAlreadyCounted: true });
+      completeClassicLeg(pendingWinRef.current.pIdx);
       setPendingWin(null);
     }
 
@@ -3895,7 +3982,7 @@ function Lobby({
             <button
               type="button"
               className="btn green"
-              onClick={startGame}
+              onClick={() => startGame(true)}
             >
               {t(lang, 'startGame')}
             </button>
