@@ -18,14 +18,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Serves the bundled web build under the production URL when the device has
- * no validated internet connection. Keeping the request URL on the production
- * origin preserves WebView localStorage, including Continue-game state.
+ * v89 internal verification: always serves the bundled web build under the
+ * normal production origin. This keeps the experience inside the native app,
+ * preserves localStorage/origin compatibility, and prevents a Vercel preview
+ * page from ever becoming the app UI.
  */
 public final class OfflineWebViewClient extends WebViewClient {
-    // INTERNAL TEST v88 preview origin. Production cleanup switches this
-    // back to dartscore-pro.vercel.app.
-    private static final String APP_HOST = "dartscore-v88-test.vercel.app";
+    private static final String APP_HOST = "dartscore-pro.vercel.app";
     private static final String ASSET_PREFIX = "offline/";
 
     public interface UrlHandler {
@@ -82,7 +81,7 @@ public final class OfflineWebViewClient extends WebViewClient {
     }
 
     private WebResourceResponse offlineResponse(Uri uri) {
-        if (uri == null || hasValidatedInternet()) return null;
+        if (uri == null) return null;
         if (!"https".equalsIgnoreCase(uri.getScheme())) return null;
         if (!APP_HOST.equalsIgnoreCase(uri.getHost())) return null;
 
