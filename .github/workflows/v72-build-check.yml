@@ -1,9 +1,12 @@
-name: v79 final i18n test
+name: v92 Production UI + Monetization
 
 on:
   push:
     branches:
-      - release/v79-final-i18n-test
+      - release/v92-v79-prod-monetization
+  pull_request:
+    branches:
+      - ci/v92-build-base
   workflow_dispatch:
 
 jobs:
@@ -15,17 +18,46 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Fetch production UI reference
+        run: |
+          git fetch origin 531705f126e694eb88e27d02a79e4358369520fa
+
+      - name: Verify production UI files are untouched
+        run: |
+          git diff --exit-code 531705f126e694eb88e27d02a79e4358369520fa --             src/app.css             src/main.jsx             src/analyticsEvents.js             src/botEngine.js             package.json             vite.config.js \
+            index.html
+          git show 531705f126e694eb88e27d02a79e4358369520fa:src/App.jsx > /tmp/App.prod.jsx
+          python3 tools/apply-v92-interstitial.py /tmp/App.prod.jsx /tmp/App.expected.jsx
+          cmp /tmp/App.expected.jsx src/App.jsx
+
+      - name: Verify monetization changes
+        run: |
+          grep -q "interstitialStartCount" src/App.jsx
+          grep -q "interstitialPending" src/App.jsx
+          grep -q "showPendingInterstitialAfterFanfare" src/App.jsx
+          grep -q "DartScoreAndroid?.showInterstitial" src/App.jsx
+          grep -q "startGame(false)" src/App.jsx
+          ! grep -q "playedVisitsRef" src/App.jsx
+          ! grep -q "playedGamesSinceAdRef" src/App.jsx
+          grep -q "FORCE_FREE_BANNER_TEST = false" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
+          grep -q "initConsentAndAds()" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
+          grep -q "public void showInterstitial()" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
+          ! grep -q "Banner diagnostics" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
+          ! grep -q "Banner loaded" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
+          ! grep -q "openAdInspector" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
+          grep -q "com.google.ads.mediation:unity:4.16.6.0" app/build.gradle
+          grep -q "com.unity3d.ads:unity-ads:4.16.6" app/build.gradle
+          grep -q "firebase-analytics" app/build.gradle
+          grep -q "user-messaging-platform:4.0.0" app/build.gradle
+          grep -q "versionCode 92" app/build.gradle
+          grep -q "versionName \"1.1.58\"" app/build.gradle
+
       - name: Set up Node 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Bring in tested statistics translations
-        run: |
-          git fetch origin preview/statistics-i18n:refs/remotes/origin/preview/statistics-i18n
-          git show origin/preview/statistics-i18n:src/App.jsx > src/App.jsx
-
-      - name: Build translated web bundle
+      - name: Build web bundle
         run: |
           npm ci
           npm run build
@@ -44,19 +76,15 @@ jobs:
       - name: Install Android SDK 36
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
-      - name: Prepare v79 Android test build
+      - name: Prepare bundled production UI
         run: |
-          sed -i 's/versionCode 78/versionCode 79/' app/build.gradle
-          sed -i 's/versionName "1.1.44"/versionName "1.1.45"/' app/build.gradle
           python3 tools/apply-v78-offline-client.py
 
-      - name: Verify combined source
+      - name: Verify bundled WebView
         run: |
           grep -q "new OfflineWebViewClient" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
-          grep -q "user-messaging-platform:4.0.0" app/build.gradle
-          grep -q "versionCode 79" app/build.gradle
-          grep -q "versionName \"1.1.45\"" app/build.gradle
-          grep -q "const STATS_I18N" src/App.jsx
+          grep -q 'APP_HOST = "dartscore-pro.vercel.app"' app/src/main/java/com/randis2288/dartscorepro/OfflineWebViewClient.java
+          ! grep -R -q "dartscore-v88-test.vercel.app" app/src/main/java src
 
       - name: Build release bundle
         run: |
@@ -67,5 +95,5 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: dartscore-pro-v79-final-i18n-test-aab
+          name: DartScorePro_v92_1.1.58
           path: app/build/outputs/bundle/release/app-release.aab
