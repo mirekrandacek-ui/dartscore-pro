@@ -1,5 +1,251 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import './app.css';
+
+/* ===== Robot: target selection is separate from board scatter ===== */
+const BOT_LEVELS = {
+  beginner: { radial: 22, angular: 0.25 },
+  easy: { radial: 18, angular: 0.19 },
+  medium: { radial: 14.5, angular: 0.155 },
+  hard: { radial: 11, angular: 0.12 },
+  expert: { radial: 8.3, angular: 0.095 }
+};
+const BOT_BOARD = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
+const botNormal = () => Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(2 * Math.PI * Math.random());
+const botScatter = (target, level = 'easy', form = 1) => {
+  const profile = BOT_LEVELS[level] || BOT_LEVELS.easy;
+  const radial = profile.radial * form;
+  // Board radii in mm: bull 6.35/15.9, treble 99–107, double 162–170.
+  let radius, angle;
+  if (target.v === 25 || target.v === 50) {
+    const x = botNormal() * radial;
+    const y = botNormal() * radial;
+    radius = Math.hypot(x, y);
+    angle = Math.atan2(x, y);
+  } else {
+    radius = Math.abs((target.m === 3 ? 103 : target.m === 2 ? 166 : 132) + botNormal() * radial);
+    angle = BOT_BOARD.indexOf(target.v) * Math.PI / 10 + botNormal() * profile.angular * form;
+  }
+  if (radius > 170) return { v: 0, m: 1 };
+  if (radius < 6.35) return { v: 50, m: 1 };
+  if (radius < 15.9) return { v: 25, m: 1 };
+  const sector = ((Math.round(angle / (Math.PI / 10)) % 20) + 20) % 20;
+  return { v: BOT_BOARD[sector], m: radius >= 162 ? 2 : radius >= 99 && radius <= 107 ? 3 : 1 };
+};
+const BOT_TARGETS = [
+  ...Array.from({ length: 20 }, (_, i) => ({ v: 20 - i, m: 1 })),
+  ...[20, 16, 18, 12, 10, 8, 6, 4, 2, 1, 14, 15, 17, 19, 13, 11, 9, 7, 5, 3].map(v => ({ v, m: 2 })),
+  ...Array.from({ length: 20 }, (_, i) => ({ v: 20 - i, m: 3 })),
+  { v: 25, m: 1 }, { v: 50, m: 1 }
+];
+const botChooseClassic = (score, dartsLeft, rules) => {
+  const restricted = rules.double || rules.triple || rules.master;
+  const allowed = ({ v, m }) => !restricted ||
+    ((m === 2 || v === 50) && (rules.double || rules.master)) ||
+    (m === 3 && (rules.triple || rules.master));
+  const finals = BOT_TARGETS.filter(allowed);
+  const direct = finals.find(t => t.v * t.m === score);
+  if (direct) return direct;
+  const safe = n => n > 0 && (!restricted || n !== 1);
+  const memo = new Map();
+  const canFinish = (n, left) => {
+    if (left < 1 || n > left * 60) return false;
+    if (finals.some(t => t.v * t.m === n)) return true;
+    if (left === 1) return false;
+    const key = `${n}:${left}`;
+    if (!memo.has(key)) memo.set(key, BOT_TARGETS.some(t => {
+      const rest = n - t.v * t.m;
+      return safe(rest) && canFinish(rest, left - 1);
+    }));
+    return memo.get(key);
+  };
+  // Prefer a single setup when it leaves a checkout within this visit.
+  if (dartsLeft > 1 && score <= dartsLeft * 60) {
+    const setup = BOT_TARGETS.find(t => safe(score - t.v * t.m) && canFinish(score - t.v * t.m, dartsLeft - 1));
+    if (setup) return setup;
+  }
+  // Outside checkout range, score heavily; near a finish leave a usable out.
+  if (score > 80) return { v: 20, m: 3 };
+  for (const final of finals) {
+    const setup = BOT_TARGETS.find(t => t.m === 1 && t.v <= 20 && score - t.v === final.v * final.m);
+    if (setup) return setup;
+  }
+  return BOT_TARGETS.find(t => t.m === 1 && safe(score - t.v)) || { v: 1, m: 1 };
+};
+
+
+/* ===== Checkout hint: display-only helper, does not alter scoring ===== */
+const CHECKOUT_DOUBLE_PREF = [20, 16, 18, 12, 10, 8, 14, 6, 4, 2, 1, 15, 13, 11, 9, 7, 5, 3, 17, 19];
+const CHECKOUT_TRIPLE_PREF = Array.from({ length: 20 }, (_, i) => 20 - i);
+const CHECKOUT_DARTS = [
+  ...CHECKOUT_TRIPLE_PREF.map((v, i) => ({ v, m: 3, score: v * 3, label: 'T' + v, setupRank: i })),
+  { v: 50, m: 1, score: 50, label: 'Bull', setupRank: 12 },
+  ...Array.from({ length: 20 }, (_, i) => 20 - i).map((v, i) => ({ v, m: 1, score: v, label: String(v), setupRank: 30 + i })),
+  { v: 25, m: 1, score: 25, label: '25', setupRank: 42 },
+  ...CHECKOUT_DOUBLE_PREF.map((v, i) => ({ v, m: 2, score: v * 2, label: 'D' + v, setupRank: 55 + i }))
+];
+const checkoutFinishAllowed = (dart, rules) => {
+  const restricted = rules.double || rules.triple;
+  if (!restricted) return true;
+  if ((dart.m === 2 || dart.v === 50) && rules.double) return true;
+  if (dart.m === 3 && rules.triple) return true;
+  return false;
+};
+const checkoutFinishRank = (dart, rules) => {
+  if (dart.v === 50) return 2;
+  if (dart.m === 2) {
+    const ix = CHECKOUT_DOUBLE_PREF.indexOf(dart.v);
+    return (ix < 0 ? 25 : ix) * 4;
+  }
+  if (dart.m === 3) {
+    const ix = CHECKOUT_TRIPLE_PREF.indexOf(dart.v);
+    return 8 + (ix < 0 ? 25 : ix) * 2;
+  }
+  if (!rules.double && !rules.triple && dart.m === 1) {
+    return 4 + Math.max(0, 20 - dart.v);
+  }
+  return 100;
+};
+const checkoutHintCache = new Map();
+const getCheckoutHint = (score, dartsLeft, rules = {}) => {
+  const target = Number(score);
+  const left = Math.min(3, Math.max(0, Number(dartsLeft) || 0));
+  if (!Number.isInteger(target) || target <= 0 || left < 1) return '';
+
+  const key = [target, left, rules.double ? 1 : 0, rules.triple ? 1 : 0].join('|');
+  if (checkoutHintCache.has(key)) return checkoutHintCache.get(key);
+
+  const finals = CHECKOUT_DARTS.filter(d => checkoutFinishAllowed(d, rules));
+  let best = null;
+  let bestCost = Infinity;
+
+  const consider = (route) => {
+    const total = route.reduce((sum, d) => sum + d.score, 0);
+    if (total !== target) return;
+    const final = route[route.length - 1];
+    if (!checkoutFinishAllowed(final, rules)) return;
+    const setupCost = route.slice(0, -1).reduce((sum, d) => sum + d.setupRank, 0);
+    let cost = ((route.length - 1) * 100) + setupCost + checkoutFinishRank(final, rules);
+
+    if (route.length > 1) {
+      const first = route[0];
+      // Prefer a treble first. Avoid opening with Bull when a natural treble route exists.
+      if (first.m === 3) cost -= 20;
+      if (first.v === 50) {
+        const tripleOnly = rules.triple && !rules.double;
+        cost += tripleOnly ? 250 : 80;
+      }
+    }
+    if (cost < bestCost) {
+      bestCost = cost;
+      best = route;
+    }
+  };
+
+  for (let len = 1; len <= left; len += 1) {
+    if (len === 1) {
+      finals.forEach(f => consider([f]));
+    } else if (len === 2) {
+      CHECKOUT_DARTS.forEach(a => {
+        const rem = target - a.score;
+        if (rem <= 0) return;
+        finals.filter(f => f.score === rem).forEach(f => consider([a, f]));
+      });
+    } else {
+      CHECKOUT_DARTS.forEach(a => {
+        const remAfterA = target - a.score;
+        if (remAfterA <= 0) return;
+        CHECKOUT_DARTS.forEach(b => {
+          const rem = remAfterA - b.score;
+          if (rem <= 0) return;
+          finals.filter(f => f.score === rem).forEach(f => consider([a, b, f]));
+        });
+      });
+    }
+  }
+
+  const result = best ? best.map(d => d.label).join(' · ') : '';
+  checkoutHintCache.set(key, result);
+  return result;
+};
+
+
+/* ===== Statistics helpers ===== */
+const emptyDetailedStats = (player) => ({
+  id: player?.id || '',
+  name: player?.name || '',
+  dartsThrown: 0,
+  pointsScored: 0,
+  first9Darts: 0,
+  first9Points: 0,
+  avg3: null,
+  first9Avg: null,
+  score60: 0,
+  score100: 0,
+  score140: 0,
+  score180: 0,
+  highestScore: null,
+  legsWon: 0,
+  setsWon: 0,
+  bestLeg: null,
+  avgDartsPerLeg: null,
+  highestCheckout: null,
+  checkoutPct: null
+});
+
+const buildClassicPlayerStats = (visits, players, setsWon = []) => {
+  const safeVisits = Array.isArray(visits) ? visits : [];
+  const completedLegs = Array.from(new Set(safeVisits.filter(v => v?.wonLeg).map(v => v.leg)));
+
+  return players.map((player, scoreIdx) => {
+    const stat = emptyDetailedStats(player);
+    const mine = safeVisits.filter(v => v?.scoreIdx === scoreIdx);
+    stat.dartsThrown = mine.reduce((sum, v) => sum + (Number(v.dartsUsed) || 0), 0);
+    stat.pointsScored = mine.reduce((sum, v) => sum + (Number(v.total) || 0), 0);
+    stat.avg3 = stat.dartsThrown > 0 ? (stat.pointsScored / stat.dartsThrown) * 3 : null;
+    stat.legsWon = mine.filter(v => v?.wonLeg).length;
+    stat.setsWon = Number(setsWon?.[scoreIdx]) || 0;
+    stat.highestScore = mine.length ? Math.max(...mine.map(v => Number(v.total) || 0)) : null;
+    stat.highestCheckout = mine.some(v => Number(v.checkout) > 0)
+      ? Math.max(...mine.map(v => Number(v.checkout) || 0))
+      : null;
+
+    mine.forEach(v => {
+      const total = Number(v.total) || 0;
+      if (total === 180) stat.score180 += 1;
+      else if (total >= 140) stat.score140 += 1;
+      else if (total >= 100) stat.score100 += 1;
+      else if (total >= 60) stat.score60 += 1;
+    });
+
+    const legDarts = [];
+    completedLegs.forEach(leg => {
+      const legMine = mine.filter(v => v.leg === leg);
+      const darts = legMine.reduce((sum, v) => sum + (Number(v.dartsUsed) || 0), 0);
+      if (darts > 0) legDarts.push({ leg, darts, won: legMine.some(v => v?.wonLeg) });
+
+      let remaining = 9;
+      legMine.forEach(v => {
+        if (remaining <= 0) return;
+        const used = Math.min(remaining, Number(v.dartsUsed) || 0);
+        if (used <= 0) return;
+        const dartCount = Number(v.dartsUsed) || 0;
+        const ratio = dartCount > 0 ? used / dartCount : 0;
+        stat.first9Points += (Number(v.total) || 0) * ratio;
+        stat.first9Darts += used;
+        remaining -= used;
+      });
+    });
+
+    stat.first9Avg = stat.first9Darts > 0 ? (stat.first9Points / stat.first9Darts) * 3 : null;
+    const wonLegDarts = legDarts.filter(x => x.won).map(x => x.darts);
+    stat.bestLeg = wonLegDarts.length ? Math.min(...wonLegDarts) : null;
+    stat.avgDartsPerLeg = legDarts.length
+      ? legDarts.reduce((sum, x) => sum + x.darts, 0) / legDarts.length
+      : null;
+    return stat;
+  });
+};
 
 /* ===== Ikona reproduktoru ===== */
 const IconSpeaker = () => (
@@ -19,6 +265,7 @@ const T = {
     anyOutHint: '— pokud není vybráno nic, uzavírá se libovolně',
     order: 'Pořadí', fixed: 'Fixní', random: 'Náhodné', playThrough: 'Dohrávat kolo',
     robot: 'Robot', off: 'Vypn.', easy: 'Snadná', medium: 'Střední', hard: 'Těžká',
+    beginner: 'Začátečník', expert: 'Expert',
     startGame: '▶ Start hry', continueGame: 'Pokračovat ve hře', saveGame: 'Uložit hru', restart: 'Opakovat hru',
     rules: 'Pravidla', addPlayer: 'Přidat hráče',
     saved: 'Uložené hry', share: 'Sdílet', clear: 'Smazat vše',
@@ -34,14 +281,17 @@ const T = {
     teamB: 'Tým B',
     teamC: 'Tým C',
     teamNeedPlayers: 'Alespoň dva týmy musí mít hráče.',
-    rouletteTotalPoints: 'Body celkem',
+    rouletteTotalPoints: 'Body celkem', roundCount: 'Počet kol',
+    sets: 'Sety', legs: 'Legy', shareApp: 'Sdílet aplikaci',
+    shareText: 'DartScore Pro – počítadlo šipek', linkCopied: 'Odkaz zkopírován',
+    legWon: 'Leg pro', setWon: 'Set pro',
     scoreInputType: 'Typ počítání',
       scoreInput: 'Zadávání',
       scoreByDarts: 'Po šipkách',
       roundTotal: 'Součet kola',
       submitScore: 'Zapsat',
       roundTotalHint: 'Zadej součet za celé kolo po 3 šipkách.',
-      confirmCheckoutRound: 'Bylo kolo zavřeno správným double/triple/master-out hodem?',
+      confirmCheckoutRound: 'Bylo kolo zavřeno správným double/triple hodem?',
     rouletteDrawButton: 'Losovat',
     rouletteHitButton: 'Zásah +1',
     rouletteSwitchButton: 'Přepnout hráče',
@@ -55,7 +305,7 @@ const T = {
     h2h: 'Vzájemné zápasy', selectPlayer: 'Vyber hráče', wins: 'výhry',
     // Pravidla – plně lokalizovaná
     rulesClassic:
-      'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Cíl: přesně na 0. Volitelné: Double-out / Triple-out / Master-out (pokud nic, pak libovolné ukončení). Přestřelení nebo zbyde 1 (pokud je aktivní některé out pravidlo) = bez skóre.',
+      'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Cíl: přesně na 0. Volitelné: Double-out / Triple-out (pokud nic, pak libovolné ukončení). Přestřelení nebo zbyde 1 (pokud je aktivní některé out pravidlo) = bez skóre.',
     rulesCricket:
       'Hraje se čísly 15–20 a 25. Single = 1 značka „/“, Double = 2 (✕), Triple = 3 (Ⓧ). Po 3 značkách je číslo zavřené. Přebytečné zásahy dávají body, jen pokud soupeř(i) nemají číslo zavřené.',
     rulesAround:
@@ -79,6 +329,7 @@ premiumNote: "Jednorázová platba. Žádné předplatné.",
     anyOutHint: '— if none is selected, any-out is allowed',
     order: 'Order', fixed: 'Fixed', random: 'Random', playThrough: 'Play the round',
     robot: 'Bot', off: 'Off', easy: 'Easy', medium: 'Medium', hard: 'Hard',
+    beginner: 'Beginner', expert: 'Expert',
     startGame: '▶ Start Game', continueGame: 'Continue game', saveGame: 'Save game', restart: 'Restart game',
     rules: 'Rules', addPlayer: 'Add player',
     saved: 'Saved games', share: 'Share', clear: 'Clear all',
@@ -94,14 +345,17 @@ premiumNote: "Jednorázová platba. Žádné předplatné.",
     teamB: 'Team B',
     teamC: 'Team C',
     teamNeedPlayers: 'At least two teams must have players.',
-    rouletteTotalPoints: 'Total points',
+    rouletteTotalPoints: 'Total points', roundCount: 'Rounds',
+    sets: 'Sets', legs: 'Legs', shareApp: 'Share app',
+    shareText: 'DartScore Pro – darts scorer', linkCopied: 'Link copied',
+    legWon: 'Leg for', setWon: 'Set for',
     scoreInputType: 'Scoring type',
       scoreInput: 'Input',
       scoreByDarts: 'By darts',
       roundTotal: 'Round total',
       submitScore: 'Submit',
       roundTotalHint: 'Enter the total score for the full 3-dart round.',
-      confirmCheckoutRound: 'Was the round finished with a valid double/triple/master-out throw?',
+      confirmCheckoutRound: 'Was the round finished with a valid double/triple throw?',
     rouletteDrawButton: 'Draw',
     rouletteHitButton: 'Hit +1',
     rouletteSwitchButton: 'Switch player',
@@ -111,7 +365,7 @@ premiumNote: "Jednorázová platba. Žádné předplatné.",
     filter: 'Filter', all: 'All', week: 'Week', month: 'Month', year: 'Year',
     h2h: 'Head-to-Head', selectPlayer: 'Select player', wins: 'wins',
     rulesClassic:
-      'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Goal: finish exactly on 0. Optional: Double-out / Triple-out / Master-out (if none, any-out allowed). Overshoot or leaving 1 (when any out-rule is active) = bust.',
+      'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Goal: finish exactly on 0. Optional: Double-out / Triple-out (if none, any-out allowed). Overshoot or leaving 1 (when any out-rule is active) = bust.',
     rulesCricket:
       'Targets: 15–20 and 25. Single = 1 “/”, Double = 2 (✕), Triple = 3 (Ⓧ). After 3 marks the number is closed. Extra marks score points only if opponents still have the number open.',
     rulesAround:
@@ -138,6 +392,7 @@ activatePremium: 'Activate Premium',
     anyOutHint: '— wenn nichts gewählt ist, Any-out erlaubt',
     order: 'Reihenfolge', fixed: 'Fix', random: 'Zufällig', playThrough: 'Runde ausspielen',
     robot: 'Roboter', off: 'Aus', easy: 'Leicht', medium: 'Mittel', hard: 'Schwer',
+    beginner: 'Anfänger', expert: 'Experte',
     startGame: '▶ Spiel starten', continueGame: 'Spiel fortsetzen', saveGame: 'Spiel speichern', restart: 'Neu starten',
     rules: 'Regeln', addPlayer: 'Spieler hinzufügen',
     saved: 'Gespeicherte Spiele', share: 'Teilen', clear: 'Alles löschen',
@@ -153,14 +408,17 @@ activatePremium: 'Activate Premium',
     teamB: 'Team B',
     teamC: 'Team C',
     teamNeedPlayers: 'Mindestens zwei Teams müssen Spieler haben.',
-    rouletteTotalPoints: 'Punkte gesamt',
+    rouletteTotalPoints: 'Punkte gesamt', roundCount: 'Runden',
+    sets: 'Sätze', legs: 'Legs', shareApp: 'App teilen',
+    shareText: 'DartScore Pro – Darts-Zähler', linkCopied: 'Link kopiert',
+    legWon: 'Leg für', setWon: 'Satz für',
     scoreInputType: 'Zählweise',
       scoreInput: 'Eingabe',
       scoreByDarts: 'Pro Dart',
       roundTotal: 'Rundensumme',
       submitScore: 'Eintragen',
       roundTotalHint: 'Gib die Gesamtpunktzahl der kompletten 3-Dart-Runde ein.',
-      confirmCheckoutRound: 'Wurde die Runde mit einem gültigen Double/Triple/Master-out beendet?',
+      confirmCheckoutRound: 'Wurde die Runde mit einem gültigen Double/Triple beendet?',
     rouletteDrawButton: 'Auslosen',
     rouletteHitButton: 'Treffer +1',
     rouletteSwitchButton: 'Spieler wechseln',
@@ -173,7 +431,7 @@ activatePremium: 'Activate Premium',
     filter: 'Filter', all: 'Alle', week: 'Woche', month: 'Monat', year: 'Jahr',
     h2h: 'Direkte Duelle', selectPlayer: 'Spieler wählen', wins: 'Siege',
     rulesClassic:
-      'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Ziel: exakt 0. Optional: Double-out / Triple-out / Master-out (wenn nichts gewählt, any-out). Überschießen oder 1 übrig (bei aktivem Out-Regel) = bust.',
+      'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Ziel: exakt 0. Optional: Double-out / Triple-out (wenn nichts gewählt, any-out). Überschießen oder 1 übrig (bei aktivem Out-Regel) = bust.',
     rulesCricket:
       'Ziele: 15–20 und 25. Single = 1 „/“, Double = 2 (✕), Triple = 3 (Ⓧ). Nach 3 Marken ist die Zahl geschlossen. Überschüsse punkten nur, wenn Gegner die Zahl nicht geschlossen haben.',
     rulesAround:
@@ -197,6 +455,7 @@ premiumNote: "Einmalige Zahlung. Kein Abo.",
     anyOutHint: '— si no se selecciona nada, se permite any-out',
     order: 'Orden', fixed: 'Fijo', random: 'Aleatorio', playThrough: 'Jugar la ronda',
     robot: 'Robot', off: 'Apag.', easy: 'Fácil', medium: 'Medio', hard: 'Difícil',
+    beginner: 'Principiante', expert: 'Experto',
     startGame: '▶ Empezar', continueGame: 'Continuar partida', saveGame: 'Guardar partida', restart: 'Reiniciar',
     rules: 'Reglas', addPlayer: 'Añadir jugador',
     saved: 'Partidas guardadas', share: 'Compartir', clear: 'Borrar todo',
@@ -212,14 +471,17 @@ premiumNote: "Einmalige Zahlung. Kein Abo.",
     teamB: 'Equipo B',
     teamC: 'Equipo C',
     teamNeedPlayers: 'Al menos dos equipos deben tener jugadores.',
-    rouletteTotalPoints: 'Puntos totales',
+    rouletteTotalPoints: 'Puntos totales', roundCount: 'Rondas',
+    sets: 'Sets', legs: 'Legs', shareApp: 'Compartir app',
+    shareText: 'DartScore Pro – marcador de dardos', linkCopied: 'Enlace copiado',
+    legWon: 'Leg para', setWon: 'Set para',
     scoreInputType: 'Tipo de puntuación',
       scoreInput: 'Entrada',
       scoreByDarts: 'Por dardos',
       roundTotal: 'Total ronda',
       submitScore: 'Guardar',
       roundTotalHint: 'Introduce la puntuación total de la ronda completa de 3 dardos.',
-      confirmCheckoutRound: '¿La ronda se cerró con un tiro válido double/triple/master-out?',
+      confirmCheckoutRound: '¿La ronda se cerró con un tiro válido double/triple?',
     rouletteDrawButton: 'Sortear',
     rouletteHitButton: 'Acierto +1',
     rouletteSwitchButton: 'Cambiar jugador',
@@ -232,7 +494,7 @@ premiumNote: "Einmalige Zahlung. Kein Abo.",
     filter: 'Filtro', all: 'Todo', week: 'Semana', month: 'Mes', year: 'Año',
     h2h: 'Cara a cara', selectPlayer: 'Elige jugador', wins: 'victorias',
     rulesClassic:
-      'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Objetivo: llegar a 0 exacto. Opcional: Double-out / Triple-out / Master-out (si no hay, any-out). Pasarse o quedar en 1 (con reglas activas) = sin puntuación.',
+      'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Objetivo: llegar a 0 exacto. Opcional: Double-out / Triple-out (si no hay, any-out). Pasarse o quedar en 1 (con reglas activas) = sin puntuación.',
     rulesCricket:
       'Objetivos 15–20 y 25. Single = 1 “/”, Double = 2 (✕), Triple = 3 (Ⓧ). Con 3 marcas el número se cierra. Excesos puntúan solo si los rivales no lo tienen cerrado.',
     rulesAround:
@@ -256,6 +518,7 @@ premiumNote: "Pago único. Sin suscripción.",
     anyOutHint: '— als niets is gekozen, any-out toegestaan',
     order: 'Volgorde', fixed: 'Vast', random: 'Willekeurig', playThrough: 'Ronde uitspelen',
     robot: 'Robot', off: 'Uit', easy: 'Makkelijk', medium: 'Gemiddeld', hard: 'Moeilijk',
+    beginner: 'Beginner', expert: 'Expert',
     startGame: '▶ Start spel', continueGame: 'Doorgaan', saveGame: 'Spel opslaan', restart: 'Opnieuw',
     rules: 'Regels', addPlayer: 'Speler toevoegen',
     saved: 'Opgeslagen spellen', share: 'Delen', clear: 'Alles wissen',
@@ -271,14 +534,17 @@ premiumNote: "Pago único. Sin suscripción.",
     teamB: 'Team B',
     teamC: 'Team C',
     teamNeedPlayers: 'Minstens twee teams moeten spelers hebben.',
-    rouletteTotalPoints: 'Totaal punten',
+    rouletteTotalPoints: 'Totaal punten', roundCount: 'Rondes',
+    sets: 'Sets', legs: 'Legs', shareApp: 'App delen',
+    shareText: 'DartScore Pro – dartscore', linkCopied: 'Link gekopieerd',
+    legWon: 'Leg voor', setWon: 'Set voor',
     scoreInputType: 'Scoretype',
       scoreInput: 'Invoer',
       scoreByDarts: 'Per dart',
       roundTotal: 'Rondetotaal',
       submitScore: 'Opslaan',
       roundTotalHint: 'Voer de totale score van de volledige 3-dart ronde in.',
-      confirmCheckoutRound: 'Is de ronde beëindigd met een geldige double/triple/master-out worp?',
+      confirmCheckoutRound: 'Is de ronde beëindigd met een geldige double/triple worp?',
     rouletteDrawButton: 'Loten',
     rouletteHitButton: 'Raak +1',
     rouletteSwitchButton: 'Speler wisselen',
@@ -291,7 +557,7 @@ premiumNote: "Pago único. Sin suscripción.",
     filter: 'Filter', all: 'Alles', week: 'Week', month: 'Maand', year: 'Jaar',
     h2h: 'Onderling', selectPlayer: 'Kies speler', wins: 'zeges',
     rulesClassic:
-      'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Doel: exact 0. Optioneel: Double-out / Triple-out / Master-out (geen keuze = any-out). Overschieten of 1 over (met regel actief) = bust.',
+      'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Doel: exact 0. Optioneel: Double-out / Triple-out (geen keuze = any-out). Overschieten of 1 over (met regel actief) = bust.',
     rulesCricket:
       'Doelen 15–20 en 25. Single = 1 “/”, Double = 2 (✕), Triple = 3 (Ⓧ). Na 3 tekens is het getal gesloten. Overschotten scoren alleen als tegenstanders nog open hebben.',
     rulesAround:
@@ -315,6 +581,7 @@ premiumNote: "Eenmalige betaling. Geen abonnement.",
     anyOutHint: '— если ничего не выбрано, допустим любой финиш',
     order: 'Порядок', fixed: 'Фикс', random: 'Случайно', playThrough: 'Доиграть круг',
     robot: 'Робот', off: 'Выкл.', easy: 'Лёгкий', medium: 'Средний', hard: 'Сложный',
+    beginner: 'Новичок', expert: 'Эксперт',
     startGame: '▶ Начать игру', continueGame: 'Продолжить', saveGame: 'Сохранить игру', restart: 'Перезапуск',
     rules: 'Правила', addPlayer: 'Добавить игрока',
     saved: 'Сохранённые игры', share: 'Поделиться', clear: 'Удалить всё',
@@ -330,14 +597,17 @@ premiumNote: "Eenmalige betaling. Geen abonnement.",
     teamB: 'Команда B',
     teamC: 'Команда C',
     teamNeedPlayers: 'Минимум в двух командах должны быть игроки.',
-    rouletteTotalPoints: 'Всего очков',
+    rouletteTotalPoints: 'Всего очков', roundCount: 'Раунды',
+    sets: 'Сеты', legs: 'Леги', shareApp: 'Поделиться',
+    shareText: 'DartScore Pro – счётчик дартса', linkCopied: 'Ссылка скопирована',
+    legWon: 'Лег для', setWon: 'Сет для',
     scoreInputType: 'Тип подсчёта',
       scoreInput: 'Ввод',
       scoreByDarts: 'По дротикам',
       roundTotal: 'Сумма раунда',
       submitScore: 'Записать',
       roundTotalHint: 'Введите сумму за полный раунд из 3 дротиков.',
-      confirmCheckoutRound: 'Раунд был завершён правильным броском double/triple/master-out?',
+      confirmCheckoutRound: 'Раунд был завершён правильным броском double/triple?',
     rouletteDrawButton: 'Случайная цель',
     rouletteHitButton: 'Попадание +1',
     rouletteSwitchButton: 'Сменить игрока',
@@ -350,7 +620,7 @@ premiumNote: "Eenmalige betaling. Geen abonnement.",
     filter: 'Фильтр', all: 'Все', week: 'Неделя', month: 'Месяц', year: 'Год',
     h2h: 'Личные встречи', selectPlayer: 'Выбери игрока', wins: 'побед',
     rulesClassic:
-      'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Цель: ровно 0. Опции: Double-out / Triple-out / Master-out (если не выбрано, любой финиш). Перебор или 1 при активных правилах = без очков.',
+      'Single = ×1, Double = ×2, Triple = ×3, Bull 25/50. Цель: ровно 0. Опции: Double-out / Triple-out (если не выбрано, любой финиш). Перебор или 1 при активных правилах = без очков.',
     rulesCricket:
       'Цели: 15–20 и 25. Single = 1 «/», Double = 2 (✕), Triple = 3 (Ⓧ). После 3 меток число закрыто. Излишки дают очки только если у соперников число не закрыто.',
     rulesAround:
@@ -374,6 +644,9 @@ premiumNote: "Разовая оплата. Без подписки.",
     anyOutHint: '— 若未选择，允许任意收尾',
     order: '顺序', fixed: '固定', random: '随机', playThrough: '打完整轮',
     robot: '机器人', off: '关', easy: '简单', medium: '中等', hard: '困难',
+    beginner: '初学者', expert: '专家',
+    sets: '盘', legs: '局',
+    legWon: '局胜：', setWon: '盘胜：',
     startGame: '▶ 开始游戏', continueGame: '继续游戏', saveGame: '保存对局', restart: '重新开始',
     rules: '规则', addPlayer: '添加玩家',
     saved: '已保存的对局', share: '分享', clear: '全部清除',
@@ -389,14 +662,14 @@ premiumNote: "Разовая оплата. Без подписки.",
     teamB: '团队 B',
     teamC: '团队 C',
     teamNeedPlayers: '至少两个团队必须有玩家。',
-    rouletteTotalPoints: '总分',
+    rouletteTotalPoints: '总分', roundCount: '轮数',
     scoreInputType: '计分方式',
       scoreInput: '输入',
       scoreByDarts: '按镖输入',
       roundTotal: '回合总分',
       submitScore: '提交',
       roundTotalHint: '输入完整 3 镖回合的总分。',
-      confirmCheckoutRound: '本回合是否以有效的 double/triple/master-out 投镖结束？',
+      confirmCheckoutRound: '本回合是否以有效的 double/triple 投镖结束？',
     rouletteDrawButton: '抽取',
     rouletteHitButton: '命中 +1',
     rouletteSwitchButton: '切换玩家',
@@ -409,7 +682,7 @@ premiumNote: "Разовая оплата. Без подписки.",
     filter: '筛选', all: '全部', week: '一周', month: '一月', year: '一年',
     h2h: '对战', selectPlayer: '选玩家', wins: '胜',
     rulesClassic:
-      'Single = ×1, Double = ×2, Triple = ×3，Bull 25/50。目标：正好到 0。可选规则：Double-out / Triple-out / Master-out（未选则任意收尾）。超分或剩 1（在启用规则时）= 爆掉。',
+      'Single = ×1, Double = ×2, Triple = ×3，Bull 25/50。目标：正好到 0。可选规则：Double-out / Triple-out（未选则任意收尾）。超分或剩 1（在启用规则时）= 爆掉。',
     rulesCricket:
       '目标为 15–20 和 25。Single = 1“/”，Double = 2（✕），Triple = 3（Ⓧ）。3 记号后该数关闭。多余命中仅在对手未关闭时计分。',
     rulesAround:
@@ -420,7 +693,7 @@ premiumNote: "Разовая оплата. Без подписки.",
 premiumDesc: "将你的游戏提升到新的水平。获得更多控制、统计数据和更好的体验。",
 premiumFeature1: "无广告",
 premiumFeature2: "保存游戏",
-premiumFeature3: "玩家统计",
+premiumFeature3: "支持后续开发",
 premiumFeature4: "自定义颜色主题",
 premiumButton: "解锁高级版 – €2.99",
 premiumNote: "一次性付款，无订阅。",
@@ -437,7 +710,138 @@ const LANG_LABEL = {
   zh: '中文'
 };
 
-const t = (lang, key) => (T[lang] && T[lang][key]) || T.cs[key] || key;
+const t = (lang, key) => (T[lang] && T[lang][key]) || T.en[key] || key;
+
+
+const ThemedSelect = ({
+  value,
+  onChange,
+  children,
+  className = '',
+  style = {},
+  title,
+  disabled = false
+}) => {
+  const [open, setOpen] = useState(false);
+  const [menuStyle, setMenuStyle] = useState(null);
+  const triggerRef = useRef(null);
+  const menuRef = useRef(null);
+
+  const options = React.Children.toArray(children)
+    .filter(child => React.isValidElement(child) && child.type === 'option')
+    .map(child => ({
+      value: child.props.value ?? '',
+      label: child.props.children,
+      disabled: !!child.props.disabled
+    }));
+
+  const selected = options.find(opt => String(opt.value) === String(value)) || options[0];
+
+  const positionMenu = () => {
+    const el = triggerRef.current;
+    if (!el) return;
+
+    const rect = el.getBoundingClientRect();
+    const gap = 6;
+    const edge = 8;
+    const desiredHeight = Math.min(280, Math.max(44, options.length * 42 + 8));
+    const roomBelow = window.innerHeight - rect.bottom - edge;
+    const roomAbove = rect.top - edge;
+    const openUp = roomBelow < Math.min(desiredHeight, 180) && roomAbove > roomBelow;
+    const maxHeight = Math.max(80, Math.min(desiredHeight, openUp ? roomAbove - gap : roomBelow - gap));
+    const width = Math.max(rect.width, 150);
+    const left = Math.max(edge, Math.min(rect.left, window.innerWidth - width - edge));
+    const top = openUp
+      ? Math.max(edge, rect.top - gap - maxHeight)
+      : Math.min(window.innerHeight - edge - maxHeight, rect.bottom + gap);
+
+    setMenuStyle({ left, top, width, maxHeight });
+  };
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    positionMenu();
+
+    const closeIfOutside = event => {
+      const target = event.target;
+      if (triggerRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+    const reposition = () => positionMenu();
+
+    document.addEventListener('pointerdown', closeIfOutside, true);
+    window.addEventListener('resize', reposition);
+    window.addEventListener('scroll', reposition, true);
+
+    return () => {
+      document.removeEventListener('pointerdown', closeIfOutside, true);
+      window.removeEventListener('resize', reposition);
+      window.removeEventListener('scroll', reposition, true);
+    };
+  }, [open, options.length]);
+
+  const choose = option => {
+    if (option.disabled) return;
+    onChange?.({ target: { value: option.value } });
+    setOpen(false);
+  };
+
+  const wrapperStyle = {
+    minWidth: style?.minWidth,
+    width: style?.width,
+    flex: style?.flex
+  };
+
+  return (
+    <span className="themedSelectWrap" style={wrapperStyle}>
+      <button
+        ref={triggerRef}
+        type="button"
+        className={`${className} themedSelectTrigger`.trim()}
+        style={style}
+        title={title}
+        disabled={disabled}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => {
+          if (disabled) return;
+          setOpen(prev => !prev);
+        }}
+      >
+        <span className="themedSelectValue">{selected?.label}</span>
+        <span className={`themedSelectChevron ${open ? 'open' : ''}`} aria-hidden="true">⌄</span>
+      </button>
+
+      {open && menuStyle && createPortal(
+        <div
+          ref={menuRef}
+          className="themedSelectMenu"
+          style={menuStyle}
+          role="listbox"
+        >
+          {options.map((option, index) => {
+            const isSelected = String(option.value) === String(value);
+            return (
+              <button
+                key={`${String(option.value)}-${index}`}
+                type="button"
+                className={`themedSelectOption ${isSelected ? 'selected' : ''}`}
+                disabled={option.disabled}
+                role="option"
+                aria-selected={isSelected}
+                onClick={() => choose(option)}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>,
+        document.body
+      )}
+    </span>
+  );
+};
 
 /* ===== Utils ===== */
 const deepClone = (obj) => {
@@ -570,6 +974,12 @@ async function showInterstitialAd() {
     if (typeof window === 'undefined') return false;
     if (!/Android/i.test(navigator.userAgent)) return false;
 
+    if (window.DartScoreAndroid?.showInterstitial) {
+      window.DartScoreAndroid.showInterstitial();
+      return true;
+    }
+
+    // Fallback for older Android shells.
     window.location.href = ADMOB_INTERSTITIAL_SCHEME_URL;
     return true;
   } catch (err) {
@@ -663,9 +1073,12 @@ function App() {
     setTimeout(() => setToast(null), 1600);
   };
 
-  const [lang, setLang] = useState(
-    ((navigator.language || 'cs').slice(0, 2)) || 'cs'
-  );
+  const [lang, setLang] = useState(() => {
+    const detectedLang = ((navigator.language || 'en').slice(0, 2)).toLowerCase();
+    return ['cs', 'en', 'de', 'es', 'nl', 'ru', 'zh'].includes(detectedLang)
+      ? detectedLang
+      : 'en';
+  });
   const [soundOn, setSoundOn] = useState(true);
   const [voiceOn, setVoiceOn] = useState(true);
 
@@ -707,7 +1120,11 @@ function App() {
 
   useEffect(() => {
     try {
-      if (isPremium) localStorage.setItem('premium', 'true');
+      if (isPremium) {
+        localStorage.setItem('premium', 'true');
+        localStorage.setItem(INTERSTITIAL_START_COUNT_KEY, '0');
+        localStorage.setItem(INTERSTITIAL_PENDING_KEY, 'false');
+      }
     } catch { }
   }, [isPremium]);
 
@@ -732,7 +1149,16 @@ function App() {
 
   const [outDouble, setOutDouble] = useState(true);
   const [outTriple, setOutTriple] = useState(false);
-  const [outMaster, setOutMaster] = useState(false);
+  // Double + Triple together behaves as Master-out; neither selected is Any-out.
+  const outMaster = outDouble && outTriple;
+
+  // Classic match format: first to N legs wins a set; first to N sets wins the match.
+  const [legsToWinSet, setLegsToWinSet] = useState(1);
+  const [setsToWin, setSetsToWin] = useState(1);
+  const [classicLegsWon, setClassicLegsWon] = useState([]);
+  const [classicSetsWon, setClassicSetsWon] = useState([]);
+  const [classicLegStarterIdx, setClassicLegStarterIdx] = useState(0);
+  const [classicLegTransition, setClassicLegTransition] = useState(false);
 
   const [randomOrder, setRandomOrder] = useState(false);
   const [playThrough, setPlayThrough] = useState(false);
@@ -772,7 +1198,8 @@ function App() {
       if (s.startScore) setStartScore(s.startScore);
       if (typeof s.outDouble === 'boolean') setOutDouble(s.outDouble);
       if (typeof s.outTriple === 'boolean') setOutTriple(s.outTriple);
-      if (typeof s.outMaster === 'boolean') setOutMaster(s.outMaster);
+      if (Number.isInteger(s.legsToWinSet) && s.legsToWinSet >= 1 && s.legsToWinSet <= 21) setLegsToWinSet(s.legsToWinSet);
+      if (Number.isInteger(s.setsToWin) && s.setsToWin >= 1 && s.setsToWin <= 21) setSetsToWin(s.setsToWin);
       if (typeof s.randomOrder === 'boolean') setRandomOrder(s.randomOrder);
       if (typeof s.playThrough === 'boolean') setPlayThrough(s.playThrough);
       if (s.ai) setAi(s.ai);
@@ -797,6 +1224,7 @@ function App() {
         JSON.stringify({
           lang, mode, startScore,
           outDouble, outTriple, outMaster,
+          legsToWinSet, setsToWin,
           randomOrder, playThrough, ai,
           scoreInputMode: mode === 'classic' ? scoreInputMode : 'darts',
           playerMode, players,
@@ -807,6 +1235,7 @@ function App() {
   }, [
     lang, mode, startScore,
     outDouble, outTriple, outMaster,
+    legsToWinSet, setsToWin,
     randomOrder, playThrough, ai, scoreInputMode, playerMode, players,
     themeColor
   ]);
@@ -939,8 +1368,57 @@ function App() {
   const [actions, setActions] = useState([]);   // undo stack
   const [thrown, setThrown] = useState([]);     // počet šipek
   const [lastTurn, setLastTurn] = useState([]); // součet posledního kola
+  const [classicVisitHistory, setClassicVisitHistory] = useState([]); // dokončené návštěvy napříč legy
+  const [classicLegSeq, setClassicLegSeq] = useState(1);
   const [winner, setWinner] = useState(null);
   const [pendingWin, setPendingWin] = useState(null);
+
+  // Free interstitial cadence:
+  // count explicit Lobby "Start Game" presses and persist the state.
+  // The 3rd Start arms one interstitial; it is shown only after a game
+  // is actually completed. If that game is abandoned, the ad remains pending.
+  const INTERSTITIAL_START_COUNT_KEY = 'interstitialStartCount';
+  const INTERSTITIAL_PENDING_KEY = 'interstitialPending';
+  const interstitialShowScheduledRef = useRef(false);
+
+  const readInterstitialStartCount = () => {
+    try {
+      const value = Number.parseInt(
+        localStorage.getItem(INTERSTITIAL_START_COUNT_KEY) || '0',
+        10
+      );
+      if (!Number.isFinite(value)) return 0;
+      return Math.min(2, Math.max(0, value));
+    } catch {
+      return 0;
+    }
+  };
+
+  const isInterstitialPending = () => {
+    try {
+      return localStorage.getItem(INTERSTITIAL_PENDING_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  };
+
+  const markLobbyStartForInterstitial = () => {
+    if (isPremium || isInterstitialPending()) return;
+
+    const nextCount = readInterstitialStartCount() + 1;
+
+    try {
+      if (nextCount >= 3) {
+        localStorage.setItem(INTERSTITIAL_START_COUNT_KEY, '0');
+        localStorage.setItem(INTERSTITIAL_PENDING_KEY, 'true');
+      } else {
+        localStorage.setItem(
+          INTERSTITIAL_START_COUNT_KEY,
+          String(nextCount)
+        );
+      }
+    } catch { }
+  };
 
   const [cricket, setCricket] = useState(null);
   const [around, setAround] = useState(null);
@@ -1078,7 +1556,7 @@ function App() {
     return true;
   };
 
-  const startGame = () => {
+  const startGame = (countAsLobbyStart = true) => {
     const baseOrder = players.map((_, i) => i);
     const teamMode = mode === 'classic' && playerMode === 'teams';
     const teamOrder = teamMode ? buildTeamOrder(players) : null;
@@ -1086,6 +1564,10 @@ function App() {
     if (teamMode && !teamOrder) {
       alert(t(lang, 'teamNeedPlayers'));
       return;
+    }
+
+    if (countAsLobbyStart) {
+      markLobbyStartForInterstitial();
     }
 
     const ord = teamMode
@@ -1101,6 +1583,9 @@ function App() {
     setDarts([]);
 
     if (mode === 'classic') {
+    setClassicVisitHistory([]);
+    setClassicLegSeq(1);
+
       const scoreSlots = playerMode === 'teams' ? 3 : players.length;
       const sc = Array.from({ length: scoreSlots }, () => startScore);
       const dartsCnt = Array.from({ length: scoreSlots }, () => 0);
@@ -1108,6 +1593,10 @@ function App() {
       setScores(sc);
       setThrown(dartsCnt);
       setLastTurn(last);
+      setClassicLegsWon(Array.from({ length: scoreSlots }, () => 0));
+      setClassicSetsWon(Array.from({ length: scoreSlots }, () => 0));
+      setClassicLegStarterIdx(0);
+      setClassicLegTransition(false);
       setCricket(null);
       setAround(null);
     } else if (mode === 'cricket') {
@@ -1144,7 +1633,7 @@ function App() {
     setScreen('game');
   };
 
-  const restartGame = () => startGame();
+  const restartGame = () => startGame(false);
 
   function shuffle(a) {
     const arr = [...a];
@@ -1155,7 +1644,7 @@ function App() {
     return arr;
   }
 
-  const anyOutSelected = outDouble || outTriple || outMaster;
+  const anyOutSelected = outDouble || outTriple;
   const isFinishAllowed = (m, v) => {
     if (!anyOutSelected) return true;
 
@@ -1165,7 +1654,6 @@ function App() {
 
     if ((m === 2 || isBullseyeCheckout) && outDouble) return true;
     if (m === 3 && outTriple) return true;
-    if ((m === 2 || m === 3 || isBullseyeCheckout) && outMaster) return true;
     return false;
   };
   const isBustLeavingOne = (newScore) => (anyOutSelected ? newScore === 1 : false);
@@ -1185,6 +1673,9 @@ function App() {
 
   /* ===== Classic commit ===== */
   const commitClassic = (value, mOverride) => {
+    if (classicLegTransition) return;
+    if (darts.length >= 3) return;
+
     let v = value;
     let m = (mOverride ?? mult);
 
@@ -1203,11 +1694,11 @@ function App() {
 
     const resetMult = () => setMult(1);
 
-    const advanceTurn = () => {
+    const advanceTurn = (delay = 250) => {
       // žádný scheduleNextPlayer – ať to nepadá, přepnutí je tady vždy definované
       setTimeout(() => {
         try { nextPlayer(); } catch (e) { console.error('nextPlayer failed:', e); }
-      }, 250);
+      }, delay);
     };
 
     // === BUST (přestřel / nebo zbyde 1 při out pravidlech) ===
@@ -1223,7 +1714,13 @@ function App() {
         scoreIdx,
         prevScore: prev,
         dartsBefore: [...darts],
+        statVisitAdded: true,
       });
+
+      setClassicVisitHistory(history => [...history, {
+        leg: classicLegSeq, scoreIdx, total: 0, dartsUsed: Math.min(3, darts.length + 1),
+        checkout: null, wonLeg: false
+      }]);
 
       setScores(sc => sc.map((x, i) => (i === scoreIdx ? roundStartScore : x)));
       setDarts([]);
@@ -1247,7 +1744,13 @@ function App() {
           scoreIdx,
           prevScore: prev,
           dartsBefore: [...darts],
+          statVisitAdded: true,
         });
+
+        setClassicVisitHistory(history => [...history, {
+          leg: classicLegSeq, scoreIdx, total: 0, dartsUsed: Math.min(3, darts.length + 1),
+          checkout: null, wonLeg: false
+        }]);
 
         setScores(sc => sc.map((x, i) => (i === scoreIdx ? roundStartScore : x)));
         setDarts([]);
@@ -1259,6 +1762,15 @@ function App() {
 
       // povolený finish
       playHitSound();
+      const finishVisit = {
+        leg: classicLegSeq,
+        scoreIdx,
+        total: darts.reduce((sum, d) => sum + (d?.score || 0), 0) + hit,
+        dartsUsed: Math.min(3, darts.length + 1),
+        checkout: roundStartScore,
+        wonLeg: true
+      };
+      setClassicVisitHistory(history => [...history, finishVisit]);
       pushAction({
         type: 'dart',
         mode: 'classic',
@@ -1268,6 +1780,7 @@ function App() {
         prevScore: prev,
         newScore: 0,
         hit: { v, m, score: hit },
+        statVisitAdded: true,
       });
 
       setScores(sc => sc.map((x, i) => (i === scoreIdx ? 0 : x)));
@@ -1303,7 +1816,7 @@ function App() {
       if (!playThrough) {
         // finalizeWin musí být mimo setState callback (kvůli čitelnosti),
         // ale tady je bezpečné – je to “okamžitý finish”
-        finalizeWin(scoreIdx);
+                  completeClassicLeg(scoreIdx, { finalVisit: finishVisit });
       }
 
       resetMult();
@@ -1321,6 +1834,7 @@ function App() {
       prevScore: prev,
       newScore: tentative,
       hit: { v, m, score: hit },
+      statVisitAdded: darts.length + 1 >= 3,
     });
 
     setScores(sc => sc.map((x, i) => (i === scoreIdx ? tentative : x)));
@@ -1333,9 +1847,12 @@ function App() {
       setLastTurn(ls => ls.map((x, i) => (i === scoreIdx ? total : x)));
 
       if (nd.length >= 3) {
+        setClassicVisitHistory(history => [...history, {
+          leg: classicLegSeq, scoreIdx, total, dartsUsed: 3, checkout: null, wonLeg: false
+        }]);
         speak(lang, total === 0 ? t(lang, 'zeroWord') : total, voiceOn);
-        advanceTurn();
-        return [];
+        advanceTurn(500);
+        return nd;
       }
 
       return nd;
@@ -1344,6 +1861,7 @@ function App() {
     resetMult();
   };
   const commitClassicRound = (roundScore) => {
+    if (classicLegTransition) return;
     const total = Number(roundScore);
     if (!Number.isInteger(total) || total < 0 || total > 180) return;
 
@@ -1374,8 +1892,12 @@ function App() {
         scoreIdx,
         prevScore: prev,
         dartsBefore: [...darts],
+        statVisitAdded: true,
       });
 
+      setClassicVisitHistory(history => [...history, {
+        leg: classicLegSeq, scoreIdx, total: 0, dartsUsed: 3, checkout: null, wonLeg: false
+      }]);
       setDarts([]);
       setLastTurn(ls => ls.map((x, i) => (i === scoreIdx ? 0 : x)));
       resetMult();
@@ -1401,6 +1923,11 @@ function App() {
 
       playHitSound();
 
+      const finishVisit = {
+        leg: classicLegSeq, scoreIdx, total, dartsUsed: 3, checkout: prev, wonLeg: true
+      };
+      setClassicVisitHistory(history => [...history, finishVisit]);
+
       pushAction({
         type: 'round',
         mode: 'classic',
@@ -1413,6 +1940,7 @@ function App() {
         dartsBefore: [...darts],
         lastTurnBefore: lastTurn[scoreIdx] ?? 0,
         thrownDelta: 3,
+        statVisitAdded: true,
       });
 
       setScores(sc => sc.map((x, i) => (i === scoreIdx ? 0 : x)));
@@ -1429,7 +1957,7 @@ function App() {
         speak(lang, total === 0 ? t(lang, 'zeroWord') : total, voiceOn);
         advanceTurn();
       } else {
-        finalizeWin(scoreIdx);
+        completeClassicLeg(scoreIdx, { finalVisit: finishVisit });
       }
 
       resetMult();
@@ -1450,7 +1978,12 @@ function App() {
       dartsBefore: [...darts],
       lastTurnBefore: lastTurn[scoreIdx] ?? 0,
       thrownDelta: 3,
+      statVisitAdded: true,
     });
+
+    setClassicVisitHistory(history => [...history, {
+      leg: classicLegSeq, scoreIdx, total, dartsUsed: 3, checkout: null, wonLeg: false
+    }]);
 
     setScores(sc => sc.map((x, i) => (i === scoreIdx ? tentative : x)));
     setThrown(th => th.map((x, i) => (i === scoreIdx ? x + 3 : x)));
@@ -1847,6 +2380,57 @@ const commitCricket = (value, mOverride) => {
       return commitAround(value, mOverride);
     };
 
+    const showPendingInterstitialAfterFanfare = () => {
+      if (isPremium || !isInterstitialPending()) return;
+      if (interstitialShowScheduledRef.current) return;
+
+      interstitialShowScheduledRef.current = true;
+
+      let fired = false;
+      let fallbackTimer = null;
+
+      const fire = async () => {
+        if (fired) return;
+        fired = true;
+
+        if (fallbackTimer != null) {
+          window.clearTimeout(fallbackTimer);
+        }
+
+        const requested = await showInterstitialAd();
+
+        if (requested) {
+          try {
+            localStorage.setItem(INTERSTITIAL_PENDING_KEY, 'false');
+            localStorage.setItem(INTERSTITIAL_START_COUNT_KEY, '0');
+          } catch { }
+        }
+
+        interstitialShowScheduledRef.current = false;
+      };
+
+      const fanfare = winAudioRef.current;
+
+      if (!fanfare) {
+        window.setTimeout(fire, 250);
+        return;
+      }
+
+      fanfare.addEventListener(
+        'ended',
+        () => window.setTimeout(fire, 150),
+        { once: true }
+      );
+
+      const durationMs =
+        Number.isFinite(fanfare.duration) && fanfare.duration > 0
+          ? Math.ceil(fanfare.duration * 1000) + 1000
+          : 7000;
+
+      // Safety fallback if playback is blocked or "ended" is never emitted.
+      fallbackTimer = window.setTimeout(fire, durationMs);
+    };
+
     const finalizeWin = (pIdx, opts = {}) => {
       if (!opts.silentVoice && mode === 'classic') {
         speak(lang, 'Vítěz!', voiceOn);
@@ -1859,21 +2443,9 @@ const commitCricket = (value, mOverride) => {
       } catch { }
 
       setWinner(pIdx);
+      showPendingInterstitialAfterFanfare();
 
-      if (!isPremium) {
-        window.setTimeout(() => {
-          try {
-            if (winAudioRef.current) {
-              winAudioRef.current.pause();
-              winAudioRef.current.currentTime = 0;
-            }
-          } catch { }
-
-          showInterstitialAd();
-        }, 1000);
-      }
-
-      if (isPremium) {
+      {
         try {
           const list = JSON.parse(localStorage.getItem('finishedGames') || '[]');
           const gameRecord = {
@@ -1884,6 +2456,20 @@ const commitCricket = (value, mOverride) => {
             players: players.map(p => p.name),
             winner: players[pIdx]?.name || ''
           };
+          if (mode === 'classic' && playerMode === 'individual') {
+            const visitsForRecord = opts.finalVisit
+              ? [...classicVisitHistory, opts.finalVisit]
+              : classicVisitHistory;
+            gameRecord.playerMode = playerMode;
+            gameRecord.legsToWinSet = legsToWinSet;
+            gameRecord.setsToWin = setsToWin;
+            gameRecord.playerStats = buildClassicPlayerStats(
+              visitsForRecord,
+              players,
+              opts.finalSetsWon || classicSetsWon
+            );
+            gameRecord.statsVersion = 1;
+          }
           if (mode === 'classic' && Array.isArray(scores)) {
             gameRecord.remainingByPlayer = playerMode === 'teams'
               ? [0, 1, 2]
@@ -1901,6 +2487,72 @@ const commitCricket = (value, mOverride) => {
           localStorage.setItem('finishedGames', JSON.stringify(list.slice(0, 200)));
         } catch { }
       }
+    };
+
+    const completeClassicLeg = (scoreIdx, opts = {}) => {
+      if (mode !== 'classic' || winner != null || classicLegTransition) return;
+
+      const scoreSlots = playerMode === 'teams' ? 3 : players.length;
+      const safeLegsToWin = Math.min(21, Math.max(1, Number(legsToWinSet) || 1));
+      const safeSetsToWin = Math.min(21, Math.max(1, Number(setsToWin) || 1));
+      const nextLegs = Array.from({ length: scoreSlots }, (_, ix) => classicLegsWon[ix] || 0);
+      const nextSets = Array.from({ length: scoreSlots }, (_, ix) => classicSetsWon[ix] || 0);
+
+      nextLegs[scoreIdx] = (nextLegs[scoreIdx] || 0) + 1;
+      let wonSet = false;
+
+      if (nextLegs[scoreIdx] >= safeLegsToWin) {
+        wonSet = true;
+        nextSets[scoreIdx] = (nextSets[scoreIdx] || 0) + 1;
+        nextLegs.fill(0);
+      }
+
+      setClassicLegsWon(nextLegs);
+      setClassicSetsWon(nextSets);
+
+      if ((nextSets[scoreIdx] || 0) >= safeSetsToWin) {
+        finalizeWin(scoreIdx, { ...opts, finalSetsWon: nextSets });
+        return;
+      }
+
+      setClassicLegTransition(true);
+      setClassicLegSeq(seq => seq + 1);
+      const winnerName = playerMode === 'teams'
+        ? teamNameByIndex(scoreIdx)
+        : (players[scoreIdx]?.name || t(lang, 'player'));
+      showToast(`${t(lang, wonSet ? 'setWon' : 'legWon')} ${winnerName}`);
+
+      let nextStarter = 0;
+      if (order.length > 0) {
+        if (playerMode !== 'teams') {
+          nextStarter = (classicLegStarterIdx + 1) % order.length;
+        } else {
+          const currentStartPlayer = order[classicLegStarterIdx] ?? order[0];
+          const currentStartScoreIdx = scoreIndexForPlayer(currentStartPlayer);
+          nextStarter = classicLegStarterIdx;
+          for (let step = 1; step <= order.length; step += 1) {
+            const candidate = (classicLegStarterIdx + step) % order.length;
+            const candidatePlayer = order[candidate];
+            if (scoreIndexForPlayer(candidatePlayer) !== currentStartScoreIdx) {
+              nextStarter = candidate;
+              break;
+            }
+          }
+        }
+      }
+
+      window.setTimeout(() => {
+        setScores(Array.from({ length: scoreSlots }, () => startScore));
+        setThrown(Array.from({ length: scoreSlots }, () => 0));
+        setLastTurn(Array.from({ length: scoreSlots }, () => 0));
+        setActions([]);
+        setDarts([]);
+        setMult(1);
+        setPendingWin(null);
+        setCurrIdx(nextStarter);
+        setClassicLegStarterIdx(nextStarter);
+        setClassicLegTransition(false);
+      }, 700);
     };
 
    /* >>> DARTSCORE_UNIQUE_ANCHOR__TURN_SWITCH_HELPERS__START__7C2A <<< */
@@ -1931,6 +2583,12 @@ useEffect(() => { turnLockRef.current = false; }, [currIdx, screen]);
 const nextPlayerSafe = () => {
   if (turnLockRef.current) return;           // HARD GUARD: nedovol 2× přepnutí v jednom "tahu"
   turnLockRef.current = true;
+
+  const ordNow = orderRef.current || [];
+  if (ordNow.length < 1) {
+    turnLockRef.current = false;
+    return;
+  }
 
   setCurrIdx((i) => {
     const ord = orderRef.current || [];
@@ -1970,7 +2628,7 @@ const nextPlayerSafe = () => {
       pendingWinRef.current &&
       winnerRef.current == null
     ) {
-      finalizeWin(pendingWinRef.current.pIdx);
+      completeClassicLeg(pendingWinRef.current.pIdx);
       setPendingWin(null);
     }
 
@@ -2002,6 +2660,19 @@ const undo = () => {
   setActions(st => {
     if (st.length === 0) return st;
     const last = st[st.length - 1];
+    if (last?.mode === 'classic' && last?.statVisitAdded) {
+      const targetScoreIdx = last.scoreIdx ?? last.pIdx;
+      setClassicVisitHistory(history => {
+        const copy = [...history];
+        for (let i = copy.length - 1; i >= 0; i -= 1) {
+          if (copy[i]?.scoreIdx === targetScoreIdx && copy[i]?.leg === classicLegSeq) {
+            copy.splice(i, 1);
+            break;
+          }
+        }
+        return copy;
+      });
+    }
 
     if (last.mode === 'classic') {
         if (last.type === 'round') {
@@ -2113,168 +2784,44 @@ useEffect(() => {
   }
 }, [order, currIdx, mode, playerMode]);
 
-    /* BOT TURN (AI) – beze změny logiky, necháváme, funguje */
+    /* BOT TURN: one cancellable dart, recalculated from the latest state. */
+    const botFormRef = useRef({});
+    useEffect(() => {
+      botFormRef.current = {};
+    }, [screen, classicLegsWon, classicSetsWon]);
 
     useEffect(() => {
       const pIdx = order[currIdx];
       const p = players[pIdx];
+      if (screen !== 'game' || !p?.bot || winner != null || classicLegTransition || darts.length >= 3) return;
+      if (mode !== 'classic' && mode !== 'cricket' && mode !== 'around') return;
 
-      if (!p || !p.bot || winner != null) return;
-
-      const tables = {
-        easy: { miss: 0.55, single: 0.40, double: 0.04, triple: 0.01 },
-        medium: { miss: 0.18, single: 0.58, double: 0.16, triple: 0.08 },
-        hard: { miss: 0.09, single: 0.50, double: 0.24, triple: 0.17 }
-      };
-      const tb = tables[p.level || 'easy'];
-
-      let cancelled = false;
-      const delays = [800, 1600, 2400];
-
-      const rollMult = () => {
-        const r = Math.random();
-        if (r < tb.miss) return { m: 1, miss: true };
-        if (r < tb.miss + tb.triple) return { m: 3, miss: false };
-        if (r < tb.miss + tb.triple + tb.double) return { m: 2, miss: false };
-        return { m: 1, miss: false };
-      };
-
-      const chooseTargetClassic = () => {
-        const myScore = scores[pIdx];
-
-        const finishAllowed = (m, v) => {
-          if (!anyOutSelected) return true;
-
-          // Bullseye 50 counts as double bull / D25 for checkout rules.
-          const isBullseyeCheckout = v === 50;
-
-          if ((m === 2 || isBullseyeCheckout) && outDouble) return true;
-          if (m === 3 && outTriple) return true;
-          if ((m === 2 || m === 3 || isBullseyeCheckout) && outMaster) return true;
-          return false;
-        };
-
-        const checkouts = [
-          { v: 50, m: 1, need: 50 },
-          { v: 20, m: 2, need: 40 }, { v: 10, m: 2, need: 20 },
-          { v: 12, m: 2, need: 24 }, { v: 16, m: 2, need: 32 },
-          { v: 8, m: 2, need: 16 }, { v: 6, m: 2, need: 12 },
-          { v: 4, m: 2, need: 8 }, { v: 2, m: 2, need: 4 }
-        ];
-        for (const co of checkouts) {
-          if (myScore === co.need && finishAllowed(co.m, co.v)) return co;
-        }
-
-        if (myScore <= 62) {
-          if (finishAllowed(2) && myScore % 2 === 0) {
-            const d = Math.min(20, Math.max(2, (myScore / 2) | 0));
-            return { v: d, m: 2 };
-          }
-          const s = Math.min(20, Math.max(1, myScore - 40));
-          return { v: (s || 1), m: 1 };
-        }
-
-        if ((p.level || 'easy') === 'easy') {
-          if (Math.random() < tb.miss) {
-            return { v: 0, m: 1 };
-          }
-          return { v: 20, m: 1 };
-        }
-
-        return { v: 20, m: 3 };
-      };
-
-      const chooseTargetCricket = () => {
-        const me = cricket?.[pIdx];
-        if (!me) return { v: 20, m: 1 };
-
-        const orderArr = [20, 19, 18, 17, 16, 15, 25];
-
-        for (const v of orderArr) {
-          const key = v === 25 ? 'bull' : String(v);
-          const marks = me.marks?.[key] ?? 0;
-          if (marks < 3) {
-            const { m, miss } = rollMult();
-            const mAdj = (v === 25 ? 1 : m);
-            if (miss) return { v: 0, m: 1 };
-            return { v, m: mAdj };
-          }
-        }
-
-        const opponentsOpen = (v) => {
-          const key = v === 25 ? 'bull' : String(v);
-          return cricket?.some(
-            (pl, ix) => ix !== pIdx && (pl.marks?.[key] ?? 0) < 3
-          );
-        };
-        for (const v of orderArr) {
-          if (opponentsOpen(v)) {
-            const { m, miss } = rollMult();
-            const mAdj = (v === 25 ? 1 : m);
-            if (miss) return { v: 0, m: 1 };
-            return { v, m: mAdj };
-          }
-        }
-
-        return { v: 20, m: 1 };
-      };
-
-      const chooseTargetAround = () => {
-        const me = around?.[pIdx];
-        const target = me?.next ?? 1;
-
-        if (Math.random() < tb.miss) {
-          return { v: 0, m: 1 };
-        }
-        if (target <= 20) return { v: target, m: 1 };
-        return { v: 25, m: 1 };
-      };
-
-      const pickThrow = () => {
-        if (mode === 'classic') return chooseTargetClassic();
-        if (mode === 'cricket') return chooseTargetCricket();
-        return chooseTargetAround();
-      };
-
-      const myIdx = pIdx;
-
-      const throwOnce = (i) => {
-        if (cancelled || winner != null) return;
-        if (order[currIdx] !== myIdx) return;
-
-        let { v, m } = pickThrow();
-
+      const timer = window.setTimeout(() => {
+        if (botFormRef.current[p.id] == null) botFormRef.current[p.id] = 0.94 + Math.random() * 0.12;
+        let target;
         if (mode === 'classic') {
-          if ((v === 0 || v === 25 || v === 50) && m > 1) m = 1;
+          target = botChooseClassic(scores[scoreIndexForPlayer(pIdx)], 3 - darts.length,
+            { double: outDouble, triple: outTriple, master: outMaster });
         } else if (mode === 'cricket') {
-          if (v === 0) m = 1;
-          if (v === 25) m = 1;
+          const values = [20, 19, 18, 17, 16, 15, 25];
+          const key = v => v === 25 ? 'bull' : String(v);
+          const v = values.find(v => (cricket?.[pIdx]?.marks?.[key(v)] ?? 0) < 3) ??
+            values.find(v => cricket?.some((pl, ix) => ix !== pIdx && (pl.marks?.[key(v)] ?? 0) < 3)) ?? 20;
+          target = { v, m: v === 25 ? 1 : 3 };
+        } else {
+          target = { v: Math.min(25, around?.[pIdx]?.next > 20 ? 25 : around?.[pIdx]?.next ?? 1), m: 1 };
         }
-
-        setTimeout(() => {
-          if (cancelled || winner != null) return;
-          if (order[currIdx] !== myIdx) return;
-          commitDart(v, m);
-
-          if (i < 2) {
-            setTimeout(() => {
-              if (order[currIdx] === myIdx && winner == null) {
-                throwOnce(i + 1);
-              }
-            }, 200);
-          }
-        }, delays[i]);
-      };
-
-      throwOnce(0);
-
-      return () => { cancelled = true; };
-
-    }, [
-      currIdx, order, players, winner, mode, scores,
-      cricket, around,
-      outDouble, outTriple, outMaster, anyOutSelected
-    ]);
+        let { v, m } = botScatter(target, p.level, botFormRef.current[p.id]);
+        // Cricket represents double bull as 25 × 2.
+        if (mode === 'cricket' && v === 50) { v = 25; m = 2; }
+        if (mode === 'cricket' && v < 15) { v = 0; m = 1; }
+        if (mode === 'around' && v === 50) { v = 25; m = 1; }
+        commitDart(v, m);
+      }, 800);
+      return () => window.clearTimeout(timer);
+    }, [screen, currIdx, order, players, winner, mode, scores, darts,
+      cricket, around, playerMode, classicLegTransition,
+      outDouble, outTriple, outMaster]);
 
  /* reklama overlay */
 useEffect(() => {
@@ -2460,10 +3007,12 @@ const buyPremium = async () => {
       lang, soundOn, voiceOn,
       mode, startScore,
       outDouble, outTriple, outMaster,
+      legsToWinSet, setsToWin, classicLegsWon, classicSetsWon, classicLegStarterIdx,
       randomOrder, playThrough, ai,
       scoreInputMode, playerMode,
       players, order, currIdx,
       scores, darts, mult, actions, thrown, lastTurn,
+      classicVisitHistory, classicLegSeq,
       winner, pendingWin,
       cricket, around, roulette,
       isPremium, themeColor
@@ -2554,6 +3103,8 @@ const buyPremium = async () => {
         setLang(s.lang || lang);
         setMode(s.mode || 'classic');
         setStartScore(s.startScore || 501);
+        setLegsToWinSet(Number.isInteger(s.legsToWinSet) ? Math.min(21, Math.max(1, s.legsToWinSet)) : 1);
+        setSetsToWin(Number.isInteger(s.setsToWin) ? Math.min(21, Math.max(1, s.setsToWin)) : 1);
         if (s.scoreInputMode) setScoreInputMode(s.scoreInputMode);
         if (s.playerMode) setPlayerMode(s.playerMode);
         setPlayers(s.players);
@@ -2565,8 +3116,15 @@ const buyPremium = async () => {
         setActions(s.actions || []);
         setThrown(s.thrown || []);
         setLastTurn(s.lastTurn || []);
+        setClassicVisitHistory(Array.isArray(s.classicVisitHistory) ? s.classicVisitHistory : []);
+        setClassicLegSeq(Number.isInteger(s.classicLegSeq) ? Math.max(1, s.classicLegSeq) : 1);
         setWinner(s.winner ?? null);
         setPendingWin(s.pendingWin ?? null);
+        const savedScoreSlots = (s.mode === 'classic' && s.playerMode === 'teams') ? 3 : (s.players?.length || 0);
+        setClassicLegsWon(Array.from({ length: savedScoreSlots }, (_, ix) => s.classicLegsWon?.[ix] || 0));
+        setClassicSetsWon(Array.from({ length: savedScoreSlots }, (_, ix) => s.classicSetsWon?.[ix] || 0));
+        setClassicLegStarterIdx(Number.isInteger(s.classicLegStarterIdx) ? Math.max(0, Math.min(s.classicLegStarterIdx, Math.max(0, (s.order?.length || 1) - 1))) : 0);
+        setClassicLegTransition(false);
         setCricket(s.cricket ?? null);
         setAround(s.around ?? null);
         setRoulette(s.roulette ?? null);
@@ -2611,10 +3169,12 @@ const buyPremium = async () => {
       lang, soundOn, voiceOn,
       mode, startScore,
       outDouble, outTriple, outMaster,
+      legsToWinSet, setsToWin, classicLegsWon, classicSetsWon, classicLegStarterIdx,
       randomOrder, playThrough, ai,
       scoreInputMode, playerMode,
       players, order, currIdx,
       scores, darts, mult, actions, thrown, lastTurn,
+      classicVisitHistory, classicLegSeq,
       winner, pendingWin,
       cricket, around,
       isPremium, themeColor
@@ -2653,7 +3213,6 @@ const buyPremium = async () => {
       const rules = [];
       if (outDouble) rules.push('DO-OUT');
       if (outTriple) rules.push('TR-OUT');
-      if (outMaster) rules.push('MA-OUT');
       return rules.length ? rules.join(' / ') : 'ANY-OUT';
     })();
 
@@ -2781,63 +3340,32 @@ const buyPremium = async () => {
               </div>
             </div>
 
-            {/* 2. řádek: lobby = jazyk + hodnocení, hra = název režimu */}
-            <div
-              className="controls"
-              style={{
-                display: 'flex',
-                alignItems: 'stretch',
-                gap: 8,
-                width: '100%'
-              }}
-            >
-              {screen === 'lobby' ? (
-                <select
-                className="input"
-                value={lang}
-                onChange={e => setLang(e.target.value)}
+            {/* 2. řádek je jen v lobby. Ve hře šetříme výšku pro hráče. */}
+            {screen === 'lobby' && (
+              <div
+                className="controls"
                 style={{
-                  height: 44,
-                  minWidth: 150,
-                  flex: '0 0 auto'
+                  display: 'flex',
+                  alignItems: 'stretch',
+                  gap: 8,
+                  width: '100%'
                 }}
               >
-                {['cs', 'en', 'de', 'es', 'nl', 'ru', 'zh'].map(code => (
-                  <option key={code} value={code}>{LANG_LABEL[code]}</option>
-                ))}
-              </select>
-              ) : mode === 'classic' ? (
-                <div className="input classicModeInfo">
-                  <span className="classicModeTitle">
-                    {modeLabel}
-                  </span>
-
-                  <span className="classicModeOut">
-                    {t(lang, 'outLabel')}: {classicOutShortLabel}
-                  </span>
-                </div>
-              ) : (
-                <div
+                <ThemedSelect
                   className="input"
+                  value={lang}
+                  onChange={e => setLang(e.target.value)}
                   style={{
-                    minHeight: 44,
-                    flex: '1 1 auto',
-                    minWidth: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '6px 12px',
-                    fontWeight: 800,
-                    textAlign: 'center',
-                    borderColor: 'var(--accent)',
-                    color: 'var(--accent)'
+                    height: 44,
+                    minWidth: 150,
+                    flex: '0 0 auto'
                   }}
                 >
-                  {modeLabel}
-                </div>
-              )}
+                  {['cs', 'en', 'de', 'es', 'nl', 'ru', 'zh'].map(code => (
+                    <option key={code} value={code}>{LANG_LABEL[code]}</option>
+                  ))}
+                </ThemedSelect>
 
-              {screen === 'lobby' && (
                 <button
                   type="button"
                   className="btn"
@@ -2860,8 +3388,8 @@ const buyPremium = async () => {
                 >
                   ⭐ {t(lang, 'rateAppButton')}
                 </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
         {screen === 'lobby' ? (
@@ -2872,7 +3400,8 @@ const buyPremium = async () => {
       startScore={startScore} setStartScore={setStartScore}
       outDouble={outDouble} setOutDouble={setOutDouble}
       outTriple={outTriple} setOutTriple={setOutTriple}
-      outMaster={outMaster} setOutMaster={setOutMaster}
+      legsToWinSet={legsToWinSet} setLegsToWinSet={setLegsToWinSet}
+      setsToWin={setsToWin} setSetsToWin={setSetsToWin}
       randomOrder={randomOrder} setRandomOrder={setRandomOrder}
       playThrough={playThrough} setPlayThrough={setPlayThrough}
       ai={ai} setAi={setAi}
@@ -2932,6 +3461,14 @@ const buyPremium = async () => {
     playerMode={playerMode}
       scoreInputMode={scoreInputMode}
     isPremium={isPremium}
+    classicOutShortLabel={classicOutShortLabel}
+    outDouble={outDouble}
+    outTriple={outTriple}
+    outMaster={outMaster}
+    legsToWinSet={legsToWinSet}
+    setsToWin={setsToWin}
+    classicLegsWon={classicLegsWon}
+    classicSetsWon={classicSetsWon}
     players={players}
     order={order}
     currIdx={currIdx}
@@ -3087,7 +3624,8 @@ function Lobby({
     startScore, setStartScore,
     outDouble, setOutDouble,
     outTriple, setOutTriple,
-    outMaster, setOutMaster,
+    legsToWinSet, setLegsToWinSet,
+    setsToWin, setSetsToWin,
     randomOrder, setRandomOrder,
     playThrough, setPlayThrough,
     ai, setAi,
@@ -3103,25 +3641,84 @@ function Lobby({
     themeColor, setThemeColor
   }) {
     const [showPremiumDetails, setShowPremiumDetails] = useState(false);
+    const matchOptions = Array.from({ length: 21 }, (_, ix) => ix + 1);
+
+    const shareApp = async () => {
+      const url = 'https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro';
+      const payload = { title: 'DartScore Pro', text: t(lang, 'shareText'), url };
+      try {
+        if (window.DartScoreAndroid?.shareApp) {
+          window.DartScoreAndroid.shareApp(payload.title, payload.text, payload.url);
+          return;
+        }
+        if (navigator.share) {
+          await navigator.share(payload);
+          return;
+        }
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(url);
+          showToast(t(lang, 'linkCopied'));
+          return;
+        }
+        window.prompt(t(lang, 'shareApp'), url);
+      } catch (e) {
+        if (e?.name === 'AbortError') return;
+        try {
+          await navigator.clipboard?.writeText?.(url);
+          showToast(t(lang, 'linkCopied'));
+        } catch {
+          window.prompt(t(lang, 'shareApp'), url);
+        }
+      }
+    };
+
     return (
       <div className="lobbyWrap">
 
-        {/* Režim */}
+        {/* Režim + zápasový formát + sdílení v jednom kompaktním řádku */}
         <div className="lobbyCard">
-          <div className="lobbyControls">
-            <span>{t(lang, 'mode')}</span>
-            <select
-              className="input"
-              value={mode}
-              onChange={e => setMode(e.target.value)}
-              style={{ height: 34 }}
-            >
-              <option value="classic">{t(lang, 'classic')}</option>
-              <option value="cricket">{t(lang, 'cricket')}</option>
-              <option value="around">{t(lang, 'around')}</option>
-              <option value="roulette">{t(lang, 'roulette')}</option>
-              <option value="rouletteDouble">{t(lang, 'rouletteDouble')}</option>
-            </select>
+          <div className="lobbyControls lobbyModeRow">
+            <div className="lobbyModeGroup">
+              <span>{t(lang, 'mode')}</span>
+              <ThemedSelect
+                className="input"
+                value={mode}
+                onChange={e => setMode(e.target.value)}
+                style={{ height: 34 }}
+              >
+                <option value="classic">{t(lang, 'classic')}</option>
+                <option value="cricket">{t(lang, 'cricket')}</option>
+                <option value="around">{t(lang, 'around')}</option>
+                <option value="roulette">{t(lang, 'roulette')}</option>
+                <option value="rouletteDouble">{t(lang, 'rouletteDouble')}</option>
+              </ThemedSelect>
+            </div>
+
+            {mode === 'classic' && (
+              <div className="matchFormatControls">
+                <label className="matchFormatItem">
+                  <span>{t(lang, 'legs')}</span>
+                  <ThemedSelect className="input matchCountSelect" value={legsToWinSet} onChange={e => setLegsToWinSet(Number(e.target.value))}>
+                    {matchOptions.map(n => <option key={`legs-${n}`} value={n}>{n}</option>)}
+                  </ThemedSelect>
+                </label>
+                <label className="matchFormatItem">
+                  <span>{t(lang, 'sets')}</span>
+                  <ThemedSelect className="input matchCountSelect" value={setsToWin} onChange={e => setSetsToWin(Number(e.target.value))}>
+                    {matchOptions.map(n => <option key={`sets-${n}`} value={n}>{n}</option>)}
+                  </ThemedSelect>
+                </label>
+              </div>
+            )}
+
+            <button type="button" className="shareIconBtn" onClick={shareApp} title={t(lang, 'shareApp')} aria-label={t(lang, 'shareApp')}>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="18" cy="5" r="2.5" />
+                <circle cx="6" cy="12" r="2.5" />
+                <circle cx="18" cy="19" r="2.5" />
+                <path d="M8.2 10.9 15.8 6.2M8.2 13.1l7.6 4.7" />
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -3171,19 +3768,6 @@ function Lobby({
                 {t(lang, 'tripleOut')}
               </label>
 
-              <label className={`tab ${outMaster ? 'active' : ''}`}>
-                <input
-                  type="checkbox"
-                  checked={outMaster}
-                  onChange={e => setOutMaster(e.target.checked)}
-                  style={{ marginRight: 6 }}
-                />
-                {t(lang, 'masterOut')}
-              </label>
-
-              <div style={{ opacity: .8, fontSize: 12 }}>
-                {t(lang, 'anyOutHint')}
-              </div>
             </div>
           </div>
         )}
@@ -3204,7 +3788,7 @@ function Lobby({
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
               <span>{t(lang, 'order')}</span>
 
-              <select
+              <ThemedSelect
                 className="input"
                 value={randomOrder ? 'random' : 'fixed'}
                 onChange={e => setRandomOrder(e.target.value === 'random')}
@@ -3212,7 +3796,7 @@ function Lobby({
               >
                 <option value="fixed">{t(lang, 'fixed')}</option>
                 <option value="random">{t(lang, 'random')}</option>
-              </select>
+              </ThemedSelect>
 
               {mode === 'classic' && (
                 <label
@@ -3234,17 +3818,19 @@ function Lobby({
 
               <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10 }}>
                 <span>{t(lang, 'robot')}</span>
-                <select
+                <ThemedSelect
                   className="input"
                   value={ai}
                   onChange={e => setAi(e.target.value)}
                   style={{ height: 34, minWidth: 104 }}
                 >
                   <option value="off">{t(lang, 'off')}</option>
+                  <option value="beginner">{t(lang, 'beginner')}</option>
                   <option value="easy">{t(lang, 'easy')}</option>
                   <option value="medium">{t(lang, 'medium')}</option>
                   <option value="hard">{t(lang, 'hard')}</option>
-                </select>
+                  <option value="expert">{t(lang, 'expert')}</option>
+                </ThemedSelect>
 
                 
               </div>
@@ -3263,7 +3849,7 @@ function Lobby({
                     {t(lang, 'scoreInputType')}
                   </span>
 
-                  <select
+                  <ThemedSelect
                     className="input"
                     value={scoreInputMode}
                     onChange={e => setScoreInputMode(e.target.value)}
@@ -3271,7 +3857,7 @@ function Lobby({
                   >
                     <option value="darts">{t(lang, 'scoreByDarts')}</option>
                     <option value="round">{t(lang, 'roundTotal')}</option>
-                  </select>
+                  </ThemedSelect>
                 </div>
               )}
 
@@ -3328,7 +3914,7 @@ function Lobby({
     <div>{t(lang, 'premiumFeature1')}</div>
     <div>{t(lang, 'premiumFeature2')}</div>
     <div>{t(lang, 'premiumFeature3')}</div>
-    <div>{t(lang, 'premiumFeature4')}</div>
+    <div style={{ marginBottom: '12px' }}>{t(lang, 'premiumFeature4')}</div>
   </div>
 )}
           {isPremium && (
@@ -3431,7 +4017,7 @@ function Lobby({
             <button
               type="button"
               className="btn green"
-              onClick={startGame}
+              onClick={() => startGame(true)}
             >
               {t(lang, 'startGame')}
             </button>
@@ -3453,7 +4039,7 @@ function Lobby({
             {mode === 'classic' && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
                 <span style={{ fontSize: 12, opacity: .85 }}>{t(lang, 'playerModeLabel')}</span>
-                <select
+                <ThemedSelect
                   className="input"
                   value={playerMode}
                   onChange={e => setPlayerMode(e.target.value)}
@@ -3461,7 +4047,7 @@ function Lobby({
                 >
                   <option value="individual">{t(lang, 'individualPlayers')}</option>
                   <option value="teams">{t(lang, 'teamPlayers')}</option>
-                </select>
+                </ThemedSelect>
               </div>
             )}
 
@@ -3479,7 +4065,7 @@ function Lobby({
 
                 {mode === 'classic' && playerMode === 'teams' && (
                   <div style={{ minWidth: 92 }}>
-                    <select
+                    <ThemedSelect
                       className="input"
                       value={p.team || (['A', 'B', 'C'][i % 3])}
                       onChange={e => setPlayers(ps => ps.map((x, ix) => ix === i ? { ...x, team: e.target.value } : x))}
@@ -3489,7 +4075,7 @@ function Lobby({
                       <option value="A">{t(lang, 'teamA')}</option>
                       <option value="B">{t(lang, 'teamB')}</option>
                       <option value="C">{t(lang, 'teamC')}</option>
-                    </select>
+                    </ThemedSelect>
                   </div>
                 )}
 
@@ -3560,45 +4146,100 @@ function Lobby({
           </details>
         </div>
         {/* >>> DARTSCORE_UNIQUE_ANCHOR__RULES_BLOCK__END__9F31 <<< */}
-        {isPremium && <SavedGames lang={lang} t={t} showToast={showToast} />}
+        <StatisticsDashboard lang={lang} t={t} showToast={showToast} />
       </div>
     );
   }
 
   /* ===== SAVED GAMES (Premium) ===== */
-  function SavedGames({ lang, t, showToast }) {
+  function StatisticsDashboard({ lang, t, showToast }) {
     const [list, setList] = useState(() => {
       try { return JSON.parse(localStorage.getItem('finishedGames') || '[]'); }
       catch { return []; }
     });
-
+    const [view, setView] = useState('overview');
     const [filter, setFilter] = useState('all');
+    const [player, setPlayer] = useState('');
     const [p1, setP1] = useState('');
     const [p2, setP2] = useState('');
 
-    const shareItem = async (it) => {
-      const text =
-        `${t(lang, 'saved')}: ${new Date(it.ts).toLocaleString()} — ${it.mode} ${it.startScore || ''}
-${it.players.join(', ')}
-${t(lang, 'youWinPrefix')}: ${it.winner}`;
-      try {
-        if (navigator.share) {
-          await navigator.share({ text });
-        } else {
-          await navigator.clipboard.writeText(text);
-          try { showToast && showToast('Zkopírováno'); } catch { }
-        }
-      } catch { }
+    const STATS_I18N = {
+      cs: {
+        statistics: 'Statistiky', noSaved: 'Zatím nejsou odehrané žádné uložené zápasy.', overview: 'Přehled', h2h: 'Vzájemné zápasy',
+        all: 'Vše', week: 'Týden', month: 'Měsíc', year: 'Rok', avg3: 'Průměr / 3 šipky', first9: 'Prvních 9', checkoutPct: 'Checkout %',
+        checkoutPending: 'Přesná evidence pokusů bude doplněna', highestCheckout: 'Nejvyšší checkout', scoring: 'Náhozy', performance: 'Výkony',
+        bestLeg: 'Nejlepší leg (šipky)', avgDartsLeg: 'Průměr šipek / leg', highestScore: 'Nejvyšší nához', winRate: 'Úspěšnost výher',
+        matches: 'vzájemných zápasů', legs: 'Legy', sets: 'Sety', last5: 'Forma posledních 5', avgTrend: 'Trend průměru',
+        matchHistory: 'Historie vzájemných zápasů', won: 'vyhrál', checkout: 'Checkout',
+        detailed: ({ detailed, total }) => `Detailní metriky jsou dostupné u ${detailed} z ${total} zápasů. Starší zápasy zůstávají započítané do výher.`,
+        older: 'Starší zápasy jsou započítané do H2H skóre a úspěšnosti výher. Detailní metriky se plní jen u nově uložených zápasů.'
+      },
+      en: {
+        statistics: 'Statistics', noSaved: 'No saved matches yet.', overview: 'Overview', h2h: 'Head-to-Head',
+        all: 'All', week: 'Week', month: 'Month', year: 'Year', avg3: '3-dart AVG', first9: 'First 9', checkoutPct: 'Checkout %',
+        checkoutPending: 'Exact attempt tracking pending', highestCheckout: 'Highest checkout', scoring: 'Scoring', performance: 'Performance',
+        bestLeg: 'Best leg (darts)', avgDartsLeg: 'Avg darts / leg', highestScore: 'Highest score', winRate: 'Win rate',
+        matches: 'matches', legs: 'Legs', sets: 'Sets', last5: 'Last 5 form', avgTrend: 'AVG trend',
+        matchHistory: 'Match history', won: 'won', checkout: 'Checkout',
+        detailed: ({ detailed, total }) => `Detailed metrics are available for ${detailed} of ${total} matches. Older matches still count toward wins.`,
+        older: 'Older matches count toward H2H score and win rate. Detailed metrics populate for newly saved matches.'
+      },
+      de: {
+        statistics: 'Statistiken', noSaved: 'Noch keine gespeicherten Spiele.', overview: 'Übersicht', h2h: 'Direkte Duelle',
+        all: 'Alle', week: 'Woche', month: 'Monat', year: 'Jahr', avg3: '3-Dart-Schnitt', first9: 'Erste 9', checkoutPct: 'Checkout %',
+        checkoutPending: 'Exakte Versuchsstatistik folgt', highestCheckout: 'Höchstes Checkout', scoring: 'Scoring', performance: 'Leistung',
+        bestLeg: 'Bestes Leg (Darts)', avgDartsLeg: 'Ø Darts / Leg', highestScore: 'Höchster Score', winRate: 'Siegquote',
+        matches: 'direkte Duelle', legs: 'Legs', sets: 'Sätze', last5: 'Form letzte 5', avgTrend: 'AVG-Trend',
+        matchHistory: 'Duell-Historie', won: 'gewann', checkout: 'Checkout',
+        detailed: ({ detailed, total }) => `Detaillierte Werte sind für ${detailed} von ${total} Spielen verfügbar. Ältere Spiele zählen weiter für Siege.`,
+        older: 'Ältere Spiele zählen für H2H und Siegquote. Detailwerte werden nur bei neu gespeicherten Spielen erfasst.'
+      },
+      es: {
+        statistics: 'Estadísticas', noSaved: 'Aún no hay partidas guardadas.', overview: 'Resumen', h2h: 'Cara a cara',
+        all: 'Todo', week: 'Semana', month: 'Mes', year: 'Año', avg3: 'Promedio / 3 dardos', first9: 'Primeros 9', checkoutPct: 'Checkout %',
+        checkoutPending: 'El registro exacto de intentos se añadirá', highestCheckout: 'Checkout más alto', scoring: 'Puntuación', performance: 'Rendimiento',
+        bestLeg: 'Mejor leg (dardos)', avgDartsLeg: 'Prom. dardos / leg', highestScore: 'Puntuación más alta', winRate: 'Porcentaje de victorias',
+        matches: 'enfrentamientos', legs: 'Legs', sets: 'Sets', last5: 'Forma últimos 5', avgTrend: 'Tendencia AVG',
+        matchHistory: 'Historial de enfrentamientos', won: 'ganó', checkout: 'Checkout',
+        detailed: ({ detailed, total }) => `Las métricas detalladas están disponibles en ${detailed} de ${total} partidas. Las anteriores siguen contando para las victorias.`,
+        older: 'Las partidas anteriores cuentan para el H2H y el porcentaje de victorias. Las métricas detalladas solo se guardan en partidas nuevas.'
+      },
+      nl: {
+        statistics: 'Statistieken', noSaved: 'Nog geen opgeslagen wedstrijden.', overview: 'Overzicht', h2h: 'Onderling',
+        all: 'Alles', week: 'Week', month: 'Maand', year: 'Jaar', avg3: 'Gem. / 3 darts', first9: 'Eerste 9', checkoutPct: 'Checkout %',
+        checkoutPending: 'Exacte pogingregistratie volgt', highestCheckout: 'Hoogste checkout', scoring: 'Scores', performance: 'Prestaties',
+        bestLeg: 'Beste leg (darts)', avgDartsLeg: 'Gem. darts / leg', highestScore: 'Hoogste score', winRate: 'Winstpercentage',
+        matches: 'onderlinge wedstrijden', legs: 'Legs', sets: 'Sets', last5: 'Vorm laatste 5', avgTrend: 'AVG-trend',
+        matchHistory: 'Onderlinge historie', won: 'won', checkout: 'Checkout',
+        detailed: ({ detailed, total }) => `Gedetailleerde statistieken zijn beschikbaar voor ${detailed} van ${total} wedstrijden. Oudere wedstrijden blijven meetellen voor winst.`,
+        older: 'Oudere wedstrijden tellen mee voor H2H en winstpercentage. Detailstatistieken worden alleen bij nieuwe wedstrijden opgeslagen.'
+      },
+      ru: {
+        statistics: 'Статистика', noSaved: 'Сохранённых матчей пока нет.', overview: 'Обзор', h2h: 'Личные встречи',
+        all: 'Все', week: 'Неделя', month: 'Месяц', year: 'Год', avg3: 'Среднее / 3 дротика', first9: 'Первые 9', checkoutPct: 'Checkout %',
+        checkoutPending: 'Точный учёт попыток будет добавлен', highestCheckout: 'Максимальный checkout', scoring: 'Наборы', performance: 'Результаты',
+        bestLeg: 'Лучший лег (дротики)', avgDartsLeg: 'Ср. дротиков / лег', highestScore: 'Максимальный набор', winRate: 'Процент побед',
+        matches: 'очных матчей', legs: 'Леги', sets: 'Сеты', last5: 'Форма за 5 матчей', avgTrend: 'Тренд среднего',
+        matchHistory: 'История личных встреч', won: 'победил', checkout: 'Checkout',
+        detailed: ({ detailed, total }) => `Подробная статистика доступна для ${detailed} из ${total} матчей. Старые матчи по-прежнему учитываются в победах.`,
+        older: 'Старые матчи учитываются в H2H и проценте побед. Подробные метрики сохраняются только для новых матчей.'
+      },
+      zh: {
+        statistics: '统计', noSaved: '暂无已保存的比赛。', overview: '概览', h2h: '对战',
+        all: '全部', week: '一周', month: '一月', year: '一年', avg3: '3镖平均', first9: '前9镖', checkoutPct: '结镖率',
+        checkoutPending: '精确尝试次数统计稍后加入', highestCheckout: '最高结镖', scoring: '得分', performance: '表现',
+        bestLeg: '最佳局（镖数）', avgDartsLeg: '平均镖数 / 局', highestScore: '最高得分', winRate: '胜率',
+        matches: '场对战', legs: '局', sets: '盘', last5: '最近5场状态', avgTrend: '平均分趋势',
+        matchHistory: '对战记录', won: '获胜', checkout: '结镖',
+        detailed: ({ detailed, total }) => `详细数据适用于 ${detailed}/${total} 场比赛。旧比赛仍计入胜场。`,
+        older: '旧比赛仍计入对战比分和胜率。详细数据仅记录新保存的比赛。'
+      }
     };
-
-    const clearAll = () => {
-      try {
-        localStorage.removeItem('finishedGames');
-        setList([]);
-        showToast && showToast('Vše smazáno');
-      } catch { }
+    const S = (key, vars) => {
+      const pack = STATS_I18N[lang] || STATS_I18N.en;
+      const value = pack[key] ?? STATS_I18N.en[key] ?? key;
+      return typeof value === 'function' ? value(vars || {}) : value;
     };
-
     const now = Date.now();
     const cutoff = {
       all: 0,
@@ -3606,117 +4247,196 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
       month: now - 30 * 24 * 60 * 60 * 1000,
       year: now - 365 * 24 * 60 * 60 * 1000
     }[filter] || 0;
-
     const filtered = list.filter(g => (g.ts || 0) >= cutoff);
+    const allPlayers = Array.from(new Set(list.flatMap(g => g.players || []))).filter(Boolean).sort();
 
-    const allPlayers = Array.from(new Set(list.flatMap(g => g.players || []))).sort();
+    React.useEffect(() => {
+      if (!player && allPlayers.length) setPlayer(allPlayers[0]);
+      if (!p1 && allPlayers.length) setP1(allPlayers[0]);
+      if (!p2 && allPlayers.length > 1) setP2(allPlayers[1]);
+    }, [allPlayers.join('|'), player, p1, p2]);
 
-    let h2h = null;
-    if (p1 && p2 && p1 !== p2) {
-      let p1wins = 0, p2wins = 0, games = 0;
-      for (const g of filtered) {
-        if ((g.players || []).includes(p1) && (g.players || []).includes(p2)) {
-          games++;
-          if (g.winner === p1) p1wins++;
-          else if (g.winner === p2) p2wins++;
-        }
-      }
-      h2h = { games, p1wins, p2wins };
-    }
+    const fmt = (n, digits = 1) => Number.isFinite(n) ? Number(n).toFixed(digits) : '—';
+    const pct = n => Number.isFinite(n) ? `${Math.round(n)} %` : '—';
 
-    if (list.length === 0) {
-      return (
-        <div className="lobbyCard">
-          <strong>{t(lang, 'saved')}:</strong> —
-        </div>
-      );
+    const mergePlayerStats = (games, name) => {
+      const rows = games
+        .map(g => ({ game: g, stat: (g.playerStats || []).find(s => s.name === name) }))
+        .filter(x => x.stat);
+      const matches = games.filter(g => (g.players || []).includes(name));
+      const wins = matches.filter(g => g.winner === name).length;
+      const sum = key => rows.reduce((acc, x) => acc + (Number(x.stat?.[key]) || 0), 0);
+      const darts = sum('dartsThrown');
+      const points = sum('pointsScored');
+      const f9d = sum('first9Darts');
+      const f9p = sum('first9Points');
+      const max = key => {
+        const vals = rows.map(x => Number(x.stat?.[key])).filter(Number.isFinite);
+        return vals.length ? Math.max(...vals) : null;
+      };
+      const min = key => {
+        const vals = rows.map(x => Number(x.stat?.[key])).filter(n => Number.isFinite(n) && n > 0);
+        return vals.length ? Math.min(...vals) : null;
+      };
+      return {
+        matches: matches.length,
+        wins,
+        winRate: matches.length ? wins / matches.length * 100 : null,
+        detailedMatches: rows.length,
+        avg3: darts ? points / darts * 3 : null,
+        first9Avg: f9d ? f9p / f9d * 3 : null,
+        score60: sum('score60'), score100: sum('score100'), score140: sum('score140'), score180: sum('score180'),
+        highestScore: max('highestScore'), highestCheckout: max('highestCheckout'),
+        legsWon: sum('legsWon'), setsWon: sum('setsWon'),
+        bestLeg: min('bestLeg'),
+        avgDartsPerLeg: rows.length ? (() => {
+          const vals = rows.map(x => Number(x.stat?.avgDartsPerLeg)).filter(Number.isFinite);
+          return vals.length ? vals.reduce((a,b) => a+b,0) / vals.length : null;
+        })() : null,
+        checkoutPct: null,
+        rows
+      };
+    };
+
+    const playerGames = filtered.filter(g => (g.players || []).includes(player));
+    const overview = mergePlayerStats(playerGames, player);
+    const h2hGames = filtered
+      .filter(g => p1 && p2 && p1 !== p2 && (g.players || []).includes(p1) && (g.players || []).includes(p2))
+      .sort((a,b) => (b.ts || 0) - (a.ts || 0));
+    const h1 = mergePlayerStats(h2hGames, p1);
+    const h2 = mergePlayerStats(h2hGames, p2);
+    const p1Wins = h2hGames.filter(g => g.winner === p1).length;
+    const p2Wins = h2hGames.filter(g => g.winner === p2).length;
+    const form = h2hGames.slice(0,5).map(g => g.winner === p1 ? 'W' : g.winner === p2 ? 'L' : '•');
+    const trend = h2hGames.slice(0,10).reverse().map(g => {
+      const s = (g.playerStats || []).find(x => x.name === p1);
+      return Number.isFinite(Number(s?.avg3)) ? Number(s.avg3) : null;
+    }).filter(Number.isFinite);
+
+    const sparkline = values => {
+      if (!values.length) return null;
+      const min = Math.min(...values), max = Math.max(...values);
+      const span = Math.max(1, max - min);
+      const pts = values.map((v, i) => {
+        const x = values.length === 1 ? 50 : (i / (values.length - 1)) * 100;
+        const y = 34 - ((v - min) / span) * 28;
+        return `${x},${y}`;
+      }).join(' ');
+      return <svg viewBox="0 0 100 40" preserveAspectRatio="none" style={{ width:'100%', height:52 }}><polyline points={pts} fill="none" stroke="var(--accent)" strokeWidth="3" vectorEffect="non-scaling-stroke" /></svg>;
+    };
+
+    const metricCard = (value, label, note) => (
+      <div style={{ flex:'1 1 46%', minWidth:120, padding:'12px 10px', border:'1px solid var(--line)', borderRadius:12, background:'rgba(255,255,255,.03)', textAlign:'center' }}>
+        <div style={{ fontSize:24, fontWeight:900, color:'var(--accent)' }}>{value}</div>
+        <div style={{ fontSize:12, fontWeight:800 }}>{label}</div>
+        {note && <div style={{ fontSize:10, opacity:.65, marginTop:3 }}>{note}</div>}
+      </div>
+    );
+
+    const compareRow = (a, label, b) => (
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1.2fr 1fr', gap:8, alignItems:'center', padding:'8px 0', borderBottom:'1px solid var(--line)' }}>
+        <strong style={{ textAlign:'right' }}>{a}</strong><span style={{ textAlign:'center', fontSize:12, opacity:.75 }}>{label}</span><strong>{b}</strong>
+      </div>
+    );
+
+    if (!allPlayers.length) {
+      return <div className="lobbyCard"><strong>{S('statistics')}</strong><div style={{ opacity:.7, marginTop:8 }}>{S('noSaved')}</div></div>;
     }
 
     return (
       <div className="lobbyCard">
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 8,
-          marginBottom: 6
-        }}>
-          <strong>{t(lang, 'saved')}</strong>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
-              {t(lang, 'filter')}:
-              <select className="input" value={filter} onChange={e => setFilter(e.target.value)} style={{ height: 30 }}>
-                <option value="all">{t(lang, 'all')}</option>
-                <option value="week">{t(lang, 'week')}</option>
-                <option value="month">{t(lang, 'month')}</option>
-                <option value="year">{t(lang, 'year')}</option>
-              </select>
-            </label>
-
-            <button
-              type="button"
-              className="btn"
-              onClick={clearAll}
-            >
-              {t(lang, 'clear')}
-            </button>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, flexWrap:'wrap', marginBottom:10 }}>
+          <strong style={{ fontSize:18 }}>📊 {S('statistics')}</strong>
+          <div style={{ display:'flex', gap:6 }}>
+            <button type="button" className={`tab ${view === 'overview' ? 'active' : ''}`} onClick={() => setView('overview')}>{S('overview')}</button>
+            <button type="button" className={`tab ${view === 'h2h' ? 'active' : ''}`} onClick={() => setView('h2h')}>{S('h2h')}</button>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
-          <strong>{t(lang, 'h2h')}:</strong>
-          <select className="input" value={p1} onChange={e => setP1(e.target.value)} style={{ height: 30 }}>
-            <option value="">{t(lang, 'selectPlayer')}</option>
-            {allPlayers.map(n => <option key={`p1-${n}`} value={n}>{n}</option>)}
-          </select>
-          <span>vs</span>
-          <select className="input" value={p2} onChange={e => setP2(e.target.value)} style={{ height: 30 }}>
-            <option value="">{t(lang, 'selectPlayer')}</option>
-            {allPlayers.map(n => <option key={`p2-${n}`} value={n}>{n}</option>)}
-          </select>
-          {h2h && (
-            <span style={{ fontSize: 12, opacity: .9 }}>
-              {p1}: {h2h.p1wins} {t(lang, 'wins')} • {p2}: {h2h.p2wins} {t(lang, 'wins')} • {h2h.games} {t(lang, 'game')}
-            </span>
+        <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center', marginBottom:12 }}>
+          <ThemedSelect className="input" value={filter} onChange={e => setFilter(e.target.value)} style={{ height:32, minWidth:105 }}>
+            <option value="all">{S('all')}</option><option value="week">{S('week')}</option><option value="month">{S('month')}</option><option value="year">{S('year')}</option>
+          </ThemedSelect>
+          {view === 'overview' ? (
+            <ThemedSelect className="input" value={player} onChange={e => setPlayer(e.target.value)} style={{ height:32, minWidth:140 }}>{allPlayers.map(n => <option key={n} value={n}>{n}</option>)}</ThemedSelect>
+          ) : (
+            <>
+              <ThemedSelect className="input" value={p1} onChange={e => setP1(e.target.value)} style={{ height:32, minWidth:120 }}>{allPlayers.map(n => <option key={`p1-${n}`} value={n}>{n}</option>)}</ThemedSelect>
+              <strong>vs</strong>
+              <ThemedSelect className="input" value={p2} onChange={e => setP2(e.target.value)} style={{ height:32, minWidth:120 }}>{allPlayers.map(n => <option key={`p2-${n}`} value={n}>{n}</option>)}</ThemedSelect>
+            </>
           )}
         </div>
 
-        <div className="savedList">
-          {filtered.map((it, idx) => (
-            <div key={idx} className="savedRow">
-              <div>
-                <div className="savedTitle">
-                  {new Date(it.ts).toLocaleString()}
-                </div>
-                <div className="savedSub">
-                  {`${it.mode} ${it.startScore || ''} • ${it.players.join(', ')}`}
-                </div>
-                <div className="savedSub">
-                  {t(lang, 'youWinPrefix')}: {it.winner}
-                </div>
-                {Array.isArray(it.remainingByPlayer) && it.remainingByPlayer.length > 0 && (
-                  <div className="savedSub">
-                    {it.remainingByPlayer.map(r => `${r.name}: ${r.remaining}`).join(' • ')}
-                  </div>
-                )}
-              </div>
-              <button
-                type="button"
-                className="btn"
-                onClick={() => shareItem(it)}
-              >
-                {t(lang, 'share')}
-              </button>
+        {view === 'overview' ? (
+          <>
+            <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+              {metricCard(fmt(overview.avg3), S('avg3'))}
+              {metricCard(fmt(overview.first9Avg), S('first9'))}
+              {metricCard(pct(overview.checkoutPct), S('checkoutPct'), S('checkoutPending'))}
+              {metricCard(overview.highestCheckout ?? '—', S('highestCheckout'))}
             </div>
-          ))}
-        </div>
+            <div style={{ marginTop:14 }}><strong>{S('scoring')}</strong><div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:6, marginTop:8, textAlign:'center' }}>
+              {[['60+',overview.score60],['100+',overview.score100],['140+',overview.score140],['180',overview.score180]].map(([k,v]) => <div key={k} style={{ padding:8, border:'1px solid var(--line)', borderRadius:10 }}><div style={{ fontWeight:900, fontSize:18 }}>{v}</div><div style={{ fontSize:11, opacity:.7 }}>{k}</div></div>)}
+            </div></div>
+            <div style={{ marginTop:14 }}><strong>{S('performance')}</strong>
+              {compareRow(overview.bestLeg ?? '—', S('bestLeg'), overview.matches ? `${overview.wins}/${overview.matches}` : '—')}
+              {compareRow(fmt(overview.avgDartsPerLeg), S('avgDartsLeg'), pct(overview.winRate))}
+              {compareRow(overview.highestScore ?? '—', S('highestScore'), S('winRate'))}
+            </div>
+            {overview.detailedMatches < overview.matches && <div style={{ marginTop:10, fontSize:11, opacity:.65 }}>{S('detailed', { detailed: overview.detailedMatches, total: overview.matches })}</div>}
+          </>
+        ) : (
+          <>
+            <div style={{ textAlign:'center', padding:'6px 0 12px' }}>
+              <div style={{ fontSize:13, opacity:.75 }}>{h2hGames.length} {S('matches')}</div>
+              <div style={{ fontSize:30, fontWeight:900, marginTop:2 }}><span>{p1}</span> <span style={{ color:'var(--accent)' }}>{p1Wins} : {p2Wins}</span> <span>{p2}</span></div>
+              <div style={{ display:'flex', justifyContent:'center', gap:24, marginTop:4, fontSize:12 }}><strong>{pct(h1.winRate)}</strong><span style={{ opacity:.55 }}>{S('winRate')}</span><strong>{pct(h2.winRate)}</strong></div>
+            </div>
+
+            <div style={{ marginTop:4 }}>
+              {compareRow(h1.legsWon, S('legs'), h2.legsWon)}
+              {compareRow(h1.setsWon, S('sets'), h2.setsWon)}
+              {compareRow(fmt(h1.avg3), S('avg3'), fmt(h2.avg3))}
+              {compareRow(fmt(h1.first9Avg), S('first9'), fmt(h2.first9Avg))}
+              {compareRow(pct(h1.checkoutPct), S('checkoutPct'), pct(h2.checkoutPct))}
+              {compareRow(h1.highestCheckout ?? '—', S('highestCheckout'), h2.highestCheckout ?? '—')}
+              {compareRow(h1.score180, '180s', h2.score180)}
+            </div>
+
+            <div style={{ marginTop:14 }}><strong>{S('last5')}</strong>
+              <div style={{ display:'flex', alignItems:'center', gap:8, marginTop:8, flexWrap:'wrap' }}>
+                {form.length ? form.map((x,i) => <span key={i} style={{ width:30, height:30, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', fontWeight:900, background:x === 'W' ? 'rgba(34,197,94,.22)' : 'rgba(239,68,68,.22)', border:'1px solid var(--line)' }}>{x}</span>) : <span style={{ opacity:.65 }}>—</span>}
+                {form.length > 0 && <span style={{ fontSize:12, opacity:.7 }}>{p1}: {form.filter(x => x === 'W').length}–{form.filter(x => x === 'L').length}</span>}
+              </div>
+            </div>
+
+            <div style={{ marginTop:14 }}><strong>{S('avgTrend')}</strong>{sparkline(trend) || <div style={{ opacity:.65, marginTop:8 }}>—</div>}</div>
+
+            {h1.detailedMatches < h2hGames.length && <div style={{ marginTop:8, fontSize:11, opacity:.65 }}>{S('older')}</div>}
+
+            <div style={{ marginTop:16 }}><strong>{S('matchHistory')}</strong>
+              <div style={{ marginTop:8, display:'grid', gap:7 }}>
+                {h2hGames.length ? h2hGames.map((g,idx) => {
+                  const s1=(g.playerStats||[]).find(s=>s.name===p1), s2=(g.playerStats||[]).find(s=>s.name===p2);
+                  return <details key={`${g.ts}-${idx}`} style={{ border:'1px solid var(--line)', borderRadius:10, padding:'8px 10px', background:'rgba(255,255,255,.02)' }}>
+                    <summary style={{ cursor:'pointer', fontWeight:800 }}>{new Date(g.ts).toLocaleDateString()} · {g.winner === p1 ? p1 : p2} {S('won')}</summary>
+                    <div style={{ marginTop:8 }}>{compareRow(fmt(s1?.avg3), 'AVG', fmt(s2?.avg3))}{compareRow(fmt(s1?.first9Avg), S('first9'), fmt(s2?.first9Avg))}{compareRow(s1?.legsWon ?? '—', S('legs'), s2?.legsWon ?? '—')}{compareRow(s1?.setsWon ?? '—', S('sets'), s2?.setsWon ?? '—')}{compareRow(s1?.highestCheckout ?? '—', S('checkout'), s2?.highestCheckout ?? '—')}</div>
+                  </details>;
+                }) : <div style={{ opacity:.65 }}>—</div>}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     );
   }
-  /* ===== GAME SCREEN ===== */
+
+  /* ===== GAME SCREEN ===== */  /* ===== GAME SCREEN ===== */
   function Game({
-    lang, t, mode, playerMode, scoreInputMode, isPremium,
+    lang, t, mode, playerMode, scoreInputMode, isPremium, classicOutShortLabel,
+    outDouble, outTriple, outMaster,
+    legsToWinSet, setsToWin, classicLegsWon, classicSetsWon,
     players, order, currIdx,
     scores, averages, thrown, lastTurn,
     cricket, around, roulette,
@@ -3919,22 +4639,6 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
       );
     };
 
-    const rouletteBotHitChance = (player, rouletteMode) => {
-      const tables = {
-        easy: { miss: 0.55, single: 0.40, double: 0.04, triple: 0.01 },
-        medium: { miss: 0.18, single: 0.58, double: 0.16, triple: 0.08 },
-        hard: { miss: 0.09, single: 0.50, double: 0.24, triple: 0.17 }
-      };
-
-      const tb = tables[player?.level || 'easy'] || tables.easy;
-
-      if (rouletteMode === 'rouletteDouble') {
-        return tb.double;
-      }
-
-      return tb.single + tb.double + tb.triple;
-    };
-
     React.useEffect(() => {
       if (!(mode === 'roulette' || mode === 'rouletteDouble')) return;
       if (winner != null) return;
@@ -3957,9 +4661,10 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
           else rouletteSwitchPlayer();
         }, 650);
       } else {
-        const chance = rouletteBotHitChance(player, mode);
         timer = window.setTimeout(() => {
-          if (Math.random() < chance) rouletteMarkHit();
+          const hit = botScatter({ v: currentTarget, m: mode === 'rouletteDouble' ? 2 : 1 }, player.level);
+          if ((hit.v === currentTarget || (currentTarget === 25 && hit.v === 50)) &&
+              (mode !== 'rouletteDouble' || hit.m === 2)) rouletteMarkHit();
           else rouletteMarkMiss();
         }, 850);
       }
@@ -3985,44 +4690,34 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
       : { outline: '2px solid var(--green)' };
     return (
       <div className="gameWrap">
-        {/* HORNÍ LIŠTA */}
-        <div className="gameTopBar">
-          {(mode === 'roulette' || mode === 'rouletteDouble') && (
-            <span className="badge">
-              {`${t(lang, 'target')}: ${rouletteTargetLabel(roulette?.currentTargets?.[order[currIdx]])} • ${Math.min(Math.floor(((thrown[order[currIdx]] || 0) / 3)) + 1, roulette?.maxRounds ?? 8)}/${roulette?.maxRounds ?? 8}`}
-            </span>
-          )}
+        {/* KOMPAKTNÍ HERNÍ LIŠTA: jen užitečný stav + textové akce */}
+        <div className="gameTopBar compactGameTopBar">
+          <div className="gameTopStatus">
+            {mode === 'classic' && (
+              <span className="gameTopInfo">
+                {t(lang, 'outLabel')}: {classicOutShortLabel}
+              </span>
+            )}
 
-          <div
-            className="gameTopBtns"
-            style={{ display: 'flex', gap: 8, flexWrap: 'nowrap' }}
-          >
-            <button
-              type="button"
-              className="btn"
-              onClick={restartGame}
-              style={{ whiteSpace: 'nowrap', minWidth: 80 }}
-            >
+            {(mode === 'roulette' || mode === 'rouletteDouble') && (
+              <span className="gameTopInfo">
+                {`${t(lang, 'roundCount')}: ${Math.min(Math.floor(((thrown[order[currIdx]] || 0) / 3)) + 1, roulette?.maxRounds ?? 8)}/${roulette?.maxRounds ?? 8}`}
+              </span>
+            )}
+          </div>
+
+          <div className="gameTopBtns compactGameActions">
+            <button type="button" className="gameTextAction" onClick={restartGame}>
               {t(lang, 'restart') ?? 'Restart'}
             </button>
 
             {isPremium && (
-              <button
-                type="button"
-                className="btn"
-                onClick={saveGame}
-                style={{ whiteSpace: 'nowrap', minWidth: 80 }}
-              >
+              <button type="button" className="gameTextAction" onClick={saveGame}>
                 {t(lang, 'saveGame') ?? 'Uložit hru'}
               </button>
             )}
 
-            <button
-              type="button"
-              className="btn ghost"
-              onClick={() => setScreen('lobby')}
-              style={{ whiteSpace: 'nowrap', minWidth: 80 }}
-            >
+            <button type="button" className="gameTextAction" onClick={() => setScreen('lobby')}>
               {t(lang, 'back') ?? 'Zpět'}
             </button>
           </div>
@@ -4036,6 +4731,9 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
                 const activeTeamIdx = gameTeamIndex(gamePlayerTeam(players[activePlayerIdx], activePlayerIdx));
                 const active = teamIdx === activeTeamIdx && winner == null;
                 const currentDarts = active ? darts : [];
+                const checkoutHint = active
+                  ? getCheckoutHint(scores[teamIdx], 3 - currentDarts.length, { double: outDouble, triple: outTriple, master: outMaster })
+                  : '';
                 const teamName = t(lang, teamIdx === 2 ? 'teamC' : teamIdx === 1 ? 'teamB' : 'teamA');
                 const teamCode = gameTeamCodeByIndex(teamIdx);
                 const members = players
@@ -4065,7 +4763,12 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
                     )}
 
                     <div className="playerHeader">
-                      <div className="playerNameText">{teamName}</div>
+                      <div className="playerTitleLine">
+                        <div className="playerNameText">{teamName}</div>
+                        <div className="classicMatchProgress">
+                          {t(lang, 'sets')} {classicSetsWon?.[teamIdx] || 0}/{setsToWin} · {t(lang, 'legs')} {classicLegsWon?.[teamIdx] || 0}/{legsToWinSet}
+                        </div>
+                      </div>
 
                       <div className="playerStats">
                         <span>{thrown[teamIdx] || 0} {t(lang, 'darts')}</span>
@@ -4092,6 +4795,11 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
                     <div className="playerScore">
                       {scores[teamIdx] ?? 0}
                     </div>
+                    {checkoutHint && (
+                      <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 800, color: 'var(--accent)', margin: '-2px 0 6px' }}>
+                        {t(lang, 'checkout')}: {checkoutHint}
+                      </div>
+                    )}
 
                     <div className="playerTurn">
                       {[0, 1, 2].map(ix => {
@@ -4178,7 +4886,7 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
                       <div className="rouletteControls">
                         <button
                           type="button"
-                          className="btn"
+                          className="btn rouletteDrawBtn"
                           onClick={runRouletteDraw}
                           disabled={!canDraw}
                         >
@@ -4187,7 +4895,7 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
 
                         <button
                           type="button"
-                          className="btn green"
+                          className="btn rouletteHitBtn"
                           onClick={() => {
                             const isLastDart = remainingDarts <= 1;
                             const shouldAutoDraw = remainingDarts > 1 && deckLeft > 0;
@@ -4204,7 +4912,7 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
 
                         <button
                           type="button"
-                          className="btn ghost"
+                          className="btn rouletteSwitchBtn"
                           onClick={rouletteSwitchPlayer}
                           disabled={rouletteDrawing}
                         >
@@ -4223,6 +4931,9 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
               const p = players[pIdx];
               const active = i === currIdx && winner == null;
               const currentDarts = active ? darts : [];
+              const checkoutHint = active && mode === 'classic'
+                ? getCheckoutHint(scores[pIdx], 3 - currentDarts.length, { double: outDouble, triple: outTriple, master: outMaster })
+                : '';
 
               return (
                 <div
@@ -4247,7 +4958,14 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
                   )}
 
                   <div className="playerHeader">
-                    <div className="playerNameText">{p.name}</div>
+                    <div className="playerTitleLine">
+                      <div className="playerNameText">{p.name}</div>
+                      {mode === 'classic' && (
+                        <div className="classicMatchProgress">
+                          {t(lang, 'sets')} {classicSetsWon?.[pIdx] || 0}/{setsToWin} · {t(lang, 'legs')} {classicLegsWon?.[pIdx] || 0}/{legsToWinSet}
+                        </div>
+                      )}
+                    </div>
 
                     {mode === 'classic' ? (
                       <div className="playerStats">
@@ -4271,6 +4989,11 @@ ${t(lang, 'youWinPrefix')}: ${it.winner}`;
                       <div className="playerScore">
                         {scores[pIdx] ?? 0}
                       </div>
+                      {checkoutHint && (
+                        <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 800, color: 'var(--accent)', margin: '-2px 0 6px' }}>
+                          {t(lang, 'checkout')}: {checkoutHint}
+                        </div>
+                      )}
                       <div className="playerTurn classicTurn">
                         {[0, 1, 2].map(ix => {
                           const d = currentDarts[ix];
