@@ -1,12 +1,12 @@
-name: v89 Embedded Hotfix Verification #2
+name: v90 UI Restore Verification
 
 on:
   push:
     branches:
-      - release/v89-embedded-hotfix
+      - release/v90-ui-restore
   pull_request:
     branches:
-      - ci/v89-build-base
+      - ci/v90-build-base
   workflow_dispatch:
 
 jobs:
@@ -46,15 +46,15 @@ jobs:
         run: |
           python3 tools/apply-v78-offline-client.py
 
-      - name: Verify v89 source
+      - name: Verify v90 source
         run: |
           grep -q "new OfflineWebViewClient" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
           grep -q "firebase-analytics" app/build.gradle
           grep -q "analytics_event" app/src/main/java/com/randis2288/dartscorepro/AdMobInterstitialActivity.java
           grep -q "game_started" src/analyticsEvents.js
           grep -q "game_completed" src/analyticsEvents.js
-          grep -q "versionCode 89" app/build.gradle
-          grep -q "versionName \"1.1.55\"" app/build.gradle
+          grep -q "versionCode 90" app/build.gradle
+          grep -q "versionName \"1.1.56\"" app/build.gradle
           grep -q "com.google.ads.mediation:unity:4.16.6.0" app/build.gradle
           grep -q "requestConsentInfoUpdate" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
           grep -q "canRequestAds()" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
@@ -85,5 +85,5 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: DartScorePro_v89_1.1.55
+          name: DartScorePro_v90_1.1.56
           path: app/build/outputs/bundle/release/app-release.aab
