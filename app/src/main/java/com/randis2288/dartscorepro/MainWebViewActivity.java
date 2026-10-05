@@ -1,9 +1,6 @@
 package com.randis2288.dartscorepro;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.ApplicationInfo;
@@ -72,10 +69,8 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private static final int IN_APP_UPDATE_REQUEST_CODE = 610;
     private static final int TTS_INSTALL_REQUEST_CODE = 611;
 
-    // INTERNAL TEST v82 ONLY: show the native banner even on Premium devices.
-    // Keep the real ad unit so AdMob mediation (including Unity) is exercised.
-    // The phone MUST be registered as an AdMob test device before installing this build.
-    private static final boolean FORCE_FREE_BANNER_TEST = true;
+    // Production behavior: Premium remains ad-free.
+    private static final boolean FORCE_FREE_BANNER_TEST = false;
 
     private WebView webView;
     private FrameLayout root;
@@ -314,11 +309,6 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             public void onAdLoaded() {
                 adHost.setVisibility(View.VISIBLE);
                 updateBannerLayout();
-                Toast.makeText(
-                    MainWebViewActivity.this,
-                    "Banner loaded",
-                    Toast.LENGTH_SHORT
-                ).show();
             }
 
             @Override
@@ -326,47 +316,7 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
                 adHost.setVisibility(View.GONE);
                 bannerHeightPx = 0;
                 updateBannerLayout();
-
-                String summary =
-                    "Banner failed: code=" + adError.getCode() +
-                    ", domain=" + adError.getDomain() +
-                    ", message=" + adError.getMessage();
-
-                String responseDetails = adError.getResponseInfo() != null
-                    ? adError.getResponseInfo().toString()
-                    : "ResponseInfo: null";
-
-                String diagnosticReport =
-                    summary + "\n\n" +
-                    "=== MEDIATION RESPONSE INFO ===\n" +
-                    responseDetails;
-
-                Toast.makeText(
-                    MainWebViewActivity.this,
-                    summary,
-                    Toast.LENGTH_LONG
-                ).show();
-
-                new AlertDialog.Builder(MainWebViewActivity.this)
-                    .setTitle("Banner diagnostics")
-                    .setMessage(diagnosticReport)
-                    .setPositiveButton("OK", null)
-                    .setNeutralButton("Kopírovat", (dialog, which) -> {
-                        ClipboardManager clipboard =
-                            (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-                        clipboard.setPrimaryClip(
-                            ClipData.newPlainText(
-                                "DartScore Pro banner diagnostics",
-                                diagnosticReport
-                            )
-                        );
-                        Toast.makeText(
-                            MainWebViewActivity.this,
-                            "Diagnostika zkopírována",
-                            Toast.LENGTH_SHORT
-                        ).show();
-                    })
-                    .show();
+                bannerLoaded = false;
             }
         });
 
@@ -517,6 +467,19 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
                     updateBannerLayout();
                 }
             }
+        );
+    }
+
+    private void showInterstitialInternal() {
+        if (currentPremiumState || isFinishing()) {
+            return;
+        }
+
+        startActivity(
+            new Intent(
+                MainWebViewActivity.this,
+                AdMobInterstitialActivity.class
+            )
         );
     }
 
@@ -1111,6 +1074,11 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         @JavascriptInterface
         public void shareApp(String title, String text, String url) {
             runOnUiThread(() -> shareAppNative(title, text, url));
+        }
+
+        @JavascriptInterface
+        public void showInterstitial() {
+            runOnUiThread(MainWebViewActivity.this::showInterstitialInternal);
         }
 
         @JavascriptInterface
