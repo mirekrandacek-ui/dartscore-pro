@@ -6,7 +6,7 @@ on:
       - release/v89-embedded-hotfix
   pull_request:
     branches:
-      - release/v86-ad-inspector
+      - ci/v89-build-base
   workflow_dispatch:
 
 jobs:
@@ -46,7 +46,7 @@ jobs:
         run: |
           python3 tools/apply-v78-offline-client.py
 
-      - name: Verify v88 source
+      - name: Verify v89 source
         run: |
           grep -q "new OfflineWebViewClient" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
           grep -q "firebase-analytics" app/build.gradle
@@ -54,7 +54,7 @@ jobs:
           grep -q "game_started" src/analyticsEvents.js
           grep -q "game_completed" src/analyticsEvents.js
           grep -q "versionCode 89" app/build.gradle
-          grep -q "versionName \"1.1.54\"" app/build.gradle
+          grep -q "versionName \"1.1.55\"" app/build.gradle
           grep -q "com.google.ads.mediation:unity:4.16.6.0" app/build.gradle
           grep -q "requestConsentInfoUpdate" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
           grep -q "canRequestAds()" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
