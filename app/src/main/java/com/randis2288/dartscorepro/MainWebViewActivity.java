@@ -65,10 +65,10 @@ import java.util.List;
 import java.util.Locale;
 
 public class MainWebViewActivity extends Activity implements PurchasesUpdatedListener {
-    // INTERNAL TEST v88: use the isolated preview so production users are
-    // not exposed to the new interstitial cadence before validation.
-    private static final String START_URL = "https://dartscore-v88-test.vercel.app/";
-    private static final String TEST_WEB_HOST = "dartscore-v88-test.vercel.app";
+    // Internal verification build: keep the normal production origin so the
+    // app remains inside the embedded WebView. The v89 web bundle itself is
+    // served from APK assets by OfflineWebViewClient.
+    private static final String START_URL = "https://dartscore-pro.vercel.app/";
     private static final String PROD_WEB_HOST = "dartscore-pro.vercel.app";
     private static final String PREMIUM_PRODUCT_ID = "premium_unlock";
 
@@ -293,10 +293,7 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             return true;
         }
 
-        if (
-            "https".equals(scheme) &&
-            (TEST_WEB_HOST.equals(host) || PROD_WEB_HOST.equals(host))
-        ) {
+        if ("https".equals(scheme) && PROD_WEB_HOST.equals(host)) {
             return false;
         }
 
