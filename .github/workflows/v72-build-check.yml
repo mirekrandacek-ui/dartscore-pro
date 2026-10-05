@@ -1,9 +1,12 @@
-name: v79 final i18n test
+name: v91 Exact v79 UI Verification
 
 on:
   push:
     branches:
-      - release/v79-final-i18n-test
+      - release/v91-v79-ui-exact
+  pull_request:
+    branches:
+      - ci/v91-build-base
   workflow_dispatch:
 
 jobs:
@@ -15,17 +18,36 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Fetch v79 reference sources
+        run: |
+          git fetch origin release/v79-final-i18n-test:refs/remotes/origin/release/v79-final-i18n-test
+          git fetch origin preview/statistics-i18n:refs/remotes/origin/preview/statistics-i18n
+
+      - name: Verify exact v79 UI support files
+        run: |
+          git diff --exit-code origin/release/v79-final-i18n-test -- src/app.css src/main.jsx
+          ! grep -q "botEngine" src/App.jsx
+          grep -q "const STATS_I18N" src/App.jsx
+          grep -q "ThemedSelect" src/App.jsx
+          grep -q "restart: 'Opakovat hru'" src/App.jsx
+          grep -q "doubleOut: 'Double-out'" src/App.jsx
+          grep -q "tripleOut: 'Triple-out'" src/App.jsx
+
+      - name: Verify only requested interstitial behavior was added
+        run: |
+          grep -q "interstitialStartCount" src/App.jsx
+          grep -q "interstitialPending" src/App.jsx
+          grep -q "showPendingInterstitialAfterFanfare" src/App.jsx
+          grep -q "startGame(false)" src/App.jsx
+          ! grep -q "playedVisitsRef" src/App.jsx
+          ! grep -q "playedGamesSinceAdRef" src/App.jsx
+
       - name: Set up Node 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Bring in tested statistics translations
-        run: |
-          git fetch origin preview/statistics-i18n:refs/remotes/origin/preview/statistics-i18n
-          git show origin/preview/statistics-i18n:src/App.jsx > src/App.jsx
-
-      - name: Build translated web bundle
+      - name: Build exact v79-derived web bundle
         run: |
           npm ci
           npm run build
@@ -44,19 +66,18 @@ jobs:
       - name: Install Android SDK 36
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
-      - name: Prepare v79 Android test build
+      - name: Prepare bundled WebView app
         run: |
-          sed -i 's/versionCode 78/versionCode 79/' app/build.gradle
-          sed -i 's/versionName "1.1.44"/versionName "1.1.45"/' app/build.gradle
           python3 tools/apply-v78-offline-client.py
 
-      - name: Verify combined source
+      - name: Verify Android shell and mediation
         run: |
+          grep -q "versionCode 91" app/build.gradle
+          grep -q "versionName \"1.1.57\"" app/build.gradle
+          grep -q "com.google.ads.mediation:unity:4.16.6.0" app/build.gradle
           grep -q "new OfflineWebViewClient" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
-          grep -q "user-messaging-platform:4.0.0" app/build.gradle
-          grep -q "versionCode 79" app/build.gradle
-          grep -q "versionName \"1.1.45\"" app/build.gradle
-          grep -q "const STATS_I18N" src/App.jsx
+          grep -q 'APP_HOST = "dartscore-pro.vercel.app"' app/src/main/java/com/randis2288/dartscorepro/OfflineWebViewClient.java
+          ! grep -R -q "dartscore-v88-test.vercel.app" app/src/main/java src
 
       - name: Build release bundle
         run: |
@@ -67,5 +88,5 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: dartscore-pro-v79-final-i18n-test-aab
+          name: DartScorePro_v91_1.1.57
           path: app/build/outputs/bundle/release/app-release.aab
