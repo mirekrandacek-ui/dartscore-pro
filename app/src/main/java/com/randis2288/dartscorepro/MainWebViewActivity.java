@@ -16,6 +16,7 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
@@ -36,6 +37,7 @@ import com.android.billingclient.api.QueryPurchasesParams;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
 
 import com.google.android.play.core.appupdate.AppUpdateInfo;
 import com.google.android.play.core.appupdate.AppUpdateManager;
@@ -62,6 +64,10 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
 
     // Od v12 už testujeme skutečné Premium chování.
     private static final boolean FORCE_FREE_BANNER_TEST = false;
+
+    // v88 is an internal verification build. Remove this diagnostic control
+    // from the final production cleanup after mediation testing is finished.
+    private static final boolean ENABLE_AD_INSPECTOR_BUTTON = true;
 
     private WebView webView;
     private FrameLayout root;
@@ -144,6 +150,26 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             )
         );
         adHost.bringToFront();
+
+        if (ENABLE_AD_INSPECTOR_BUTTON) {
+            Button inspectorButton = new Button(this);
+            inspectorButton.setText("AD INSPECTOR");
+            inspectorButton.setTextSize(10f);
+            inspectorButton.setAlpha(0.72f);
+            inspectorButton.setOnClickListener(v -> openAdInspectorInternal());
+
+            FrameLayout.LayoutParams inspectorParams =
+                new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.WRAP_CONTENT,
+                    FrameLayout.LayoutParams.WRAP_CONTENT,
+                    Gravity.BOTTOM | Gravity.END
+                );
+            int marginPx = (int) (8 * getResources().getDisplayMetrics().density);
+            inspectorParams.setMargins(marginPx, marginPx, marginPx, marginPx);
+
+            root.addView(inspectorButton, inspectorParams);
+            inspectorButton.bringToFront();
+        }
 
         setContentView(root);
 
@@ -274,6 +300,22 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         adView.loadAd(new AdRequest.Builder().build());
     }
 
+
+    private void openAdInspectorInternal() {
+        MobileAds.openAdInspector(this, error -> {
+            if (error != null) {
+                nativeToast(
+                    "Ad Inspector: " + error.getCode() + " - " + error.getMessage()
+                );
+            }
+        });
+    }
+
+    private void showInterstitialInternal() {
+        Intent intent =
+            new Intent(MainWebViewActivity.this, AdMobInterstitialActivity.class);
+        startActivity(intent);
+    }
 
     private void initInAppUpdate() {
         appUpdateManager = AppUpdateManagerFactory.create(this);
@@ -794,6 +836,16 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         @JavascriptInterface
         public void restorePremium() {
             runOnUiThread(() -> restorePremiumInternal(true));
+        }
+
+        @JavascriptInterface
+        public void showInterstitial() {
+            runOnUiThread(MainWebViewActivity.this::showInterstitialInternal);
+        }
+
+        @JavascriptInterface
+        public void openAdInspector() {
+            runOnUiThread(MainWebViewActivity.this::openAdInspectorInternal);
         }
 
         @JavascriptInterface
