@@ -23,7 +23,9 @@ import java.util.Map;
  * origin preserves WebView localStorage, including Continue-game state.
  */
 public final class OfflineWebViewClient extends WebViewClient {
-    private static final String APP_HOST = "dartscore-pro.vercel.app";
+    // INTERNAL TEST v88 preview origin. Production cleanup switches this
+    // back to dartscore-pro.vercel.app.
+    private static final String APP_HOST = "dartscore-v88-test.vercel.app";
     private static final String ASSET_PREFIX = "offline/";
 
     public interface UrlHandler {
