@@ -1,77 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import './app.css';
-
-/* ===== Robot: target selection is separate from board scatter ===== */
-const BOT_LEVELS = {
-  beginner: { radial: 22, angular: 0.25 },
-  easy: { radial: 18, angular: 0.19 },
-  medium: { radial: 14.5, angular: 0.155 },
-  hard: { radial: 11, angular: 0.12 },
-  expert: { radial: 8.3, angular: 0.095 }
-};
-const BOT_BOARD = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
-const botNormal = () => Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(2 * Math.PI * Math.random());
-const botScatter = (target, level = 'easy', form = 1) => {
-  const profile = BOT_LEVELS[level] || BOT_LEVELS.easy;
-  const radial = profile.radial * form;
-  // Board radii in mm: bull 6.35/15.9, treble 99–107, double 162–170.
-  let radius, angle;
-  if (target.v === 25 || target.v === 50) {
-    const x = botNormal() * radial;
-    const y = botNormal() * radial;
-    radius = Math.hypot(x, y);
-    angle = Math.atan2(x, y);
-  } else {
-    radius = Math.abs((target.m === 3 ? 103 : target.m === 2 ? 166 : 132) + botNormal() * radial);
-    angle = BOT_BOARD.indexOf(target.v) * Math.PI / 10 + botNormal() * profile.angular * form;
-  }
-  if (radius > 170) return { v: 0, m: 1 };
-  if (radius < 6.35) return { v: 50, m: 1 };
-  if (radius < 15.9) return { v: 25, m: 1 };
-  const sector = ((Math.round(angle / (Math.PI / 10)) % 20) + 20) % 20;
-  return { v: BOT_BOARD[sector], m: radius >= 162 ? 2 : radius >= 99 && radius <= 107 ? 3 : 1 };
-};
-const BOT_TARGETS = [
-  ...Array.from({ length: 20 }, (_, i) => ({ v: 20 - i, m: 1 })),
-  ...[20, 16, 18, 12, 10, 8, 6, 4, 2, 1, 14, 15, 17, 19, 13, 11, 9, 7, 5, 3].map(v => ({ v, m: 2 })),
-  ...Array.from({ length: 20 }, (_, i) => ({ v: 20 - i, m: 3 })),
-  { v: 25, m: 1 }, { v: 50, m: 1 }
-];
-const botChooseClassic = (score, dartsLeft, rules) => {
-  const restricted = rules.double || rules.triple || rules.master;
-  const allowed = ({ v, m }) => !restricted ||
-    ((m === 2 || v === 50) && (rules.double || rules.master)) ||
-    (m === 3 && (rules.triple || rules.master));
-  const finals = BOT_TARGETS.filter(allowed);
-  const direct = finals.find(t => t.v * t.m === score);
-  if (direct) return direct;
-  const safe = n => n > 0 && (!restricted || n !== 1);
-  const memo = new Map();
-  const canFinish = (n, left) => {
-    if (left < 1 || n > left * 60) return false;
-    if (finals.some(t => t.v * t.m === n)) return true;
-    if (left === 1) return false;
-    const key = `${n}:${left}`;
-    if (!memo.has(key)) memo.set(key, BOT_TARGETS.some(t => {
-      const rest = n - t.v * t.m;
-      return safe(rest) && canFinish(rest, left - 1);
-    }));
-    return memo.get(key);
-  };
-  // Prefer a single setup when it leaves a checkout within this visit.
-  if (dartsLeft > 1 && score <= dartsLeft * 60) {
-    const setup = BOT_TARGETS.find(t => safe(score - t.v * t.m) && canFinish(score - t.v * t.m, dartsLeft - 1));
-    if (setup) return setup;
-  }
-  // Outside checkout range, score heavily; near a finish leave a usable out.
-  if (score > 80) return { v: 20, m: 3 };
-  for (const final of finals) {
-    const setup = BOT_TARGETS.find(t => t.m === 1 && t.v <= 20 && score - t.v === final.v * final.m);
-    if (setup) return setup;
-  }
-  return BOT_TARGETS.find(t => t.m === 1 && safe(score - t.v)) || { v: 1, m: 1 };
-};
+import { botThrowAround, botThrowClassic, botThrowCricket, botThrowRoulette, normalizeBotLevel } from './botEngine.js';
 
 
 /* ===== Checkout hint: display-only helper, does not alter scoring ===== */
@@ -974,12 +904,16 @@ async function showInterstitialAd() {
     if (typeof window === 'undefined') return false;
     if (!/Android/i.test(navigator.userAgent)) return false;
 
+    window.DartScoreAnalytics?.track('interstitial_requested', {
+      ad_format: 'interstitial',
+      plan_tier: localStorage.getItem('premium') === 'true' ? 'premium' : 'free'
+    });
+
     if (window.DartScoreAndroid?.showInterstitial) {
       window.DartScoreAndroid.showInterstitial();
       return true;
     }
 
-    // Fallback for older Android shells.
     window.location.href = ADMOB_INTERSTITIAL_SCHEME_URL;
     return true;
   } catch (err) {
@@ -1163,7 +1097,7 @@ function App() {
   const [randomOrder, setRandomOrder] = useState(false);
   const [playThrough, setPlayThrough] = useState(false);
 
-  const [ai, setAi] = useState('off'); // off | easy | medium | hard
+  const [ai, setAi] = useState('off'); // off | beginner | medium | hard
   const [scoreInputMode, setScoreInputMode] = useState('darts'); // darts | round
   const [playerMode, setPlayerMode] = useState('individual'); // individual | teams
 
@@ -1202,7 +1136,7 @@ function App() {
       if (Number.isInteger(s.setsToWin) && s.setsToWin >= 1 && s.setsToWin <= 21) setSetsToWin(s.setsToWin);
       if (typeof s.randomOrder === 'boolean') setRandomOrder(s.randomOrder);
       if (typeof s.playThrough === 'boolean') setPlayThrough(s.playThrough);
-      if (s.ai) setAi(s.ai);
+      if (s.ai) setAi(s.ai === 'off' ? 'off' : normalizeBotLevel(s.ai));
 
       if (nextMode === 'classic' && ['darts', 'round'].includes(s.scoreInputMode)) {
         setScoreInputMode(s.scoreInputMode);
@@ -1211,7 +1145,7 @@ function App() {
       }
 
       if (s.playerMode) setPlayerMode(s.playerMode);
-      if (s.players) setPlayers(s.players.map((p, ix) => ({ ...p, team: p.team || (['A', 'B', 'C'][ix % 3]) })));
+      if (s.players) setPlayers(s.players.map((p, ix) => ({ ...p, level: p.bot ? normalizeBotLevel(p.level) : p.level, team: p.team || (['A', 'B', 'C'][ix % 3]) })));
       if (s.themeColor) setThemeColor(s.themeColor);
     } catch { }
   }, []);
@@ -1276,7 +1210,7 @@ function App() {
             name: `🤖 ${t(lang, 'robot')} (${t(lang, ai)})`,
             color: colors[ps.length % colors.length],
             bot: true,
-            level: ai
+            level: normalizeBotLevel(ai)
           }
         ];
       }
@@ -1374,9 +1308,9 @@ function App() {
   const [pendingWin, setPendingWin] = useState(null);
 
   // Free interstitial cadence:
-  // count explicit Lobby "Start Game" presses and persist the state.
-  // The 3rd Start arms one interstitial; it is shown only after a game
-  // is actually completed. If that game is abandoned, the ad remains pending.
+  // every third explicit Lobby Start arms one interstitial.
+  // The pending state persists across app restarts and is consumed only
+  // after a game is actually completed.
   const INTERSTITIAL_START_COUNT_KEY = 'interstitialStartCount';
   const INTERSTITIAL_PENDING_KEY = 'interstitialPending';
   const interstitialShowScheduledRef = useRef(false);
@@ -1557,6 +1491,22 @@ function App() {
   };
 
   const startGame = (countAsLobbyStart = true) => {
+    try {
+      let previousGame = null;
+      if (screen === 'game') {
+        previousGame = normalizeSavedGame(makeSnapshot());
+      } else {
+        previousGame = normalizeSavedGame(
+          JSON.parse(localStorage.getItem('savedGame') || '{}')
+        );
+      }
+
+      window.DartScoreAnalytics?.abandonGame(
+        previousGame,
+        screen === 'game' ? 'restart' : 'new_game'
+      );
+    } catch { }
+
     const baseOrder = players.map((_, i) => i);
     const teamMode = mode === 'classic' && playerMode === 'teams';
     const teamOrder = teamMode ? buildTeamOrder(players) : null;
@@ -2409,7 +2359,7 @@ const commitCricket = (value, mOverride) => {
         interstitialShowScheduledRef.current = false;
       };
 
-      const fanfare = winAudioRef.current;
+      const fanfare = soundOn ? winAudioRef.current : null;
 
       if (!fanfare) {
         window.setTimeout(fire, 250);
@@ -2427,7 +2377,6 @@ const commitCricket = (value, mOverride) => {
           ? Math.ceil(fanfare.duration * 1000) + 1000
           : 7000;
 
-      // Safety fallback if playback is blocked or "ended" is never emitted.
       fallbackTimer = window.setTimeout(fire, durationMs);
     };
 
@@ -2436,7 +2385,7 @@ const commitCricket = (value, mOverride) => {
         speak(lang, 'Vítěz!', voiceOn);
       }
       try {
-        if (winAudioRef.current) {
+        if (soundOn && winAudioRef.current) {
           winAudioRef.current.currentTime = 0;
           winAudioRef.current.play();
         }
@@ -2798,25 +2747,25 @@ useEffect(() => {
 
       const timer = window.setTimeout(() => {
         if (botFormRef.current[p.id] == null) botFormRef.current[p.id] = 0.94 + Math.random() * 0.12;
-        let target;
+        const form = botFormRef.current[p.id];
+        const level = normalizeBotLevel(p.level);
+        let hit;
+
         if (mode === 'classic') {
-          target = botChooseClassic(scores[scoreIndexForPlayer(pIdx)], 3 - darts.length,
-            { double: outDouble, triple: outTriple, master: outMaster });
+          hit = botThrowClassic({
+            score: scores[scoreIndexForPlayer(pIdx)],
+            dartsLeft: 3 - darts.length,
+            rules: { double: outDouble, triple: outTriple, master: outMaster },
+            level,
+            form,
+          });
         } else if (mode === 'cricket') {
-          const values = [20, 19, 18, 17, 16, 15, 25];
-          const key = v => v === 25 ? 'bull' : String(v);
-          const v = values.find(v => (cricket?.[pIdx]?.marks?.[key(v)] ?? 0) < 3) ??
-            values.find(v => cricket?.some((pl, ix) => ix !== pIdx && (pl.marks?.[key(v)] ?? 0) < 3)) ?? 20;
-          target = { v, m: v === 25 ? 1 : 3 };
+          hit = botThrowCricket({ cricket, pIdx, level, form });
         } else {
-          target = { v: Math.min(25, around?.[pIdx]?.next > 20 ? 25 : around?.[pIdx]?.next ?? 1), m: 1 };
+          hit = botThrowAround({ next: around?.[pIdx]?.next ?? 1, level, form });
         }
-        let { v, m } = botScatter(target, p.level, botFormRef.current[p.id]);
-        // Cricket represents double bull as 25 × 2.
-        if (mode === 'cricket' && v === 50) { v = 25; m = 2; }
-        if (mode === 'cricket' && v < 15) { v = 0; m = 1; }
-        if (mode === 'around' && v === 50) { v = 25; m = 1; }
-        commitDart(v, m);
+
+        commitDart(hit.v, hit.m);
       }, 800);
       return () => window.clearTimeout(timer);
     }, [screen, currIdx, order, players, winner, mode, scores, darts,
@@ -3192,6 +3141,10 @@ const buyPremium = async () => {
     // text režimu do hlavičky vedle výběru jazyka
     const rateApp = () => {
       const url = 'https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro';
+
+      window.DartScoreAnalytics?.track('rate_app_clicked', {
+        source: 'lobby'
+      });
 
       try {
         window.open(url, '_blank', 'noopener,noreferrer');
@@ -3642,10 +3595,17 @@ function Lobby({
   }) {
     const [showPremiumDetails, setShowPremiumDetails] = useState(false);
     const matchOptions = Array.from({ length: 21 }, (_, ix) => ix + 1);
+    const isNativeAndroidApp =
+      typeof window !== 'undefined' && Boolean(window.DartScoreAndroid);
 
     const shareApp = async () => {
       const url = 'https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro';
       const payload = { title: 'DartScore Pro', text: t(lang, 'shareText'), url };
+
+      window.DartScoreAnalytics?.track('app_share_clicked', {
+        source: 'lobby'
+      });
+
       try {
         if (window.DartScoreAndroid?.shareApp) {
           window.DartScoreAndroid.shareApp(payload.title, payload.text, payload.url);
@@ -3826,10 +3786,8 @@ function Lobby({
                 >
                   <option value="off">{t(lang, 'off')}</option>
                   <option value="beginner">{t(lang, 'beginner')}</option>
-                  <option value="easy">{t(lang, 'easy')}</option>
                   <option value="medium">{t(lang, 'medium')}</option>
                   <option value="hard">{t(lang, 'hard')}</option>
-                  <option value="expert">{t(lang, 'expert')}</option>
                 </ThemedSelect>
 
                 
@@ -3879,7 +3837,14 @@ function Lobby({
             <button
   type="button"
   className="btn"
-  onClick={() => setShowPremiumDetails(s => !s)}
+  onClick={() => {
+    if (!showPremiumDetails) {
+      window.DartScoreAnalytics?.track('premium_screen_viewed', {
+        plan_tier: isPremium ? 'premium' : 'free'
+      });
+    }
+    setShowPremiumDetails(s => !s);
+  }}
   style={{
     minWidth: 90,
     fontWeight: 800,
@@ -3892,6 +3857,7 @@ function Lobby({
             <button
               type="button"
               className="btn"
+              data-analytics-action="premium_purchase_started"
               onClick={buyPremium}           
               style={{
                 minWidth: 90,
@@ -4146,6 +4112,77 @@ function Lobby({
           </details>
         </div>
         {/* >>> DARTSCORE_UNIQUE_ANCHOR__RULES_BLOCK__END__9F31 <<< */}
+
+        {!isNativeAndroidApp && (
+          <section className="webPublisherContent" aria-labelledby="dartscore-web-about">
+            {lang === 'cs' ? (
+              <>
+                <h1 id="dartscore-web-about">DartScore Pro – počítadlo skóre pro šipky</h1>
+                <p>
+                  DartScore Pro je praktické počítadlo pro domácí trénink i zápasy více hráčů.
+                  Aplikace počítá skóre, hlídá pořadí hráčů a u podporovaných režimů pomáhá
+                  s průběhem hry, takže se můžete soustředit na samotné házení.
+                </p>
+                <h2>Co v DartScore Pro najdeš</h2>
+                <p>
+                  Můžeš hrát klasické X01 se skóre 101 až 901, Cricket, Around the Clock
+                  a režimy Roulette. U X01 lze nastavit Double Out nebo Triple Out,
+                  počet legů a setů, pevné či náhodné pořadí a také zadávání po jednotlivých
+                  šipkách nebo celkového náhozu za kolo.
+                </p>
+                <p>
+                  Pro samostatný trénink je k dispozici robot s několika úrovněmi obtížnosti.
+                  Při hře více lidí můžeš spravovat hráče, pořadí a týmový režim. DartScore Pro
+                  uchovává rozehranou hru a statistiky na zařízení, aby ses mohl ke hře vrátit.
+                </p>
+                <h2>Jak začít</h2>
+                <p>
+                  Vyber herní režim, nastav pravidla, přidej hráče a stiskni Start.
+                  Podrobnější vysvětlení režimů a bodování najdeš v průvodci.
+                </p>
+                <nav className="webPublisherLinks" aria-label="Informace o DartScore Pro">
+                  <a href="/how-to-play/">Jak hrát a počítat skóre</a>
+                  <a href="/about/">O DartScore Pro</a>
+                  <a href="/privacy/">Zásady ochrany soukromí</a>
+                </nav>
+              </>
+            ) : (
+              <>
+                <h1 id="dartscore-web-about">DartScore Pro – darts scoring companion</h1>
+                <p>
+                  DartScore Pro is a practical darts scorer for home practice and multiplayer
+                  matches. It keeps track of scores and player order and guides supported game
+                  modes so players can focus on throwing rather than manual arithmetic.
+                </p>
+                <h2>What you can do</h2>
+                <p>
+                  Play classic X01 with starting scores from 101 to 901, Cricket, Around the
+                  Clock and Roulette modes. X01 supports configurable finishing rules,
+                  legs and sets, fixed or random order, and score entry by individual darts
+                  or by the total score for a round.
+                </p>
+                <p>
+                  Solo players can practise against a computer opponent with several
+                  difficulty levels. Multiplayer games support player management, ordering
+                  and team play. DartScore Pro also keeps unfinished games and match
+                  statistics on the device so you can continue later.
+                </p>
+                <h2>Getting started</h2>
+                <p>
+                  Choose a game mode, set the rules, add players and press Start.
+                  The detailed guide explains the supported modes, scoring and common
+                  finishing rules.
+                </p>
+                <nav className="webPublisherLinks" aria-label="DartScore Pro information">
+                  <a href="/how-to-play/">How to play and score darts</a>
+                  <a href="/about/">About DartScore Pro</a>
+                  <a href="/privacy/">Privacy Policy</a>
+                </nav>
+              </>
+            )}
+          </section>
+        )}
+
         <StatisticsDashboard lang={lang} t={t} showToast={showToast} />
       </div>
     );
@@ -4164,82 +4201,15 @@ function Lobby({
     const [p2, setP2] = useState('');
 
     const STATS_I18N = {
-      cs: {
-        statistics: 'Statistiky', noSaved: 'Zatím nejsou odehrané žádné uložené zápasy.', overview: 'Přehled', h2h: 'Vzájemné zápasy',
-        all: 'Vše', week: 'Týden', month: 'Měsíc', year: 'Rok', avg3: 'Průměr / 3 šipky', first9: 'Prvních 9', checkoutPct: 'Checkout %',
-        checkoutPending: 'Přesná evidence pokusů bude doplněna', highestCheckout: 'Nejvyšší checkout', scoring: 'Náhozy', performance: 'Výkony',
-        bestLeg: 'Nejlepší leg (šipky)', avgDartsLeg: 'Průměr šipek / leg', highestScore: 'Nejvyšší nához', winRate: 'Úspěšnost výher',
-        matches: 'vzájemných zápasů', legs: 'Legy', sets: 'Sety', last5: 'Forma posledních 5', avgTrend: 'Trend průměru',
-        matchHistory: 'Historie vzájemných zápasů', won: 'vyhrál', checkout: 'Checkout',
-        detailed: ({ detailed, total }) => `Detailní metriky jsou dostupné u ${detailed} z ${total} zápasů. Starší zápasy zůstávají započítané do výher.`,
-        older: 'Starší zápasy jsou započítané do H2H skóre a úspěšnosti výher. Detailní metriky se plní jen u nově uložených zápasů.'
-      },
-      en: {
-        statistics: 'Statistics', noSaved: 'No saved matches yet.', overview: 'Overview', h2h: 'Head-to-Head',
-        all: 'All', week: 'Week', month: 'Month', year: 'Year', avg3: '3-dart AVG', first9: 'First 9', checkoutPct: 'Checkout %',
-        checkoutPending: 'Exact attempt tracking pending', highestCheckout: 'Highest checkout', scoring: 'Scoring', performance: 'Performance',
-        bestLeg: 'Best leg (darts)', avgDartsLeg: 'Avg darts / leg', highestScore: 'Highest score', winRate: 'Win rate',
-        matches: 'matches', legs: 'Legs', sets: 'Sets', last5: 'Last 5 form', avgTrend: 'AVG trend',
-        matchHistory: 'Match history', won: 'won', checkout: 'Checkout',
-        detailed: ({ detailed, total }) => `Detailed metrics are available for ${detailed} of ${total} matches. Older matches still count toward wins.`,
-        older: 'Older matches count toward H2H score and win rate. Detailed metrics populate for newly saved matches.'
-      },
-      de: {
-        statistics: 'Statistiken', noSaved: 'Noch keine gespeicherten Spiele.', overview: 'Übersicht', h2h: 'Direkte Duelle',
-        all: 'Alle', week: 'Woche', month: 'Monat', year: 'Jahr', avg3: '3-Dart-Schnitt', first9: 'Erste 9', checkoutPct: 'Checkout %',
-        checkoutPending: 'Exakte Versuchsstatistik folgt', highestCheckout: 'Höchstes Checkout', scoring: 'Scoring', performance: 'Leistung',
-        bestLeg: 'Bestes Leg (Darts)', avgDartsLeg: 'Ø Darts / Leg', highestScore: 'Höchster Score', winRate: 'Siegquote',
-        matches: 'direkte Duelle', legs: 'Legs', sets: 'Sätze', last5: 'Form letzte 5', avgTrend: 'AVG-Trend',
-        matchHistory: 'Duell-Historie', won: 'gewann', checkout: 'Checkout',
-        detailed: ({ detailed, total }) => `Detaillierte Werte sind für ${detailed} von ${total} Spielen verfügbar. Ältere Spiele zählen weiter für Siege.`,
-        older: 'Ältere Spiele zählen für H2H und Siegquote. Detailwerte werden nur bei neu gespeicherten Spielen erfasst.'
-      },
-      es: {
-        statistics: 'Estadísticas', noSaved: 'Aún no hay partidas guardadas.', overview: 'Resumen', h2h: 'Cara a cara',
-        all: 'Todo', week: 'Semana', month: 'Mes', year: 'Año', avg3: 'Promedio / 3 dardos', first9: 'Primeros 9', checkoutPct: 'Checkout %',
-        checkoutPending: 'El registro exacto de intentos se añadirá', highestCheckout: 'Checkout más alto', scoring: 'Puntuación', performance: 'Rendimiento',
-        bestLeg: 'Mejor leg (dardos)', avgDartsLeg: 'Prom. dardos / leg', highestScore: 'Puntuación más alta', winRate: 'Porcentaje de victorias',
-        matches: 'enfrentamientos', legs: 'Legs', sets: 'Sets', last5: 'Forma últimos 5', avgTrend: 'Tendencia AVG',
-        matchHistory: 'Historial de enfrentamientos', won: 'ganó', checkout: 'Checkout',
-        detailed: ({ detailed, total }) => `Las métricas detalladas están disponibles en ${detailed} de ${total} partidas. Las anteriores siguen contando para las victorias.`,
-        older: 'Las partidas anteriores cuentan para el H2H y el porcentaje de victorias. Las métricas detalladas solo se guardan en partidas nuevas.'
-      },
-      nl: {
-        statistics: 'Statistieken', noSaved: 'Nog geen opgeslagen wedstrijden.', overview: 'Overzicht', h2h: 'Onderling',
-        all: 'Alles', week: 'Week', month: 'Maand', year: 'Jaar', avg3: 'Gem. / 3 darts', first9: 'Eerste 9', checkoutPct: 'Checkout %',
-        checkoutPending: 'Exacte pogingregistratie volgt', highestCheckout: 'Hoogste checkout', scoring: 'Scores', performance: 'Prestaties',
-        bestLeg: 'Beste leg (darts)', avgDartsLeg: 'Gem. darts / leg', highestScore: 'Hoogste score', winRate: 'Winstpercentage',
-        matches: 'onderlinge wedstrijden', legs: 'Legs', sets: 'Sets', last5: 'Vorm laatste 5', avgTrend: 'AVG-trend',
-        matchHistory: 'Onderlinge historie', won: 'won', checkout: 'Checkout',
-        detailed: ({ detailed, total }) => `Gedetailleerde statistieken zijn beschikbaar voor ${detailed} van ${total} wedstrijden. Oudere wedstrijden blijven meetellen voor winst.`,
-        older: 'Oudere wedstrijden tellen mee voor H2H en winstpercentage. Detailstatistieken worden alleen bij nieuwe wedstrijden opgeslagen.'
-      },
-      ru: {
-        statistics: 'Статистика', noSaved: 'Сохранённых матчей пока нет.', overview: 'Обзор', h2h: 'Личные встречи',
-        all: 'Все', week: 'Неделя', month: 'Месяц', year: 'Год', avg3: 'Среднее / 3 дротика', first9: 'Первые 9', checkoutPct: 'Checkout %',
-        checkoutPending: 'Точный учёт попыток будет добавлен', highestCheckout: 'Максимальный checkout', scoring: 'Наборы', performance: 'Результаты',
-        bestLeg: 'Лучший лег (дротики)', avgDartsLeg: 'Ср. дротиков / лег', highestScore: 'Максимальный набор', winRate: 'Процент побед',
-        matches: 'очных матчей', legs: 'Леги', sets: 'Сеты', last5: 'Форма за 5 матчей', avgTrend: 'Тренд среднего',
-        matchHistory: 'История личных встреч', won: 'победил', checkout: 'Checkout',
-        detailed: ({ detailed, total }) => `Подробная статистика доступна для ${detailed} из ${total} матчей. Старые матчи по-прежнему учитываются в победах.`,
-        older: 'Старые матчи учитываются в H2H и проценте побед. Подробные метрики сохраняются только для новых матчей.'
-      },
-      zh: {
-        statistics: '统计', noSaved: '暂无已保存的比赛。', overview: '概览', h2h: '对战',
-        all: '全部', week: '一周', month: '一月', year: '一年', avg3: '3镖平均', first9: '前9镖', checkoutPct: '结镖率',
-        checkoutPending: '精确尝试次数统计稍后加入', highestCheckout: '最高结镖', scoring: '得分', performance: '表现',
-        bestLeg: '最佳局（镖数）', avgDartsLeg: '平均镖数 / 局', highestScore: '最高得分', winRate: '胜率',
-        matches: '场对战', legs: '局', sets: '盘', last5: '最近5场状态', avgTrend: '平均分趋势',
-        matchHistory: '对战记录', won: '获胜', checkout: '结镖',
-        detailed: ({ detailed, total }) => `详细数据适用于 ${detailed}/${total} 场比赛。旧比赛仍计入胜场。`,
-        older: '旧比赛仍计入对战比分和胜率。详细数据仅记录新保存的比赛。'
-      }
+      cs:{statistics:'Statistiky',noSaved:'Zatím nejsou odehrané žádné uložené zápasy.',overview:'Přehled',h2h:'Vzájemné zápasy',all:'Vše',week:'Týden',month:'Měsíc',year:'Rok',avg3:'Průměr / 3 šipky',first9:'Prvních 9',checkoutPct:'Checkout %',checkoutPending:'Přesná evidence pokusů bude doplněna',highestCheckout:'Nejvyšší checkout',scoring:'Náhozy',performance:'Výkony',bestLeg:'Nejlepší leg (šipky)',avgDartsLeg:'Průměr šipek / leg',highestScore:'Nejvyšší nához',winRate:'Úspěšnost výher',matches:'vzájemných zápasů',legs:'Legy',sets:'Sety',last5:'Forma posledních 5',avgTrend:'Trend průměru',matchHistory:'Historie vzájemných zápasů',won:'vyhrál',checkout:'Checkout',detailed:({detailed,total})=>`Detailní metriky jsou dostupné u ${detailed} z ${total} zápasů. Starší zápasy zůstávají započítané do výher.`,older:'Starší zápasy jsou započítané do H2H skóre a úspěšnosti výher. Detailní metriky se plní jen u nově uložených zápasů.'},
+      en:{statistics:'Statistics',noSaved:'No saved matches yet.',overview:'Overview',h2h:'Head-to-Head',all:'All',week:'Week',month:'Month',year:'Year',avg3:'3-dart AVG',first9:'First 9',checkoutPct:'Checkout %',checkoutPending:'Exact attempt tracking pending',highestCheckout:'Highest checkout',scoring:'Scoring',performance:'Performance',bestLeg:'Best leg (darts)',avgDartsLeg:'Avg darts / leg',highestScore:'Highest score',winRate:'Win rate',matches:'matches',legs:'Legs',sets:'Sets',last5:'Last 5 form',avgTrend:'AVG trend',matchHistory:'Match history',won:'won',checkout:'Checkout',detailed:({detailed,total})=>`Detailed metrics are available for ${detailed} of ${total} matches. Older matches still count toward wins.`,older:'Older matches count toward H2H score and win rate. Detailed metrics populate for newly saved matches.'},
+      de:{statistics:'Statistiken',noSaved:'Noch keine gespeicherten Spiele.',overview:'Übersicht',h2h:'Direkte Duelle',all:'Alle',week:'Woche',month:'Monat',year:'Jahr',avg3:'3-Dart-Schnitt',first9:'Erste 9',checkoutPct:'Checkout %',checkoutPending:'Exakte Versuchsstatistik folgt',highestCheckout:'Höchstes Checkout',scoring:'Scoring',performance:'Leistung',bestLeg:'Bestes Leg (Darts)',avgDartsLeg:'Ø Darts / Leg',highestScore:'Höchster Score',winRate:'Siegquote',matches:'direkte Duelle',legs:'Legs',sets:'Sätze',last5:'Form letzte 5',avgTrend:'AVG-Trend',matchHistory:'Duell-Historie',won:'gewann',checkout:'Checkout',detailed:({detailed,total})=>`Detaillierte Werte sind für ${detailed} von ${total} Spielen verfügbar. Ältere Spiele zählen weiter für Siege.`,older:'Ältere Spiele zählen für H2H und Siegquote. Detailwerte werden nur bei neu gespeicherten Spielen erfasst.'},
+      es:{statistics:'Estadísticas',noSaved:'Aún no hay partidas guardadas.',overview:'Resumen',h2h:'Cara a cara',all:'Todo',week:'Semana',month:'Mes',year:'Año',avg3:'Promedio / 3 dardos',first9:'Primeros 9',checkoutPct:'Checkout %',checkoutPending:'El registro exacto de intentos se añadirá',highestCheckout:'Checkout más alto',scoring:'Puntuación',performance:'Rendimiento',bestLeg:'Mejor leg (dardos)',avgDartsLeg:'Prom. dardos / leg',highestScore:'Puntuación más alta',winRate:'Porcentaje de victorias',matches:'enfrentamientos',legs:'Legs',sets:'Sets',last5:'Forma últimos 5',avgTrend:'Tendencia AVG',matchHistory:'Historial de enfrentamientos',won:'ganó',checkout:'Checkout',detailed:({detailed,total})=>`Las métricas detalladas están disponibles en ${detailed} de ${total} partidas. Las anteriores siguen contando para las victorias.`,older:'Las partidas anteriores cuentan para el H2H y el porcentaje de victorias. Las métricas detalladas solo se guardan en partidas nuevas.'},
+      nl:{statistics:'Statistieken',noSaved:'Nog geen opgeslagen wedstrijden.',overview:'Overzicht',h2h:'Onderling',all:'Alles',week:'Week',month:'Maand',year:'Jaar',avg3:'Gem. / 3 darts',first9:'Eerste 9',checkoutPct:'Checkout %',checkoutPending:'Exacte pogingregistratie volgt',highestCheckout:'Hoogste checkout',scoring:'Scores',performance:'Prestaties',bestLeg:'Beste leg (darts)',avgDartsLeg:'Gem. darts / leg',highestScore:'Hoogste score',winRate:'Winstpercentage',matches:'onderlinge wedstrijden',legs:'Legs',sets:'Sets',last5:'Vorm laatste 5',avgTrend:'AVG-trend',matchHistory:'Onderlinge historie',won:'won',checkout:'Checkout',detailed:({detailed,total})=>`Gedetailleerde statistieken zijn beschikbaar voor ${detailed} van ${total} wedstrijden. Oudere wedstrijden blijven meetellen voor winst.`,older:'Oudere wedstrijden tellen mee voor H2H en winstpercentage. Detailstatistieken worden alleen bij nieuwe wedstrijden opgeslagen.'},
+      ru:{statistics:'Статистика',noSaved:'Сохранённых матчей пока нет.',overview:'Обзор',h2h:'Личные встречи',all:'Все',week:'Неделя',month:'Месяц',year:'Год',avg3:'Среднее / 3 дротика',first9:'Первые 9',checkoutPct:'Checkout %',checkoutPending:'Точный учёт попыток будет добавлен',highestCheckout:'Максимальный checkout',scoring:'Наборы',performance:'Результаты',bestLeg:'Лучший лег (дротики)',avgDartsLeg:'Ср. дротиков / лег',highestScore:'Максимальный набор',winRate:'Процент побед',matches:'очных матчей',legs:'Леги',sets:'Сеты',last5:'Форма за 5 матчей',avgTrend:'Тренд среднего',matchHistory:'История личных встреч',won:'победил',checkout:'Checkout',detailed:({detailed,total})=>`Подробная статистика доступна для ${detailed} из ${total} матчей. Старые матчи по-прежнему учитываются в победах.`,older:'Старые матчи учитываются в H2H и проценте побед. Подробные метрики сохраняются только для новых матчей.'},
+      zh:{statistics:'统计',noSaved:'暂无已保存的比赛。',overview:'概览',h2h:'对战',all:'全部',week:'一周',month:'一月',year:'一年',avg3:'3镖平均',first9:'前9镖',checkoutPct:'结镖率',checkoutPending:'精确尝试次数统计稍后加入',highestCheckout:'最高结镖',scoring:'得分',performance:'表现',bestLeg:'最佳局（镖数）',avgDartsLeg:'平均镖数 / 局',highestScore:'最高得分',winRate:'胜率',matches:'场对战',legs:'局',sets:'盘',last5:'最近5场状态',avgTrend:'平均分趋势',matchHistory:'对战记录',won:'获胜',checkout:'结镖',detailed:({detailed,total})=>`详细数据适用于 ${detailed}/${total} 场比赛。旧比赛仍计入胜场。`,older:'旧比赛仍计入对战比分和胜率。详细数据仅记录新保存的比赛。'}
     };
-    const S = (key, vars) => {
-      const pack = STATS_I18N[lang] || STATS_I18N.en;
-      const value = pack[key] ?? STATS_I18N.en[key] ?? key;
-      return typeof value === 'function' ? value(vars || {}) : value;
-    };
+    const S=(key,vars)=>{const pack=STATS_I18N[lang]||STATS_I18N.en;const value=pack[key]??STATS_I18N.en[key]??key;return typeof value==='function'?value(vars||{}):value;};
     const now = Date.now();
     const cutoff = {
       all: 0,
@@ -4421,7 +4391,7 @@ function Lobby({
                   const s1=(g.playerStats||[]).find(s=>s.name===p1), s2=(g.playerStats||[]).find(s=>s.name===p2);
                   return <details key={`${g.ts}-${idx}`} style={{ border:'1px solid var(--line)', borderRadius:10, padding:'8px 10px', background:'rgba(255,255,255,.02)' }}>
                     <summary style={{ cursor:'pointer', fontWeight:800 }}>{new Date(g.ts).toLocaleDateString()} · {g.winner === p1 ? p1 : p2} {S('won')}</summary>
-                    <div style={{ marginTop:8 }}>{compareRow(fmt(s1?.avg3), 'AVG', fmt(s2?.avg3))}{compareRow(fmt(s1?.first9Avg), S('first9'), fmt(s2?.first9Avg))}{compareRow(s1?.legsWon ?? '—', S('legs'), s2?.legsWon ?? '—')}{compareRow(s1?.setsWon ?? '—', S('sets'), s2?.setsWon ?? '—')}{compareRow(s1?.highestCheckout ?? '—', S('checkout'), s2?.highestCheckout ?? '—')}</div>
+                    <div style={{ marginTop:8 }}>{compareRow(fmt(s1?.avg3), 'AVG', fmt(s2?.avg3))}{compareRow(fmt(s1?.first9Avg), 'First 9', fmt(s2?.first9Avg))}{compareRow(s1?.legsWon ?? '—', 'Legs', s2?.legsWon ?? '—')}{compareRow(s1?.setsWon ?? '—', 'Sets', s2?.setsWon ?? '—')}{compareRow(s1?.highestCheckout ?? '—', S('checkout'), s2?.highestCheckout ?? '—')}</div>
                   </details>;
                 }) : <div style={{ opacity:.65 }}>—</div>}
               </div>
@@ -4447,6 +4417,11 @@ function Lobby({
   }) {
     const HEAD_H = 40;
     const [roundScoreInput, setRoundScoreInput] = React.useState('');
+    const inputLocked = Boolean(players[order[currIdx]]?.bot);
+
+    React.useEffect(() => {
+      if (inputLocked) setRoundScoreInput('');
+    }, [inputLocked]);
 
     const gameTeamCodes = ['A', 'B', 'C'];
 
@@ -4662,7 +4637,7 @@ function Lobby({
         }, 650);
       } else {
         timer = window.setTimeout(() => {
-          const hit = botScatter({ v: currentTarget, m: mode === 'rouletteDouble' ? 2 : 1 }, player.level);
+          const hit = botThrowRoulette({ target: currentTarget, doubleOnly: mode === 'rouletteDouble', level: player.level });
           if ((hit.v === currentTarget || (currentTarget === 25 && hit.v === 50)) &&
               (mode !== 'rouletteDouble' || hit.m === 2)) rouletteMarkHit();
           else rouletteMarkMiss();
@@ -5128,7 +5103,14 @@ function Lobby({
 
           {/* PAD / KEYPAD */}
           {winner == null && !hideDartControls && (
-            <div className={`padPane ${mode === 'classic' && scoreInputMode === 'round' ? 'roundTotalKeypad' : 'dartKeypad'}`}>
+            <div
+              className={`padPane ${mode === 'classic' && scoreInputMode === 'round' ? 'roundTotalKeypad' : 'dartKeypad'}`}
+              aria-disabled={inputLocked}
+              style={{
+                pointerEvents: inputLocked ? 'none' : 'auto',
+                opacity: inputLocked ? 0.5 : 1
+              }}
+            >
               {mode === 'classic' && scoreInputMode === 'round' ? (
                 <>
                   <div
