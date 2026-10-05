@@ -21,6 +21,7 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
@@ -64,7 +65,11 @@ import java.util.List;
 import java.util.Locale;
 
 public class MainWebViewActivity extends Activity implements PurchasesUpdatedListener {
-    private static final String START_URL = "https://dartscore-pro.vercel.app/";
+    // INTERNAL TEST v88: use the isolated preview so production users are
+    // not exposed to the new interstitial cadence before validation.
+    private static final String START_URL = "https://dartscore-v88-test.vercel.app/";
+    private static final String TEST_WEB_HOST = "dartscore-v88-test.vercel.app";
+    private static final String PROD_WEB_HOST = "dartscore-pro.vercel.app";
     private static final String PREMIUM_PRODUCT_ID = "premium_unlock";
 
     private static final String PROD_BANNER_ID = "ca-app-pub-9232105399279318/2746750399";
@@ -77,6 +82,7 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     // Keep the real ad unit so AdMob mediation (including Unity) is exercised.
     // The phone MUST be registered as an AdMob test device before installing this build.
     private static final boolean FORCE_FREE_BANNER_TEST = true;
+    private static final boolean ENABLE_AD_INSPECTOR_BUTTON = true;
 
     private WebView webView;
     private FrameLayout root;
@@ -184,6 +190,33 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             return insets;
         });
 
+        if (ENABLE_AD_INSPECTOR_BUTTON) {
+            Button inspectorButton = new Button(this);
+            inspectorButton.setText("AD INSPECTOR");
+            inspectorButton.setTextSize(10f);
+            inspectorButton.setAlpha(0.78f);
+            inspectorButton.setOnClickListener(v -> openAdInspectorNow());
+
+            FrameLayout.LayoutParams inspectorParams =
+                new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.WRAP_CONTENT,
+                    FrameLayout.LayoutParams.WRAP_CONTENT,
+                    Gravity.TOP | Gravity.END
+                );
+
+            int marginPx =
+                (int) (8 * getResources().getDisplayMetrics().density);
+            inspectorParams.setMargins(
+                marginPx,
+                marginPx,
+                marginPx,
+                marginPx
+            );
+
+            root.addView(inspectorButton, inspectorParams);
+            inspectorButton.bringToFront();
+        }
+
         setContentView(root);
         root.requestApplyInsets();
 
@@ -260,7 +293,10 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             return true;
         }
 
-        if ("https".equals(scheme) && "dartscore-pro.vercel.app".equals(host)) {
+        if (
+            "https".equals(scheme) &&
+            (TEST_WEB_HOST.equals(host) || PROD_WEB_HOST.equals(host))
+        ) {
             return false;
         }
 
@@ -500,6 +536,38 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
                     );
                 }
             }
+        );
+    }
+
+    private void openAdInspectorNow() {
+        if (!adsReady || isFinishing()) {
+            nativeToast("Ad Inspector: Mobile Ads ještě nejsou připravené.");
+            return;
+        }
+
+        MobileAds.openAdInspector(
+            this,
+            error -> {
+                if (error != null) {
+                    nativeToast(
+                        "Ad Inspector nejde otevřít: " +
+                        error.getCode() + " – " + error.getMessage()
+                    );
+                }
+            }
+        );
+    }
+
+    private void showInterstitialInternal() {
+        if (currentPremiumState || isFinishing()) {
+            return;
+        }
+
+        startActivity(
+            new Intent(
+                MainWebViewActivity.this,
+                AdMobInterstitialActivity.class
+            )
         );
     }
 
@@ -1140,6 +1208,18 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         @JavascriptInterface
         public void shareApp(String title, String text, String url) {
             runOnUiThread(() -> shareAppNative(title, text, url));
+        }
+
+        @JavascriptInterface
+        public void showInterstitial() {
+            runOnUiThread(
+                MainWebViewActivity.this::showInterstitialInternal
+            );
+        }
+
+        @JavascriptInterface
+        public void openAdInspector() {
+            runOnUiThread(MainWebViewActivity.this::openAdInspectorNow);
         }
 
         @JavascriptInterface
