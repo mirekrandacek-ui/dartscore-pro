@@ -1,9 +1,9 @@
-name: v86 Ad Inspector
+name: v88 Interstitial Verification
 
 on:
   push:
     branches:
-      - release/v86-ad-inspector
+      - release/v88-interstitial-cadence
   workflow_dispatch:
 
 jobs:
@@ -19,13 +19,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: Bring in tested web source with analytics events
-        run: |
-          git fetch origin feature/v81-analytics-events-web:refs/remotes/origin/feature/v81-analytics-events-web
-          git show 34bb02a5ca5e56ef7ce1a3d048b365606d9772e0:src/App.jsx > src/App.jsx
-          git show 34bb02a5ca5e56ef7ce1a3d048b365606d9772e0:src/main.jsx > src/main.jsx
-          git show 34bb02a5ca5e56ef7ce1a3d048b365606d9772e0:src/analyticsEvents.js > src/analyticsEvents.js
 
       - name: Build web bundle
         run: |
@@ -46,28 +39,32 @@ jobs:
       - name: Install Android SDK 36
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
-      - name: Prepare v86 Android test build
+      - name: Prepare offline fallback
         run: |
-          sed -i 's/versionCode 78/versionCode 86/' app/build.gradle
-          sed -i 's/versionName "1.1.44"/versionName "1.1.52"/' app/build.gradle
           python3 tools/apply-v78-offline-client.py
 
-      - name: Verify combined source
+      - name: Verify v88 source
         run: |
           grep -q "new OfflineWebViewClient" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
           grep -q "firebase-analytics" app/build.gradle
           grep -q "analytics_event" app/src/main/java/com/randis2288/dartscorepro/AdMobInterstitialActivity.java
           grep -q "game_started" src/analyticsEvents.js
           grep -q "game_completed" src/analyticsEvents.js
-          grep -q "versionCode 86" app/build.gradle
-          grep -q "versionName \"1.1.52\"" app/build.gradle
-          grep -q "const STATS_I18N" src/App.jsx
+          grep -q "versionCode 88" app/build.gradle
+          grep -q "versionName \"1.1.54\"" app/build.gradle
+          grep -q "com.google.ads.mediation:unity:4.16.6.0" app/build.gradle
           grep -q "requestConsentInfoUpdate" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
-          grep -q "loadAndShowConsentFormIfRequired" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
           grep -q "canRequestAds()" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
           grep -q "initializeMobileAdsAfterConsent" app/src/main/java/com/randis2288/dartscorepro/Application.java
           grep -q "debugSymbolLevel 'SYMBOL_TABLE'" app/build.gradle
           grep -q "openAdInspector" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
+          grep -q "public void showInterstitial()" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
+          grep -q "interstitialStartCount" src/App.jsx
+          grep -q "interstitialPending" src/App.jsx
+          grep -q "showPendingInterstitialAfterFanfare" src/App.jsx
+          grep -q "startGame(false)" src/App.jsx
+          grep -q "DartScoreAndroid?.showInterstitial" src/App.jsx
+          grep -q "dartscore-v88-test.vercel.app" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
 
       - name: Build release bundle
         run: |
@@ -83,5 +80,5 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: DartScorePro_v86_1.1.52
+          name: DartScorePro_v88_1.1.54
           path: app/build/outputs/bundle/release/app-release.aab
