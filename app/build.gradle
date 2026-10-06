@@ -61,8 +61,8 @@ android {
         applicationId "com.randis2288.dartscorepro"
         minSdkVersion 23
         targetSdkVersion 36
-        versionCode 92
-        versionName "1.1.58"
+        versionCode 93
+        versionName "1.1.59"
 
         resValue "string", "appName", twaManifest.name
         resValue "string", "launcherName", twaManifest.launcherName
@@ -109,6 +109,16 @@ android {
             ndk {
                 debugSymbolLevel 'SYMBOL_TABLE'
             }
+        }
+    }
+
+    packaging {
+        jniLibs {
+            // The only native code in the bundle is AndroidX DataStore's
+            // multiprocess shared-counter helper. DartScore does not use
+            // multiprocess DataStore, and this prebuilt library ships stripped,
+            // which is what triggers the Play Console debug-symbol warning.
+            excludes += "**/libdatastore_shared_counter.so"
         }
     }
 

@@ -1859,17 +1859,9 @@ function App() {
     }
 
     if (tentative === 0) {
-      let finishOk = true;
-
-      if (anyOutSelected) {
-        finishOk = window.confirm(t(lang, 'confirmCheckoutRound'));
-      }
-
-      if (!finishOk) {
-        doBust();
-        return;
-      }
-
+      // In "Round total" mode the entered total is authoritative.
+      // If it exactly reaches zero, treat it as a valid checkout regardless
+      // of Double-out / Triple-out. The app cannot infer the final dart here.
       playHitSound();
 
       const finishVisit = {
