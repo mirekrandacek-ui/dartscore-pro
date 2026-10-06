@@ -69,37 +69,37 @@ jobs:
           expected_gradle = expected_gradle.replace('versionName "1.1.58"', 'versionName "1.1.59"', 1)
 
           anchor = """    buildTypes {
-              release {
-                  minifyEnabled true
-                  signingConfig signingConfigs.release
-                  ndk {
-                      debugSymbolLevel 'SYMBOL_TABLE'
-                  }
-              }
-          }
+        release {
+            minifyEnabled true
+            signingConfig signingConfigs.release
+            ndk {
+                debugSymbolLevel 'SYMBOL_TABLE'
+            }
+        }
+    }
 
-          """
+"""
           replacement = """    buildTypes {
-              release {
-                  minifyEnabled true
-                  signingConfig signingConfigs.release
-                  ndk {
-                      debugSymbolLevel 'SYMBOL_TABLE'
-                  }
-              }
-          }
+        release {
+            minifyEnabled true
+            signingConfig signingConfigs.release
+            ndk {
+                debugSymbolLevel 'SYMBOL_TABLE'
+            }
+        }
+    }
 
-              packaging {
-                  jniLibs {
-                      // The only native code in the bundle is AndroidX DataStore's
-                      // multiprocess shared-counter helper. DartScore does not use
-                      // multiprocess DataStore, and this prebuilt library ships stripped,
-                      // which is what triggers the Play Console debug-symbol warning.
-                      excludes += "**/libdatastore_shared_counter.so"
-                  }
-              }
+    packaging {
+        jniLibs {
+            // The only native code in the bundle is AndroidX DataStore's
+            // multiprocess shared-counter helper. DartScore does not use
+            // multiprocess DataStore, and this prebuilt library ships stripped,
+            // which is what triggers the Play Console debug-symbol warning.
+            excludes += "**/libdatastore_shared_counter.so"
+        }
+    }
 
-          """
+"""
           assert expected_gradle.count(anchor) == 1, "Unexpected v92 Gradle source"
           expected_gradle = expected_gradle.replace(anchor, replacement, 1)
           assert current_gradle == expected_gradle, "app/build.gradle contains changes beyond version + DataStore native exclusion"
