@@ -1,9 +1,9 @@
-name: v93 Checkout + Symbols Verification
+name: v94 Remove Winner Voice
 
 on:
   pull_request:
     branches:
-      - ci/v93c-build-base
+      - ci/v94-build-base
 
 jobs:
   build:
@@ -14,20 +14,23 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Fetch v92 reference
-        run: git fetch origin release/v92-v79-prod-monetization:refs/remotes/origin/release/v92-v79-prod-monetization
+      - name: Fetch v93 reference
+        run: git fetch origin release/v93c-round-total-symbols-clean:refs/remotes/origin/release/v93c-round-total-symbols-clean
 
       - name: Verify only requested files changed
         run: |
-          git diff --name-only origin/release/v92-v79-prod-monetization...HEAD | sort > /tmp/changed.txt
+          git diff --name-only origin/release/v93c-round-total-symbols-clean...HEAD | sort > /tmp/changed.txt
           printf '%s\n' '.github/workflows/v72-build-check.yml' 'app/build.gradle' 'src/App.jsx' | sort > /tmp/expected.txt
           diff -u /tmp/expected.txt /tmp/changed.txt
-          git diff --check origin/release/v92-v79-prod-monetization...HEAD
-          grep -q 'if (tentative === 0)' src/App.jsx
-          ! grep -A12 'if (tentative === 0)' src/App.jsx | grep -q 'confirmCheckoutRound'
+          git diff --check origin/release/v93c-round-total-symbols-clean...HEAD
+
+          ! grep -q "speak(lang, 'Vítěz!', voiceOn)" src/App.jsx
+          ! grep -q "'Vítěz!'" src/App.jsx
+
+          grep -q 'versionCode 94' app/build.gradle
+          grep -q 'versionName "1.1.60"' app/build.gradle
+
           grep -q 'excludes += "\*\*/libdatastore_shared_counter.so"' app/build.gradle
-          grep -q 'versionCode 93' app/build.gradle
-          grep -q 'versionName "1.1.59"' app/build.gradle
 
       - name: Set up Node 20
         uses: actions/setup-node@v4
@@ -75,5 +78,5 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@v4
         with:
-          name: DartScorePro_v93_1.1.59
+          name: DartScorePro_v94_1.1.60
           path: app/build/outputs/bundle/release/app-release.aab
