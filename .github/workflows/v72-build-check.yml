@@ -1,12 +1,12 @@
-name: v92 Production UI + Monetization
+name: v93 Round Total + Symbols Fix
 
 on:
   push:
     branches:
-      - release/v92-v79-prod-monetization
+      - release/v93-round-total-checkout-symbols
   pull_request:
     branches:
-      - ci/v92-build-base
+      - ci/v93-build-base
   workflow_dispatch:
 
 jobs:
@@ -18,39 +18,111 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Fetch production UI reference
-        run: |
-          git fetch origin 531705f126e694eb88e27d02a79e4358369520fa
+      - name: Fetch v92 reference
+        run: git fetch origin release/v92-v79-prod-monetization:refs/remotes/origin/release/v92-v79-prod-monetization
 
-      - name: Verify production UI files are untouched
+      - name: Verify only requested source changes
         run: |
-          git diff --exit-code 531705f126e694eb88e27d02a79e4358369520fa --             src/app.css             src/main.jsx             src/analyticsEvents.js             src/botEngine.js             package.json             vite.config.js \
-            index.html
-          git show 531705f126e694eb88e27d02a79e4358369520fa:src/App.jsx > /tmp/App.prod.jsx
-          python3 tools/apply-v92-interstitial.py /tmp/App.prod.jsx /tmp/App.expected.jsx
-          cmp /tmp/App.expected.jsx src/App.jsx
+          python3 - <<'PY'
+          import subprocess
+          from pathlib import Path
 
-      - name: Verify monetization changes
-        run: |
-          grep -q "interstitialStartCount" src/App.jsx
-          grep -q "interstitialPending" src/App.jsx
-          grep -q "showPendingInterstitialAfterFanfare" src/App.jsx
-          grep -q "DartScoreAndroid?.showInterstitial" src/App.jsx
-          grep -q "startGame(false)" src/App.jsx
-          ! grep -q "playedVisitsRef" src/App.jsx
-          ! grep -q "playedGamesSinceAdRef" src/App.jsx
-          grep -q "FORCE_FREE_BANNER_TEST = false" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
-          grep -q "initConsentAndAds()" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
-          grep -q "public void showInterstitial()" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
-          ! grep -q "Banner diagnostics" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
-          ! grep -q "Banner loaded" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
-          ! grep -q "openAdInspector" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
-          grep -q "com.google.ads.mediation:unity:4.16.6.0" app/build.gradle
-          grep -q "com.unity3d.ads:unity-ads:4.16.6" app/build.gradle
-          grep -q "firebase-analytics" app/build.gradle
-          grep -q "user-messaging-platform:4.0.0" app/build.gradle
-          grep -q "versionCode 92" app/build.gradle
-          grep -q "versionName \"1.1.58\"" app/build.gradle
+          def show(ref, path):
+              return subprocess.check_output(
+                  ["git", "show", f"{ref}:{path}"],
+                  text=True
+              )
+
+          base_ref = "origin/release/v92-v79-prod-monetization"
+
+          base_app = show(base_ref, "src/App.jsx")
+          current_app = Path("src/App.jsx").read_text()
+
+          old = """    if (tentative === 0) {
+                let finishOk = true;
+
+                if (anyOutSelected) {
+                  finishOk = window.confirm(t(lang, 'confirmCheckoutRound'));
+                }
+
+                if (!finishOk) {
+                  doBust();
+                  return;
+                }
+
+                playHitSound();
+          """
+          new = """    if (tentative === 0) {
+                // In "Round total" mode the entered total is authoritative.
+                // If it exactly reaches zero, treat it as a valid checkout regardless
+                // of Double-out / Triple-out. The app cannot infer the final dart here.
+                playHitSound();
+          """
+          assert base_app.count(old) == 1, "Unexpected v92 round-total source"
+          expected_app = base_app.replace(old, new, 1)
+          assert current_app == expected_app, "src/App.jsx contains changes beyond the requested checkout fix"
+
+          base_gradle = show(base_ref, "app/build.gradle")
+          current_gradle = Path("app/build.gradle").read_text()
+
+          expected_gradle = base_gradle.replace("versionCode 92", "versionCode 93", 1)
+          expected_gradle = expected_gradle.replace('versionName "1.1.58"', 'versionName "1.1.59"', 1)
+
+          anchor = """    buildTypes {
+              release {
+                  minifyEnabled true
+                  signingConfig signingConfigs.release
+                  ndk {
+                      debugSymbolLevel 'SYMBOL_TABLE'
+                  }
+              }
+          }
+
+          """
+          replacement = """    buildTypes {
+              release {
+                  minifyEnabled true
+                  signingConfig signingConfigs.release
+                  ndk {
+                      debugSymbolLevel 'SYMBOL_TABLE'
+                  }
+              }
+          }
+
+              packaging {
+                  jniLibs {
+                      // The only native code in the bundle is AndroidX DataStore's
+                      // multiprocess shared-counter helper. DartScore does not use
+                      // multiprocess DataStore, and this prebuilt library ships stripped,
+                      // which is what triggers the Play Console debug-symbol warning.
+                      excludes += "**/libdatastore_shared_counter.so"
+                  }
+              }
+
+          """
+          assert expected_gradle.count(anchor) == 1, "Unexpected v92 Gradle source"
+          expected_gradle = expected_gradle.replace(anchor, replacement, 1)
+          assert current_gradle == expected_gradle, "app/build.gradle contains changes beyond version + DataStore native exclusion"
+
+          unchanged = [
+              "src/app.css",
+              "src/main.jsx",
+              "src/analyticsEvents.js",
+              "src/botEngine.js",
+              "index.html",
+              "package.json",
+              "vite.config.js",
+              "app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java",
+              "app/src/main/java/com/randis2288/dartscorepro/Application.java",
+              "app/src/main/java/com/randis2288/dartscorepro/AdMobInterstitialManager.java",
+              "app/src/main/java/com/randis2288/dartscorepro/AdMobInterstitialActivity.java",
+          ]
+          for path in unchanged:
+              current = Path(path).read_text()
+              assert current == show(base_ref, path), f"Unexpected change in {path}"
+
+          print("v93 source diff verified: checkout fix + native-symbol warning fix only.")
+          PY
 
       - name: Set up Node 20
         uses: actions/setup-node@v4
@@ -77,23 +149,26 @@ jobs:
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
       - name: Prepare bundled production UI
-        run: |
-          python3 tools/apply-v78-offline-client.py
+        run: python3 tools/apply-v78-offline-client.py
 
-      - name: Verify bundled WebView
-        run: |
-          grep -q "new OfflineWebViewClient" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
-          grep -q 'APP_HOST = "dartscore-pro.vercel.app"' app/src/main/java/com/randis2288/dartscorepro/OfflineWebViewClient.java
-          ! grep -R -q "dartscore-v88-test.vercel.app" app/src/main/java src
-
-      - name: Build release bundle
+      - name: Build signed release bundle
         run: |
           chmod +x gradlew
           ./gradlew :app:bundleRelease --stacktrace
 
+      - name: Verify no native .so remains
+        run: |
+          if unzip -l app/build/outputs/bundle/release/app-release.aab | grep -E 'base/lib/.+\.so$'; then
+            echo "Unexpected native library remains in AAB"
+            exit 1
+          fi
+          echo "No native .so libraries remain; Play native debug-symbol warning should no longer apply."
+
+      - name: Verify AAB signature
+        run: jarsigner -verify app/build/outputs/bundle/release/app-release.aab
+
       - name: Upload bundle
-        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: DartScorePro_v92_1.1.58
+          name: DartScorePro_v93_1.1.59
           path: app/build/outputs/bundle/release/app-release.aab
