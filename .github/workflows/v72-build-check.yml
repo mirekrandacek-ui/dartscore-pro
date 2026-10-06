@@ -1,13 +1,9 @@
-name: v92 Production UI + Monetization
+name: v93 Checkout + Symbols Verification
 
 on:
-  push:
-    branches:
-      - release/v92-v79-prod-monetization
   pull_request:
     branches:
-      - ci/v92-build-base
-  workflow_dispatch:
+      - ci/v93c-build-base
 
 jobs:
   build:
@@ -18,39 +14,20 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Fetch production UI reference
-        run: |
-          git fetch origin 531705f126e694eb88e27d02a79e4358369520fa
+      - name: Fetch v92 reference
+        run: git fetch origin release/v92-v79-prod-monetization:refs/remotes/origin/release/v92-v79-prod-monetization
 
-      - name: Verify production UI files are untouched
+      - name: Verify only requested files changed
         run: |
-          git diff --exit-code 531705f126e694eb88e27d02a79e4358369520fa --             src/app.css             src/main.jsx             src/analyticsEvents.js             src/botEngine.js             package.json             vite.config.js \
-            index.html
-          git show 531705f126e694eb88e27d02a79e4358369520fa:src/App.jsx > /tmp/App.prod.jsx
-          python3 tools/apply-v92-interstitial.py /tmp/App.prod.jsx /tmp/App.expected.jsx
-          cmp /tmp/App.expected.jsx src/App.jsx
-
-      - name: Verify monetization changes
-        run: |
-          grep -q "interstitialStartCount" src/App.jsx
-          grep -q "interstitialPending" src/App.jsx
-          grep -q "showPendingInterstitialAfterFanfare" src/App.jsx
-          grep -q "DartScoreAndroid?.showInterstitial" src/App.jsx
-          grep -q "startGame(false)" src/App.jsx
-          ! grep -q "playedVisitsRef" src/App.jsx
-          ! grep -q "playedGamesSinceAdRef" src/App.jsx
-          grep -q "FORCE_FREE_BANNER_TEST = false" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
-          grep -q "initConsentAndAds()" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
-          grep -q "public void showInterstitial()" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
-          ! grep -q "Banner diagnostics" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
-          ! grep -q "Banner loaded" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
-          ! grep -q "openAdInspector" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
-          grep -q "com.google.ads.mediation:unity:4.16.6.0" app/build.gradle
-          grep -q "com.unity3d.ads:unity-ads:4.16.6" app/build.gradle
-          grep -q "firebase-analytics" app/build.gradle
-          grep -q "user-messaging-platform:4.0.0" app/build.gradle
-          grep -q "versionCode 92" app/build.gradle
-          grep -q "versionName \"1.1.58\"" app/build.gradle
+          git diff --name-only origin/release/v92-v79-prod-monetization...HEAD | sort > /tmp/changed.txt
+          printf '%s\n' '.github/workflows/v72-build-check.yml' 'app/build.gradle' 'src/App.jsx' | sort > /tmp/expected.txt
+          diff -u /tmp/expected.txt /tmp/changed.txt
+          git diff --check origin/release/v92-v79-prod-monetization...HEAD
+          grep -q 'if (tentative === 0)' src/App.jsx
+          ! grep -A12 'if (tentative === 0)' src/App.jsx | grep -q 'confirmCheckoutRound'
+          grep -q 'excludes += "\*\*/libdatastore_shared_counter.so"' app/build.gradle
+          grep -q 'versionCode 93' app/build.gradle
+          grep -q 'versionName "1.1.59"' app/build.gradle
 
       - name: Set up Node 20
         uses: actions/setup-node@v4
@@ -77,23 +54,26 @@ jobs:
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
       - name: Prepare bundled production UI
-        run: |
-          python3 tools/apply-v78-offline-client.py
+        run: python3 tools/apply-v78-offline-client.py
 
-      - name: Verify bundled WebView
-        run: |
-          grep -q "new OfflineWebViewClient" app/src/main/java/com/randis2288/dartscorepro/MainWebViewActivity.java
-          grep -q 'APP_HOST = "dartscore-pro.vercel.app"' app/src/main/java/com/randis2288/dartscorepro/OfflineWebViewClient.java
-          ! grep -R -q "dartscore-v88-test.vercel.app" app/src/main/java src
-
-      - name: Build release bundle
+      - name: Build signed release bundle
         run: |
           chmod +x gradlew
           ./gradlew :app:bundleRelease --stacktrace
 
+      - name: Verify no native libraries remain
+        run: |
+          if unzip -l app/build/outputs/bundle/release/app-release.aab | grep -E 'base/lib/.+\.so$'; then
+            echo "Unexpected native library remains in AAB"
+            exit 1
+          fi
+          echo "No native .so libraries remain."
+
+      - name: Verify AAB signature
+        run: jarsigner -verify app/build/outputs/bundle/release/app-release.aab
+
       - name: Upload bundle
-        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: DartScorePro_v92_1.1.58
+          name: DartScorePro_v93_1.1.59
           path: app/build/outputs/bundle/release/app-release.aab
