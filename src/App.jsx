@@ -2372,9 +2372,6 @@ const commitCricket = (value, mOverride) => {
     };
 
     const finalizeWin = (pIdx, opts = {}) => {
-      if (!opts.silentVoice && mode === 'classic') {
-        speak(lang, 'Vítěz!', voiceOn);
-      }
       try {
         if (soundOn && winAudioRef.current) {
           winAudioRef.current.currentTime = 0;
