@@ -223,8 +223,9 @@ async function enterRound(n) {
   await page.waitForTimeout(60);
 }
 async function expectWinner() {
-  await page.waitForSelector('.playerCard.winner', { timeout: 5000 });
-  return await page.locator('.playerCard.winner').count();
+  const winnerSelector = '.playerCard.winner, .playerCol.winner';
+  await page.waitForSelector(winnerSelector, { timeout: 5000 });
+  return await page.locator(winnerSelector).count();
 }
 async function clickKey(n) {
   await page.locator('.padPane').getByRole('button', { name: String(n), exact: true }).click();
