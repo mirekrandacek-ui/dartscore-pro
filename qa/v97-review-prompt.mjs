@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {
   REVIEW_MAX_PROMPTS,
@@ -69,3 +70,16 @@ doneState = onReviewDone(doneState);
 assert.equal(canShowReviewPrompt(doneState, now), false, 'rating/no-thanks permanently disables prompt');
 
 console.log('v97 review prompt targeted QA: PASS');
+
+
+const appSource = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
+for (const key of ['reviewPromptTitle', 'reviewPromptText', 'reviewNow', 'reviewLater', 'reviewNoThanks']) {
+  assert.equal((appSource.match(new RegExp(key + ':', 'g')) || []).length, 7, key + ' must exist in all 7 languages');
+}
+assert.match(appSource, /recordReviewCompletedGame\(\);/, 'completed games must feed review cadence');
+assert.match(appSource, /openRating\('auto_prompt'\)/, 'prompt rating action must use the rating flow');
+assert.match(appSource, /const rateApp = \(\) => openRating\('lobby'\);/, 'manual rating must use the same done flag');
+assert.match(appSource, /const APP_VERSION = '1\.1\.63';/);
+assert.match(appSource, /const LOBBY_DEFAULTS_VERSION = '1\.1\.62';/);
+
+console.log('v97 review prompt integration checks: PASS');
