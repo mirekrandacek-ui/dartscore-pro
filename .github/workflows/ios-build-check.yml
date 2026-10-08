@@ -1,0 +1,50 @@
+name: iOS build check
+
+on:
+  push:
+    branches:
+      - feature/ios-v97
+    paths:
+      - src/**
+      - public/**
+      - package.json
+      - package-lock.json
+      - capacitor.config.json
+      - ios/**
+      - .github/workflows/ios-build-check.yml
+
+jobs:
+  ios-build:
+    runs-on: macos-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout iOS branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frozen web bundle
+        run: npm run build
+
+      - name: Sync Capacitor iOS
+        run: npx cap sync ios
+
+      - name: Verify iOS identity
+        run: |
+          grep -q "PRODUCT_BUNDLE_IDENTIFIER = com.randis2288.dartscorepro;" ios/App/App.xcodeproj/project.pbxproj
+          grep -q "MARKETING_VERSION = 1.1.63;" ios/App/App.xcodeproj/project.pbxproj
+          grep -q "CURRENT_PROJECT_VERSION = 1;" ios/App/App.xcodeproj/project.pbxproj
+          grep -q "IPHONEOS_DEPLOYMENT_TARGET = 15.0;" ios/App/App.xcodeproj/project.pbxproj
+          /usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" ios/App/App/Info.plist | grep -qx "DartScore Pro"
+
+      - name: Compile iOS app without signing
+        run: |
+          xcodebuild             -project ios/App/App.xcodeproj             -scheme App             -configuration Release             -sdk iphonesimulator             -derivedDataPath build/ios-derived             CODE_SIGNING_ALLOWED=NO             build
