@@ -54,6 +54,7 @@ try {
 const browser = await chromium.launch({headless:true});
 const context = await browser.newContext({viewport:{width:412,height:915}});
 const page = await context.newPage();
+page.setDefaultTimeout(1500);
 const pageErrors = [];
 const consoleErrors = [];
 page.on('pageerror', e => pageErrors.push(String(e)));
