@@ -99,6 +99,7 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private ConsentInformation consentInformation;
     private boolean adsReady = false;
     private boolean currentPremiumState = false;
+    private boolean premiumStateKnown = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,25 +124,15 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
 
         initTextToSpeech();
 
-        webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                return handleUrl(request.getUrl());
-            }
-
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                return handleUrl(Uri.parse(url));
-            }
-
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
+        webView.setWebViewClient(new OfflineWebViewClient(
+            this,
+            this::handleUrl,
+            (view, url) -> {
                 injectWebFixes(view);
                 view.postDelayed(() -> injectWebFixes(view), 1000);
                 view.postDelayed(() -> injectWebFixes(view), 3000);
             }
-        });
+        ));
 
         root.addView(
             webView,
@@ -180,7 +171,10 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         initInAppUpdate();
         initConsentAndAds();
         initBilling();
-        setPremiumState(false);
+        // Keep ads suppressed until Play Billing has resolved Premium ownership.
+        // The web layer may safely promote the state to Premium earlier, but a
+        // temporary/free-looking web state must never trigger a banner request.
+        applyBannerState();
         webView.loadUrl(START_URL);
     }
 
@@ -263,12 +257,39 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     }
 
     private void setPremiumState(boolean isPremium) {
-        currentPremiumState = isPremium;
+        // A positive Premium signal is always safe to honor immediately.
+        // A negative signal from the web is only authoritative after native
+        // Play Billing has completed its ownership check.
+        if (isPremium) {
+            currentPremiumState = true;
+            premiumStateKnown = true;
+        } else if (premiumStateKnown) {
+            currentPremiumState = false;
+        }
 
-        if ((!FORCE_FREE_BANNER_TEST && isPremium) || !adsReady) {
+        applyBannerState();
+    }
+
+    private void resolvePremiumState(boolean isPremium) {
+        currentPremiumState = isPremium;
+        premiumStateKnown = true;
+        applyBannerState();
+    }
+
+    private void applyBannerState() {
+        boolean premiumBlocksAds = !FORCE_FREE_BANNER_TEST && currentPremiumState;
+
+        if (!premiumStateKnown || premiumBlocksAds || !adsReady) {
             adHost.setVisibility(View.GONE);
             bannerHeightPx = 0;
             updateBannerLayout();
+
+            if (premiumBlocksAds && adView != null) {
+                adView.destroy();
+                adView = null;
+                bannerLoaded = false;
+                adHost.removeAllViews();
+            }
             return;
         }
 
@@ -284,6 +305,12 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     }
 
     private void loadBanner() {
+        if (!premiumStateKnown
+            || (!FORCE_FREE_BANNER_TEST && currentPremiumState)
+            || !adsReady) {
+            bannerLoaded = false;
+            return;
+        }
         int widthPx = getResources().getDisplayMetrics().widthPixels;
         float density = getResources().getDisplayMetrics().density;
         int adWidthDp = Math.max(320, (int) (widthPx / density));
@@ -307,6 +334,20 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         adView.setAdListener(new AdListener() {
             @Override
             public void onAdLoaded() {
+                if (!premiumStateKnown
+                    || (!FORCE_FREE_BANNER_TEST && currentPremiumState)
+                    || !adsReady) {
+                    adHost.setVisibility(View.GONE);
+                    bannerHeightPx = 0;
+                    updateBannerLayout();
+                    if (adView != null) {
+                        adView.destroy();
+                        adView = null;
+                    }
+                    bannerLoaded = false;
+                    return;
+                }
+
                 adHost.setVisibility(View.VISIBLE);
                 updateBannerLayout();
             }
@@ -740,6 +781,10 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
                     }
                 }
 
+                if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+                    runOnUiThread(() -> resolvePremiumState(false));
+                }
+
                 if (showMessageIfMissing) {
                     nativeToast("Premium nákup nebyl nalezen.");
                 }
@@ -792,6 +837,23 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
                 );
             }
         });
+    }
+
+    private void openStoreListingNative() {
+        String packageId = getPackageName();
+        Intent marketIntent = new Intent(
+            Intent.ACTION_VIEW,
+            Uri.parse("market://details?id=" + packageId)
+        );
+
+        try {
+            startActivity(marketIntent);
+        } catch (Exception ignored) {
+            startActivity(new Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("https://play.google.com/store/apps/details?id=" + packageId)
+            ));
+        }
     }
 
     private void shareAppNative(String title, String text, String url) {
@@ -1054,6 +1116,11 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         @JavascriptInterface
         public void buyPremium() {
             runOnUiThread(MainWebViewActivity.this::launchPremiumPurchase);
+        }
+
+        @JavascriptInterface
+        public void rateApp() {
+            runOnUiThread(MainWebViewActivity.this::openStoreListingNative);
         }
 
         @JavascriptInterface

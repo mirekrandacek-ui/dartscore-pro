@@ -231,6 +231,21 @@ const T = {
     activatePremium: 'Aktivuj Premium',
     premiumAlreadyOwned: 'Kámo, Premium máš už koupené 🙂',
     gameSavedToast: 'Uloženo',
+    needPlayer: 'Přidej alespoň jednoho hráče.',
+    roundTotalInvalid: 'Zadej číslo od 0 do 180.',
+    appearanceLabel: 'Vzhled aplikace:',
+    premiumActivated: 'Premium aktivováno',
+    premiumActivatedTest: 'Premium aktivováno (test)',
+    billingUnavailable: 'Google Play nákup není v této verzi dostupný.',
+    purchaseUnavailable: 'Nákup teď není dostupný. Zavři a znovu otevři aplikaci a zkus to znovu.',
+    purchaseCancelled: 'Nákup byl zrušen.',
+    purchaseFailed: 'Nákup Premium selhal',
+    nothingToContinue: 'Nic k pokračování',
+    restoreFailed: 'Obnova selhala',
+    errorTitle: 'Ups, něco se pokazilo.',
+    errorReload: 'Zkusit znovu načíst',
+    draw: 'Remíza',
+    colorBlack: 'černá', colorGreen: 'zelená', colorBlue: 'modrá', colorRed: 'červená', colorPurple: 'fialová',
     filter: 'Filtr', all: 'Vše', week: 'Týden', month: 'Měsíc', year: 'Rok',
     h2h: 'Vzájemné zápasy', selectPlayer: 'Vyber hráče', wins: 'výhry',
     // Pravidla – plně lokalizovaná
@@ -313,6 +328,21 @@ premiumNote: "One-time payment. No subscription.",
 activatePremium: 'Activate Premium',
   premiumAlreadyOwned: 'Buddy, you already own Premium 🙂',
   gameSavedToast: 'Saved',
+  needPlayer: 'Add at least one player.',
+  roundTotalInvalid: 'Enter a number from 0 to 180.',
+  appearanceLabel: 'App appearance:',
+  premiumActivated: 'Premium activated',
+  premiumActivatedTest: 'Premium activated (test)',
+  billingUnavailable: 'Google Play purchase is not available in this version.',
+  purchaseUnavailable: 'Purchases are unavailable right now. Close and reopen the app, then try again.',
+  purchaseCancelled: 'Purchase cancelled.',
+  purchaseFailed: 'Premium purchase failed',
+  nothingToContinue: 'No saved game to continue.',
+  restoreFailed: 'Restore failed.',
+  errorTitle: 'Oops, something went wrong.',
+  errorReload: 'Reload the app',
+  draw: 'Draw',
+  colorBlack: 'black', colorGreen: 'green', colorBlue: 'blue', colorRed: 'red', colorPurple: 'purple',
     },
   de: {
     app: 'DartScore Pro', sound: 'Ton', voice: 'Stimme', back: 'Zurück',
@@ -358,6 +388,21 @@ activatePremium: 'Activate Premium',
     activatePremium: 'Premium aktivieren',
     premiumAlreadyOwned: 'Premium gehört dir schon 🙂',
     gameSavedToast: 'Gespeichert',
+    needPlayer: 'Füge mindestens einen Spieler hinzu.',
+    roundTotalInvalid: 'Gib eine Zahl von 0 bis 180 ein.',
+    appearanceLabel: 'App-Darstellung:',
+    premiumActivated: 'Premium aktiviert',
+    premiumActivatedTest: 'Premium aktiviert (Test)',
+    billingUnavailable: 'Google-Play-Kauf ist in dieser Version nicht verfügbar.',
+    purchaseUnavailable: 'Käufe sind momentan nicht verfügbar. Schließe und öffne die App erneut und versuche es noch einmal.',
+    purchaseCancelled: 'Kauf abgebrochen.',
+    purchaseFailed: 'Premium-Kauf fehlgeschlagen',
+    nothingToContinue: 'Kein gespeichertes Spiel zum Fortsetzen.',
+    restoreFailed: 'Wiederherstellung fehlgeschlagen.',
+    errorTitle: 'Ups, etwas ist schiefgelaufen.',
+    errorReload: 'App neu laden',
+    draw: 'Unentschieden',
+    colorBlack: 'schwarz', colorGreen: 'grün', colorBlue: 'blau', colorRed: 'rot', colorPurple: 'lila',
     filter: 'Filter', all: 'Alle', week: 'Woche', month: 'Monat', year: 'Jahr',
     h2h: 'Direkte Duelle', selectPlayer: 'Spieler wählen', wins: 'Siege',
     rulesClassic:
@@ -421,6 +466,21 @@ premiumNote: "Einmalige Zahlung. Kein Abo.",
     activatePremium: 'Activar Premium',
     premiumAlreadyOwned: 'Premium ya es tuyo 🙂',
     gameSavedToast: 'Guardado',
+    needPlayer: 'Añade al menos un jugador.',
+    roundTotalInvalid: 'Introduce un número de 0 a 180.',
+    appearanceLabel: 'Apariencia de la app:',
+    premiumActivated: 'Premium activado',
+    premiumActivatedTest: 'Premium activado (prueba)',
+    billingUnavailable: 'La compra de Google Play no está disponible en esta versión.',
+    purchaseUnavailable: 'Las compras no están disponibles ahora. Cierra y vuelve a abrir la app e inténtalo de nuevo.',
+    purchaseCancelled: 'Compra cancelada.',
+    purchaseFailed: 'La compra de Premium ha fallado',
+    nothingToContinue: 'No hay una partida guardada para continuar.',
+    restoreFailed: 'La restauración ha fallado.',
+    errorTitle: 'Ups, algo salió mal.',
+    errorReload: 'Volver a cargar la app',
+    draw: 'Empate',
+    colorBlack: 'negro', colorGreen: 'verde', colorBlue: 'azul', colorRed: 'rojo', colorPurple: 'morado',
     filter: 'Filtro', all: 'Todo', week: 'Semana', month: 'Mes', year: 'Año',
     h2h: 'Cara a cara', selectPlayer: 'Elige jugador', wins: 'victorias',
     rulesClassic:
@@ -484,6 +544,21 @@ premiumNote: "Pago único. Sin suscripción.",
     activatePremium: 'Premium activeren',
     premiumAlreadyOwned: 'Premium is al van jou 🙂',
     gameSavedToast: 'Opgeslagen',
+    needPlayer: 'Voeg minimaal één speler toe.',
+    roundTotalInvalid: 'Voer een getal van 0 tot 180 in.',
+    appearanceLabel: 'App-weergave:',
+    premiumActivated: 'Premium geactiveerd',
+    premiumActivatedTest: 'Premium geactiveerd (test)',
+    billingUnavailable: 'Google Play-aankopen zijn in deze versie niet beschikbaar.',
+    purchaseUnavailable: 'Aankopen zijn nu niet beschikbaar. Sluit en open de app opnieuw en probeer het nog eens.',
+    purchaseCancelled: 'Aankoop geannuleerd.',
+    purchaseFailed: 'Premium-aankoop mislukt',
+    nothingToContinue: 'Geen opgeslagen spel om verder te gaan.',
+    restoreFailed: 'Herstellen mislukt.',
+    errorTitle: 'Oeps, er ging iets mis.',
+    errorReload: 'App opnieuw laden',
+    draw: 'Gelijkspel',
+    colorBlack: 'zwart', colorGreen: 'groen', colorBlue: 'blauw', colorRed: 'rood', colorPurple: 'paars',
     filter: 'Filter', all: 'Alles', week: 'Week', month: 'Maand', year: 'Jaar',
     h2h: 'Onderling', selectPlayer: 'Kies speler', wins: 'zeges',
     rulesClassic:
@@ -547,6 +622,21 @@ premiumNote: "Eenmalige betaling. Geen abonnement.",
     activatePremium: 'Активировать Premium',
     premiumAlreadyOwned: 'Premium уже у тебя 🙂',
     gameSavedToast: 'Сохранено',
+    needPlayer: 'Добавь хотя бы одного игрока.',
+    roundTotalInvalid: 'Введи число от 0 до 180.',
+    appearanceLabel: 'Внешний вид приложения:',
+    premiumActivated: 'Premium активирован',
+    premiumActivatedTest: 'Premium активирован (тест)',
+    billingUnavailable: 'Покупка через Google Play недоступна в этой версии.',
+    purchaseUnavailable: 'Покупки сейчас недоступны. Закрой и снова открой приложение, затем попробуй ещё раз.',
+    purchaseCancelled: 'Покупка отменена.',
+    purchaseFailed: 'Не удалось купить Premium',
+    nothingToContinue: 'Нет сохранённой игры для продолжения.',
+    restoreFailed: 'Не удалось восстановить игру.',
+    errorTitle: 'Упс, что-то пошло не так.',
+    errorReload: 'Перезагрузить приложение',
+    draw: 'Ничья',
+    colorBlack: 'чёрный', colorGreen: 'зелёный', colorBlue: 'синий', colorRed: 'красный', colorPurple: 'фиолетовый',
     filter: 'Фильтр', all: 'Все', week: 'Неделя', month: 'Месяц', year: 'Год',
     h2h: 'Личные встречи', selectPlayer: 'Выбери игрока', wins: 'побед',
     rulesClassic:
@@ -593,6 +683,9 @@ premiumNote: "Разовая оплата. Без подписки.",
     teamC: '团队 C',
     teamNeedPlayers: '至少两个团队必须有玩家。',
     rouletteTotalPoints: '总分', roundCount: '轮数',
+    shareApp: '分享应用',
+    shareText: 'DartScore Pro – 飞镖计分器',
+    linkCopied: '链接已复制',
     scoreInputType: '计分方式',
       scoreInput: '输入',
       scoreByDarts: '按镖输入',
@@ -609,6 +702,21 @@ premiumNote: "Разовая оплата. Без подписки.",
     activatePremium: '激活 Premium',
     premiumAlreadyOwned: '你已经拥有高级版 🙂',
     gameSavedToast: '已保存',
+    needPlayer: '请至少添加一名玩家。',
+    roundTotalInvalid: '请输入 0 到 180 之间的数字。',
+    appearanceLabel: '应用外观：',
+    premiumActivated: 'Premium 已激活',
+    premiumActivatedTest: 'Premium 已激活（测试）',
+    billingUnavailable: '此版本暂不支持 Google Play 购买。',
+    purchaseUnavailable: '当前无法购买。请关闭并重新打开应用后再试。',
+    purchaseCancelled: '购买已取消。',
+    purchaseFailed: 'Premium 购买失败',
+    nothingToContinue: '没有可继续的已保存对局。',
+    restoreFailed: '恢复失败。',
+    errorTitle: '糟糕，出现了问题。',
+    errorReload: '重新加载应用',
+    draw: '平局',
+    colorBlack: '黑色', colorGreen: '绿色', colorBlue: '蓝色', colorRed: '红色', colorPurple: '紫色',
     filter: '筛选', all: '全部', week: '一周', month: '一月', year: '一年',
     h2h: '对战', selectPlayer: '选玩家', wins: '胜',
     rulesClassic:
@@ -866,7 +974,7 @@ class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div style={{ padding: 16, color: '#fff', background: '#111', minHeight: '100vh' }}>
-          <h2>Ups, něco se pokazilo.</h2>
+          <h2>{t(this.props.lang || 'en', 'errorTitle')}</h2>
           <div style={{ opacity: .8, whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: 12, marginTop: 12 }}>
             {this.state.info}
           </div>
@@ -874,7 +982,7 @@ class ErrorBoundary extends React.Component {
             onClick={() => location.reload()}
             style={{ marginTop: 16 }}
           >
-            Zkusit znovu načíst
+            {t(this.props.lang || 'en', 'errorReload')}
           </button>
         </div>
       );
@@ -1110,7 +1218,7 @@ function App() {
   const winAudioRef = useRef(null);
   /* persist screen */
 
-  const APP_VERSION = '1.1.19';
+  const APP_VERSION = '1.1.62';
   const LOBBY_DEFAULTS_VERSION = APP_VERSION;
 
   /* načti lobby z localStorage */
@@ -1475,21 +1583,31 @@ function App() {
   const finishRouletteIfComplete = (nextScores, nextThrown, nextRoulette) => {
     if (!isRouletteGameComplete(nextThrown, nextRoulette)) return false;
 
-    let bestIdx = 0;
-    let bestScore = nextScores[0] ?? 0;
+    const bestScore = Math.max(...nextScores.map(score => score ?? 0));
+    const bestIndexes = nextScores
+      .map((score, ix) => ({ score: score ?? 0, ix }))
+      .filter(item => item.score === bestScore)
+      .map(item => item.ix);
 
-    nextScores.forEach((score, ix) => {
-      if ((score ?? 0) > bestScore) {
-        bestScore = score ?? 0;
-        bestIdx = ix;
-      }
-    });
+    if (bestIndexes.length > 1) {
+      finalizeWin(-1, {
+        silentVoice: false,
+        draw: true,
+        tiedIndexes: bestIndexes
+      });
+      return true;
+    }
 
-    finalizeWin(bestIdx, { silentVoice: false });
+    finalizeWin(bestIndexes[0], { silentVoice: false });
     return true;
   };
 
   const startGame = (countAsLobbyStart = true) => {
+    if (!Array.isArray(players) || players.length === 0) {
+      showToast(t(lang, 'needPlayer'));
+      return;
+    }
+
     try {
       let previousGame = null;
       if (screen === 'game') {
@@ -2385,14 +2503,23 @@ const commitCricket = (value, mOverride) => {
       {
         try {
           const list = JSON.parse(localStorage.getItem('finishedGames') || '[]');
+          const classicTeamWin = mode === 'classic' && playerMode === 'teams' && !opts.draw;
           const gameRecord = {
             ts: Date.now(),
             mode, startScore,
             outDouble, outTriple, outMaster,
             randomOrder, playThrough,
             players: players.map(p => p.name),
-            winner: players[pIdx]?.name || ''
+            winner: opts.draw
+              ? ''
+              : (classicTeamWin ? teamNameByIndex(pIdx) : (players[pIdx]?.name || ''))
           };
+          if (opts.draw) {
+            gameRecord.result = 'draw';
+            gameRecord.tiedPlayers = (opts.tiedIndexes || [])
+              .map(ix => players[ix]?.name)
+              .filter(Boolean);
+          }
           if (mode === 'classic' && playerMode === 'individual') {
             const visitsForRecord = opts.finalVisit
               ? [...classicVisitHistory, opts.finalVisit]
@@ -2413,16 +2540,20 @@ const commitCricket = (value, mOverride) => {
                   .filter(ix => players.some((_, pIx) => scoreIndexForPlayer(pIx) === ix))
                   .map(ix => ({
                     name: teamNameByIndex(ix),
-                    remaining: scores[ix] ?? 0
+                    remaining: ix === pIdx ? 0 : (scores[ix] ?? 0)
                   }))
               : players.map((p, ix) => ({
                   name: p.name,
-                  remaining: scores[ix] ?? 0
+                  remaining: ix === pIdx ? 0 : (scores[ix] ?? 0)
                 }));
           }
           list.unshift(gameRecord);
           localStorage.setItem('finishedGames', JSON.stringify(list.slice(0, 200)));
         } catch { }
+      }
+
+      if (opts.draw) {
+        showToast(t(lang, 'draw'));
       }
     };
 
@@ -2817,12 +2948,12 @@ const buyPremium = async () => {
       setIsPremium(true);
       localStorage.setItem('premium', 'true');
       setShowAd(false);
-      showToast('Premium aktivováno (test)');
+      showToast(t(lang, 'premiumActivatedTest'));
       return;
     }
 
     if (!hasDigitalGoods || !hasPaymentRequest) {
-      showToast('Google Play nákup není v této verzi dostupný');
+      showToast(t(lang, 'billingUnavailable'));
       return;
     }
 
@@ -2894,7 +3025,7 @@ const buyPremium = async () => {
     setIsPremium(true);
     localStorage.setItem('premium', 'true');
     setShowAd(false);
-    showToast('Premium aktivováno');
+    showToast(t(lang, 'premiumActivated'));
   } catch (err) {
     const msg = String(err?.message || err || '');
     const msgLower = msg.toLowerCase();
@@ -2926,16 +3057,16 @@ const buyPremium = async () => {
       msg.includes('clientAppUnavailable') ||
       msg.includes('Billing service is unavailable')
     ) {
-      showToast('Nákup teď není dostupný. Zavři a znovu otevři aplikaci a zkus to znovu.');
+      showToast(t(lang, 'purchaseUnavailable'));
       return;
     }
 
     if (msg.includes('AbortError')) {
-      showToast('Nákup byl zrušen.');
+      showToast(t(lang, 'purchaseCancelled'));
       return;
     }
 
-    showToast(`Nákup Premium selhal: ${msg}`);
+    showToast(`${t(lang, 'purchaseFailed')}: ${msg}`);
   }
 };
     const makeSnapshot = () => ({
@@ -3033,7 +3164,7 @@ const buyPremium = async () => {
 
         if (!isValidSavedGame(s)) {
           localStorage.removeItem('savedGame');
-          showToast('Nic k pokračování');
+          showToast(t(lang, 'nothingToContinue'));
           return;
         }
 
@@ -3075,7 +3206,7 @@ const buyPremium = async () => {
       } catch (e) {
         console.error(e);
         localStorage.removeItem('savedGame');
-        showToast('Obnova selhala');
+        showToast(t(lang, 'restoreFailed'));
       }
     };
 
@@ -3135,9 +3266,15 @@ const buyPremium = async () => {
       });
 
       try {
-        window.open(url, '_blank', 'noopener,noreferrer');
+        if (window.DartScoreAndroid?.rateApp) {
+          window.DartScoreAndroid.rateApp();
+          return;
+        }
+
+        const opened = window.open(url, '_blank', 'noopener,noreferrer');
+        if (!opened) window.location.assign(url);
       } catch {
-        window.location.href = url;
+        window.location.assign(url);
       }
     };
 
@@ -3158,7 +3295,7 @@ const buyPremium = async () => {
     })();
 
     return (
-      <ErrorBoundary>
+      <ErrorBoundary lang={lang}>
         <div
           className="container"
           data-mode={mode}
@@ -3432,22 +3569,7 @@ const buyPremium = async () => {
     undo={undo}
     winner={winner}
     saveGame={() => {
-      try {
-        const list = JSON.parse(localStorage.getItem('finishedGames') || '[]');
-        list.unshift({
-          ts: Date.now(),
-          mode,
-          startScore,
-          outDouble,
-          outTriple,
-          outMaster,
-          randomOrder,
-          playThrough,
-          players: players.map(p => p.name),
-          winner: players[order[currIdx]]?.name || ''
-        });
-        localStorage.setItem('finishedGames', JSON.stringify(list.slice(0, 200)));
-      } catch {}
+      saveSnapshot();
       showToast(t(lang, 'gameSavedToast'));
     }}
     restartGame={restartGame}
@@ -3842,20 +3964,21 @@ function Lobby({
 >
   {t(lang, 'premiumInfoButton')}
 </button>
-            <button
-              type="button"
-              className="btn"
-              data-analytics-action="premium_purchase_started"
-              onClick={buyPremium}           
-              style={{
-                minWidth: 90,
-                fontWeight: 800,
-                borderColor: 'var(--accent)',
-                boxShadow: isPremium ? '0 0 6px var(--accent)' : 'none'
-              }}
-            >
-            {t(lang, 'activatePremium')}
-            </button>
+            {!isPremium && (
+              <button
+                type="button"
+                className="btn"
+                data-analytics-action="premium_purchase_started"
+                onClick={buyPremium}
+                style={{
+                  minWidth: 90,
+                  fontWeight: 800,
+                  borderColor: 'var(--accent)'
+                }}
+              >
+                {t(lang, 'activatePremium')}
+              </button>
+            )}
                      </div>
 {showPremiumDetails && (
   <div style={{
@@ -3881,7 +4004,7 @@ function Lobby({
                   fontWeight: 600
                 }}
               >
-                Vzhled aplikace:
+                {t(lang, 'appearanceLabel')}
               </div>
 
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -3898,7 +4021,7 @@ function Lobby({
                     cursor: 'pointer',
                     boxShadow: themeColor === 'black' ? '0 0 6px #fff' : 'none'
                   }}
-                  title="černá"
+                  title={t(lang, 'colorBlack')}
                 />
 
                 <button
@@ -3913,7 +4036,7 @@ function Lobby({
                     cursor: 'pointer',
                     boxShadow: themeColor === 'green' ? '0 0 6px #fff' : 'none'
                   }}
-                  title="zelená"
+                  title={t(lang, 'colorGreen')}
                 />
 
                 <button
@@ -3928,7 +4051,7 @@ function Lobby({
                     cursor: 'pointer',
                     boxShadow: themeColor === 'blue' ? '0 0 6px #fff' : 'none'
                   }}
-                  title="modrá"
+                  title={t(lang, 'colorBlue')}
                 />
 
                 <button
@@ -3943,7 +4066,7 @@ function Lobby({
                     cursor: 'pointer',
                     boxShadow: themeColor === 'red' ? '0 0 6px #fff' : 'none'
                   }}
-                  title="červená"
+                  title={t(lang, 'colorRed')}
                 />
 
                 <button
@@ -3958,7 +4081,7 @@ function Lobby({
                     cursor: 'pointer',
                     boxShadow: themeColor === 'purple' ? '0 0 6px #fff' : 'none'
                   }}
-                  title="fialová"
+                  title={t(lang, 'colorPurple')}
                 />
               </div>
             </div>
@@ -4189,13 +4312,13 @@ function Lobby({
     const [p2, setP2] = useState('');
 
     const STATS_I18N = {
-      cs:{statistics:'Statistiky',noSaved:'Zatím nejsou odehrané žádné uložené zápasy.',overview:'Přehled',h2h:'Vzájemné zápasy',all:'Vše',week:'Týden',month:'Měsíc',year:'Rok',avg3:'Průměr / 3 šipky',first9:'Prvních 9',checkoutPct:'Checkout %',checkoutPending:'Přesná evidence pokusů bude doplněna',highestCheckout:'Nejvyšší checkout',scoring:'Náhozy',performance:'Výkony',bestLeg:'Nejlepší leg (šipky)',avgDartsLeg:'Průměr šipek / leg',highestScore:'Nejvyšší nához',winRate:'Úspěšnost výher',matches:'vzájemných zápasů',legs:'Legy',sets:'Sety',last5:'Forma posledních 5',avgTrend:'Trend průměru',matchHistory:'Historie vzájemných zápasů',won:'vyhrál',checkout:'Checkout',detailed:({detailed,total})=>`Detailní metriky jsou dostupné u ${detailed} z ${total} zápasů. Starší zápasy zůstávají započítané do výher.`,older:'Starší zápasy jsou započítané do H2H skóre a úspěšnosti výher. Detailní metriky se plní jen u nově uložených zápasů.'},
-      en:{statistics:'Statistics',noSaved:'No saved matches yet.',overview:'Overview',h2h:'Head-to-Head',all:'All',week:'Week',month:'Month',year:'Year',avg3:'3-dart AVG',first9:'First 9',checkoutPct:'Checkout %',checkoutPending:'Exact attempt tracking pending',highestCheckout:'Highest checkout',scoring:'Scoring',performance:'Performance',bestLeg:'Best leg (darts)',avgDartsLeg:'Avg darts / leg',highestScore:'Highest score',winRate:'Win rate',matches:'matches',legs:'Legs',sets:'Sets',last5:'Last 5 form',avgTrend:'AVG trend',matchHistory:'Match history',won:'won',checkout:'Checkout',detailed:({detailed,total})=>`Detailed metrics are available for ${detailed} of ${total} matches. Older matches still count toward wins.`,older:'Older matches count toward H2H score and win rate. Detailed metrics populate for newly saved matches.'},
-      de:{statistics:'Statistiken',noSaved:'Noch keine gespeicherten Spiele.',overview:'Übersicht',h2h:'Direkte Duelle',all:'Alle',week:'Woche',month:'Monat',year:'Jahr',avg3:'3-Dart-Schnitt',first9:'Erste 9',checkoutPct:'Checkout %',checkoutPending:'Exakte Versuchsstatistik folgt',highestCheckout:'Höchstes Checkout',scoring:'Scoring',performance:'Leistung',bestLeg:'Bestes Leg (Darts)',avgDartsLeg:'Ø Darts / Leg',highestScore:'Höchster Score',winRate:'Siegquote',matches:'direkte Duelle',legs:'Legs',sets:'Sätze',last5:'Form letzte 5',avgTrend:'AVG-Trend',matchHistory:'Duell-Historie',won:'gewann',checkout:'Checkout',detailed:({detailed,total})=>`Detaillierte Werte sind für ${detailed} von ${total} Spielen verfügbar. Ältere Spiele zählen weiter für Siege.`,older:'Ältere Spiele zählen für H2H und Siegquote. Detailwerte werden nur bei neu gespeicherten Spielen erfasst.'},
-      es:{statistics:'Estadísticas',noSaved:'Aún no hay partidas guardadas.',overview:'Resumen',h2h:'Cara a cara',all:'Todo',week:'Semana',month:'Mes',year:'Año',avg3:'Promedio / 3 dardos',first9:'Primeros 9',checkoutPct:'Checkout %',checkoutPending:'El registro exacto de intentos se añadirá',highestCheckout:'Checkout más alto',scoring:'Puntuación',performance:'Rendimiento',bestLeg:'Mejor leg (dardos)',avgDartsLeg:'Prom. dardos / leg',highestScore:'Puntuación más alta',winRate:'Porcentaje de victorias',matches:'enfrentamientos',legs:'Legs',sets:'Sets',last5:'Forma últimos 5',avgTrend:'Tendencia AVG',matchHistory:'Historial de enfrentamientos',won:'ganó',checkout:'Checkout',detailed:({detailed,total})=>`Las métricas detalladas están disponibles en ${detailed} de ${total} partidas. Las anteriores siguen contando para las victorias.`,older:'Las partidas anteriores cuentan para el H2H y el porcentaje de victorias. Las métricas detalladas solo se guardan en partidas nuevas.'},
-      nl:{statistics:'Statistieken',noSaved:'Nog geen opgeslagen wedstrijden.',overview:'Overzicht',h2h:'Onderling',all:'Alles',week:'Week',month:'Maand',year:'Jaar',avg3:'Gem. / 3 darts',first9:'Eerste 9',checkoutPct:'Checkout %',checkoutPending:'Exacte pogingregistratie volgt',highestCheckout:'Hoogste checkout',scoring:'Scores',performance:'Prestaties',bestLeg:'Beste leg (darts)',avgDartsLeg:'Gem. darts / leg',highestScore:'Hoogste score',winRate:'Winstpercentage',matches:'onderlinge wedstrijden',legs:'Legs',sets:'Sets',last5:'Vorm laatste 5',avgTrend:'AVG-trend',matchHistory:'Onderlinge historie',won:'won',checkout:'Checkout',detailed:({detailed,total})=>`Gedetailleerde statistieken zijn beschikbaar voor ${detailed} van ${total} wedstrijden. Oudere wedstrijden blijven meetellen voor winst.`,older:'Oudere wedstrijden tellen mee voor H2H en winstpercentage. Detailstatistieken worden alleen bij nieuwe wedstrijden opgeslagen.'},
-      ru:{statistics:'Статистика',noSaved:'Сохранённых матчей пока нет.',overview:'Обзор',h2h:'Личные встречи',all:'Все',week:'Неделя',month:'Месяц',year:'Год',avg3:'Среднее / 3 дротика',first9:'Первые 9',checkoutPct:'Checkout %',checkoutPending:'Точный учёт попыток будет добавлен',highestCheckout:'Максимальный checkout',scoring:'Наборы',performance:'Результаты',bestLeg:'Лучший лег (дротики)',avgDartsLeg:'Ср. дротиков / лег',highestScore:'Максимальный набор',winRate:'Процент побед',matches:'очных матчей',legs:'Леги',sets:'Сеты',last5:'Форма за 5 матчей',avgTrend:'Тренд среднего',matchHistory:'История личных встреч',won:'победил',checkout:'Checkout',detailed:({detailed,total})=>`Подробная статистика доступна для ${detailed} из ${total} матчей. Старые матчи по-прежнему учитываются в победах.`,older:'Старые матчи учитываются в H2H и проценте побед. Подробные метрики сохраняются только для новых матчей.'},
-      zh:{statistics:'统计',noSaved:'暂无已保存的比赛。',overview:'概览',h2h:'对战',all:'全部',week:'一周',month:'一月',year:'一年',avg3:'3镖平均',first9:'前9镖',checkoutPct:'结镖率',checkoutPending:'精确尝试次数统计稍后加入',highestCheckout:'最高结镖',scoring:'得分',performance:'表现',bestLeg:'最佳局（镖数）',avgDartsLeg:'平均镖数 / 局',highestScore:'最高得分',winRate:'胜率',matches:'场对战',legs:'局',sets:'盘',last5:'最近5场状态',avgTrend:'平均分趋势',matchHistory:'对战记录',won:'获胜',checkout:'结镖',detailed:({detailed,total})=>`详细数据适用于 ${detailed}/${total} 场比赛。旧比赛仍计入胜场。`,older:'旧比赛仍计入对战比分和胜率。详细数据仅记录新保存的比赛。'}
+      cs:{statistics:'Statistiky',noSaved:'Zatím nejsou odehrané žádné uložené zápasy.',overview:'Přehled',h2h:'Vzájemné zápasy',all:'Vše',week:'Týden',month:'Měsíc',year:'Rok',avg3:'Průměr / 3 šipky',first9:'Prvních 9',checkoutPct:'Checkout %',checkoutPending:'Přesná evidence pokusů bude doplněna',highestCheckout:'Nejvyšší checkout',scoring:'Náhozy',performance:'Výkony',bestLeg:'Nejlepší leg (šipky)',avgDartsLeg:'Průměr šipek / leg',highestScore:'Nejvyšší nához',winRate:'Úspěšnost výher',matches:'vzájemných zápasů',legs:'Legy',sets:'Sety',last5:'Forma posledních 5',avgTrend:'Trend průměru',matchHistory:'Historie vzájemných zápasů',won:'vyhrál',draw:'remíza',checkout:'Checkout',detailed:({detailed,total})=>`Detailní metriky jsou dostupné u ${detailed} z ${total} zápasů. Starší zápasy zůstávají započítané do výher.`,older:'Starší zápasy jsou započítané do H2H skóre a úspěšnosti výher. Detailní metriky se plní jen u nově uložených zápasů.'},
+      en:{statistics:'Statistics',noSaved:'No saved matches yet.',overview:'Overview',h2h:'Head-to-Head',all:'All',week:'Week',month:'Month',year:'Year',avg3:'3-dart AVG',first9:'First 9',checkoutPct:'Checkout %',checkoutPending:'Exact attempt tracking pending',highestCheckout:'Highest checkout',scoring:'Scoring',performance:'Performance',bestLeg:'Best leg (darts)',avgDartsLeg:'Avg darts / leg',highestScore:'Highest score',winRate:'Win rate',matches:'matches',legs:'Legs',sets:'Sets',last5:'Last 5 form',avgTrend:'AVG trend',matchHistory:'Match history',won:'won',draw:'draw',checkout:'Checkout',detailed:({detailed,total})=>`Detailed metrics are available for ${detailed} of ${total} matches. Older matches still count toward wins.`,older:'Older matches count toward H2H score and win rate. Detailed metrics populate for newly saved matches.'},
+      de:{statistics:'Statistiken',noSaved:'Noch keine gespeicherten Spiele.',overview:'Übersicht',h2h:'Direkte Duelle',all:'Alle',week:'Woche',month:'Monat',year:'Jahr',avg3:'3-Dart-Schnitt',first9:'Erste 9',checkoutPct:'Checkout %',checkoutPending:'Exakte Versuchsstatistik folgt',highestCheckout:'Höchstes Checkout',scoring:'Scoring',performance:'Leistung',bestLeg:'Bestes Leg (Darts)',avgDartsLeg:'Ø Darts / Leg',highestScore:'Höchster Score',winRate:'Siegquote',matches:'direkte Duelle',legs:'Legs',sets:'Sätze',last5:'Form letzte 5',avgTrend:'AVG-Trend',matchHistory:'Duell-Historie',won:'gewann',draw:'Unentschieden',checkout:'Checkout',detailed:({detailed,total})=>`Detaillierte Werte sind für ${detailed} von ${total} Spielen verfügbar. Ältere Spiele zählen weiter für Siege.`,older:'Ältere Spiele zählen für H2H und Siegquote. Detailwerte werden nur bei neu gespeicherten Spielen erfasst.'},
+      es:{statistics:'Estadísticas',noSaved:'Aún no hay partidas guardadas.',overview:'Resumen',h2h:'Cara a cara',all:'Todo',week:'Semana',month:'Mes',year:'Año',avg3:'Promedio / 3 dardos',first9:'Primeros 9',checkoutPct:'Checkout %',checkoutPending:'El registro exacto de intentos se añadirá',highestCheckout:'Checkout más alto',scoring:'Puntuación',performance:'Rendimiento',bestLeg:'Mejor leg (dardos)',avgDartsLeg:'Prom. dardos / leg',highestScore:'Puntuación más alta',winRate:'Porcentaje de victorias',matches:'enfrentamientos',legs:'Legs',sets:'Sets',last5:'Forma últimos 5',avgTrend:'Tendencia AVG',matchHistory:'Historial de enfrentamientos',won:'ganó',draw:'empate',checkout:'Checkout',detailed:({detailed,total})=>`Las métricas detalladas están disponibles en ${detailed} de ${total} partidas. Las anteriores siguen contando para las victorias.`,older:'Las partidas anteriores cuentan para el H2H y el porcentaje de victorias. Las métricas detalladas solo se guardan en partidas nuevas.'},
+      nl:{statistics:'Statistieken',noSaved:'Nog geen opgeslagen wedstrijden.',overview:'Overzicht',h2h:'Onderling',all:'Alles',week:'Week',month:'Maand',year:'Jaar',avg3:'Gem. / 3 darts',first9:'Eerste 9',checkoutPct:'Checkout %',checkoutPending:'Exacte pogingregistratie volgt',highestCheckout:'Hoogste checkout',scoring:'Scores',performance:'Prestaties',bestLeg:'Beste leg (darts)',avgDartsLeg:'Gem. darts / leg',highestScore:'Hoogste score',winRate:'Winstpercentage',matches:'onderlinge wedstrijden',legs:'Legs',sets:'Sets',last5:'Vorm laatste 5',avgTrend:'AVG-trend',matchHistory:'Onderlinge historie',won:'won',draw:'gelijkspel',checkout:'Checkout',detailed:({detailed,total})=>`Gedetailleerde statistieken zijn beschikbaar voor ${detailed} van ${total} wedstrijden. Oudere wedstrijden blijven meetellen voor winst.`,older:'Oudere wedstrijden tellen mee voor H2H en winstpercentage. Detailstatistieken worden alleen bij nieuwe wedstrijden opgeslagen.'},
+      ru:{statistics:'Статистика',noSaved:'Сохранённых матчей пока нет.',overview:'Обзор',h2h:'Личные встречи',all:'Все',week:'Неделя',month:'Месяц',year:'Год',avg3:'Среднее / 3 дротика',first9:'Первые 9',checkoutPct:'Checkout %',checkoutPending:'Точный учёт попыток будет добавлен',highestCheckout:'Максимальный checkout',scoring:'Наборы',performance:'Результаты',bestLeg:'Лучший лег (дротики)',avgDartsLeg:'Ср. дротиков / лег',highestScore:'Максимальный набор',winRate:'Процент побед',matches:'очных матчей',legs:'Леги',sets:'Сеты',last5:'Форма за 5 матчей',avgTrend:'Тренд среднего',matchHistory:'История личных встреч',won:'победил',draw:'ничья',checkout:'Checkout',detailed:({detailed,total})=>`Подробная статистика доступна для ${detailed} из ${total} матчей. Старые матчи по-прежнему учитываются в победах.`,older:'Старые матчи учитываются в H2H и проценте побед. Подробные метрики сохраняются только для новых матчей.'},
+      zh:{statistics:'统计',noSaved:'暂无已保存的比赛。',overview:'概览',h2h:'对战',all:'全部',week:'一周',month:'一月',year:'一年',avg3:'3镖平均',first9:'前9镖',checkoutPct:'结镖率',checkoutPending:'精确尝试次数统计稍后加入',highestCheckout:'最高结镖',scoring:'得分',performance:'表现',bestLeg:'最佳局（镖数）',avgDartsLeg:'平均镖数 / 局',highestScore:'最高得分',winRate:'胜率',matches:'场对战',legs:'局',sets:'盘',last5:'最近5场状态',avgTrend:'平均分趋势',matchHistory:'对战记录',won:'获胜',draw:'平局',checkout:'结镖',detailed:({detailed,total})=>`详细数据适用于 ${detailed}/${total} 场比赛。旧比赛仍计入胜场。`,older:'旧比赛仍计入对战比分和胜率。详细数据仅记录新保存的比赛。'}
     };
     const S=(key,vars)=>{const pack=STATS_I18N[lang]||STATS_I18N.en;const value=pack[key]??STATS_I18N.en[key]??key;return typeof value==='function'?value(vars||{}):value;};
     const now = Date.now();
@@ -4378,7 +4501,9 @@ function Lobby({
                 {h2hGames.length ? h2hGames.map((g,idx) => {
                   const s1=(g.playerStats||[]).find(s=>s.name===p1), s2=(g.playerStats||[]).find(s=>s.name===p2);
                   return <details key={`${g.ts}-${idx}`} style={{ border:'1px solid var(--line)', borderRadius:10, padding:'8px 10px', background:'rgba(255,255,255,.02)' }}>
-                    <summary style={{ cursor:'pointer', fontWeight:800 }}>{new Date(g.ts).toLocaleDateString()} · {g.winner === p1 ? p1 : p2} {S('won')}</summary>
+                    <summary style={{ cursor:'pointer', fontWeight:800 }}>
+                      {new Date(g.ts).toLocaleDateString()} · {g.result === 'draw' ? S('draw') : `${g.winner === p1 ? p1 : p2} ${S('won')}`}
+                    </summary>
                     <div style={{ marginTop:8 }}>{compareRow(fmt(s1?.avg3), 'AVG', fmt(s2?.avg3))}{compareRow(fmt(s1?.first9Avg), 'First 9', fmt(s2?.first9Avg))}{compareRow(s1?.legsWon ?? '—', 'Legs', s2?.legsWon ?? '—')}{compareRow(s1?.setsWon ?? '—', 'Sets', s2?.setsWon ?? '—')}{compareRow(s1?.highestCheckout ?? '—', S('checkout'), s2?.highestCheckout ?? '—')}</div>
                   </details>;
                 }) : <div style={{ opacity:.65 }}>—</div>}
@@ -4405,6 +4530,10 @@ function Lobby({
   }) {
     const HEAD_H = 40;
     const [roundScoreInput, setRoundScoreInput] = React.useState('');
+    const roundScoreNumber = roundScoreInput === '' ? null : Number(roundScoreInput);
+    const roundScoreInvalid = roundScoreInput !== '' && (
+      !Number.isInteger(roundScoreNumber) || roundScoreNumber < 0 || roundScoreNumber > 180
+    );
     const inputLocked = Boolean(players[order[currIdx]]?.bot);
 
     React.useEffect(() => {
@@ -4449,10 +4578,6 @@ function Lobby({
         const next = nextRaw.slice(0, 3);
 
         if (!/^\d{1,3}$/.test(next)) return prev;
-
-        const n = Number(next);
-        if (!Number.isInteger(n) || n < 0 || n > 180) return prev;
-
         return next;
       });
     }, []);
@@ -4685,6 +4810,21 @@ function Lobby({
             </button>
           </div>
         </div>
+
+        {winner === -1 && (
+          <div
+            className="lobbyCard"
+            style={{
+              marginBottom: 10,
+              textAlign: 'center',
+              fontWeight: 900,
+              fontSize: 18,
+              borderColor: 'var(--accent)'
+            }}
+          >
+            {t(lang, 'draw')}
+          </div>
+        )}
 
         {/* SCOREBOARD */}
           {mode === 'classic' && playerMode === 'teams' ? (
@@ -5125,7 +5265,7 @@ function Lobby({
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
-                      background: 'var(--accent)',
+                      background: roundScoreInvalid ? '#b91c1c' : 'var(--accent)',
                       color: '#fff',
                       border: '3px solid #000',
                       boxShadow: '0 0 0 1px rgba(255,255,255,0.15)'
@@ -5184,7 +5324,7 @@ function Lobby({
                               type="button"
                               className="btn green"
                               onClick={submitRoundScore}
-                              disabled={roundScoreInput === ''}
+                              disabled={roundScoreInput === '' || roundScoreInvalid}
                               style={{
                                 flex: 1,
                                 minWidth: 0,
@@ -5225,7 +5365,7 @@ function Lobby({
                   ))}
 
                   <div style={{ fontSize: 12, opacity: .75, textAlign: 'center', paddingTop: 4 }}>
-                    {t(lang, 'roundTotalHint')}
+                    {roundScoreInvalid ? t(lang, 'roundTotalInvalid') : t(lang, 'roundTotalHint')}
                   </div>
                 </>
               ) : hideDartControls ? null : (
