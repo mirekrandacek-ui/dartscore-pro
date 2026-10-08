@@ -57,6 +57,9 @@ jobs:
       - name: Run extended gameplay audit
         run: node audit/v95-extended-audit.mjs
 
+      - name: Run isolated regression audit
+        run: node audit/v95-isolated-audit.mjs
+
       - name: Upload audit report
         if: always()
         uses: actions/upload-artifact@v4
@@ -65,4 +68,5 @@ jobs:
           path: |
             audit-v95-results.json
             audit-v95-extended-results.json
+            audit-v95-isolated-results.json
           if-no-files-found: warn
