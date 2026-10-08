@@ -8,7 +8,7 @@ on:
 jobs:
   regression:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -18,12 +18,40 @@ jobs:
       - run: npm ci
       - run: npm install --no-save playwright@1.55.0
       - run: npx playwright install --with-deps chromium
-      - run: node qa/full-regression.mjs
+
+      - name: Test actual live app loaded by Android v95
+        env:
+          BASE_URL: https://dartscore-pro.vercel.app/
+          REPORT_PREFIX: qa-prod
+        run: node qa/full-regression.mjs
+
+      - name: Build v95 release-branch web source
+        run: npm run build
+
+      - name: Start local v95 web
+        run: |
+          npx vite preview --host 127.0.0.1 --port 4173 > /tmp/vite-preview.log 2>&1 &
+          echo $! > /tmp/vite-preview.pid
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/vite-preview.log
+          exit 1
+
+      - name: Test v95 release-branch web source
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+          REPORT_PREFIX: qa-release-v95
+        run: node qa/full-regression.mjs
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: qa-v95-full-report
           path: |
-            qa-v95-report.json
-            qa-v95-report.md
-          if-no-files-found: error
+            qa-prod-report.json
+            qa-prod-report.md
+            qa-release-v95-report.json
+            qa-release-v95-report.md
+          if-no-files-found: warn
