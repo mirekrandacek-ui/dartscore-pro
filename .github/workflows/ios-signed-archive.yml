@@ -57,10 +57,10 @@ jobs:
           grep -q "MARKETING_VERSION = 1.1.63;" ios/App/App.xcodeproj/project.pbxproj
           grep -q "CURRENT_PROJECT_VERSION = 1;" ios/App/App.xcodeproj/project.pbxproj
 
-      - name: Create signed archive
+      - name: Create unsigned archive
         run: |
           set -euo pipefail
-          xcodebuild             -project ios/App/App.xcodeproj             -scheme App             -configuration Release             -destination 'generic/platform=iOS'             -archivePath "$RUNNER_TEMP/DartScorePro.xcarchive"             -allowProvisioningUpdates             -authenticationKeyPath "$APPSTORE_KEY_PATH"             -authenticationKeyID "$APPSTORE_KEY_ID"             -authenticationKeyIssuerID "$APPSTORE_ISSUER_ID"             archive
+          xcodebuild             -project ios/App/App.xcodeproj             -scheme App             -configuration Release             -destination 'generic/platform=iOS'             -archivePath "$RUNNER_TEMP/DartScorePro.xcarchive"             CODE_SIGNING_ALLOWED=NO             CODE_SIGNING_REQUIRED=NO             archive
 
       - name: Create export options
         run: |
