@@ -7,6 +7,9 @@ on:
     paths:
       - app/build.gradle
       - .github/workflows/build-v95-aab.yml
+  pull_request:
+    branches:
+      - release/v94c-remove-winner-voice
 
 jobs:
   build:
