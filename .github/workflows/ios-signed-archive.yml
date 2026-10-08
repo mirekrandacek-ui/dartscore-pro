@@ -90,6 +90,28 @@ jobs:
           test -f "$RUNNER_TEMP/export/App.ipa"
           mv "$RUNNER_TEMP/export/App.ipa" "$RUNNER_TEMP/export/DartScorePro_1.1.63_build1.ipa"
 
+      - name: Validate IPA with App Store Connect
+        run: |
+          set -euo pipefail
+          xcrun altool \
+            --validate-app \
+            -f "$RUNNER_TEMP/export/DartScorePro_1.1.63_build1.ipa" \
+            -t ios \
+            --apiKey "$APPSTORE_KEY_ID" \
+            --apiIssuer "$APPSTORE_ISSUER_ID" \
+            --p8-file-path "$APPSTORE_KEY_PATH"
+
+      - name: Upload build to App Store Connect
+        run: |
+          set -euo pipefail
+          xcrun altool \
+            --upload-app \
+            -f "$RUNNER_TEMP/export/DartScorePro_1.1.63_build1.ipa" \
+            -t ios \
+            --apiKey "$APPSTORE_KEY_ID" \
+            --apiIssuer "$APPSTORE_ISSUER_ID" \
+            --p8-file-path "$APPSTORE_KEY_PATH"
+
       - name: Upload signed IPA artifact
         uses: actions/upload-artifact@v4
         with:
