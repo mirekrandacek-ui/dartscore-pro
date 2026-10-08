@@ -201,19 +201,30 @@ await scenario('Around the Clock - 10 complete games', async () => {
 async function rouletteGame(p, mode) {
   for (let round = 0; round < 8; round++) {
     await waitActive(p, mode, 'Player 1');
-    await p.waitForFunction(() => {
-      const b = document.querySelector('button.rouletteDrawBtn');
-      return b && !b.disabled;
-    });
-    await p.locator('button.rouletteDrawBtn').click();
-    for (let d = 0; d < 3; d++) {
+
+    if (round === 0) {
+      await p.waitForFunction(() => {
+        const b = document.querySelector('button.rouletteDrawBtn');
+        return b && !b.disabled;
+      }, null, { timeout: 5000 });
+      await p.locator('button.rouletteDrawBtn').click();
+
       await p.waitForFunction(() => {
         const b = document.querySelector('button.rouletteHitBtn');
         return b && !b.disabled;
-      }, null, { timeout: 5000 });
+      }, null, { timeout: 7000 });
       await p.locator('button.rouletteHitBtn').click();
-      if (d < 2) await p.waitForTimeout(45);
+
+      // After a hit, the app should auto-draw the next target.
+      await p.waitForFunction(() => {
+        const b = document.querySelector('button.rouletteHitBtn');
+        return b && !b.disabled;
+      }, null, { timeout: 7000 });
+      await p.locator('button.rouletteSwitchBtn').click();
+    } else {
+      await p.locator('button.rouletteSwitchBtn').click();
     }
+
     await waitActive(p, mode, 'Player 2');
     await p.locator('button.rouletteSwitchBtn').click();
     if (round < 7) await waitActive(p, mode, 'Player 1');
@@ -222,7 +233,7 @@ async function rouletteGame(p, mode) {
 }
 
 await scenario('Roulette - 10 complete 8-round games', async () => {
-  const env = await makePage();
+  const env = await makePage({ fast: false });
   try {
     const p = env.page;
     await setMode(p, 'Roulette');
@@ -236,7 +247,7 @@ await scenario('Roulette - 10 complete 8-round games', async () => {
 });
 
 await scenario('Roulette Double - 10 complete 8-round games', async () => {
-  const env = await makePage();
+  const env = await makePage({ fast: false });
   try {
     const p = env.page;
     await setMode(p, 'Roulette Double');
@@ -246,6 +257,44 @@ await scenario('Roulette Double - 10 complete 8-round games', async () => {
       await rouletteGame(p, 'rouletteDouble');
     }
     return { games: 10, roundsPerGame: 8 };
+  } finally { await closeEnv(env); }
+});
+
+await scenario('Roulette: three consecutive hits auto-draw and auto-switch', async () => {
+  const env = await makePage({ fast: false });
+  try {
+    const p = env.page;
+    await setMode(p, 'Roulette');
+    await start(p);
+    await p.locator('button.rouletteDrawBtn').click();
+    for (let d = 0; d < 3; d++) {
+      await p.waitForFunction(() => {
+        const b = document.querySelector('button.rouletteHitBtn');
+        return b && !b.disabled;
+      }, null, { timeout: 7000 });
+      await p.locator('button.rouletteHitBtn').click();
+    }
+    await waitActive(p, 'roulette', 'Player 2');
+    return { autoSwitchedAfterThirdHit: true };
+  } finally { await closeEnv(env); }
+});
+
+await scenario('Roulette Double: three consecutive hits auto-draw and auto-switch', async () => {
+  const env = await makePage({ fast: false });
+  try {
+    const p = env.page;
+    await setMode(p, 'Roulette Double');
+    await start(p);
+    await p.locator('button.rouletteDrawBtn').click();
+    for (let d = 0; d < 3; d++) {
+      await p.waitForFunction(() => {
+        const b = document.querySelector('button.rouletteHitBtn');
+        return b && !b.disabled;
+      }, null, { timeout: 7000 });
+      await p.locator('button.rouletteHitBtn').click();
+    }
+    await waitActive(p, 'rouletteDouble', 'Player 2');
+    return { autoSwitchedAfterThirdHit: true };
   } finally { await closeEnv(env); }
 });
 
@@ -348,7 +397,7 @@ await scenario('Player add/delete/reorder', async () => {
     const inputs = p.locator('.playerRow input');
     if (await inputs.count() !== 3) throw new Error('Expected 3 players');
     await inputs.nth(2).fill('Audit Player');
-    await p.locator('.playerRow').nth(2).getByRole('button', { name: 'Up', exact: true }).click();
+    await p.locator('.playerRow').nth(2).locator('button[title="Up"]').click();
     const names = await p.locator('.playerRow input').evaluateAll(es => es.map(e => e.value));
     if (names[1] !== 'Audit Player') throw new Error('Reorder failed');
     await p.locator('.playerRow').nth(1).locator('button.trash').click();
@@ -437,6 +486,41 @@ await scenario('Sound OFF suppresses audio', async () => {
     const calls = await p.evaluate(() => window.__auditCalls.media);
     if (calls.length) throw new Error('Sound off still played media: ' + JSON.stringify(calls));
     return { mediaCalls: 0 };
+  } finally { await closeEnv(env); }
+});
+
+await scenario('Voice bridge receives all 7 language codes', async () => {
+  const env = await makePage({ premium: true });
+  try {
+    const p = env.page;
+    const langs = [
+      ['Čeština','cs'], ['English','en'], ['Deutsch','de'], ['Español','es'],
+      ['Nederlands','nl'], ['Русский','ru'], ['中文','zh']
+    ];
+    const calls = [];
+    for (const item of langs) {
+      if (await p.locator('.gameWrap').count()) {
+        const back = p.locator('button.gameTextAction').last();
+        await back.click();
+        await p.locator('.lobbyWrap').waitFor({ state: 'visible' });
+      }
+      await setLanguage(p, item[0]);
+      const classicLabels = { cs:'Klasická hra', en:'Classic', de:'Klassisch', es:'Clásico', nl:'Klassiek', ru:'Классика', zh:'经典' };
+      await setMode(p, classicLabels[item[1]]);
+      await p.getByRole('button', { name: '101', exact: true }).click();
+      const startLabel = { cs:'▶ Start hry', en:'▶ Start Game', de:'▶ Spiel starten', es:'▶ Iniciar juego', nl:'▶ Start spel', ru:'▶ Начать игру', zh:'▶ 开始游戏' }[item[1]];
+      await p.getByRole('button', { name: startLabel, exact: true }).click();
+      await p.locator('.gameWrap').waitFor({ state: 'visible' });
+      await p.evaluate(() => { window.__auditCalls.speak = []; });
+      await p.getByRole('button', { name: 'TRIPLE', exact: true }).click();
+      await key(p, 17);
+      await key(p, 50);
+      await p.locator('.winner').waitFor({ state: 'visible' });
+      const got = await p.evaluate(() => window.__auditCalls.speak.slice());
+      if (!got.some(x => x.lang === item[1])) throw new Error('Missing TTS call for ' + item[1]);
+      calls.push({ lang:item[1], calls:got });
+    }
+    return { languagesTested: 7, calls };
   } finally { await closeEnv(env); }
 });
 
