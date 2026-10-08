@@ -145,9 +145,9 @@ const context = await browser.newContext({
   viewport: { width: 412, height: 915 },
   userAgent: 'Mozilla/5.0 (Linux; Android 14; QA) AppleWebKit/537.36 Chrome/154 Mobile Safari/537.36'
 });
-const page = await context.newPage();
+let page = null;
 
-await page.addInitScript(() => {
+await context.addInitScript(() => {
   window.__qa = { speaks: [], shares: [], premiumStates: [], interstitials: 0, mediaPlays: 0, rateApps: 0 };
   const realTimeout = window.setTimeout.bind(window);
   const realInterval = window.setInterval.bind(window);
@@ -174,12 +174,13 @@ await page.addInitScript(() => {
 });
 
 async function reset(premium=false) {
-  await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
-  await page.evaluate((premium) => {
+  if (page && !page.isClosed()) await page.close();
+  page = await context.newPage();
+  await page.addInitScript(({premium}) => {
     localStorage.clear();
     if (premium) localStorage.setItem('premium','true');
-  }, premium);
-  await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
+  }, {premium});
+  await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForSelector('.lobbyWrap', { timeout: 30000 });
   await page.waitForTimeout(80);
 }
@@ -276,7 +277,7 @@ await check('E2E: Cricket 10 complete games', async () => {
     await page.waitForTimeout(60);
     await clickKey(0); await clickKey(0); await clickKey(0);
     await page.waitForTimeout(60);
-    await double(25); await clickKey(25);
+    await clickKey(25); await clickKey(25); await clickKey(25);
     await expectWinner();
     if (g < 9) await restartGame();
   }
