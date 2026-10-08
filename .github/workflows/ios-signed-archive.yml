@@ -1,4 +1,5 @@
 name: iOS signed archive
+# rerun with Admin App Store Connect API key
 
 on:
   workflow_dispatch:
