@@ -601,7 +601,7 @@ await test('Pět hráčů se střídá přesně v pořadí 1→2→3→4→5→1
   for(let i=0;i<3;i++) await page.getByRole('button',{name:/Přidat hráče/}).click();
   await page.getByRole('button',{name:/Start hry/}).click();
   for(let i=1;i<=5;i++){
-    assert(await activeName(page)===\`Hráč \${i}\`,'Čekám Hráč '+i+', aktivní '+await activeName(page));
+    assert(await activeName(page)===`Hráč ${i}`,'Čekám Hráč '+i+', aktivní '+await activeName(page));
     await key(page,0); await key(page,0); await key(page,0);
     await page.waitForTimeout(450);
   }
