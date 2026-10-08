@@ -1,7 +1,8 @@
 import { chromium } from 'playwright';
 import fs from 'node:fs';
 
-const BASE = 'https://dartscore-pro.vercel.app/';
+const BASE = process.env.BASE_URL || 'https://dartscore-pro.vercel.app/';
+const REPORT_PREFIX = process.env.REPORT_PREFIX || 'qa-v95';
 const results = [];
 const diagnostics = [];
 
@@ -102,7 +103,7 @@ async function mult(page, name) {
   await page.getByRole('button', {name, exact:true}).click();
   await page.waitForTimeout(40);
 }
-async function finish101Any(page) { await key(page,50); await key(page,50); await key(page,1); }
+async function finish101Any(page) { await key(page,1); await mult(page,'TRIPLE'); await key(page,20); await mult(page,'DOUBLE'); await key(page,20); }
 async function finish101Double(page) { await key(page,1); await mult(page,'TRIPLE'); await key(page,20); await mult(page,'DOUBLE'); await key(page,20); }
 async function finish101Triple(page) { await key(page,1); await mult(page,'DOUBLE'); await key(page,20); await mult(page,'TRIPLE'); await key(page,20); }
 
@@ -254,9 +255,9 @@ await test('Classic DOUBLE-OUT: neplatný single checkout je bust', async () => 
   const {context,page}=await makePage();
   await page.getByText('Double-out',{exact:true}).locator('input').check();
   await start101(page);
-  await mult(page,'TRIPLE'); await key(page,20);
+  await key(page,50);
   await mult(page,'DOUBLE'); await key(page,20);
-  await key(page,1);
+  await key(page,11);
   await page.waitForTimeout(400);
   const scores=await allPlayerScores(page);
   assert(scores[0]===101,'Bust nevrátil skóre na 101: '+scores[0]);
@@ -311,8 +312,11 @@ await test('Součet kola + DOUBLE-OUT: exact zero nesmí automaticky obejít che
   await chooseByLabel(page,'Typ počítání','Součet kola');
   await page.getByRole('button',{name:'101',exact:true}).click();
   await page.getByRole('button',{name:/Start hry/}).click();
+  let sawConfirm=false;
+  page.once('dialog', async dialog => { sawConfirm=true; await dialog.dismiss(); });
   await roundEnter(page,101);
-  assert(await page.locator('.playerCard.winner').count()===0,'101 je bez potvrzení posledního double automaticky uznáno jako výhra');
+  assert(sawConfirm,'Při Double-out v Součtu kola se neobjevil dotaz na platný checkout');
+  assert(await page.locator('.playerCard.winner').count()===0,'101 po zamítnutí checkoutu bylo uznáno jako výhra');
   await context.close();
 });
 
@@ -557,6 +561,217 @@ await test('FinishedGames: týmová výhra ukládá vítězný tým, ne náhodn�
   await context.close();
 });
 
+
+await test('Startovní skóre 101/301/501/701/901 se skutečně nastaví', async () => {
+  for (const score of [101,301,501,701,901]) {
+    const {context,page}=await makePage();
+    if (score!==501) await page.getByRole('button',{name:String(score),exact:true}).click();
+    await page.getByRole('button',{name:/Start hry/}).click();
+    assert(await activeScore(page)===score,'Start '+score+' otevřel skóre '+await activeScore(page));
+    await context.close();
+  }
+});
+
+await test('Lze hrát sólo s jedním hráčem', async () => {
+  const {context,page}=await makePage();
+  await page.locator('.playerRow').nth(1).locator('button.trash').click();
+  assert(await page.locator('.playerRow').count()===1,'Nezůstal přesně 1 hráč');
+  await page.getByRole('button',{name:/Start hry/}).click();
+  await key(page,20); await key(page,20); await key(page,20);
+  await page.waitForTimeout(450);
+  assert(await activeName(page)==='Hráč 1','Sólo hra nemá stále Hráče 1');
+  assert(await activeScore(page)===441,'Sólo skóre '+await activeScore(page));
+  await context.close();
+});
+
+await test('Nulový počet hráčů nesmí spustit hru', async () => {
+  const {context,page}=await makePage();
+  while(await page.locator('.playerRow').count()) {
+    await page.locator('.playerRow').first().locator('button.trash').click();
+  }
+  await page.getByRole('button',{name:/Start hry/}).click();
+  await page.waitForTimeout(100);
+  assert(await page.locator('.playerCard').count()>0 || await page.getByRole('button',{name:/Start hry/}).count()===1,
+    'Hra se spustila bez jediného hráče a bez validace');
+  await context.close();
+});
+
+await test('Pět hráčů se střídá přesně v pořadí 1→2→3→4→5→1', async () => {
+  const {context,page}=await makePage();
+  for(let i=0;i<3;i++) await page.getByRole('button',{name:/Přidat hráče/}).click();
+  await page.getByRole('button',{name:/Start hry/}).click();
+  for(let i=1;i<=5;i++){
+    assert(await activeName(page)===\`Hráč \${i}\`,'Čekám Hráč '+i+', aktivní '+await activeName(page));
+    await key(page,0); await key(page,0); await key(page,0);
+    await page.waitForTimeout(450);
+  }
+  assert(await activeName(page)==='Hráč 1','Po pátém hráči se nevrátil Hráč 1');
+  await context.close();
+});
+
+await test('Přesun hráče nahoru/dolů mění pořadí bez ztráty hráče', async () => {
+  const {context,page}=await makePage();
+  await page.getByRole('button',{name:/Přidat hráče/}).click();
+  const rows=page.locator('.playerRow');
+  const before=await rows.locator('input').evaluateAll(es=>es.map(e=>e.value));
+  await rows.nth(2).getByTitle('Up').click();
+  const after=await rows.locator('input').evaluateAll(es=>es.map(e=>e.value));
+  assert(before.join('|')==='Hráč 1|Hráč 2|Hráč 3','Neočekávaný výchozí seznam '+before);
+  assert(after.join('|')==='Hráč 1|Hráč 3|Hráč 2','Up neprohodil pořadí '+after);
+  await context.close();
+});
+
+await test('Týmový režim odmítne konfiguraci s jediným aktivním týmem', async () => {
+  const {context,page}=await makePage();
+  await chooseByLabel(page,'Režim hráčů','Týmy');
+  const teamTriggers=page.locator('.playerRow button.themedSelectTrigger');
+  await chooseTrigger(page,teamTriggers.nth(1),'Tým A');
+  let alertText='';
+  page.once('dialog', async d=>{alertText=d.message(); await d.dismiss();});
+  await page.getByRole('button',{name:/Start hry/}).click();
+  await page.waitForTimeout(80);
+  assert(alertText.includes('Alespoň dva týmy'),'Chybí validace týmů, alert='+alertText);
+  assert(await page.getByRole('button',{name:/Start hry/}).count()===1,'Po invalidní konfiguraci app opustila lobby');
+  await context.close();
+});
+
+await test('Součet kola odmítne hodnotu nad 180', async () => {
+  const {context,page}=await makePage();
+  await chooseByLabel(page,'Typ počítání','Součet kola');
+  await page.getByRole('button',{name:/Start hry/}).click();
+  await roundEnter(page,181);
+  await page.waitForTimeout(100);
+  assert(await activeScore(page)===501,'181 změnilo skóre na '+await activeScore(page));
+  assert(await activeName(page)==='Hráč 1','181 přepnulo hráče');
+  await context.close();
+});
+
+await test('Hlas vypnutý: po odehraném kole se nativní speak vůbec nevolá', async () => {
+  const {context,page}=await makePage();
+  await page.getByRole('button',{name:'Hlas',exact:true}).click();
+  await page.getByRole('button',{name:/Start hry/}).click();
+  await key(page,20); await key(page,20); await key(page,20);
+  await page.waitForTimeout(650);
+  const calls=await page.evaluate(()=>window.__nativeCalls.speak);
+  assert(calls.length===0,'Hlas je vypnutý, ale speak calls='+JSON.stringify(calls));
+  await context.close();
+});
+
+await test('Zvuk vypnutý: zásah ani výhra nevolají audio.play()', async () => {
+  const {context,page}=await makePage();
+  await page.evaluate(()=>{
+    window.__audioPlayCount=0;
+    HTMLMediaElement.prototype.play=function(){window.__audioPlayCount++; return Promise.resolve();};
+  });
+  await page.getByRole('button',{name:'Zvuk',exact:true}).click();
+  await start101(page); await finish101Any(page); await page.waitForTimeout(120);
+  const n=await page.evaluate(()=>window.__audioPlayCount);
+  assert(n===0,'Zvuk vypnutý, ale audio.play() bylo '+n+'×');
+  await context.close();
+});
+
+await test('Zvuk zapnutý: zásah používá hit sound a výhra fanfáru', async () => {
+  const {context,page}=await makePage();
+  await page.evaluate(()=>{
+    window.__audioSrcs=[];
+    HTMLMediaElement.prototype.play=function(){window.__audioSrcs.push(this.getAttribute('src')||''); return Promise.resolve();};
+  });
+  await start101(page); await finish101Any(page); await page.waitForTimeout(120);
+  const srcs=await page.evaluate(()=>window.__audioSrcs);
+  assert(srcs.some(x=>x.includes('dart-hit.mp3')),'Chybí hit sound: '+JSON.stringify(srcs));
+  assert(srcs.some(x=>x.includes('tada-fanfare')),'Chybí fanfára: '+JSON.stringify(srcs));
+  await context.close();
+});
+
+await test('Cricket save/resume zachová marky a body', async () => {
+  const {context,page}=await makePage();
+  await chooseByLabel(page,'Režim','Cricket');
+  await page.getByRole('button',{name:/Start hry/}).click();
+  await mult(page,'TRIPLE'); await key(page,20);
+  const before=await page.locator('.playerCol').first().innerText();
+  await page.getByRole('button',{name:'Zpět',exact:true}).first().click();
+  await page.getByRole('button',{name:'Pokračovat ve hře',exact:true}).click();
+  await page.waitForTimeout(100);
+  const after=await page.locator('.playerCol').first().innerText();
+  assert(after.includes('Ⓧ'),'Po resume Cricket chybí zavřená 20: '+after);
+  assert(before.includes('Ⓧ'),'Před uložením test neuzavřel 20');
+  await context.close();
+});
+
+await test('Around save/resume zachová další cíl', async () => {
+  const {context,page}=await makePage();
+  await chooseByLabel(page,'Režim','Around the Clock');
+  await page.getByRole('button',{name:/Start hry/}).click();
+  await key(page,1); await key(page,2);
+  const before=(await page.locator('.playerCard.active .aroundTargetBox').innerText()).trim();
+  await page.getByRole('button',{name:'Zpět',exact:true}).first().click();
+  await page.getByRole('button',{name:'Pokračovat ve hře',exact:true}).click();
+  const after=(await page.locator('.playerCard.active .aroundTargetBox').innerText()).trim();
+  assert(before===after,'Around cíl se změnil '+before+' -> '+after);
+  await context.close();
+});
+
+await test('Ruleta Undo vrátí poslední zásah a bod', async () => {
+  const {context,page}=await makePage();
+  await chooseByLabel(page,'Režim','Ruleta');
+  await page.getByRole('button',{name:/Start hry/}).click();
+  await page.getByRole('button',{name:'Losovat',exact:true}).click();
+  await page.waitForTimeout(3300);
+  await page.getByRole('button',{name:'Zásah +1',exact:true}).click();
+  await page.getByRole('button',{name:'Zpět',exact:true}).last().click();
+  const score=(await page.locator('.playerCard.active .rouletteScore').innerText()).trim();
+  assert(score.includes('0'),'Roulette Undo nevrátil bod: '+score);
+  await context.close();
+});
+
+await test('Free hráči: limit je maximálně 3', async () => {
+  const {context,page}=await makePage();
+  for(let i=0;i<8;i++) await page.getByRole('button',{name:/Přidat hráče/}).click();
+  const count=await page.locator('.playerRow').count();
+  assert(count<=3,'Free dovolilo '+count+' hráčů');
+  await context.close();
+});
+
+await test('Premium hráči: limit je maximálně 5', async () => {
+  const {context,page}=await makePage({premium:true});
+  for(let i=0;i<10;i++) await page.getByRole('button',{name:/Přidat hráče/}).click();
+  const count=await page.locator('.playerRow').count();
+  assert(count<=5,'Premium dovolilo '+count+' hráčů');
+  await context.close();
+});
+
+await test('Čínština má vlastní překlad Sdílet aplikaci, ne anglický fallback', async () => {
+  const {context,page}=await makePage();
+  await chooseLanguage(page,'中文');
+  const txt=(await page.locator('body').innerText());
+  assert(!txt.includes('Share app'),'Čínština zobrazuje anglické Share app');
+  await context.close();
+});
+
+await test('Statistiky po dokončené Classic hře obsahují uložený zápas a vítěze', async () => {
+  const {context,page}=await makePage();
+  await start101(page); await finish101Any(page); await page.waitForTimeout(180);
+  const rec=await page.evaluate(()=>JSON.parse(localStorage.getItem('finishedGames')||'[]')[0]);
+  assert(rec && rec.winner==='Hráč 1','Uložený winner='+JSON.stringify(rec?.winner));
+  assert(rec.detailed===true,'Záznam nemá detailed=true');
+  await page.getByRole('button',{name:'Zpět',exact:true}).first().click();
+  await page.getByText('Statistiky',{exact:true}).scrollIntoViewIfNeeded();
+  const body=await page.locator('body').innerText();
+  assert(body.includes('Hráč 1'),'Statistiky neobsahují Hráče 1');
+  await context.close();
+});
+
+await test('320px mobilní šířka: lobby nemá horizontální overflow v CS/DE/RU/ZH', async () => {
+  const {context,page}=await makePage();
+  await page.setViewportSize({width:320,height:700});
+  for(const lang of ['Čeština','Deutsch','Русский','中文']){
+    await chooseLanguage(page,lang);
+    const dims=await page.evaluate(()=>({sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth}));
+    assert(dims.sw<=dims.cw+1,lang+' overflow '+JSON.stringify(dims));
+  }
+  await context.close();
+});
+
 // Stress: 50 quick Classic 101 games through actual UI in one session.
 await test('Stress: 50 po sobě jdoucích Classic 101 her bez pádu/stavu mimo rozsah', async () => {
   const {context,page,errors}=await makePage();
@@ -582,11 +797,11 @@ const counts = {
   total: results.length
 };
 const report = { generatedAt: new Date().toISOString(), base: BASE, counts, results, diagnostics };
-fs.writeFileSync('qa-v95-report.json', JSON.stringify(report,null,2));
+fs.writeFileSync(REPORT_PREFIX+'-report.json', JSON.stringify(report,null,2));
 let md = `# DartScore Pro v95 – automated regression report\n\nTarget: ${BASE}\n\n**PASS ${counts.pass} / FAIL ${counts.fail} / TOTAL ${counts.total}**\n\n`;
 for (const r of results) md += `- **${r.status}** — ${r.name}${r.detail ? `: ${r.detail}` : ''}\n`;
 if (diagnostics.length) md += '\n## Diagnostics\n'+diagnostics.map(d=>`- ${d.name}: ${JSON.stringify(d.value)}`).join('\n')+'\n';
-fs.writeFileSync('qa-v95-report.md', md);
+fs.writeFileSync(REPORT_PREFIX+'-report.md', md);
 console.log('QA_SUMMARY', JSON.stringify(counts));
 console.log(md);
 await browser.close();
