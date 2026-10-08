@@ -7,7 +7,7 @@ const diagnostics = [];
 
 function addResult(name, status, detail='') {
   results.push({ name, status, detail });
-  console.log(\`[\${status}] \${name}\${detail ? ' — ' + detail : ''}\`);
+  console.log(`[${status}] ${name}${detail ? ' — ' + detail : ''}`);
 }
 async function test(name, fn) {
   try {
@@ -583,9 +583,9 @@ const counts = {
 };
 const report = { generatedAt: new Date().toISOString(), base: BASE, counts, results, diagnostics };
 fs.writeFileSync('qa-v95-report.json', JSON.stringify(report,null,2));
-let md = \`# DartScore Pro v95 – automated regression report\n\nTarget: \${BASE}\n\n**PASS \${counts.pass} / FAIL \${counts.fail} / TOTAL \${counts.total}**\n\n\`;
-for (const r of results) md += \`- **\${r.status}** — \${r.name}\${r.detail ? \`: \${r.detail}\` : ''}\n\`;
-if (diagnostics.length) md += '\n## Diagnostics\n'+diagnostics.map(d=>\`- \${d.name}: \${JSON.stringify(d.value)}\`).join('\n')+'\n';
+let md = `# DartScore Pro v95 – automated regression report\n\nTarget: ${BASE}\n\n**PASS ${counts.pass} / FAIL ${counts.fail} / TOTAL ${counts.total}**\n\n`;
+for (const r of results) md += `- **${r.status}** — ${r.name}${r.detail ? `: ${r.detail}` : ''}\n`;
+if (diagnostics.length) md += '\n## Diagnostics\n'+diagnostics.map(d=>`- ${d.name}: ${JSON.stringify(d.value)}`).join('\n')+'\n';
 fs.writeFileSync('qa-v95-report.md', md);
 console.log('QA_SUMMARY', JSON.stringify(counts));
 console.log(md);
