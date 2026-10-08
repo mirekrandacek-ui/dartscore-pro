@@ -52,7 +52,7 @@ try {
 } catch(e) { record('Internal web APP_VERSION matches Android v95/1.1.61', false, e.message); }
 
 const browser = await chromium.launch({headless:true});
-const context = await browser.newContext({viewport:{width:412,height:915}, userAgent:'Mozilla/5.0 (Linux; Android 14; SM-S911B) AppleWebKit/537.36 Chrome/154 Mobile Safari/537.36'});
+const context = await browser.newContext({viewport:{width:412,height:915}, locale:'cs-CZ', userAgent:'Mozilla/5.0 (Linux; Android 14; SM-S911B) AppleWebKit/537.36 Chrome/154 Mobile Safari/537.36'});
 const page = await context.newPage();
 page.setDefaultTimeout(1500);
 const pageErrors = [];
