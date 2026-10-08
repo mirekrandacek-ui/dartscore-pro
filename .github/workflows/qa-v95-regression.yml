@@ -6,9 +6,9 @@ on:
       - release/v95-meta-adapter
 
 jobs:
-  discover:
+  regression:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -18,10 +18,12 @@ jobs:
       - run: npm ci
       - run: npm install --no-save playwright@1.55.0
       - run: npx playwright install --with-deps chromium
-      - run: node qa/ui-discovery.mjs
+      - run: node qa/full-regression.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: qa-v95-discovery
-          path: qa-discovery.png
-          if-no-files-found: ignore
+          name: qa-v95-full-report
+          path: |
+            qa-v95-report.json
+            qa-v95-report.md
+          if-no-files-found: error
