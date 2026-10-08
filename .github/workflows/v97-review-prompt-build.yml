@@ -1,0 +1,74 @@
+name: v97 Review Prompt Targeted QA + AAB
+
+on:
+  push:
+    branches:
+      - release/v97-review-prompt
+    paths:
+      - src/App.jsx
+      - src/reviewPrompt.js
+      - qa/v97-review-prompt.mjs
+      - app/build.gradle
+      - .github/workflows/v97-review-prompt-build.yml
+
+jobs:
+  targeted-review-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout v97
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run targeted review prompt QA
+        run: node qa/v97-review-prompt.mjs
+
+      - name: Build frozen web bundle
+        run: npm run build
+
+      - name: Verify release identity
+        run: |
+          grep -q "versionCode 97" app/build.gradle
+          grep -q 'versionName "1.1.63"' app/build.gradle
+          grep -q "minSdkVersion 24" app/build.gradle
+          grep -q "const APP_VERSION = '1.1.63'" src/App.jsx
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: ''
+
+      - name: Install Android SDK 36
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Build signed v97 AAB
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:bundleRelease --stacktrace
+
+      - name: Verify AAB package + signature
+        run: |
+          unzip -l app/build/outputs/bundle/release/app-release.aab | grep -q 'base/assets/offline/index.html'
+          jarsigner -verify app/build/outputs/bundle/release/app-release.aab
+
+      - name: Upload v97 AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: DartScorePro_v97_1.1.63
+          path: app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
