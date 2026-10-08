@@ -2,6 +2,14 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import './app.css';
 import { botThrowAround, botThrowClassic, botThrowCricket, botThrowRoulette, normalizeBotLevel } from './botEngine.js';
+import {
+  canShowReviewPrompt,
+  normalizeReviewState,
+  onAppLaunch,
+  onGameCompleted,
+  onPromptShown,
+  onReviewDone
+} from './reviewPrompt.js';
 
 
 /* ===== Checkout hint: display-only helper, does not alter scoring ===== */
@@ -226,6 +234,11 @@ const T = {
     rouletteHitButton: 'Zásah +1',
     rouletteSwitchButton: 'Přepnout hráče',
     rateAppButton: 'Líbí se ti aplikace?',
+    reviewPromptTitle: 'Baví tě DartScore Pro?',
+    reviewPromptText: 'Předem díky za šipkově rychlou recenzi! 🎯',
+    reviewNow: 'Ohodnotit',
+    reviewLater: 'Později',
+    reviewNoThanks: 'Ne, díky',
     premiumInfoButton: 'Co obsahuje Premium',
     premiumMode: 'Premium režim',
     activatePremium: 'Aktivuj Premium',
@@ -305,6 +318,11 @@ premiumNote: "Jednorázová platba. Žádné předplatné.",
     rouletteHitButton: 'Hit +1',
     rouletteSwitchButton: 'Switch player',
     rateAppButton: 'Do you like the app?',
+    reviewPromptTitle: 'Enjoying DartScore Pro?',
+    reviewPromptText: 'Thanks in advance for a quick bullseye review! 🎯',
+    reviewNow: 'Rate now',
+    reviewLater: 'Later',
+    reviewNoThanks: 'No, thanks',
     premiumInfoButton: 'What Premium includes',
     premiumMode: 'Premium Mode',
     filter: 'Filter', all: 'All', week: 'Week', month: 'Month', year: 'Year',
@@ -383,6 +401,11 @@ activatePremium: 'Activate Premium',
     rouletteHitButton: 'Treffer +1',
     rouletteSwitchButton: 'Spieler wechseln',
     rateAppButton: 'Gefällt dir die App?',
+    reviewPromptTitle: 'Macht dir DartScore Pro Spaß?',
+    reviewPromptText: 'Danke vorab für eine pfeilschnelle Bewertung! 🎯',
+    reviewNow: 'Jetzt bewerten',
+    reviewLater: 'Später',
+    reviewNoThanks: 'Nein, danke',
     premiumInfoButton: 'Was enthält Premium?',
     premiumMode: 'Premium-Modus',
     activatePremium: 'Premium aktivieren',
@@ -461,6 +484,11 @@ premiumNote: "Einmalige Zahlung. Kein Abo.",
     rouletteHitButton: 'Acierto +1',
     rouletteSwitchButton: 'Cambiar jugador',
     rateAppButton: '¿Te gusta la app?',
+    reviewPromptTitle: '¿Disfrutas DartScore Pro?',
+    reviewPromptText: '¡Gracias de antemano por una reseña rápida como un dardo! 🎯',
+    reviewNow: 'Valorar',
+    reviewLater: 'Más tarde',
+    reviewNoThanks: 'No, gracias',
     premiumInfoButton: 'Qué incluye Premium',
     premiumMode: 'Modo Premium',
     activatePremium: 'Activar Premium',
@@ -539,6 +567,11 @@ premiumNote: "Pago único. Sin suscripción.",
     rouletteHitButton: 'Raak +1',
     rouletteSwitchButton: 'Speler wisselen',
     rateAppButton: 'Vind je de app leuk?',
+    reviewPromptTitle: 'Bevalt DartScore Pro?',
+    reviewPromptText: 'Alvast bedankt voor een pijlsnelle review! 🎯',
+    reviewNow: 'Beoordelen',
+    reviewLater: 'Later',
+    reviewNoThanks: 'Nee, bedankt',
     premiumInfoButton: 'Wat bevat Premium?',
     premiumMode: 'Premium-modus',
     activatePremium: 'Premium activeren',
@@ -617,6 +650,11 @@ premiumNote: "Eenmalige betaling. Geen abonnement.",
     rouletteHitButton: 'Попадание +1',
     rouletteSwitchButton: 'Сменить игрока',
     rateAppButton: 'Нравится приложение?',
+    reviewPromptTitle: 'Нравится DartScore Pro?',
+    reviewPromptText: 'Заранее спасибо за отзыв — быстрый, как дротик! 🎯',
+    reviewNow: 'Оценить',
+    reviewLater: 'Позже',
+    reviewNoThanks: 'Нет, спасибо',
     premiumInfoButton: 'Что включает Premium',
     premiumMode: 'Премиум-режим',
     activatePremium: 'Активировать Premium',
@@ -697,6 +735,11 @@ premiumNote: "Разовая оплата. Без подписки.",
     rouletteHitButton: '命中 +1',
     rouletteSwitchButton: '切换玩家',
     rateAppButton: '喜欢这个应用吗？',
+    reviewPromptTitle: '喜欢 DartScore Pro 吗？',
+    reviewPromptText: '提前感谢你的飞镖般快速评价！🎯',
+    reviewNow: '去评分',
+    reviewLater: '稍后',
+    reviewNoThanks: '不用了，谢谢',
     premiumInfoButton: 'Premium 包含什么',
     premiumMode: '高级模式',
     activatePremium: '激活 Premium',
@@ -1086,6 +1129,23 @@ function AdSenseBanner() {
   );
 }
 
+const REVIEW_STATE_KEY = 'reviewPromptStateV1';
+const REVIEW_SESSION_KEY = 'reviewPromptLaunchCountedV1';
+
+const readReviewState = () => {
+  try {
+    return normalizeReviewState(JSON.parse(localStorage.getItem(REVIEW_STATE_KEY) || '{}'));
+  } catch {
+    return normalizeReviewState();
+  }
+};
+
+const writeReviewState = (state) => {
+  try {
+    localStorage.setItem(REVIEW_STATE_KEY, JSON.stringify(normalizeReviewState(state)));
+  } catch { }
+};
+
 function App() {
   const ADS_ENABLED = false;
   /* viewport fix */
@@ -1108,6 +1168,31 @@ function App() {
   /* === STATE === */
 
   const [screen, setScreen] = useState('lobby');
+  const [showReviewPrompt, setShowReviewPrompt] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(REVIEW_SESSION_KEY) === 'true') return;
+      sessionStorage.setItem(REVIEW_SESSION_KEY, 'true');
+      writeReviewState(onAppLaunch(readReviewState()));
+    } catch { }
+  }, []);
+
+  const recordReviewCompletedGame = () => {
+    writeReviewState(onGameCompleted(readReviewState()));
+  };
+
+  const markReviewDone = () => {
+    writeReviewState(onReviewDone(readReviewState()));
+  };
+
+  const maybeShowReviewPrompt = () => {
+    const state = readReviewState();
+    if (!canShowReviewPrompt(state)) return false;
+    writeReviewState(onPromptShown(state));
+    setShowReviewPrompt(true);
+    return true;
+  };
 
   const [toast, setToast] = useState(null);
   const showToast = (msg) => {
@@ -1218,8 +1303,8 @@ function App() {
   const winAudioRef = useRef(null);
   /* persist screen */
 
-  const APP_VERSION = '1.1.62';
-  const LOBBY_DEFAULTS_VERSION = APP_VERSION;
+  const APP_VERSION = '1.1.63';
+  const LOBBY_DEFAULTS_VERSION = '1.1.62';
 
   /* načti lobby z localStorage */
   useEffect(() => {
@@ -2498,6 +2583,7 @@ const commitCricket = (value, mOverride) => {
       } catch { }
 
       setWinner(pIdx);
+      recordReviewCompletedGame();
       showPendingInterstitialAfterFanfare();
 
       {
@@ -3258,11 +3344,12 @@ const buyPremium = async () => {
 
 
     // text režimu do hlavičky vedle výběru jazyka
-    const rateApp = () => {
+    const openRating = (source = 'lobby') => {
       const url = 'https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro';
+      markReviewDone();
 
       window.DartScoreAnalytics?.track('rate_app_clicked', {
-        source: 'lobby'
+        source
       });
 
       try {
@@ -3276,6 +3363,15 @@ const buyPremium = async () => {
       } catch {
         window.location.assign(url);
       }
+    };
+
+    const rateApp = () => openRating('lobby');
+
+    const returnToLobbyFromGame = () => {
+      const completedGame = winner != null;
+      saveSnapshot();
+      setScreen('lobby');
+      if (completedGame) maybeShowReviewPrompt();
     };
 
     const modeLabel = (() => {
@@ -3339,10 +3435,7 @@ const buyPremium = async () => {
                   <button
                     type="button"
                     className="btn ghost"
-                    onClick={() => {
-                      saveSnapshot();
-                      setScreen('lobby');
-                    }}
+                    onClick={returnToLobbyFromGame}
                     title={t(lang, 'back')}
                     style={{ flexShrink: 0 }}
                   >
@@ -3575,13 +3668,84 @@ const buyPremium = async () => {
     restartGame={restartGame}
     cardRefs={cardRefs}
     setScreen={(scr) => {
-      if (scr === 'lobby') saveSnapshot();
+      if (scr === 'lobby') {
+        returnToLobbyFromGame();
+        return;
+      }
       setScreen(scr);
     }}
   />
 )}
           {!isPremium && ADS_ENABLED && (
             <AdSenseBanner />
+          )}
+
+          {showReviewPrompt && (
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={t(lang, 'reviewPromptTitle')}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 10020,
+                background: 'rgba(0,0,0,0.72)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 18
+              }}
+            >
+              <div
+                style={{
+                  width: '100%',
+                  maxWidth: 360,
+                  background: '#111827',
+                  border: '2px solid var(--accent)',
+                  borderRadius: 16,
+                  padding: 20,
+                  boxShadow: '0 18px 50px rgba(0,0,0,.55)',
+                  textAlign: 'center'
+                }}
+              >
+                <div style={{ fontSize: 22, fontWeight: 900 }}>
+                  {t(lang, 'reviewPromptTitle')}
+                </div>
+                <div style={{ marginTop: 10, fontSize: 15, lineHeight: 1.4, opacity: 0.92 }}>
+                  {t(lang, 'reviewPromptText')}
+                </div>
+
+                <div style={{ display: 'grid', gap: 10, marginTop: 18 }}>
+                  <button
+                    type="button"
+                    className="btn primary"
+                    onClick={() => {
+                      setShowReviewPrompt(false);
+                      openRating('auto_prompt');
+                    }}
+                  >
+                    ⭐ {t(lang, 'reviewNow')}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    onClick={() => setShowReviewPrompt(false)}
+                  >
+                    {t(lang, 'reviewLater')}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    onClick={() => {
+                      markReviewDone();
+                      setShowReviewPrompt(false);
+                    }}
+                  >
+                    {t(lang, 'reviewNoThanks')}
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
 
           <audio ref={hitAudioRef} src="/dart-hit.mp3" preload="auto" />
