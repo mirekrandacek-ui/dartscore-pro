@@ -575,3 +575,4 @@ const md = [
 ].join('\n');
 fs.writeFileSync('qa-results/report.md', md);
 console.log('\n' + md);
+if (fail > 0) process.exitCode = 1;
