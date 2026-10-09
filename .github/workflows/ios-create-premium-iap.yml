@@ -1,0 +1,93 @@
+name: Create iOS Premium IAP
+
+on:
+  push:
+    branches:
+      - feature/ios-v97
+    paths:
+      - .github/workflows/ios-create-premium-iap.yml
+
+jobs:
+  create:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    env:
+      APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+      APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+      APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create non-consumable Premium product if missing
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          source "$RUNNER_TEMP/venv/bin/activate"
+          python -m pip install --quiet PyJWT cryptography
+          python - <<'PY'
+          import os, time, jwt, json, urllib.request, urllib.error
+
+          key = os.environ["APPSTORE_PRIVATE_KEY"]
+          kid = os.environ["APPSTORE_KEY_ID"]
+          issuer = os.environ["APPSTORE_ISSUER_ID"]
+          now = int(time.time())
+          token = jwt.encode(
+              {"iss": issuer, "iat": now, "exp": now + 600, "aud": "appstoreconnect-v1"},
+              key,
+              algorithm="ES256",
+              headers={"kid": kid, "typ": "JWT"},
+          )
+          headers = {
+              "Authorization": "Bearer " + token,
+              "Content-Type": "application/json",
+          }
+
+          list_url = "https://api.appstoreconnect.apple.com/v1/apps/6817341039/inAppPurchasesV2?limit=50"
+          with urllib.request.urlopen(urllib.request.Request(list_url, headers=headers)) as resp:
+              existing = json.load(resp).get("data", [])
+
+          for item in existing:
+              if item.get("attributes", {}).get("productId") == "premium_unlock":
+                  print("PREMIUM_IAP_ALREADY_EXISTS=" + item["id"])
+                  raise SystemExit(0)
+
+          body = {
+              "data": {
+                  "type": "inAppPurchases",
+                  "attributes": {
+                      "name": "DartScore Premium",
+                      "productId": "premium_unlock",
+                      "inAppPurchaseType": "NON_CONSUMABLE",
+                      "reviewNote": "Unlocks ad-free use, game saving, player statistics and custom color themes.",
+                      "availableInAllTerritories": True
+                  },
+                  "relationships": {
+                      "app": {
+                          "data": {
+                              "type": "apps",
+                              "id": "6817341039"
+                          }
+                      }
+                  }
+              }
+          }
+
+          req = urllib.request.Request(
+              "https://api.appstoreconnect.apple.com/v2/inAppPurchases",
+              data=json.dumps(body).encode("utf-8"),
+              headers=headers,
+              method="POST",
+          )
+
+          try:
+              with urllib.request.urlopen(req) as resp:
+                  created = json.load(resp)
+              item = created["data"]
+              print("PREMIUM_IAP_CREATED=" + item["id"])
+              print("PRODUCT_ID=" + item["attributes"].get("productId", ""))
+              print("STATE=" + item["attributes"].get("state", ""))
+          except urllib.error.HTTPError as e:
+              print("HTTP_STATUS=" + str(e.code))
+              print(e.read().decode("utf-8", "replace"))
+              raise
+          PY
