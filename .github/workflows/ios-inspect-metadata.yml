@@ -1,0 +1,64 @@
+name: Inspect App Store metadata
+
+on:
+  push:
+    branches:
+      - feature/ios-v97
+    paths:
+      - .github/workflows/ios-inspect-metadata.yml
+
+jobs:
+  inspect:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    env:
+      APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+      APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+      APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect metadata
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          source "$RUNNER_TEMP/venv/bin/activate"
+          python -m pip install --quiet PyJWT cryptography requests
+          python - <<'PY'
+          import os,time,jwt,requests,json
+          key=os.environ["APPSTORE_PRIVATE_KEY"]; kid=os.environ["APPSTORE_KEY_ID"]; issuer=os.environ["APPSTORE_ISSUER_ID"]
+          now=int(time.time())
+          token=jwt.encode({"iss":issuer,"iat":now,"exp":now+600,"aud":"appstoreconnect-v1"},key,algorithm="ES256",headers={"kid":kid,"typ":"JWT"})
+          H={"Authorization":"Bearer "+token}; B="https://api.appstoreconnect.apple.com"
+          version_id="69fd4586-a0ca-4d5d-a25c-65dc867dc6a2"
+
+          def get(path,params=None):
+              r=requests.get(B+path,headers=H,params=params)
+              print("HTTP",r.status_code,path)
+              if not r.ok:
+                  print(r.text); return None
+              return r.json()
+
+          locs=get(f"/v1/appStoreVersions/{version_id}/appStoreVersionLocalizations",{"limit":50})
+          if locs:
+              for loc in locs["data"]:
+                  a=loc["attributes"]
+                  print("LOC",json.dumps({
+                    "id":loc["id"],"locale":a.get("locale"),"description":a.get("description"),
+                    "keywords":a.get("keywords"),"supportUrl":a.get("supportUrl"),
+                    "marketingUrl":a.get("marketingUrl"),"promotionalText":a.get("promotionalText"),
+                    "whatsNew":a.get("whatsNew")
+                  },ensure_ascii=False))
+                  sets=get(f"/v1/appStoreVersionLocalizations/{loc['id']}/appScreenshotSets",{"limit":50})
+                  if sets:
+                      for ss in sets["data"]:
+                          sa=ss["attributes"]
+                          print("SCREENSET",ss["id"],sa.get("screenshotDisplayType"))
+
+          review=get(f"/v1/appStoreVersions/{version_id}/appStoreReviewDetail")
+          if review and review.get("data"):
+              a=review["data"]["attributes"]
+              safe={k:a.get(k) for k in ["contactFirstName","contactLastName","contactEmail","contactPhone","demoAccountRequired","notes"]}
+              print("REVIEW",json.dumps(safe,ensure_ascii=False))
+          else:
+              print("REVIEW NONE")
+          PY
