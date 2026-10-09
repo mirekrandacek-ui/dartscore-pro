@@ -82,16 +82,8 @@ jobs:
 
           {
             const { context, page } = await newPage();
-            const selects = page.locator('select');
-            let changed = false;
-            for (let i = 0; i < await selects.count(); i++) {
-              if (await selects.nth(i).locator('option[value="cricket"]').count()) {
-                await selects.nth(i).selectOption('cricket');
-                changed = true;
-                break;
-              }
-            }
-            if (!changed) throw new Error('Mode select with Cricket not found');
+            await page.getByRole('button', { name: /^Classic$/i }).click();
+            await page.getByRole('option', { name: /^Cricket$/i }).click();
             await page.getByRole('button', { name: /Start game/i }).click();
             await page.waitForTimeout(500);
             await page.evaluate(() => window.scrollTo(0, 0));
