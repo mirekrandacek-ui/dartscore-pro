@@ -1,0 +1,75 @@
+name: Localize iOS Premium IAP
+
+on:
+  push:
+    branches:
+      - feature/ios-v97
+    paths:
+      - .github/workflows/ios-localize-premium-iap.yml
+
+jobs:
+  localize:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    env:
+      APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+      APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+      APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add Premium localizations
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          source "$RUNNER_TEMP/venv/bin/activate"
+          python -m pip install --quiet PyJWT cryptography
+          python - <<'PY'
+          import os, time, jwt, json, urllib.request, urllib.error
+
+          key=os.environ["APPSTORE_PRIVATE_KEY"]; kid=os.environ["APPSTORE_KEY_ID"]; issuer=os.environ["APPSTORE_ISSUER_ID"]
+          now=int(time.time())
+          token=jwt.encode({"iss":issuer,"iat":now,"exp":now+600,"aud":"appstoreconnect-v1"},key,algorithm="ES256",headers={"kid":kid,"typ":"JWT"})
+          headers={"Authorization":"Bearer "+token,"Content-Type":"application/json"}
+          iap_id="6821062175"
+
+          localizations={
+            "cs":("DartScore Premium","Odstraní reklamy a odemkne ukládání her, statistiky hráčů a vlastní barevný vzhled."),
+            "en-US":("DartScore Premium","Removes ads and unlocks game saving, player statistics and custom color themes."),
+            "de-DE":("DartScore Premium","Entfernt Werbung und schaltet Spielspeicherung, Spielerstatistiken und eigene Farbschemata frei."),
+            "es-ES":("DartScore Premium","Elimina los anuncios y desbloquea el guardado de partidas, estadísticas y temas de color personalizados."),
+            "nl-NL":("DartScore Premium","Verwijdert advertenties en ontgrendelt spelopslag, spelersstatistieken en aangepaste kleurthema's."),
+            "ru":("DartScore Premium","Убирает рекламу и открывает сохранение игр, статистику игроков и пользовательские цветовые темы."),
+            "zh-Hans":("DartScore Premium","移除广告，并解锁游戏保存、玩家统计和自定义配色。")
+          }
+
+          for locale,(name,description) in localizations.items():
+            body={
+              "data":{
+                "type":"inAppPurchaseLocalizations",
+                "attributes":{"locale":locale,"name":name,"description":description},
+                "relationships":{
+                  "inAppPurchaseV2":{
+                    "data":{"type":"inAppPurchases","id":iap_id}
+                  }
+                }
+              }
+            }
+            req=urllib.request.Request(
+              "https://api.appstoreconnect.apple.com/v1/inAppPurchaseLocalizations",
+              data=json.dumps(body).encode("utf-8"),
+              headers=headers,
+              method="POST"
+            )
+            try:
+              with urllib.request.urlopen(req) as resp:
+                data=json.load(resp)
+              print("LOCALIZATION_CREATED="+locale+"|"+data["data"]["id"])
+            except urllib.error.HTTPError as e:
+              payload=e.read().decode("utf-8","replace")
+              if e.code==409 and "already" in payload.lower():
+                print("LOCALIZATION_EXISTS="+locale)
+                continue
+              print("LOCALIZATION_FAILED="+locale+"|HTTP="+str(e.code))
+              print(payload)
+              raise
+          PY
