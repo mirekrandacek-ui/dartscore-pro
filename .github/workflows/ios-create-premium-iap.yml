@@ -58,8 +58,7 @@ jobs:
                       "name": "DartScore Premium",
                       "productId": "premium_unlock",
                       "inAppPurchaseType": "NON_CONSUMABLE",
-                      "reviewNote": "Unlocks ad-free use, game saving, player statistics and custom color themes.",
-                      "availableInAllTerritories": True
+                      "reviewNote": "Unlocks ad-free use, game saving, player statistics and custom color themes."
                   },
                   "relationships": {
                       "app": {
