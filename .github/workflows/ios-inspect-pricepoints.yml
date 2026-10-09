@@ -1,0 +1,43 @@
+name: Inspect iOS Premium price points
+
+on:
+  push:
+    branches:
+      - feature/ios-v97
+    paths:
+      - .github/workflows/ios-inspect-pricepoints.yml
+
+jobs:
+  inspect:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    env:
+      APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+      APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+      APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: List Czech price points near 70 CZK
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          source "$RUNNER_TEMP/venv/bin/activate"
+          python -m pip install --quiet PyJWT cryptography
+          python - <<'PY'
+          import os, time, jwt, json, urllib.request
+          key=os.environ["APPSTORE_PRIVATE_KEY"]; kid=os.environ["APPSTORE_KEY_ID"]; issuer=os.environ["APPSTORE_ISSUER_ID"]
+          now=int(time.time())
+          token=jwt.encode({"iss":issuer,"iat":now,"exp":now+600,"aud":"appstoreconnect-v1"},key,algorithm="ES256",headers={"kid":kid,"typ":"JWT"})
+          url="https://api.appstoreconnect.apple.com/v2/inAppPurchases/6821062175/pricePoints?filter%5Bterritory%5D=CZE&include=territory&limit=8000"
+          req=urllib.request.Request(url,headers={"Authorization":"Bearer "+token})
+          with urllib.request.urlopen(req) as resp: data=json.load(resp)
+          matches=[]
+          for item in data.get("data",[]):
+              a=item.get("attributes",{})
+              try: price=float(a.get("customerPrice"))
+              except (TypeError,ValueError): continue
+              if 50 <= price <= 100:
+                  matches.append((price,item["id"],a.get("proceeds")))
+          for price,pid,proceeds in sorted(matches):
+              print(f"PRICE_POINT={price:.2f} CZK|{pid}|proceeds={proceeds}")
+          PY
