@@ -1,0 +1,48 @@
+name: Inspect iOS IAP
+
+on:
+  push:
+    branches:
+      - feature/ios-v97
+    paths:
+      - .github/workflows/ios-inspect-iap.yml
+
+jobs:
+  inspect:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    env:
+      APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+      APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+      APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Inspect in-app purchases
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          source "$RUNNER_TEMP/venv/bin/activate"
+          python -m pip install --quiet PyJWT cryptography
+          python - <<'PY'
+          import os, time, jwt, json, urllib.request
+          key = os.environ["APPSTORE_PRIVATE_KEY"]
+          kid = os.environ["APPSTORE_KEY_ID"]
+          issuer = os.environ["APPSTORE_ISSUER_ID"]
+          now = int(time.time())
+          token = jwt.encode(
+              {"iss": issuer, "iat": now, "exp": now + 600, "aud": "appstoreconnect-v1"},
+              key,
+              algorithm="ES256",
+              headers={"kid": kid, "typ": "JWT"},
+          )
+          url = "https://api.appstoreconnect.apple.com/v1/apps/6817341039/inAppPurchasesV2?limit=50"
+          req = urllib.request.Request(url, headers={"Authorization": "Bearer " + token})
+          with urllib.request.urlopen(req) as resp:
+              data = json.load(resp)
+          items = data.get("data", [])
+          print("IAP_COUNT=" + str(len(items)))
+          for item in items:
+              a = item.get("attributes", {})
+              print("IAP=" + a.get("productId", "") + "|" + a.get("name", "") + "|" + a.get("inAppPurchaseType", "") + "|" + a.get("state", ""))
+          PY
