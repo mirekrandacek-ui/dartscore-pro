@@ -43,7 +43,7 @@ jobs:
 
       - name: Capture Premium review screenshot
         run: |
-          cat > /tmp/capture.mjs <<'JS'
+          cat > ./capture-review.mjs <<'JS'
           import { chromium } from 'playwright';
 
           const browser = await chromium.launch();
@@ -72,7 +72,7 @@ jobs:
           });
           await browser.close();
           JS
-          node /tmp/capture.mjs
+          node ./capture-review.mjs
           sips -g pixelWidth -g pixelHeight /tmp/DartScore-Premium-Review.png
           test "$(sips -g pixelWidth /tmp/DartScore-Premium-Review.png | awk '/pixelWidth/{print $2}')" = "1290"
           test "$(sips -g pixelHeight /tmp/DartScore-Premium-Review.png | awk '/pixelHeight/{print $2}')" = "2796"
