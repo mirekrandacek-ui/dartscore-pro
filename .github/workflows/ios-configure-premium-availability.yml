@@ -1,0 +1,77 @@
+name: Configure iOS Premium availability
+
+on:
+  push:
+    branches:
+      - feature/ios-v97
+    paths:
+      - .github/workflows/ios-configure-premium-availability.yml
+
+jobs:
+  configure:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    env:
+      APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+      APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+      APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Make Premium available in all App Store territories
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          source "$RUNNER_TEMP/venv/bin/activate"
+          python -m pip install --quiet PyJWT cryptography
+          python - <<'PY'
+          import os, time, jwt, json, urllib.request, urllib.error
+
+          key=os.environ["APPSTORE_PRIVATE_KEY"]; kid=os.environ["APPSTORE_KEY_ID"]; issuer=os.environ["APPSTORE_ISSUER_ID"]
+          now=int(time.time())
+          token=jwt.encode(
+            {"iss":issuer,"iat":now,"exp":now+600,"aud":"appstoreconnect-v1"},
+            key, algorithm="ES256", headers={"kid":kid,"typ":"JWT"}
+          )
+          headers={"Authorization":"Bearer "+token,"Content-Type":"application/json"}
+          iap_id="6821062175"
+
+          territories_url="https://api.appstoreconnect.apple.com/v1/territories?limit=200"
+          with urllib.request.urlopen(urllib.request.Request(territories_url,headers=headers)) as resp:
+            territories=json.load(resp).get("data",[])
+          territory_data=[{"type":"territories","id":t["id"]} for t in territories]
+          print("TERRITORY_COUNT="+str(len(territory_data)))
+
+          body={
+            "data":{
+              "type":"inAppPurchaseAvailabilities",
+              "attributes":{"availableInNewTerritories":True},
+              "relationships":{
+                "availableTerritories":{"data":territory_data},
+                "inAppPurchase":{"data":{"type":"inAppPurchases","id":iap_id}}
+              }
+            }
+          }
+
+          req=urllib.request.Request(
+            "https://api.appstoreconnect.apple.com/v1/inAppPurchaseAvailabilities",
+            data=json.dumps(body).encode("utf-8"),
+            headers=headers,
+            method="POST"
+          )
+
+          try:
+            with urllib.request.urlopen(req) as resp:
+              data=json.load(resp)
+            print("AVAILABILITY_CREATED="+data["data"]["id"])
+            print("AVAILABLE_IN_NEW_TERRITORIES="+str(data["data"]["attributes"].get("availableInNewTerritories")))
+          except urllib.error.HTTPError as e:
+            payload=e.read().decode("utf-8","replace")
+            # If availability already exists, treat that as an idempotent success signal.
+            if e.code==409 and ("already" in payload.lower() or "existing" in payload.lower()):
+              print("AVAILABILITY_ALREADY_EXISTS")
+              print(payload)
+              raise SystemExit(0)
+            print("HTTP_STATUS="+str(e.code))
+            print(payload)
+            raise
+          PY
