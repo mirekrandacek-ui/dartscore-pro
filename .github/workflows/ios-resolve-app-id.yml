@@ -1,0 +1,47 @@
+name: Resolve App Store app ID
+
+on:
+  push:
+    branches:
+      - feature/ios-v97
+    paths:
+      - .github/workflows/ios-resolve-app-id.yml
+
+jobs:
+  resolve:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    env:
+      APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+      APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+      APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve numeric App Store ID
+        run: |
+          python3 -m pip install --quiet PyJWT cryptography
+          python3 - <<'PY'
+          import os, time, jwt, json, urllib.request, urllib.parse
+          key = os.environ["APPSTORE_PRIVATE_KEY"]
+          kid = os.environ["APPSTORE_KEY_ID"]
+          issuer = os.environ["APPSTORE_ISSUER_ID"]
+          now = int(time.time())
+          token = jwt.encode(
+              {"iss": issuer, "iat": now, "exp": now + 600, "aud": "appstoreconnect-v1"},
+              key,
+              algorithm="ES256",
+              headers={"kid": kid, "typ": "JWT"},
+          )
+          bundle = "com.randis2288.dartscorepro"
+          url = "https://api.appstoreconnect.apple.com/v1/apps?filter%5BbundleId%5D=" + urllib.parse.quote(bundle)
+          req = urllib.request.Request(url, headers={"Authorization": "Bearer " + token})
+          with urllib.request.urlopen(req) as resp:
+              data = json.load(resp)
+          apps = data.get("data", [])
+          if len(apps) != 1:
+              raise SystemExit(f"Expected exactly one app for {bundle}, got {len(apps)}")
+          print("DARTSCORE_APP_STORE_ID=" + apps[0]["id"])
+          print("DARTSCORE_APP_NAME=" + apps[0]["attributes"].get("name", ""))
+          PY
