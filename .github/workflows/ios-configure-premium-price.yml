@@ -33,7 +33,7 @@ jobs:
 
           iap_id="6821062175"
           price_point_id="eyJzIjoiNjgyMTA2MjE3NSIsInQiOiJDWkUiLCJwIjoiMTAwNjAifQ"
-          temp_price_id="dartscore-premium-cze-current"
+          temp_price_id="${price1}"
 
           body={
             "data":{
@@ -53,8 +53,7 @@ jobs:
                   "inAppPurchaseV2":{"data":{"type":"inAppPurchases","id":iap_id}},
                   "inAppPurchasePricePoint":{"data":{"type":"inAppPurchasePricePoints","id":price_point_id}}
                 }
-              },
-              {"type":"territories","id":"CZE"}
+              }
             ]
           }
 
