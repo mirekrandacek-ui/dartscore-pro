@@ -33,13 +33,13 @@ jobs:
           iap_id="6821062175"
 
           localizations={
-            "cs":("DartScore Premium","Odstraní reklamy a odemkne ukládání her, statistiky hráčů a vlastní barevný vzhled."),
-            "en-US":("DartScore Premium","Removes ads and unlocks game saving, player statistics and custom color themes."),
-            "de-DE":("DartScore Premium","Entfernt Werbung und schaltet Spielspeicherung, Spielerstatistiken und eigene Farbschemata frei."),
-            "es-ES":("DartScore Premium","Elimina los anuncios y desbloquea el guardado de partidas, estadísticas y temas de color personalizados."),
-            "nl-NL":("DartScore Premium","Verwijdert advertenties en ontgrendelt spelopslag, spelersstatistieken en aangepaste kleurthema's."),
-            "ru":("DartScore Premium","Убирает рекламу и открывает сохранение игр, статистику игроков и пользовательские цветовые темы."),
-            "zh-Hans":("DartScore Premium","移除广告，并解锁游戏保存、玩家统计和自定义配色。")
+            "cs":("DartScore Premium","Bez reklam, ukládání her, statistiky a vlastní vzhled."),
+            "en-US":("DartScore Premium","No ads, game saves, player stats and custom themes."),
+            "de-DE":("DartScore Premium","Werbefrei, Spielstände, Statistiken und eigene Farben."),
+            "es-ES":("DartScore Premium","Sin anuncios, guardado, estadísticas y temas de color."),
+            "nl-NL":("DartScore Premium","Geen ads, games opslaan, statistieken en kleurthema's."),
+            "ru":("DartScore Premium","Без рекламы, сохранения, статистика и цветовые темы."),
+            "zh-Hans":("DartScore Premium","无广告，解锁游戏保存、玩家统计和自定义配色。")
           }
 
           for locale,(name,description) in localizations.items():
