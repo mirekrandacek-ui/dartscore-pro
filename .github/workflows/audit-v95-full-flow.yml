@@ -1,0 +1,72 @@
+name: Audit v95 full flow
+
+on:
+  pull_request:
+    branches:
+      - release/v95-meta-adapter
+  push:
+    branches:
+      - audit/v95-full-flow
+    paths:
+      - 'src/**'
+      - 'app/src/**'
+      - 'audit/**'
+      - '.github/workflows/audit-v95-full-flow.yml'
+      - 'package*.json'
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install app dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Start preview
+        run: |
+          nohup npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/dartscore-vite.log 2>&1 &
+          for i in {1..60}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/dartscore-vite.log
+          exit 1
+
+      - name: Run full-flow audit
+        run: node audit/v95-flow-audit.mjs
+
+      - name: Run extended gameplay audit
+        run: node audit/v95-extended-audit.mjs
+
+      - name: Run isolated regression audit
+        run: node audit/v95-isolated-audit.mjs
+
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v95-full-flow-audit
+          path: |
+            audit-v95-results.json
+            audit-v95-extended-results.json
+            audit-v95-isolated-results.json
+          if-no-files-found: warn
