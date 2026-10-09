@@ -58,7 +58,7 @@ jobs:
           grep -q "MARKETING_VERSION = 1.1.63;" ios/App/App.xcodeproj/project.pbxproj
           grep -q "CURRENT_PROJECT_VERSION = 2;" ios/App/App.xcodeproj/project.pbxproj
 
-      - name: Create distribution-signed archive
+      - name: Create unsigned archive
         run: |
           set -euo pipefail
           xcodebuild \
@@ -67,14 +67,22 @@ jobs:
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath "$RUNNER_TEMP/DartScorePro.xcarchive" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$APPSTORE_KEY_PATH" \
-            -authenticationKeyID "$APPSTORE_KEY_ID" \
-            -authenticationKeyIssuerID "$APPSTORE_ISSUER_ID" \
-            CODE_SIGN_STYLE=Automatic \
-            DEVELOPMENT_TEAM=MQG667M2B8 \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
             archive
+
+      - name: Normalize embedded framework signatures
+        run: |
+          set -euo pipefail
+          APP_PATH="$RUNNER_TEMP/DartScorePro.xcarchive/Products/Applications/App.app"
+          test -d "$APP_PATH/Frameworks"
+          find "$APP_PATH/Frameworks" -maxdepth 1 -type d -name '*.framework' -print0 | while IFS= read -r -d '' framework; do
+            echo "Ad-hoc signing $(basename "$framework") before cloud export"
+            codesign --remove-signature "$framework" 2>/dev/null || true
+            codesign --force --sign - --timestamp=none "$framework"
+          done
+          codesign --force --sign - --timestamp=none "$APP_PATH"
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 
       - name: Create export options
         run: |
