@@ -1,7 +1,24 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import './app.css';
 import { botThrowAround, botThrowClassic, botThrowCricket, botThrowRoulette, normalizeBotLevel } from './botEngine.js';
+
+const DartScoreIOS = registerPlugin('DartScoreIOS');
+const PLATFORM = Capacitor.getPlatform();
+const IS_IOS = PLATFORM === 'ios';
+const APP_STORE_ID = '6817341039';
+const IOS_APP_STORE_URL = `https://apps.apple.com/app/id${APP_STORE_ID}`;
+const IOS_PREMIUM_PRODUCT_ID = 'premium_unlock';
+const SPEECH_LANG_MAP = {
+  cs: 'cs-CZ',
+  en: 'en-US',
+  de: 'de-DE',
+  es: 'es-ES',
+  nl: 'nl-NL',
+  ru: 'ru-RU',
+  zh: 'zh-CN'
+};
 import {
   canShowReviewPrompt,
   normalizeReviewState,
@@ -249,7 +266,10 @@ const T = {
     appearanceLabel: 'Vzhled aplikace:',
     premiumActivated: 'Premium aktivováno',
     premiumActivatedTest: 'Premium aktivováno (test)',
-    billingUnavailable: 'Google Play nákup není v této verzi dostupný.',
+    billingUnavailable: 'Nákup Premium teď není dostupný.',
+    purchasePending: 'Nákup čeká na potvrzení.',
+    restorePurchases: 'Obnovit nákupy',
+    nothingToRestore: 'Žádný nákup k obnovení.',
     purchaseUnavailable: 'Nákup teď není dostupný. Zavři a znovu otevři aplikaci a zkus to znovu.',
     purchaseCancelled: 'Nákup byl zrušen.',
     purchaseFailed: 'Nákup Premium selhal',
@@ -351,7 +371,10 @@ activatePremium: 'Activate Premium',
   appearanceLabel: 'App appearance:',
   premiumActivated: 'Premium activated',
   premiumActivatedTest: 'Premium activated (test)',
-  billingUnavailable: 'Google Play purchase is not available in this version.',
+  billingUnavailable: 'Premium purchase is not available right now.',
+  purchasePending: 'Purchase is awaiting confirmation.',
+  restorePurchases: 'Restore purchases',
+  nothingToRestore: 'No purchase to restore.',
   purchaseUnavailable: 'Purchases are unavailable right now. Close and reopen the app, then try again.',
   purchaseCancelled: 'Purchase cancelled.',
   purchaseFailed: 'Premium purchase failed',
@@ -416,7 +439,10 @@ activatePremium: 'Activate Premium',
     appearanceLabel: 'App-Darstellung:',
     premiumActivated: 'Premium aktiviert',
     premiumActivatedTest: 'Premium aktiviert (Test)',
-    billingUnavailable: 'Google-Play-Kauf ist in dieser Version nicht verfügbar.',
+    billingUnavailable: 'Der Premium-Kauf ist derzeit nicht verfügbar.',
+    purchasePending: 'Der Kauf wartet auf Bestätigung.',
+    restorePurchases: 'Käufe wiederherstellen',
+    nothingToRestore: 'Keine Käufe zum Wiederherstellen.',
     purchaseUnavailable: 'Käufe sind momentan nicht verfügbar. Schließe und öffne die App erneut und versuche es noch einmal.',
     purchaseCancelled: 'Kauf abgebrochen.',
     purchaseFailed: 'Premium-Kauf fehlgeschlagen',
@@ -499,7 +525,10 @@ premiumNote: "Einmalige Zahlung. Kein Abo.",
     appearanceLabel: 'Apariencia de la app:',
     premiumActivated: 'Premium activado',
     premiumActivatedTest: 'Premium activado (prueba)',
-    billingUnavailable: 'La compra de Google Play no está disponible en esta versión.',
+    billingUnavailable: 'La compra Premium no está disponible ahora.',
+    purchasePending: 'La compra está pendiente de confirmación.',
+    restorePurchases: 'Restaurar compras',
+    nothingToRestore: 'No hay compras para restaurar.',
     purchaseUnavailable: 'Las compras no están disponibles ahora. Cierra y vuelve a abrir la app e inténtalo de nuevo.',
     purchaseCancelled: 'Compra cancelada.',
     purchaseFailed: 'La compra de Premium ha fallado',
@@ -582,7 +611,10 @@ premiumNote: "Pago único. Sin suscripción.",
     appearanceLabel: 'App-weergave:',
     premiumActivated: 'Premium geactiveerd',
     premiumActivatedTest: 'Premium geactiveerd (test)',
-    billingUnavailable: 'Google Play-aankopen zijn in deze versie niet beschikbaar.',
+    billingUnavailable: 'Premium kopen is momenteel niet beschikbaar.',
+    purchasePending: 'De aankoop wacht op bevestiging.',
+    restorePurchases: 'Aankopen herstellen',
+    nothingToRestore: 'Geen aankoop om te herstellen.',
     purchaseUnavailable: 'Aankopen zijn nu niet beschikbaar. Sluit en open de app opnieuw en probeer het nog eens.',
     purchaseCancelled: 'Aankoop geannuleerd.',
     purchaseFailed: 'Premium-aankoop mislukt',
@@ -665,7 +697,10 @@ premiumNote: "Eenmalige betaling. Geen abonnement.",
     appearanceLabel: 'Внешний вид приложения:',
     premiumActivated: 'Premium активирован',
     premiumActivatedTest: 'Premium активирован (тест)',
-    billingUnavailable: 'Покупка через Google Play недоступна в этой версии.',
+    billingUnavailable: 'Покупка Premium сейчас недоступна.',
+    purchasePending: 'Покупка ожидает подтверждения.',
+    restorePurchases: 'Восстановить покупки',
+    nothingToRestore: 'Нет покупок для восстановления.',
     purchaseUnavailable: 'Покупки сейчас недоступны. Закрой и снова открой приложение, затем попробуй ещё раз.',
     purchaseCancelled: 'Покупка отменена.',
     purchaseFailed: 'Не удалось купить Premium',
@@ -750,7 +785,10 @@ premiumNote: "Разовая оплата. Без подписки.",
     appearanceLabel: '应用外观：',
     premiumActivated: 'Premium 已激活',
     premiumActivatedTest: 'Premium 已激活（测试）',
-    billingUnavailable: '此版本暂不支持 Google Play 购买。',
+    billingUnavailable: '目前无法购买高级版。',
+    purchasePending: '购买正在等待确认。',
+    restorePurchases: '恢复购买',
+    nothingToRestore: '没有可恢复的购买。',
     purchaseUnavailable: '当前无法购买。请关闭并重新打开应用后再试。',
     purchaseCancelled: '购买已取消。',
     purchaseFailed: 'Premium 购买失败',
@@ -949,6 +987,13 @@ const autoNameRx = [/^Hráč (\d+)$/, /^Player (\d+)$/, /^Spieler (\d+)$/, /^Jug
 function speak(lang, text, enabled) {
   if (!enabled || typeof window === 'undefined') return;
 
+  const targetLang = SPEECH_LANG_MAP[lang] || 'en-US';
+
+  if (IS_IOS) {
+    DartScoreIOS.speak({ text: String(text), lang: targetLang }).catch(() => {});
+    return;
+  }
+
   try {
     if (window.DartScoreAndroid?.speak) {
       window.DartScoreAndroid.speak(String(text), lang || 'cs');
@@ -960,18 +1005,6 @@ function speak(lang, text, enabled) {
 
   const synth = window.speechSynthesis;
   const utter = new SpeechSynthesisUtterance(String(text));
-
-  const langMap = {
-    cs: 'cs-CZ',
-    en: 'en-US',
-    de: 'de-DE',
-    es: 'es-ES',
-    nl: 'nl-NL',
-    ru: 'ru-RU',
-    zh: 'zh-CN'
-  };
-
-  const targetLang = langMap[lang] || 'en-US';
   utter.lang = targetLang;
 
   // pokus o výběr ženského hlasu pro daný jazyk
@@ -1223,6 +1256,21 @@ function App() {
   useEffect(() => {
     const restorePremium = async () => {
       try {
+        if (IS_IOS) {
+          const result = await DartScoreIOS.restorePremium({
+            productId: IOS_PREMIUM_PRODUCT_ID,
+            sync: false
+          });
+          if (result?.owned) {
+            setIsPremium(true);
+            localStorage.setItem('premium', 'true');
+          } else {
+            setIsPremium(false);
+            localStorage.removeItem('premium');
+          }
+          return;
+        }
+
         if (!window.getDigitalGoodsService) return;
 
         const service = await window.getDigitalGoodsService(
@@ -3020,6 +3068,37 @@ const buyPremium = async () => {
   }
 
   try {
+    if (IS_IOS) {
+      const result = await DartScoreIOS.purchasePremium({
+        productId: IOS_PREMIUM_PRODUCT_ID
+      });
+
+      if (result?.owned || result?.status === 'purchased' || result?.status === 'alreadyOwned') {
+        setIsPremium(true);
+        localStorage.setItem('premium', 'true');
+        setShowAd(false);
+        showToast(
+          result?.status === 'alreadyOwned'
+            ? t(lang, 'premiumAlreadyOwned')
+            : t(lang, 'premiumActivated')
+        );
+        return;
+      }
+
+      if (result?.status === 'cancelled') {
+        showToast(t(lang, 'purchaseCancelled'));
+        return;
+      }
+
+      if (result?.status === 'pending') {
+        showToast(t(lang, 'purchasePending'));
+        return;
+      }
+
+      showToast(t(lang, 'billingUnavailable'));
+      return;
+    }
+
     const hasWindow = typeof window !== 'undefined';
     const hasDigitalGoods =
       hasWindow && typeof window.getDigitalGoodsService === 'function';
@@ -3155,6 +3234,31 @@ const buyPremium = async () => {
     showToast(`${t(lang, 'purchaseFailed')}: ${msg}`);
   }
 };
+
+const restorePremiumPurchase = async () => {
+  if (!IS_IOS) return;
+
+  try {
+    const result = await DartScoreIOS.restorePremium({
+      productId: IOS_PREMIUM_PRODUCT_ID,
+      sync: true
+    });
+
+    if (result?.owned) {
+      setIsPremium(true);
+      localStorage.setItem('premium', 'true');
+      setShowAd(false);
+      showToast(t(lang, 'premiumActivated'));
+      return;
+    }
+
+    showToast(t(lang, 'nothingToRestore'));
+  } catch (err) {
+    console.error('RESTORE PREMIUM ERROR:', err);
+    showToast(t(lang, 'restoreFailed'));
+  }
+};
+
     const makeSnapshot = () => ({
       version: 2,
       screen: 'game',
@@ -3344,13 +3448,23 @@ const buyPremium = async () => {
 
 
     // text režimu do hlavičky vedle výběru jazyka
-    const openRating = (source = 'lobby') => {
-      const url = 'https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro';
+    const openRating = async (source = 'lobby') => {
       markReviewDone();
 
       window.DartScoreAnalytics?.track('rate_app_clicked', {
         source
       });
+
+      if (IS_IOS) {
+        try {
+          await DartScoreIOS.openReview({ appId: APP_STORE_ID });
+        } catch (err) {
+          console.warn('App Store review page could not be opened', err);
+        }
+        return;
+      }
+
+      const url = 'https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro';
 
       try {
         if (window.DartScoreAndroid?.rateApp) {
@@ -3586,6 +3700,7 @@ const buyPremium = async () => {
       showToast={showToast}
       hasSaved={hasSaved}
       buyPremium={buyPremium}
+      restorePremiumPurchase={restorePremiumPurchase}
       isPremium={isPremium} setIsPremium={setIsPremium}
       themeColor={themeColor} setThemeColor={setThemeColor}
     />
@@ -3864,6 +3979,7 @@ function Lobby({
     showToast,
     hasSaved,
     buyPremium,
+    restorePremiumPurchase,
     isPremium, setIsPremium,
     themeColor, setThemeColor
   }) {
@@ -3873,7 +3989,9 @@ function Lobby({
       typeof window !== 'undefined' && Boolean(window.DartScoreAndroid);
 
     const shareApp = async () => {
-      const url = 'https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro';
+      const url = IS_IOS
+        ? IOS_APP_STORE_URL
+        : 'https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro';
       const payload = { title: 'DartScore Pro', text: t(lang, 'shareText'), url };
 
       window.DartScoreAnalytics?.track('app_share_clicked', {
@@ -3881,6 +3999,10 @@ function Lobby({
       });
 
       try {
+        if (IS_IOS) {
+          await DartScoreIOS.shareApp({ text: payload.text, url: payload.url });
+          return;
+        }
         if (window.DartScoreAndroid?.shareApp) {
           window.DartScoreAndroid.shareApp(payload.title, payload.text, payload.url);
           return;
@@ -4144,6 +4266,16 @@ function Lobby({
               </button>
             )}
                      </div>
+          {IS_IOS && !isPremium && (
+            <button
+              type="button"
+              className="gameTextAction"
+              onClick={restorePremiumPurchase}
+              style={{ marginBottom: 8 }}
+            >
+              {t(lang, 'restorePurchases')}
+            </button>
+          )}
 {showPremiumDetails && (
   <div style={{
     marginTop: '8px',
