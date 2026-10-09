@@ -1,0 +1,160 @@
+name: Upload iOS Premium review screenshot
+
+on:
+  push:
+    branches:
+      - feature/ios-v97
+    paths:
+      - .github/workflows/ios-upload-premium-review-screenshot.yml
+
+jobs:
+  upload:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    env:
+      APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+      APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+      APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies and Playwright
+        run: |
+          npm ci
+          npm install --no-save playwright@1.55.0
+          npx playwright install chromium
+
+      - name: Build and start app
+        run: |
+          npm run build
+          npx vite preview --host 127.0.0.1 --port 4173 > /tmp/vite.log 2>&1 &
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/vite.log
+          exit 1
+
+      - name: Capture Premium review screenshot
+        run: |
+          cat > /tmp/capture.mjs <<'JS'
+          import { chromium } from 'playwright';
+
+          const browser = await chromium.launch();
+          const context = await browser.newContext({
+            viewport: { width: 430, height: 932 },
+            deviceScaleFactor: 3,
+            locale: 'cs-CZ',
+            isMobile: true,
+            hasTouch: true
+          });
+          const page = await context.newPage();
+          await page.goto('http://127.0.0.1:4173/', { waitUntil: 'networkidle' });
+
+          const info = page.getByRole('button', { name: /Co obsahuje Premium/i });
+          await info.scrollIntoViewIfNeeded();
+          await info.click();
+          await page.waitForTimeout(350);
+
+          const premiumCard = info.locator('xpath=ancestor::div[contains(@class,"lobbyCard")][1]');
+          await premiumCard.scrollIntoViewIfNeeded();
+          await page.waitForTimeout(250);
+
+          await page.screenshot({
+            path: '/tmp/DartScore-Premium-Review.png',
+            fullPage: false
+          });
+          await browser.close();
+          JS
+          node /tmp/capture.mjs
+          sips -g pixelWidth -g pixelHeight /tmp/DartScore-Premium-Review.png
+          test "$(sips -g pixelWidth /tmp/DartScore-Premium-Review.png | awk '/pixelWidth/{print $2}')" = "1290"
+          test "$(sips -g pixelHeight /tmp/DartScore-Premium-Review.png | awk '/pixelHeight/{print $2}')" = "2796"
+
+      - name: Upload screenshot to App Store Connect
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          source "$RUNNER_TEMP/venv/bin/activate"
+          python -m pip install --quiet PyJWT cryptography requests
+          python - <<'PY'
+          import os, time, jwt, json, requests, hashlib
+
+          path="/tmp/DartScore-Premium-Review.png"
+          iap_id="6821062175"
+          key=os.environ["APPSTORE_PRIVATE_KEY"]
+          kid=os.environ["APPSTORE_KEY_ID"]
+          issuer=os.environ["APPSTORE_ISSUER_ID"]
+          now=int(time.time())
+          token=jwt.encode(
+            {"iss":issuer,"iat":now,"exp":now+600,"aud":"appstoreconnect-v1"},
+            key, algorithm="ES256", headers={"kid":kid,"typ":"JWT"}
+          )
+          headers={"Authorization":"Bearer "+token,"Content-Type":"application/json"}
+
+          size=os.path.getsize(path)
+          body={
+            "data":{
+              "type":"inAppPurchaseAppStoreReviewScreenshots",
+              "attributes":{
+                "fileName":"DartScore-Premium-Review.png",
+                "fileSize":size
+              },
+              "relationships":{
+                "inAppPurchaseV2":{
+                  "data":{"type":"inAppPurchases","id":iap_id}
+                }
+              }
+            }
+          }
+
+          create=requests.post(
+            "https://api.appstoreconnect.apple.com/v1/inAppPurchaseAppStoreReviewScreenshots",
+            headers=headers, json=body
+          )
+          create.raise_for_status()
+          obj=create.json()["data"]
+          sid=obj["id"]
+          ops=obj["attributes"].get("uploadOperations",[])
+          print("SCREENSHOT_ID="+sid)
+          print("UPLOAD_OPERATIONS="+str(len(ops)))
+
+          data=open(path,"rb").read()
+          for op in ops:
+            offset=op["offset"]
+            length=op["length"]
+            chunk=data[offset:offset+length]
+            upload_headers={h["name"]:h["value"] for h in op.get("requestHeaders",[])}
+            resp=requests.request(op["method"],op["url"],headers=upload_headers,data=chunk)
+            resp.raise_for_status()
+
+          md5=hashlib.md5(data).hexdigest()
+          patch_body={
+            "data":{
+              "type":"inAppPurchaseAppStoreReviewScreenshots",
+              "id":sid,
+              "attributes":{
+                "uploaded":True,
+                "sourceFileChecksum":md5
+              }
+            }
+          }
+          patch=requests.patch(
+            f"https://api.appstoreconnect.apple.com/v1/inAppPurchaseAppStoreReviewScreenshots/{sid}",
+            headers=headers, json=patch_body
+          )
+          patch.raise_for_status()
+          result=patch.json()["data"]["attributes"]
+          print("SCREENSHOT_UPLOAD_STATE="+str(result.get("assetDeliveryState",{}).get("state")))
+          PY
+
+      - name: Upload screenshot artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DartScore-Premium-Review-Screenshot
+          path: /tmp/DartScore-Premium-Review.png
