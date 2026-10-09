@@ -41,7 +41,7 @@ jobs:
         run: |
           grep -q "PRODUCT_BUNDLE_IDENTIFIER = com.randis2288.dartscorepro;" ios/App/App.xcodeproj/project.pbxproj
           grep -q "MARKETING_VERSION = 1.1.63;" ios/App/App.xcodeproj/project.pbxproj
-          grep -q "CURRENT_PROJECT_VERSION = 2;" ios/App/App.xcodeproj/project.pbxproj
+          grep -q "CURRENT_PROJECT_VERSION = 3;" ios/App/App.xcodeproj/project.pbxproj
           grep -q "IPHONEOS_DEPLOYMENT_TARGET = 15.0;" ios/App/App.xcodeproj/project.pbxproj
           /usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" ios/App/App/Info.plist | grep -qx "DartScore Pro"
 
