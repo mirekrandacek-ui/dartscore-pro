@@ -19,17 +19,16 @@ const IOS_PREMIUM_PRODUCT_ID = 'premium_unlock';
 
 // Filled only after the iOS app + ad units are created in AdMob.
 // Keeping these blank prevents accidental ad requests with Android IDs.
-const IOS_ADMOB_APP_ID = '';
-const IOS_ADMOB_BANNER_ID = '';
+const IOS_ADMOB_APP_ID = 'ca-app-pub-9232105399279318~8707407752';
+const IOS_ADMOB_BANNER_ID = 'ca-app-pub-9232105399279318/8268424056';
 const IOS_ADMOB_INTERSTITIAL_ID = '';
-const IOS_ADS_CONFIGURED = Boolean(
-  IOS_ADMOB_APP_ID && IOS_ADMOB_BANNER_ID && IOS_ADMOB_INTERSTITIAL_ID
-);
+const IOS_BANNER_CONFIGURED = Boolean(IOS_ADMOB_APP_ID && IOS_ADMOB_BANNER_ID);
+const IOS_INTERSTITIAL_CONFIGURED = Boolean(IOS_ADMOB_APP_ID && IOS_ADMOB_INTERSTITIAL_ID);
 
 let iosAdMobInitialized = false;
 
 async function ensureIOSAdMobReady() {
-  if (!IS_IOS || !IOS_ADS_CONFIGURED) return false;
+  if (!IS_IOS || !IOS_ADMOB_APP_ID) return false;
 
   let consentInfo = await AdMob.requestConsentInfo();
 
@@ -51,6 +50,7 @@ async function ensureIOSAdMobReady() {
 }
 
 async function showIOSBanner() {
+  if (!IOS_BANNER_CONFIGURED) return false;
   const ready = await ensureIOSAdMobReady();
   if (!ready) return false;
 
@@ -1145,6 +1145,7 @@ async function showInterstitialAd() {
     });
 
     if (IS_IOS) {
+      if (!IOS_INTERSTITIAL_CONFIGURED) return false;
       const ready = await ensureIOSAdMobReady();
       if (!ready) return false;
 
