@@ -1,0 +1,76 @@
+name: Configure iOS Premium price
+
+on:
+  push:
+    branches:
+      - feature/ios-v97
+    paths:
+      - .github/workflows/ios-configure-premium-price.yml
+
+jobs:
+  configure:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    env:
+      APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+      APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+      APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set Czech base price to 69.99 CZK
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          source "$RUNNER_TEMP/venv/bin/activate"
+          python -m pip install --quiet PyJWT cryptography
+          python - <<'PY'
+          import os, time, jwt, json, urllib.request, urllib.error
+
+          key=os.environ["APPSTORE_PRIVATE_KEY"]; kid=os.environ["APPSTORE_KEY_ID"]; issuer=os.environ["APPSTORE_ISSUER_ID"]
+          now=int(time.time())
+          token=jwt.encode({"iss":issuer,"iat":now,"exp":now+600,"aud":"appstoreconnect-v1"},key,algorithm="ES256",headers={"kid":kid,"typ":"JWT"})
+          headers={"Authorization":"Bearer "+token,"Content-Type":"application/json"}
+
+          iap_id="6821062175"
+          price_point_id="eyJzIjoiNjgyMTA2MjE3NSIsInQiOiJDWkUiLCJwIjoiMTAwNjAifQ"
+          temp_price_id="dartscore-premium-cze-current"
+
+          body={
+            "data":{
+              "type":"inAppPurchasePriceSchedules",
+              "relationships":{
+                "inAppPurchase":{"data":{"type":"inAppPurchases","id":iap_id}},
+                "baseTerritory":{"data":{"type":"territories","id":"CZE"}},
+                "manualPrices":{"data":[{"type":"inAppPurchasePrices","id":temp_price_id}]}
+              }
+            },
+            "included":[
+              {
+                "type":"inAppPurchasePrices",
+                "id":temp_price_id,
+                "attributes":{"startDate":None},
+                "relationships":{
+                  "inAppPurchaseV2":{"data":{"type":"inAppPurchases","id":iap_id}},
+                  "inAppPurchasePricePoint":{"data":{"type":"inAppPurchasePricePoints","id":price_point_id}}
+                }
+              },
+              {"type":"territories","id":"CZE"}
+            ]
+          }
+
+          req=urllib.request.Request(
+            "https://api.appstoreconnect.apple.com/v1/inAppPurchasePriceSchedules",
+            data=json.dumps(body).encode(),
+            headers=headers,
+            method="POST"
+          )
+          try:
+            with urllib.request.urlopen(req) as resp:
+              data=json.load(resp)
+            print("PRICE_SCHEDULE_CREATED="+data["data"]["id"])
+            print("BASE_PRICE=69.99 CZK")
+          except urllib.error.HTTPError as e:
+            print("HTTP_STATUS="+str(e.code))
+            print(e.read().decode("utf-8","replace"))
+            raise
+          PY
