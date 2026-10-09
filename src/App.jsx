@@ -1,6 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Capacitor, registerPlugin } from '@capacitor/core';
+import {
+  AdMob,
+  AdmobConsentStatus,
+  BannerAdPosition,
+  BannerAdSize
+} from '@capacitor-community/admob';
 import './app.css';
 import { botThrowAround, botThrowClassic, botThrowCricket, botThrowRoulette, normalizeBotLevel } from './botEngine.js';
 
@@ -10,6 +16,52 @@ const IS_IOS = PLATFORM === 'ios';
 const APP_STORE_ID = '6817341039';
 const IOS_APP_STORE_URL = `https://apps.apple.com/app/id${APP_STORE_ID}`;
 const IOS_PREMIUM_PRODUCT_ID = 'premium_unlock';
+
+// Filled only after the iOS app + ad units are created in AdMob.
+// Keeping these blank prevents accidental ad requests with Android IDs.
+const IOS_ADMOB_APP_ID = '';
+const IOS_ADMOB_BANNER_ID = '';
+const IOS_ADMOB_INTERSTITIAL_ID = '';
+const IOS_ADS_CONFIGURED = Boolean(
+  IOS_ADMOB_APP_ID && IOS_ADMOB_BANNER_ID && IOS_ADMOB_INTERSTITIAL_ID
+);
+
+let iosAdMobInitialized = false;
+
+async function ensureIOSAdMobReady() {
+  if (!IS_IOS || !IOS_ADS_CONFIGURED) return false;
+
+  let consentInfo = await AdMob.requestConsentInfo();
+
+  if (
+    consentInfo?.isConsentFormAvailable &&
+    consentInfo?.status === AdmobConsentStatus.REQUIRED
+  ) {
+    consentInfo = await AdMob.showConsentForm();
+  }
+
+  if (!consentInfo?.canRequestAds) return false;
+
+  if (!iosAdMobInitialized) {
+    await AdMob.initialize();
+    iosAdMobInitialized = true;
+  }
+
+  return true;
+}
+
+async function showIOSBanner() {
+  const ready = await ensureIOSAdMobReady();
+  if (!ready) return false;
+
+  await AdMob.showBanner({
+    adId: IOS_ADMOB_BANNER_ID,
+    adSize: BannerAdSize.ADAPTIVE_BANNER,
+    position: BannerAdPosition.BOTTOM_CENTER,
+    margin: 0
+  });
+  return true;
+}
 const SPEECH_LANG_MAP = {
   cs: 'cs-CZ',
   en: 'en-US',
@@ -1086,12 +1138,24 @@ const ADMOB_INTERSTITIAL_SCHEME_URL = "dartscorepro://show-interstitial";
 async function showInterstitialAd() {
   try {
     if (typeof window === 'undefined') return false;
-    if (!/Android/i.test(navigator.userAgent)) return false;
 
     window.DartScoreAnalytics?.track('interstitial_requested', {
       ad_format: 'interstitial',
       plan_tier: localStorage.getItem('premium') === 'true' ? 'premium' : 'free'
     });
+
+    if (IS_IOS) {
+      const ready = await ensureIOSAdMobReady();
+      if (!ready) return false;
+
+      await AdMob.prepareInterstitial({
+        adId: IOS_ADMOB_INTERSTITIAL_ID
+      });
+      await AdMob.showInterstitial();
+      return true;
+    }
+
+    if (!/Android/i.test(navigator.userAgent)) return false;
 
     if (window.DartScoreAndroid?.showInterstitial) {
       window.DartScoreAndroid.showInterstitial();
@@ -1252,6 +1316,8 @@ function App() {
       return false;
     }
   });
+  const [premiumStateResolved, setPremiumStateResolved] = useState(!IS_IOS);
+  const [iosBannerVisible, setIosBannerVisible] = useState(false);
 
   useEffect(() => {
     const restorePremium = async () => {
@@ -1287,6 +1353,8 @@ function App() {
         }
       } catch (e) {
         console.warn('Restore premium failed', e);
+      } finally {
+        if (IS_IOS) setPremiumStateResolved(true);
       }
     };
 
@@ -1310,6 +1378,34 @@ function App() {
       }
     } catch { }
   }, [isPremium]);
+
+  useEffect(() => {
+    if (!IS_IOS || !premiumStateResolved) return undefined;
+
+    let cancelled = false;
+
+    const syncIOSBanner = async () => {
+      if (isPremium || !IOS_ADS_CONFIGURED) {
+        try { await AdMob.removeBanner(); } catch { }
+        if (!cancelled) setIosBannerVisible(false);
+        return;
+      }
+
+      try {
+        const shown = await showIOSBanner();
+        if (!cancelled) setIosBannerVisible(Boolean(shown));
+      } catch (err) {
+        console.warn('iOS banner skipped:', err?.message || err);
+        if (!cancelled) setIosBannerVisible(false);
+      }
+    };
+
+    syncIOSBanner();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isPremium, premiumStateResolved]);
 
   const [themeColor, setThemeColor] = useState('default');
 
@@ -3513,7 +3609,7 @@ const restorePremiumPurchase = async () => {
           data-premium={isPremium ? '1' : '0'}
           style={{
             paddingTop: 'max(var(--sat, 0px), var(--sat-fallback, 28px))',
-            paddingBottom: 0,
+            paddingBottom: iosBannerVisible ? 60 : 0,
           }}
         >
           {/* HEADER */}
