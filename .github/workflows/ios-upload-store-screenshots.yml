@@ -1,0 +1,170 @@
+name: Upload App Store screenshots
+
+on:
+  push:
+    branches:
+      - feature/ios-v97
+    paths:
+      - .github/workflows/ios-upload-store-screenshots.yml
+
+jobs:
+  screenshots:
+    runs-on: macos-latest
+    timeout-minutes: 25
+    env:
+      APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+      APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+      APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install screenshot tools
+        run: |
+          npm ci
+          npm install --no-save playwright@1.55.0
+          npx playwright install chromium
+          python3 -m venv "$RUNNER_TEMP/venv"
+          source "$RUNNER_TEMP/venv/bin/activate"
+          python -m pip install --quiet pillow PyJWT cryptography requests
+
+      - name: Build and start app
+        run: |
+          npm run build
+          npx vite preview --host 127.0.0.1 --port 4173 > /tmp/vite.log 2>&1 &
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/vite.log
+          exit 1
+
+      - name: Capture real app screens
+        run: |
+          cat > ./capture-store.mjs <<'JS'
+          import { chromium } from 'playwright';
+
+          const browser = await chromium.launch();
+
+          async function newPage() {
+            const context = await browser.newContext({
+              viewport: { width: 402, height: 874 },
+              deviceScaleFactor: 3,
+              locale: 'en-US',
+              isMobile: true,
+              hasTouch: true
+            });
+            const page = await context.newPage();
+            await page.goto('http://127.0.0.1:4173/', { waitUntil: 'networkidle' });
+            await page.evaluate(() => window.scrollTo(0, 0));
+            return { context, page };
+          }
+
+          {
+            const { context, page } = await newPage();
+            await page.screenshot({ path: '/tmp/01-lobby.png', fullPage: false });
+            await context.close();
+          }
+
+          {
+            const { context, page } = await newPage();
+            await page.getByRole('button', { name: /Start game/i }).click();
+            await page.waitForTimeout(500);
+            await page.evaluate(() => window.scrollTo(0, 0));
+            await page.screenshot({ path: '/tmp/02-x01.png', fullPage: false });
+            await context.close();
+          }
+
+          {
+            const { context, page } = await newPage();
+            const selects = page.locator('select');
+            let changed = false;
+            for (let i = 0; i < await selects.count(); i++) {
+              if (await selects.nth(i).locator('option[value="cricket"]').count()) {
+                await selects.nth(i).selectOption('cricket');
+                changed = true;
+                break;
+              }
+            }
+            if (!changed) throw new Error('Mode select with Cricket not found');
+            await page.getByRole('button', { name: /Start game/i }).click();
+            await page.waitForTimeout(500);
+            await page.evaluate(() => window.scrollTo(0, 0));
+            await page.screenshot({ path: '/tmp/03-cricket.png', fullPage: false });
+            await context.close();
+          }
+
+          await browser.close();
+          JS
+          node ./capture-store.mjs
+
+          source "$RUNNER_TEMP/venv/bin/activate"
+          python - <<'PY'
+          from PIL import Image
+          for p in ["/tmp/01-lobby.png","/tmp/02-x01.png","/tmp/03-cricket.png"]:
+              im=Image.open(p).convert("RGB")
+              assert im.size == (1206,2622), (p, im.size)
+              im.save(p, "PNG", optimize=True)
+              print("SCREEN", p, im.size, im.mode)
+          PY
+
+      - name: Upload screenshots to App Store Connect
+        run: |
+          source "$RUNNER_TEMP/venv/bin/activate"
+          python - <<'PY'
+          import os,time,jwt,requests,hashlib
+
+          key=os.environ["APPSTORE_PRIVATE_KEY"]; kid=os.environ["APPSTORE_KEY_ID"]; issuer=os.environ["APPSTORE_ISSUER_ID"]
+          now=int(time.time())
+          token=jwt.encode({"iss":issuer,"iat":now,"exp":now+600,"aud":"appstoreconnect-v1"},key,algorithm="ES256",headers={"kid":kid,"typ":"JWT"})
+          H={"Authorization":"Bearer "+token,"Content-Type":"application/json"}
+          B="https://api.appstoreconnect.apple.com"
+          localization_id="78171f28-411e-4a15-9424-35ce45f35657"
+
+          r=requests.get(B+f"/v1/appStoreVersionLocalizations/{localization_id}/appScreenshotSets",headers={"Authorization":"Bearer "+token},params={"filter[screenshotDisplayType]":"APP_IPHONE_61","limit":10})
+          r.raise_for_status()
+          sets=r.json().get("data",[])
+          if sets:
+              set_id=sets[0]["id"]
+              print("SCREENSHOT_SET_REUSED="+set_id)
+          else:
+              body={"data":{"type":"appScreenshotSets","attributes":{"screenshotDisplayType":"APP_IPHONE_61"},"relationships":{"appStoreVersionLocalization":{"data":{"type":"appStoreVersionLocalizations","id":localization_id}}}}}
+              r=requests.post(B+"/v1/appScreenshotSets",headers=H,json=body)
+              r.raise_for_status()
+              set_id=r.json()["data"]["id"]
+              print("SCREENSHOT_SET_CREATED="+set_id)
+
+          for path in ["/tmp/01-lobby.png","/tmp/02-x01.png","/tmp/03-cricket.png"]:
+              name=os.path.basename(path)
+              data=open(path,"rb").read()
+              body={"data":{"type":"appScreenshots","attributes":{"fileName":name,"fileSize":len(data)},"relationships":{"appScreenshotSet":{"data":{"type":"appScreenshotSets","id":set_id}}}}}
+              r=requests.post(B+"/v1/appScreenshots",headers=H,json=body)
+              r.raise_for_status()
+              obj=r.json()["data"]
+              sid=obj["id"]
+              ops=obj["attributes"].get("uploadOperations",[])
+              for op in ops:
+                  chunk=data[op["offset"]:op["offset"]+op["length"]]
+                  h={x["name"]:x["value"] for x in op.get("requestHeaders",[])}
+                  u=requests.request(op["method"],op["url"],headers=h,data=chunk)
+                  u.raise_for_status()
+              patch={"data":{"type":"appScreenshots","id":sid,"attributes":{"uploaded":True,"sourceFileChecksum":hashlib.md5(data).hexdigest()}}}
+              r=requests.patch(B+f"/v1/appScreenshots/{sid}",headers=H,json=patch)
+              r.raise_for_status()
+              state=r.json()["data"]["attributes"].get("assetDeliveryState",{}).get("state")
+              print("SCREENSHOT_UPLOADED="+name+"|"+sid+"|"+str(state))
+          PY
+
+      - name: Save screenshots artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DartScore-AppStore-Screenshots
+          path: |
+            /tmp/01-lobby.png
+            /tmp/02-x01.png
+            /tmp/03-cricket.png
