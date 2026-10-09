@@ -21,8 +21,10 @@ jobs:
 
       - name: Resolve numeric App Store ID
         run: |
-          python3 -m pip install --quiet PyJWT cryptography
-          python3 - <<'PY'
+          python3 -m venv "$RUNNER_TEMP/venv"
+          source "$RUNNER_TEMP/venv/bin/activate"
+          python -m pip install --quiet PyJWT cryptography
+          python - <<'PY'
           import os, time, jwt, json, urllib.request, urllib.parse
           key = os.environ["APPSTORE_PRIVATE_KEY"]
           kid = os.environ["APPSTORE_KEY_ID"]
