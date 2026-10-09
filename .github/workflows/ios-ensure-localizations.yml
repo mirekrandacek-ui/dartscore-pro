@@ -1,0 +1,63 @@
+name: Ensure App Store localizations
+
+on:
+  push:
+    branches:
+      - feature/ios-v97
+    paths:
+      - .github/workflows/ios-ensure-localizations.yml
+
+jobs:
+  localizations:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    env:
+      APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+      APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+      APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure seven App Store locales
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          source "$RUNNER_TEMP/venv/bin/activate"
+          python -m pip install --quiet PyJWT cryptography requests
+          python - <<'PY'
+          import os,time,jwt,requests
+
+          key=os.environ["APPSTORE_PRIVATE_KEY"]
+          kid=os.environ["APPSTORE_KEY_ID"]
+          issuer=os.environ["APPSTORE_ISSUER_ID"]
+          now=int(time.time())
+          token=jwt.encode(
+              {"iss":issuer,"iat":now,"exp":now+600,"aud":"appstoreconnect-v1"},
+              key,algorithm="ES256",headers={"kid":kid,"typ":"JWT"}
+          )
+          H={"Authorization":"Bearer "+token,"Content-Type":"application/json"}
+          B="https://api.appstoreconnect.apple.com"
+          version_id="69fd4586-a0ca-4d5d-a25c-65dc867dc6a2"
+          wanted=["en-US","cs","de-DE","es-ES","nl-NL","ru","zh-Hans"]
+
+          r=requests.get(B+f"/v1/appStoreVersions/{version_id}/appStoreVersionLocalizations",headers=H,params={"limit":50})
+          r.raise_for_status()
+          existing={x["attributes"]["locale"]:x["id"] for x in r.json().get("data",[])}
+          print("EXISTING="+",".join(sorted(existing)))
+
+          for locale in wanted:
+              if locale in existing:
+                  print("LOCALE_EXISTS="+locale+"|"+existing[locale])
+                  continue
+              body={
+                "data":{
+                  "type":"appStoreVersionLocalizations",
+                  "attributes":{"locale":locale},
+                  "relationships":{"appStoreVersion":{"data":{"type":"appStoreVersions","id":version_id}}}
+                }
+              }
+              r=requests.post(B+"/v1/appStoreVersionLocalizations",headers=H,json=body)
+              print("CREATE",locale,"HTTP",r.status_code)
+              print(r.text)
+              r.raise_for_status()
+              print("LOCALE_CREATED="+locale+"|"+r.json()["data"]["id"])
+          PY
