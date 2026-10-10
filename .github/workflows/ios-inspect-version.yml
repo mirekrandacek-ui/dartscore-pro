@@ -45,6 +45,11 @@ jobs:
               a=v["attributes"]
               print("VERSION",v["id"],a.get("versionString"),a.get("platform"),a.get("appStoreState"))
 
+          selected=get(f"/v1/appStoreVersions/{versions[0]['id']}/build") if versions else None
+          if selected and selected.get("data"):
+              a=selected["data"]["attributes"]
+              print("SELECTED_BUILD",selected["data"]["id"],a.get("version"),a.get("processingState"))
+
           builds=get(f"/v1/apps/{app_id}/builds",{"limit":50})["data"]
           for b in builds:
               a=b["attributes"]
@@ -57,3 +62,5 @@ jobs:
           PY
 
 # final audit refresh 2026-10-10
+
+# final selected-build refresh 2026-10-10
