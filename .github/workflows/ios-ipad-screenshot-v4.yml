@@ -1,0 +1,111 @@
+name: Capture iPad simulator screenshot v4
+
+on:
+  push:
+    branches:
+      - feature/ios-v97
+    paths:
+      - .github/workflows/ios-ipad-screenshot-v4.yml
+
+jobs:
+  capture:
+    runs-on: macos-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Prepare and build app
+        run: |
+          npm ci
+          npm run build
+          npx cap sync ios
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -derivedDataPath build/ios-derived \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Boot exact 13-inch iPad
+        run: |
+          set -euo pipefail
+          UDID="$(xcrun simctl list devices -j | python3 -c '
+          import json,sys
+          d=json.load(sys.stdin)["devices"]
+          key=next(k for k in d if k.endswith("iOS-26-5"))
+          xs=[x for x in d[key] if x.get("isAvailable") and x["name"]=="iPad Pro 13-inch (M5)"]
+          print(xs[0]["udid"])
+          ')"
+          echo "SIM_UDID=$UDID" >> "$GITHUB_ENV"
+          echo "Using $UDID"
+
+          open -a Simulator --args -CurrentDeviceUDID "$UDID" >/dev/null 2>&1 || true
+          python3 - "$UDID" <<'PY'
+          import subprocess,sys,time,json
+          u=sys.argv[1]
+          try:
+              subprocess.run(["xcrun","simctl","boot",u],timeout=30,check=False)
+          except subprocess.TimeoutExpired:
+              print("boot command timed out; continuing to poll")
+          for i in range(120):
+              out=subprocess.check_output(["xcrun","simctl","list","devices","-j"])
+              d=json.loads(out)["devices"]
+              state=next((x["state"] for xs in d.values() for x in xs if x["udid"]==u),"Missing")
+              print("state",state)
+              if state=="Booted":
+                  break
+              time.sleep(2)
+          else:
+              raise SystemExit("Simulator did not reach Booted")
+          print("Booted. Waiting for SpringBoard...")
+          time.sleep(60)
+          PY
+
+      - name: Install launch and screenshot with timeouts
+        run: |
+          set -euo pipefail
+          APP_PATH="$GITHUB_WORKSPACE/build/ios-derived/Build/Products/Release-iphonesimulator/App.app"
+          SHOT="$RUNNER_TEMP/DartScore_iPad_13_EN_lobby.png"
+
+          python3 - "$SIM_UDID" "$APP_PATH" "$SHOT" <<'PY'
+          import subprocess,sys,time,os
+          u,app,shot=sys.argv[1:]
+          def run(cmd,timeout):
+              print("RUN", " ".join(cmd), flush=True)
+              try:
+                  r=subprocess.run(cmd,timeout=timeout,text=True,capture_output=True)
+              except subprocess.TimeoutExpired:
+                  raise SystemExit("TIMEOUT: "+" ".join(cmd))
+              print("RETURN",r.returncode,flush=True)
+              if r.stdout: print("STDOUT",r.stdout,flush=True)
+              if r.stderr: print("STDERR",r.stderr,flush=True)
+              if r.returncode:
+                  raise SystemExit(r.returncode)
+
+          run(["xcrun","simctl","install",u,app],90)
+          run(["xcrun","simctl","spawn",u,"defaults","write","NSGlobalDomain","AppleLanguages","-array","en"],30)
+          run(["xcrun","simctl","spawn",u,"defaults","write","NSGlobalDomain","AppleLocale","en_US"],30)
+          run(["xcrun","simctl","launch",u,"com.randis2288.dartscorepro"],45)
+          print("App launched; waiting 25 sec",flush=True)
+          time.sleep(25)
+          run(["xcrun","simctl","io",u,"screenshot",shot],45)
+          if not os.path.exists(shot):
+              raise SystemExit("Screenshot not created")
+          PY
+
+          sips -g pixelWidth -g pixelHeight "$SHOT"
+
+      - name: Upload screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: DartScore_iPad_13_EN_real_v4
+          path: ${{ runner.temp }}/DartScore_iPad_13_EN_lobby.png
+          if-no-files-found: error
