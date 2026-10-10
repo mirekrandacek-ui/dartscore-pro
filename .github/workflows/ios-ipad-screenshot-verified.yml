@@ -41,19 +41,19 @@ jobs:
           import XCTest
           final class Capture: XCTestCase {
               let app = XCUIApplication(bundleIdentifier: "com.randis2288.dartscorepro")
-              func button(_ label: String) -> XCUIElement {
-                  let q = app.buttons.matching(NSPredicate(format: "label == %@", label))
-                  let e = q.firstMatch
-                  XCTAssertTrue(e.waitForExistence(timeout: 15), "Missing button: \(label)\n\(app.debugDescription)")
-                  return e
-              }
-              func tap(_ label: String) { button(label).tap() }
-              func option(_ label: String) {
+              // WebView custom selects are exposed by iOS accessibility as Other,
+              // rather than Button. Accept the real hittable element instead.
+              func element(_ label: String) -> XCUIElement {
                   let q = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", label))
+                  let first = q.firstMatch
+                  XCTAssertTrue(first.waitForExistence(timeout: 15), "Missing UI element: \(label)\n\(app.debugDescription)")
                   let matches = q.allElementsBoundByIndex.filter { $0.isHittable }
-                  XCTAssertFalse(matches.isEmpty, "Missing option: \(label)\n\(app.debugDescription)")
-                  matches.last?.tap()
+                  XCTAssertFalse(matches.isEmpty, "Element not hittable: \(label)\n\(app.debugDescription)")
+                  return matches.last ?? first
               }
+              func button(_ label: String) -> XCUIElement { element(label) }
+              func tap(_ label: String) { element(label).tap() }
+              func option(_ label: String) { element(label).tap() }
               func shot(_ name: String) {
                   XCTAssertEqual(app.state, .runningForeground)
                   sleep(2)
@@ -63,7 +63,7 @@ jobs:
                   add(a)
                   print("CAPTURED_REAL_IPAD_SCREEN \(name)")
               }
-              func back() { tap("Back"); XCTAssertTrue(button("Classic").exists) }
+              func back() { tap("Back"); XCTAssertTrue(element("Classic").exists) }
               func testEightScreens() {
                   continueAfterFailure = false
                   XCUIDevice.shared.orientation = .portrait
