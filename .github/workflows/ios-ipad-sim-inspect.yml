@@ -1,0 +1,26 @@
+name: Inspect iPad simulator availability
+
+on:
+  push:
+    branches:
+      - feature/ios-v97
+    paths:
+      - .github/workflows/ios-ipad-sim-inspect.yml
+
+jobs:
+  inspect:
+    runs-on: macos-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect CoreSimulator
+        run: |
+          set -euo pipefail
+          echo "XCODE:"
+          xcodebuild -version
+          echo "RUNTIMES:"
+          xcrun simctl list runtimes
+          echo "DEVICE TYPES:"
+          xcrun simctl list devicetypes | grep -i "iPad Pro 13" || true
+          echo "AVAILABLE DEVICES:"
+          xcrun simctl list devices available | grep -A3 -B2 -i "iPad Pro 13" || true
