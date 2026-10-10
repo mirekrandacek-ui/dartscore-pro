@@ -9,6 +9,7 @@ import {
 } from '@capacitor-community/admob';
 import './app.css';
 import { botThrowAround, botThrowClassic, botThrowCricket, botThrowRoulette, normalizeBotLevel } from './botEngine.js';
+import { hasRecordedScore, isQuickClassic, isSupportedX01 } from './interstitialPolicy.js';
 
 const DartScoreIOS = registerPlugin('DartScoreIOS');
 const PLATFORM = Capacitor.getPlatform();
@@ -1652,21 +1653,6 @@ function App() {
   const pendingClassicAdRef = useRef(null);
   const gameSessionRef = useRef(0);
 
-  const isQuickClassic = (game) =>
-    game?.mode === 'classic'
-    && [101, 301].includes(Number(game.startScore))
-    // The match-format UI represents single leg / single set as 1 / 1.
-    && Number(game.legsToWinSet) <= 1 && Number(game.setsToWin) <= 1;
-
-  const hasRecordedScore = (game) =>
-    (game?.actions?.length || 0) > 0
-    || (game?.darts?.length || 0) > 0
-    || (game?.thrown || []).some(n => Number(n) > 0)
-    || (game?.scores || []).some(n => Number(n) < Number(game.startScore))
-    || (game?.classicVisitHistory?.length || 0) > 0
-    || (game?.classicLegsWon || []).some(n => Number(n) > 0)
-    || (game?.classicSetsWon || []).some(n => Number(n) > 0);
-
   const emitInterstitialEvent = async (event) => {
     if (isPremium || !event?.ad_event) return false;
 
@@ -1734,7 +1720,7 @@ function App() {
 
   const recordClassicAdEvent = (game, event) => {
     if (isPremium || adCountedForGameRef.current || game?.adEventCounted || game?.mode !== 'classic') return;
-    if (![101, 301, 501, 701, 901].includes(Number(game.startScore))) return;
+    if (!isSupportedX01(game)) return;
     if (event === 'abandoned' && (!isQuickClassic(game) || !hasRecordedScore(game))) return;
 
     adCountedForGameRef.current = true;
