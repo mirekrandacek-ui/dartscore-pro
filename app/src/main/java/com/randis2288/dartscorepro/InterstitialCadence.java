@@ -27,7 +27,11 @@ final class InterstitialCadence {
         SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         boolean eligible = false;
 
-        if ("legacy".equals(event)) {
+        if ("legacy_bridge".equals(event)) {
+            // WebView versions without typed ad events already enforced a
+            // three-start threshold; apply only the native cooldown here.
+            eligible = true;
+        } else if ("legacy".equals(event)) {
             int count = prefs.getInt(OTHER_GAME_COUNT, 0) + 1;
             prefs.edit().putInt(OTHER_GAME_COUNT, count).apply();
             eligible = count >= 3;
