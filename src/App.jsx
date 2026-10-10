@@ -899,17 +899,14 @@ function formatAvg(a) {
 /* ===== AdMob interstitial handler ===== */
 const ADMOB_INTERSTITIAL_SCHEME_URL = "dartscorepro://show-interstitial";
 
-async function showInterstitialAd() {
+async function showInterstitialAd(eventDetails) {
   try {
-    if (typeof window === 'undefined') return false;
+    if (typeof window === 'undefined' || !eventDetails?.ad_event) return false;
     if (!/Android/i.test(navigator.userAgent)) return false;
 
-    window.DartScoreAnalytics?.track('interstitial_requested', {
-      ad_format: 'interstitial',
-      plan_tier: localStorage.getItem('premium') === 'true' ? 'premium' : 'free'
-    });
-
-    window.location.href = ADMOB_INTERSTITIAL_SCHEME_URL;
+    // Native Android persists the counter and enforces the 5-minute cooldown.
+    const params = new URLSearchParams(eventDetails);
+    window.location.href = `${ADMOB_INTERSTITIAL_SCHEME_URL}?${params}`;
     return true;
   } catch (err) {
     console.warn("AdMob interstitial skipped:", err?.message || err);
@@ -995,6 +992,8 @@ function App() {
   /* === STATE === */
 
   const [screen, setScreen] = useState('lobby');
+  const screenRef = useRef('lobby');
+  screenRef.current = screen;
 
   const [toast, setToast] = useState(null);
   const showToast = (msg) => {
@@ -1298,10 +1297,64 @@ function App() {
   const [winner, setWinner] = useState(null);
   const [pendingWin, setPendingWin] = useState(null);
 
-  // Interstitial cadence: a game counts only after at least 3 completed visits.
-  // Show one interstitial on Start/Restart after every 3 counted games.
+  // Non-X01 modes keep the existing 3-visit threshold per counted game.
+  // Native Android owns persistent ad counters and the global 5-minute gap.
   const playedVisitsRef = useRef(0);
-  const playedGamesSinceAdRef = useRef(0);
+  const adCountedForGameRef = useRef(false);
+  const pendingCompletedAdRef = useRef(null);
+  const pendingCompletedAdTimerRef = useRef(null);
+  const gameSessionRef = useRef(0);
+
+  const isQuickClassic = (game) =>
+    game?.mode === 'classic'
+    && (Number(game.startScore) === 101 || Number(game.startScore) === 301)
+    // Single-leg / no extra sets is represented by 1 / 1 in this UI.
+    && Number(game.legsToWinSet) <= 1 && Number(game.setsToWin) <= 1;
+
+  const hasRecordedScore = (game) =>
+    (game?.actions?.length || 0) > 0
+    || (game?.darts?.length || 0) > 0
+    || (game?.thrown || []).some(n => Number(n) > 0)
+    || (game?.scores || []).some(n => Number(n) < Number(game.startScore))
+    || (game?.classicVisitHistory?.length || 0) > 0
+    || (game?.classicLegsWon || []).some(n => Number(n) > 0)
+    || (game?.classicSetsWon || []).some(n => Number(n) > 0);
+
+  const flushCompletedAd = () => {
+    if (pendingCompletedAdTimerRef.current != null) {
+      window.clearTimeout(pendingCompletedAdTimerRef.current);
+      pendingCompletedAdTimerRef.current = null;
+    }
+    const pending = pendingCompletedAdRef.current;
+    pendingCompletedAdRef.current = null;
+    if (pending) showInterstitialAd(pending);
+  };
+
+  const recordClassicAdEvent = (game, event) => {
+    if (isPremium || adCountedForGameRef.current || game?.adEventCounted || game?.mode !== 'classic') return;
+    if (event === 'abandoned' && (!isQuickClassic(game) || !hasRecordedScore(game))) return;
+    adCountedForGameRef.current = true;
+    const payload = {
+      ad_event: event,
+      mode: 'classic',
+      score: Number(game.startScore),
+      legs: Number(game.legsToWinSet),
+      sets: Number(game.setsToWin)
+    };
+    if (event === 'completed') {
+      pendingCompletedAdRef.current = payload;
+      const session = gameSessionRef.current;
+      pendingCompletedAdTimerRef.current = window.setTimeout(() => {
+        pendingCompletedAdTimerRef.current = null;
+        // Do not pop an interstitial into another, already-running game.
+        if (gameSessionRef.current === session && screenRef.current === 'game') {
+          flushCompletedAd();
+        }
+      }, 1800);
+    } else {
+      showInterstitialAd(payload);
+    }
+  };
 
   const [cricket, setCricket] = useState(null);
   const [around, setAround] = useState(null);
@@ -1440,8 +1493,8 @@ function App() {
   };
 
   const startGame = () => {
+    let previousGame = null;
     try {
-      let previousGame = null;
       if (screen === 'game') {
         previousGame = normalizeSavedGame(makeSnapshot());
       } else {
@@ -1465,17 +1518,20 @@ function App() {
       return;
     }
 
+    // When Repeat/Start is pressed before the victory fanfare ends, deliver
+    // the pending win event at that natural game boundary.
+    flushCompletedAd();
+    if (previousGame?.mode === 'classic' && previousGame.winner == null) {
+      recordClassicAdEvent(previousGame, 'abandoned');
+    }
+
     const completedVisits = playedVisitsRef.current;
     playedVisitsRef.current = 0;
-
-    if (!isPremium && completedVisits >= 3) {
-      playedGamesSinceAdRef.current += 1;
-
-      if (playedGamesSinceAdRef.current >= 3) {
-        playedGamesSinceAdRef.current = 0;
-        showInterstitialAd();
-      }
+    if (!isPremium && previousGame?.mode !== 'classic' && completedVisits >= 3) {
+      showInterstitialAd({ ad_event: 'legacy' });
     }
+    adCountedForGameRef.current = false;
+    gameSessionRef.current += 1;
 
     const ord = teamMode
       ? teamOrder
@@ -2299,6 +2355,10 @@ const commitCricket = (value, mOverride) => {
       } catch { }
 
       setWinner(pIdx);
+      // Exactly one event for the whole match, not for intermediate legs.
+      recordClassicAdEvent({
+        mode, startScore, legsToWinSet, setsToWin, adEventCounted: adCountedForGameRef.current
+      }, 'completed');
 
       if (!opts.visitAlreadyCounted) {
         playedVisitsRef.current += 1;
@@ -2876,7 +2936,8 @@ const buyPremium = async () => {
       classicVisitHistory, classicLegSeq,
       winner, pendingWin,
       cricket, around, roulette,
-      isPremium, themeColor
+      isPremium, themeColor,
+      adEventCounted: adCountedForGameRef.current
     });
 
     const normalizeSavedGame = (snap) => {
@@ -2981,6 +3042,8 @@ const buyPremium = async () => {
         setClassicLegSeq(Number.isInteger(s.classicLegSeq) ? Math.max(1, s.classicLegSeq) : 1);
         setWinner(s.winner ?? null);
         setPendingWin(s.pendingWin ?? null);
+        adCountedForGameRef.current = Boolean(s.adEventCounted);
+        gameSessionRef.current += 1;
         const savedScoreSlots = (s.mode === 'classic' && s.playerMode === 'teams') ? 3 : (s.players?.length || 0);
         setClassicLegsWon(Array.from({ length: savedScoreSlots }, (_, ix) => s.classicLegsWon?.[ix] || 0));
         setClassicSetsWon(Array.from({ length: savedScoreSlots }, (_, ix) => s.classicSetsWon?.[ix] || 0));
@@ -3074,6 +3137,15 @@ const buyPremium = async () => {
       return '';
     })();
 
+    const exitToLobby = () => {
+      if (screen === 'game') {
+        if (winner != null) flushCompletedAd();
+        else recordClassicAdEvent(makeSnapshot(), 'abandoned');
+        saveSnapshot();
+      }
+      setScreen('lobby');
+    };
+
     const classicOutShortLabel = (() => {
       const rules = [];
       if (outDouble) rules.push('DO-OUT');
@@ -3127,8 +3199,7 @@ const buyPremium = async () => {
                     type="button"
                     className="btn ghost"
                     onClick={() => {
-                      saveSnapshot();
-                      setScreen('lobby');
+                      exitToLobby();
                     }}
                     title={t(lang, 'back')}
                     style={{ flexShrink: 0 }}
@@ -3376,10 +3447,7 @@ const buyPremium = async () => {
     }}
     restartGame={restartGame}
     cardRefs={cardRefs}
-    setScreen={(scr) => {
-      if (scr === 'lobby') saveSnapshot();
-      setScreen(scr);
-    }}
+    onExitToLobby={exitToLobby}
   />
 )}
           {!isPremium && ADS_ENABLED && (
@@ -4325,7 +4393,7 @@ function Lobby({
     darts, mult, setMult, commitDart, commitClassicRound,
     rouletteDrawTarget, rouletteMarkHit, rouletteMarkMiss, rouletteSwitchPlayer,
     undo, winner,
-    saveGame, restartGame, cardRefs, setScreen
+    saveGame, restartGame, cardRefs, onExitToLobby
   }) {
     const HEAD_H = 40;
     const [roundScoreInput, setRoundScoreInput] = React.useState('');
@@ -4604,7 +4672,7 @@ function Lobby({
               </button>
             )}
 
-            <button type="button" className="gameTextAction" onClick={() => setScreen('lobby')}>
+            <button type="button" className="gameTextAction" onClick={onExitToLobby}>
               {t(lang, 'back') ?? 'Zpět'}
             </button>
           </div>
