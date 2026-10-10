@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>DartScore Pro Support</title>
+  <style>
+    :root{color-scheme:dark}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:#0b0f14;color:#f5f7fa;line-height:1.55}
+    main{max-width:760px;margin:0 auto;padding:40px 20px 56px}
+    .card{background:#121821;border:1px solid #26303d;border-radius:18px;padding:28px}
+    h1{margin:0 0 8px;font-size:32px}
+    h2{margin:30px 0 10px;font-size:20px}
+    p{margin:8px 0 0;color:#d9e0e8}
+    .langs{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0}
+    button{border:1px solid #39485a;background:#18212c;color:#fff;border-radius:10px;padding:8px 11px;cursor:pointer}
+    button.active{background:#1f9d55;border-color:#1f9d55}
+    a{color:#58d68d}
+    .muted{font-size:14px;color:#9eabb9;margin-top:28px}
+  </style>
+</head>
+<body>
+<main>
+  <div class="card">
+    <h1>DartScore Pro</h1>
+    <div class="langs" aria-label="Language">
+      <button data-lang="cs">CS</button><button data-lang="en">EN</button><button data-lang="de">DE</button>
+      <button data-lang="es">ES</button><button data-lang="nl">NL</button><button data-lang="ru">RU</button><button data-lang="zh">ZH</button>
+    </div>
+    <div id="content"></div>
+  </div>
+</main>
+<script>
+const copy={
+cs:{title:"Podpora",intro:"Potřebuješ poradit s DartScore Pro, nahlásit problém nebo poslat návrh na zlepšení? Napiš nám.",contact:"Kontakt",email:"E-mail",reply:"Odpovíme co nejdříve.",help:"S čím můžeme pomoci",items:["problémy se spuštěním nebo ovládáním aplikace","Premium nákup nebo obnovení nákupu","reklamy, zvuk nebo nastavení","návrhy na nové funkce a zpětná vazba"],footer:"DartScore Pro – počítadlo šipek pro iPhone, iPad a Android."},
+en:{title:"Support",intro:"Need help with DartScore Pro, want to report a problem, or have an idea for improvement? Contact us.",contact:"Contact",email:"Email",reply:"We’ll reply as soon as possible.",help:"How we can help",items:["app launch or control issues","Premium purchase or purchase restore","ads, sound or settings","feature requests and feedback"],footer:"DartScore Pro – darts counter for iPhone, iPad and Android."},
+de:{title:"Support",intro:"Brauchst du Hilfe mit DartScore Pro, möchtest du ein Problem melden oder hast du eine Idee zur Verbesserung? Schreib uns.",contact:"Kontakt",email:"E-Mail",reply:"Wir antworten so schnell wie möglich.",help:"Wobei wir helfen können",items:["Probleme beim Starten oder Bedienen der App","Premium-Kauf oder Wiederherstellung des Kaufs","Werbung, Ton oder Einstellungen","Funktionswünsche und Feedback"],footer:"DartScore Pro – Dart-Zähler für iPhone, iPad und Android."},
+es:{title:"Soporte",intro:"¿Necesitas ayuda con DartScore Pro, quieres informar de un problema o tienes una idea para mejorarlo? Escríbenos.",contact:"Contacto",email:"Correo electrónico",reply:"Responderemos lo antes posible.",help:"En qué podemos ayudarte",items:["problemas al iniciar o usar la aplicación","compra Premium o restauración de compras","anuncios, sonido o ajustes","sugerencias de funciones y comentarios"],footer:"DartScore Pro – contador de dardos para iPhone, iPad y Android."},
+nl:{title:"Ondersteuning",intro:"Hulp nodig met DartScore Pro, een probleem melden of een idee voor verbetering? Neem contact met ons op.",contact:"Contact",email:"E-mail",reply:"We antwoorden zo snel mogelijk.",help:"Waarmee we kunnen helpen",items:["problemen met starten of bedienen van de app","Premium-aankoop of aankoop herstellen","advertenties, geluid of instellingen","functieverzoeken en feedback"],footer:"DartScore Pro – dartteller voor iPhone, iPad en Android."},
+ru:{title:"Поддержка",intro:"Нужна помощь с DartScore Pro, хотите сообщить о проблеме или предложить улучшение? Напишите нам.",contact:"Контакты",email:"Эл. почта",reply:"Мы ответим как можно скорее.",help:"С чем мы можем помочь",items:["проблемы с запуском или управлением приложением","покупка Premium или восстановление покупки","реклама, звук или настройки","предложения функций и обратная связь"],footer:"DartScore Pro — счётчик дартса для iPhone, iPad и Android."},
+zh:{title:"支持",intro:"需要 DartScore Pro 的帮助、想报告问题或提出改进建议？欢迎联系我们。",contact:"联系方式",email:"电子邮箱",reply:"我们会尽快回复。",help:"我们可以帮助解决",items:["应用启动或操作问题","Premium 购买或恢复购买","广告、声音或设置","功能建议和反馈"],footer:"DartScore Pro — 适用于 iPhone、iPad 和 Android 的飞镖计分器。"}
+};
+function normalize(v){v=(v||"en").toLowerCase();if(v.startsWith("cs"))return"cs";if(v.startsWith("de"))return"de";if(v.startsWith("es"))return"es";if(v.startsWith("nl"))return"nl";if(v.startsWith("ru"))return"ru";if(v.startsWith("zh"))return"zh";return"en";}
+function render(lang){
+  const t=copy[lang]||copy.en;
+  document.documentElement.lang=lang;
+  document.querySelectorAll("button[data-lang]").forEach(b=>b.classList.toggle("active",b.dataset.lang===lang));
+  document.getElementById("content").innerHTML=
+    '<h2>'+t.title+'</h2><p>'+t.intro+'</p>'+
+    '<h2>'+t.contact+'</h2><p><strong>'+t.email+':</strong> <a href="mailto:contact@dartscorepro.app">contact@dartscorepro.app</a></p><p>'+t.reply+'</p>'+
+    '<h2>'+t.help+'</h2><ul>'+t.items.map(x=>'<li>'+x+'</li>').join('')+'</ul>'+
+    '<p class="muted">'+t.footer+'</p>';
+  localStorage.setItem("dartscore-support-lang",lang);
+}
+document.querySelectorAll("button[data-lang]").forEach(b=>b.addEventListener("click",()=>render(b.dataset.lang)));
+render(localStorage.getItem("dartscore-support-lang")||normalize(navigator.language));
+</script>
+</body>
+</html>
