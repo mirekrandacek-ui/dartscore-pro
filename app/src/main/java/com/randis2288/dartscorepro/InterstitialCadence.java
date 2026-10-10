@@ -62,7 +62,7 @@ final class InterstitialCadence {
 
         long now = System.currentTimeMillis();
         long last = prefs.getLong(LAST_SHOWN_AT, 0L);
-        return last <= 0L || now < last || now - last >= MIN_GAP_MS;
+        return last <= 0L || (now >= last && now - last >= MIN_GAP_MS);
     }
 
     /** Called ONLY from onAdShowedFullScreenContent, never from load or show attempts. */
