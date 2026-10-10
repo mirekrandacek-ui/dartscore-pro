@@ -1651,6 +1651,7 @@ function App() {
   const interstitialShowScheduledRef = useRef(false);
   const adCountedForGameRef = useRef(false);
   const pendingClassicAdRef = useRef(null);
+  const PENDING_CLASSIC_AD_KEY = 'dspPendingClassicAdV98';
   const gameSessionRef = useRef(0);
 
   const emitInterstitialEvent = async (event) => {
@@ -1691,16 +1692,23 @@ function App() {
   };
 
   const flushClassicAd = () => {
-    const pending = pendingClassicAdRef.current;
-    if (!pending) return;
+    let event = pendingClassicAdRef.current?.event || null;
+    if (!event) {
+      try { event = JSON.parse(localStorage.getItem(PENDING_CLASSIC_AD_KEY) || 'null'); }
+      catch { event = null; }
+    }
     pendingClassicAdRef.current = null;
-    emitInterstitialEvent(pending.event);
+    if (!event) return;
+    try { localStorage.removeItem(PENDING_CLASSIC_AD_KEY); } catch { }
+    emitInterstitialEvent(event);
   };
 
   const queueClassicAdAfterFanfare = (event) => {
     if (isPremium) return;
     const pending = { event, session: gameSessionRef.current };
     pendingClassicAdRef.current = pending;
+    // A victory during app shutdown must still count at the next game boundary.
+    try { localStorage.setItem(PENDING_CLASSIC_AD_KEY, JSON.stringify(event)); } catch { }
     const fire = () => {
       if (pendingClassicAdRef.current !== pending) return;
       if (screenRef.current !== 'game' || gameSessionRef.current !== pending.session) return;
