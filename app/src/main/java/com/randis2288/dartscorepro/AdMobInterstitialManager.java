@@ -88,7 +88,8 @@ public final class AdMobInterstitialManager {
 
     public static synchronized boolean showIfReady(
         Activity activity,
-        Runnable onFinished
+        Runnable onFinished,
+        Runnable onShown
     ) {
         long now = SystemClock.elapsedRealtime();
 
@@ -109,6 +110,11 @@ public final class AdMobInterstitialManager {
                 private void finishAndPreload() {
                     preload(activity.getApplicationContext());
                     onFinished.run();
+                }
+
+                @Override
+                public void onAdShowedFullScreenContent() {
+                    onShown.run();
                 }
 
                 @Override
