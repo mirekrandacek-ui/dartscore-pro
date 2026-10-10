@@ -8,8 +8,10 @@ permissions:
   contents: read
 jobs:
   capture:
-    runs-on: macos-latest
-    timeout-minutes: 25
+    runs-on: macos-15
+    timeout-minutes: 12
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -84,7 +86,7 @@ jobs:
           import json,os
           data=json.load(open(os.environ['RUNNER_TEMP']+'/devices.json'))['devices']
           choices=[(runtime,d) for runtime,ds in data.items() for d in ds
-                   if d.get('isAvailable') and d['name'].startswith('iPad Pro 13-inch')]
+                   if runtime.endswith('iOS-18-5') and d.get('isAvailable') and d['name'].startswith('iPad Pro 13-inch')]
           assert choices, 'No 13-inch iPad available'
           runtime,d=choices[-1]
           print(runtime,d)
@@ -93,7 +95,15 @@ jobs:
       - name: Launch, verify English UI and capture
         run: |
           set -euo pipefail
-          xcodebuild test -project ios/App/App.xcodeproj -scheme Capture -configuration Release -destination "platform=iOS Simulator,id=$SIM_UDID" -parallel-testing-enabled NO -maximum-concurrent-test-simulator-destinations 1 -derivedDataPath build/ios-capture -resultBundlePath "$RUNNER_TEMP/Capture.xcresult" CODE_SIGNING_ALLOWED=NO
+          python3 <<'PY'
+          import subprocess,os
+          cmd=['xcodebuild','test','-project','ios/App/App.xcodeproj','-scheme','Capture','-configuration','Release','-destination','platform=iOS Simulator,id='+os.environ['SIM_UDID'],'-parallel-testing-enabled','NO','-maximum-concurrent-test-simulator-destinations','1','-derivedDataPath','build/ios-capture','-resultBundlePath',os.environ['RUNNER_TEMP']+'/Capture.xcresult','-test-timeouts-enabled','YES','-default-test-execution-time-allowance','120','-maximum-test-execution-time-allowance','180','CODE_SIGNING_ALLOWED=NO']
+          try:
+              result=subprocess.run(cmd,timeout=480)
+              raise SystemExit(result.returncode)
+          except subprocess.TimeoutExpired:
+              raise SystemExit('Build and capture exceeded 8 minute limit')
+          PY
       - name: Export screenshot attachments
         if: always()
         run: |
