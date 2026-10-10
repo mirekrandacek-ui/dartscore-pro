@@ -25,7 +25,8 @@ public class AdMobInterstitialActivity extends Activity {
 
             boolean shown = AdMobInterstitialManager.showIfReady(
                 AdMobInterstitialActivity.this,
-                AdMobInterstitialActivity.this::finishSafely
+                AdMobInterstitialActivity.this::finishSafely,
+                () -> InterstitialCadence.markShown(getApplicationContext())
             );
 
             if (shown) {
@@ -51,6 +52,12 @@ public class AdMobInterstitialActivity extends Activity {
         if (handleAnalyticsIntent(getIntent() != null ? getIntent().getData() : null)) {
             finish();
             overridePendingTransition(0, 0);
+            return;
+        }
+
+        if (!InterstitialCadence.recordAndShouldShow(this,
+                getIntent() != null ? getIntent().getData() : null)) {
+            finishSafely();
             return;
         }
 

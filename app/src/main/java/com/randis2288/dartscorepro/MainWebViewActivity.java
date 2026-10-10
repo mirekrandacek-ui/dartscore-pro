@@ -520,7 +520,7 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             new Intent(
                 MainWebViewActivity.this,
                 AdMobInterstitialActivity.class
-            )
+            ).setData(Uri.parse("dartscorepro://show-interstitial?ad_event=legacy_bridge"))
         );
     }
 

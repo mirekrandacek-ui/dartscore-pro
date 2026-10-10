@@ -101,7 +101,8 @@ public final class AdMobInterstitialManager {
 
     public static synchronized boolean showIfReady(
         Activity activity,
-        Runnable onFinished
+        Runnable onFinished,
+        Runnable onShown
     ) {
         if (!canRequestAds(activity)) {
             Log.d(TAG, "Interstitial show skipped until UMP allows ad requests.");
@@ -127,6 +128,11 @@ public final class AdMobInterstitialManager {
                 private void finishAndPreload() {
                     preload(activity.getApplicationContext());
                     onFinished.run();
+                }
+
+                @Override
+                public void onAdShowedFullScreenContent() {
+                    onShown.run();
                 }
 
                 @Override
