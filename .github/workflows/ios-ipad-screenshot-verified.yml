@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: write
 jobs:
   capture:
     runs-on: macos-15
@@ -13,6 +14,13 @@ jobs:
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
     steps:
+      - name: Cancel superseded screenshot attempts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run list --repo "$GITHUB_REPOSITORY" --workflow ios-ipad-screenshot-verified.yml --branch feature/ios-v97 --limit 10 --json databaseId,status | jq -r --arg current "$GITHUB_RUN_ID" '.[] | select((.status == "in_progress" or .status == "queued") and (.databaseId|tostring) != $current) | .databaseId' | while read -r run; do
+            gh run cancel "$run" --repo "$GITHUB_REPOSITORY" || true
+          done
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
