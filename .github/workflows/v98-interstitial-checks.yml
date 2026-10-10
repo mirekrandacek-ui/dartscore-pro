@@ -35,6 +35,8 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
+      # Ubuntu runners already provide the Android SDK and sdkmanager.
+      # setup-android@v3 currently attempts to install the removed "tools" package.
+      - run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
       - run: chmod +x ./gradlew
       - run: ./gradlew :app:compileDebugJavaWithJavac --no-daemon
