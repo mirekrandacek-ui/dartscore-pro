@@ -10,7 +10,7 @@ permissions:
 jobs:
   capture:
     runs-on: macos-15
-    timeout-minutes: 12
+    timeout-minutes: 15
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
     steps:
@@ -40,25 +40,96 @@ jobs:
           cat > ios/App/CaptureUITests/Capture.swift <<'SWIFT'
           import XCTest
           final class Capture: XCTestCase {
-              func testEnglishLobby() {
+              let app = XCUIApplication(bundleIdentifier: "com.randis2288.dartscorepro")
+              func button(_ label: String) -> XCUIElement {
+                  let q = app.buttons.matching(NSPredicate(format: "label == %@", label))
+                  let e = q.firstMatch
+                  XCTAssertTrue(e.waitForExistence(timeout: 15), "Missing button: \(label)\n\(app.debugDescription)")
+                  return e
+              }
+              func tap(_ label: String) { button(label).tap() }
+              func option(_ label: String) {
+                  let q = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", label))
+                  let matches = q.allElementsBoundByIndex.filter { $0.isHittable }
+                  XCTAssertFalse(matches.isEmpty, "Missing option: \(label)\n\(app.debugDescription)")
+                  matches.last?.tap()
+              }
+              func shot(_ name: String) {
+                  XCTAssertEqual(app.state, .runningForeground)
+                  sleep(2)
+                  let a = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+                  a.name = name
+                  a.lifetime = .keepAlways
+                  add(a)
+                  print("CAPTURED_REAL_IPAD_SCREEN \(name)")
+              }
+              func back() { tap("Back"); XCTAssertTrue(button("Classic").exists) }
+              func testEightScreens() {
                   continueAfterFailure = false
                   XCUIDevice.shared.orientation = .portrait
-                  let app = XCUIApplication(bundleIdentifier: "com.randis2288.dartscorepro")
                   app.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
                   app.launch()
                   XCTAssertTrue(app.wait(for: .runningForeground, timeout: 90))
                   let start = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Start Game")).firstMatch
-                  XCTAssertTrue(start.waitForExistence(timeout: 90), app.debugDescription)
-                  XCTAssertTrue(start.isHittable, app.debugDescription)
-                  sleep(3)
-                  XCTAssertEqual(app.state, .runningForeground)
-                  let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
-                  attachment.name = "DartScore_iPad_13_EN_lobby"
-                  attachment.lifetime = .keepAlways
-                  add(attachment)
-                  print("VERIFIED_ENGLISH_LOBBY_FOREGROUND")
+                  XCTAssertTrue(start.waitForExistence(timeout: 90))
+                  // Menu and language picker use the application's existing controls.
+                  tap("Classic")
+                  XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Roulette Double")).firstMatch.waitForExistence(timeout: 10))
+                  shot("02_five-modes")
+                  option("Classic")
+                  tap("English")
+                  XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Español")).firstMatch.waitForExistence(timeout: 10))
+                  shot("08_multi-language")
+                  option("English")
+                  tap("Individuals"); option("Teams")
+                  shot("06_team-mode")
+                  tap("Teams"); option("Individuals")
+                  start.tap()
+                  XCTAssertTrue(button("20").exists)
+                  shot("01_fast-simple")
+                  tap("Back")
+                  // Reach 170 by actual entered darts: 301 - T20 - T17 - D10.
+                  tap("301"); start.tap()
+                  tap("TRIPLE"); tap("20")
+                  tap("TRIPLE"); tap("17")
+                  tap("DOUBLE"); tap("10")
+                  tap("0"); tap("0"); tap("0")
+                  shot("04_checkout-hints")
+                  tap("Back")
+                  // Finish one real short match for saved statistics: 101 - T20 - 1 - D20.
+                  tap("101"); start.tap()
+                  tap("TRIPLE"); tap("20"); tap("1"); tap("DOUBLE"); tap("20")
+                  sleep(5)
+                  tap("Back")
+                  let h2h = app.buttons["Head-to-Head"].firstMatch
+                  for _ in 0..<6 {
+                      if h2h.exists && h2h.isHittable { break }
+                      app.swipeUp()
+                  }
+                  XCTAssertTrue(h2h.exists && h2h.isHittable, app.debugDescription)
+                  h2h.tap()
+                  // Scroll to the statistics portion, keeping actual application layout.
+                  app.swipeUp()
+                  shot("05_statistics")
+                  for _ in 0..<6 {
+                      if app.buttons["Classic"].firstMatch.isHittable { break }
+                      app.swipeDown()
+                  }
+                  tap("Classic"); option("Roulette Double")
+                  start.tap()
+                  let draw = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Draw")).firstMatch
+                  XCTAssertTrue(draw.waitForExistence(timeout: 15)); draw.tap()
+                  sleep(4)
+                  shot("03_doubles")
+                  tap("Back")
+                  tap("Roulette Double"); option("Cricket")
+                  start.tap()
+                  tap("20"); tap("20"); tap("19")
+                  tap("TRIPLE"); tap("18"); tap("19"); tap("25")
+                  shot("07_cricket")
               }
           }
+          
           SWIFT
           ruby <<'RUBY'
           require 'xcodeproj'
@@ -105,12 +176,12 @@ jobs:
           set -euo pipefail
           python3 <<'PY'
           import subprocess,os
-          cmd=['xcodebuild','test','-project','ios/App/App.xcodeproj','-scheme','Capture','-configuration','Release','-destination','platform=iOS Simulator,id='+os.environ['SIM_UDID'],'-parallel-testing-enabled','NO','-maximum-concurrent-test-simulator-destinations','1','-derivedDataPath','build/ios-capture','-resultBundlePath',os.environ['RUNNER_TEMP']+'/Capture.xcresult','-test-timeouts-enabled','YES','-default-test-execution-time-allowance','120','-maximum-test-execution-time-allowance','180','CODE_SIGNING_ALLOWED=NO']
+          cmd=['xcodebuild','test','-project','ios/App/App.xcodeproj','-scheme','Capture','-configuration','Release','-destination','platform=iOS Simulator,id='+os.environ['SIM_UDID'],'-parallel-testing-enabled','NO','-maximum-concurrent-test-simulator-destinations','1','-derivedDataPath','build/ios-capture','-resultBundlePath',os.environ['RUNNER_TEMP']+'/Capture.xcresult','-test-timeouts-enabled','YES','-default-test-execution-time-allowance','480','-maximum-test-execution-time-allowance','540','CODE_SIGNING_ALLOWED=NO']
           try:
-              result=subprocess.run(cmd,timeout=480)
+              result=subprocess.run(cmd,timeout=660)
               raise SystemExit(result.returncode)
           except subprocess.TimeoutExpired:
-              raise SystemExit('Build and capture exceeded 8 minute limit')
+              raise SystemExit('Build and capture exceeded 11 minute limit')
           PY
       - name: Export screenshot attachments
         if: always()
@@ -122,6 +193,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: DartScore_iPad_13_EN_verified
+          name: DartScore_iPad_13_EN_eight_screens
           path: ${{ runner.temp }}/capture-output
           if-no-files-found: warn
