@@ -1,0 +1,108 @@
+name: Capture verified English iPad screenshot
+on:
+  push:
+    branches: [feature/ios-v97]
+    paths: [.github/workflows/ios-ipad-screenshot-verified.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: macos-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Prepare app and temporary UI test
+        env:
+          GEM_HOME: ${{ runner.temp }}/gems
+          GEM_PATH: ${{ runner.temp }}/gems
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run build
+          npx cap sync ios
+          gem install xcodeproj --no-document
+          mkdir -p ios/App/CaptureUITests
+          cat > ios/App/CaptureUITests/Capture.swift <<'SWIFT'
+          import XCTest
+          final class Capture: XCTestCase {
+              func testEnglishLobby() {
+                  continueAfterFailure = false
+                  XCUIDevice.shared.orientation = .portrait
+                  let app = XCUIApplication(bundleIdentifier: "com.randis2288.dartscorepro")
+                  app.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+                  app.launch()
+                  XCTAssertTrue(app.wait(for: .runningForeground, timeout: 90))
+                  let start = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Start Game")).firstMatch
+                  XCTAssertTrue(start.waitForExistence(timeout: 90), app.debugDescription)
+                  XCTAssertTrue(start.isHittable, app.debugDescription)
+                  sleep(3)
+                  XCTAssertEqual(app.state, .runningForeground)
+                  let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+                  attachment.name = "DartScore_iPad_13_EN_lobby"
+                  attachment.lifetime = .keepAlways
+                  add(attachment)
+                  print("VERIFIED_ENGLISH_LOBBY_FOREGROUND")
+              }
+          }
+          SWIFT
+          ruby <<'RUBY'
+          require 'xcodeproj'
+          project = Xcodeproj::Project.open('ios/App/App.xcodeproj')
+          app = project.targets.find { |t| t.name == 'App' }
+          test = project.new_target(:ui_test_bundle, 'CaptureUITests', :ios, '15.0')
+          test.add_dependency(app)
+          group = project.main_group.new_group('CaptureUITests', 'CaptureUITests')
+          test.add_file_references([group.new_file('Capture.swift')])
+          test.build_configurations.each do |c|
+            c.build_settings['GENERATE_INFOPLIST_FILE'] = 'YES'
+            c.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = 'com.randis2288.dartscorepro.capturetests'
+            c.build_settings['TEST_TARGET_NAME'] = 'App'
+            c.build_settings['SWIFT_VERSION'] = '5.0'
+            c.build_settings['TARGETED_DEVICE_FAMILY'] = '2'
+            c.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+          end
+          project.save
+          scheme = Xcodeproj::XCScheme.new
+          scheme.add_build_target(app)
+          scheme.add_build_target(test)
+          scheme.add_test_target(test)
+          scheme.test_action.build_configuration = 'Release'
+          scheme.save_as(project.path, 'Capture', true)
+          RUBY
+      - name: Select real 13-inch iPad
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          xcrun simctl list devices available -j > "$RUNNER_TEMP/devices.json"
+          python3 <<'PY'
+          import json,os
+          data=json.load(open(os.environ['RUNNER_TEMP']+'/devices.json'))['devices']
+          choices=[(runtime,d) for runtime,ds in data.items() for d in ds
+                   if d.get('isAvailable') and d['name'].startswith('iPad Pro 13-inch')]
+          assert choices, 'No 13-inch iPad available'
+          runtime,d=choices[-1]
+          print(runtime,d)
+          with open(os.environ['GITHUB_ENV'],'a') as f: f.write('SIM_UDID='+d['udid']+'\n')
+          PY
+      - name: Launch, verify English UI and capture
+        run: |
+          set -euo pipefail
+          xcodebuild test -project ios/App/App.xcodeproj -scheme Capture -configuration Release -destination "platform=iOS Simulator,id=$SIM_UDID" -parallel-testing-enabled NO -maximum-concurrent-test-simulator-destinations 1 -derivedDataPath build/ios-capture -resultBundlePath "$RUNNER_TEMP/Capture.xcresult" CODE_SIGNING_ALLOWED=NO
+      - name: Export screenshot attachments
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/capture-output"
+          if [ -d "$RUNNER_TEMP/Capture.xcresult" ]; then
+            xcrun xcresulttool export attachments --path "$RUNNER_TEMP/Capture.xcresult" --output-path "$RUNNER_TEMP/capture-output"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: DartScore_iPad_13_EN_verified
+          path: ${{ runner.temp }}/capture-output
+          if-no-files-found: warn
