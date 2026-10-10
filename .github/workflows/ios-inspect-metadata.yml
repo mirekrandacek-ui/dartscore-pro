@@ -61,6 +61,25 @@ jobs:
               print("REVIEW",json.dumps(safe,ensure_ascii=False))
           else:
               print("REVIEW NONE")
+
+          infos=get(f"/v1/apps/{app_id}/appInfos",{"limit":50})
+          if infos:
+              for info in infos["data"]:
+                  print("APPINFO",info["id"],json.dumps(info["attributes"],ensure_ascii=False))
+                  ilocs=get(f"/v1/appInfos/{info['id']}/appInfoLocalizations",{"limit":50})
+                  if ilocs:
+                      for il in ilocs["data"]:
+                          ia=il["attributes"]
+                          print("APPINFO_LOC",json.dumps({
+                            "locale":ia.get("locale"),"name":ia.get("name"),"subtitle":ia.get("subtitle"),
+                            "privacyPolicyUrl":ia.get("privacyPolicyUrl"),"privacyChoicesUrl":ia.get("privacyChoicesUrl")
+                          },ensure_ascii=False))
+                  for rel,label in [("primaryCategory","PRIMARY_CATEGORY"),("secondaryCategory","SECONDARY_CATEGORY")]:
+                      cat=get(f"/v1/appInfos/{info['id']}/{rel}")
+                      if cat and cat.get("data"):
+                          print(label,cat["data"]["id"],json.dumps(cat["data"].get("attributes",{}),ensure_ascii=False))
           PY
 
 # final metadata audit 2026-10-10
+
+# final appinfo audit 2026-10-10
