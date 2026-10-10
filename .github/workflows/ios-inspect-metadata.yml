@@ -29,6 +29,7 @@ jobs:
           now=int(time.time())
           token=jwt.encode({"iss":issuer,"iat":now,"exp":now+600,"aud":"appstoreconnect-v1"},key,algorithm="ES256",headers={"kid":kid,"typ":"JWT"})
           H={"Authorization":"Bearer "+token}; B="https://api.appstoreconnect.apple.com"
+          app_id="6817341039"
           version_id="69fd4586-a0ca-4d5d-a25c-65dc867dc6a2"
 
           def get(path,params=None):
@@ -83,3 +84,5 @@ jobs:
 # final metadata audit 2026-10-10
 
 # final appinfo audit 2026-10-10
+
+# retry appinfo audit 2026-10-10
