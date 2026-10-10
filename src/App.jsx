@@ -1135,14 +1135,11 @@ function formatAvg(a) {
 /* ===== AdMob interstitial handler ===== */
 const ADMOB_INTERSTITIAL_SCHEME_URL = "dartscorepro://show-interstitial";
 
-async function showInterstitialAd() {
+async function showInterstitialAd(eventDetails) {
   try {
     if (typeof window === 'undefined') return false;
 
-    window.DartScoreAnalytics?.track('interstitial_requested', {
-      ad_format: 'interstitial',
-      plan_tier: localStorage.getItem('premium') === 'true' ? 'premium' : 'free'
-    });
+    if (!eventDetails?.ad_event) return false;
 
     if (IS_IOS) {
       if (!IOS_INTERSTITIAL_CONFIGURED) return false;
@@ -1158,12 +1155,10 @@ async function showInterstitialAd() {
 
     if (!/Android/i.test(navigator.userAgent)) return false;
 
-    if (window.DartScoreAndroid?.showInterstitial) {
-      window.DartScoreAndroid.showInterstitial();
-      return true;
-    }
-
-    window.location.href = ADMOB_INTERSTITIAL_SCHEME_URL;
+    // Typed events go through the native Activity on both TWA and WebView.
+    // This avoids the legacy bridge bypassing the native cadence.
+    const query = new URLSearchParams(eventDetails);
+    window.location.href = `${ADMOB_INTERSTITIAL_SCHEME_URL}?${query}`;
     return true;
   } catch (err) {
     console.warn("AdMob interstitial skipped:", err?.message || err);
@@ -1266,6 +1261,8 @@ function App() {
   /* === STATE === */
 
   const [screen, setScreen] = useState('lobby');
+  const screenRef = useRef('lobby');
+  screenRef.current = screen;
   const [showReviewPrompt, setShowReviewPrompt] = useState(false);
 
   useEffect(() => {
@@ -1651,6 +1648,106 @@ function App() {
   const INTERSTITIAL_START_COUNT_KEY = 'interstitialStartCount';
   const INTERSTITIAL_PENDING_KEY = 'interstitialPending';
   const interstitialShowScheduledRef = useRef(false);
+  const adCountedForGameRef = useRef(false);
+  const pendingClassicAdRef = useRef(null);
+  const gameSessionRef = useRef(0);
+
+  const isQuickClassic = (game) =>
+    game?.mode === 'classic'
+    && [101, 301].includes(Number(game.startScore))
+    // The match-format UI represents single leg / single set as 1 / 1.
+    && Number(game.legsToWinSet) <= 1 && Number(game.setsToWin) <= 1;
+
+  const hasRecordedScore = (game) =>
+    (game?.actions?.length || 0) > 0
+    || (game?.darts?.length || 0) > 0
+    || (game?.thrown || []).some(n => Number(n) > 0)
+    || (game?.scores || []).some(n => Number(n) < Number(game.startScore))
+    || (game?.classicVisitHistory?.length || 0) > 0
+    || (game?.classicLegsWon || []).some(n => Number(n) > 0)
+    || (game?.classicSetsWon || []).some(n => Number(n) > 0);
+
+  const emitInterstitialEvent = async (event) => {
+    if (isPremium || !event?.ad_event) return false;
+
+    if (IS_IOS) {
+      // iOS does not use the Android SharedPreferences cadence controller.
+      // Persist the count here and reset it only on successful display.
+      try {
+        const getCount = key => Math.max(0, Number(localStorage.getItem(key)) || 0);
+        const quick = isQuickClassic({
+          mode: event.mode, startScore: event.score,
+          legsToWinSet: event.legs, setsToWin: event.sets
+        });
+        const key = quick ? 'dspIosQuickInterstitialCount' : 'dspIosLegacyInterstitialCount';
+        let eligible = true;
+        if (quick || event.ad_event === 'legacy') {
+          const count = getCount(key) + 1;
+          localStorage.setItem(key, String(count));
+          eligible = count >= 3;
+        }
+        if (!eligible) return false;
+        const last = Number(localStorage.getItem('dspIosInterstitialLastShown') || 0);
+        if (last > 0 && Date.now() >= last && Date.now() - last < 5 * 60 * 1000) return false;
+        const shown = await showInterstitialAd(event);
+        if (shown) {
+          localStorage.setItem('dspIosInterstitialLastShown', String(Date.now()));
+          localStorage.setItem('dspIosQuickInterstitialCount', '0');
+          localStorage.setItem('dspIosLegacyInterstitialCount', '0');
+        }
+        return shown;
+      } catch (err) {
+        console.warn('iOS interstitial pacing unavailable:', err);
+        return false;
+      }
+    }
+    return showInterstitialAd(event);
+  };
+
+  const flushClassicAd = () => {
+    const pending = pendingClassicAdRef.current;
+    if (!pending) return;
+    pendingClassicAdRef.current = null;
+    emitInterstitialEvent(pending.event);
+  };
+
+  const queueClassicAdAfterFanfare = (event) => {
+    if (isPremium) return;
+    const pending = { event, session: gameSessionRef.current };
+    pendingClassicAdRef.current = pending;
+    const fire = () => {
+      if (pendingClassicAdRef.current !== pending) return;
+      if (screenRef.current !== 'game' || gameSessionRef.current !== pending.session) return;
+      flushClassicAd();
+    };
+    const fanfare = soundOn ? winAudioRef.current : null;
+    if (!fanfare) {
+      window.setTimeout(fire, 250);
+      return;
+    }
+    fanfare.addEventListener('ended', () => window.setTimeout(fire, 150), { once: true });
+    const delay = Number.isFinite(fanfare.duration) && fanfare.duration > 0
+      ? Math.ceil(fanfare.duration * 1000) + 1000
+      : 7000;
+    window.setTimeout(fire, delay);
+  };
+
+  const recordClassicAdEvent = (game, event) => {
+    if (isPremium || adCountedForGameRef.current || game?.adEventCounted || game?.mode !== 'classic') return;
+    if (![101, 301, 501, 701, 901].includes(Number(game.startScore))) return;
+    if (event === 'abandoned' && (!isQuickClassic(game) || !hasRecordedScore(game))) return;
+
+    adCountedForGameRef.current = true;
+    const details = {
+      ad_event: event,
+      mode: 'classic',
+      score: Number(game.startScore),
+      legs: Number(game.legsToWinSet),
+      sets: Number(game.setsToWin)
+    };
+    if (event === 'completed') queueClassicAdAfterFanfare(details);
+    else emitInterstitialEvent(details);
+  };
 
   const readInterstitialStartCount = () => {
     try {
@@ -1838,8 +1935,8 @@ function App() {
       return;
     }
 
+    let previousGame = null;
     try {
-      let previousGame = null;
       if (screen === 'game') {
         previousGame = normalizeSavedGame(makeSnapshot());
       } else {
@@ -1863,9 +1960,17 @@ function App() {
       return;
     }
 
-    if (countAsLobbyStart) {
+    // Keep the legacy three-Lobby-Start cadence for non-X01 modes only.
+    // X01 uses completed matches (or a qualified short-game exit).
+    flushClassicAd();
+    if (previousGame?.mode === 'classic' && previousGame.winner == null) {
+      recordClassicAdEvent(previousGame, 'abandoned');
+    }
+    if (countAsLobbyStart && mode !== 'classic') {
       markLobbyStartForInterstitial();
     }
+    adCountedForGameRef.current = false;
+    gameSessionRef.current += 1;
 
     const ord = teamMode
       ? teamOrder
@@ -2686,7 +2791,7 @@ const commitCricket = (value, mOverride) => {
           window.clearTimeout(fallbackTimer);
         }
 
-        const requested = await showInterstitialAd();
+        const requested = await emitInterstitialEvent({ ad_event: 'legacy_bridge' });
 
         if (requested) {
           try {
@@ -2729,7 +2834,11 @@ const commitCricket = (value, mOverride) => {
 
       setWinner(pIdx);
       recordReviewCompletedGame();
-      showPendingInterstitialAfterFanfare();
+      if (mode === 'classic') {
+        recordClassicAdEvent({ mode, startScore, legsToWinSet, setsToWin }, 'completed');
+      } else {
+        showPendingInterstitialAfterFanfare();
+      }
 
       {
         try {
@@ -3370,7 +3479,8 @@ const restorePremiumPurchase = async () => {
       classicVisitHistory, classicLegSeq,
       winner, pendingWin,
       cricket, around, roulette,
-      isPremium, themeColor
+      isPremium, themeColor,
+      adEventCounted: adCountedForGameRef.current
     });
 
     const normalizeSavedGame = (snap) => {
@@ -3475,6 +3585,8 @@ const restorePremiumPurchase = async () => {
         setClassicLegSeq(Number.isInteger(s.classicLegSeq) ? Math.max(1, s.classicLegSeq) : 1);
         setWinner(s.winner ?? null);
         setPendingWin(s.pendingWin ?? null);
+        adCountedForGameRef.current = Boolean(s.adEventCounted);
+        gameSessionRef.current += 1;
         const savedScoreSlots = (s.mode === 'classic' && s.playerMode === 'teams') ? 3 : (s.players?.length || 0);
         setClassicLegsWon(Array.from({ length: savedScoreSlots }, (_, ix) => s.classicLegsWon?.[ix] || 0));
         setClassicSetsWon(Array.from({ length: savedScoreSlots }, (_, ix) => s.classicSetsWon?.[ix] || 0));
@@ -3580,6 +3692,8 @@ const restorePremiumPurchase = async () => {
 
     const returnToLobbyFromGame = () => {
       const completedGame = winner != null;
+      if (completedGame) flushClassicAd();
+      else recordClassicAdEvent(makeSnapshot(), 'abandoned');
       saveSnapshot();
       setScreen('lobby');
       if (completedGame) maybeShowReviewPrompt();
