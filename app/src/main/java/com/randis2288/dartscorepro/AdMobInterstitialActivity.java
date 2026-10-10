@@ -22,7 +22,8 @@ public class AdMobInterstitialActivity extends Activity {
 
             boolean shown = AdMobInterstitialManager.showIfReady(
                 AdMobInterstitialActivity.this,
-                AdMobInterstitialActivity.this::finishSafely
+                AdMobInterstitialActivity.this::finishSafely,
+                () -> InterstitialCadence.markShown(getApplicationContext())
             );
 
             if (shown) {
@@ -44,6 +45,13 @@ public class AdMobInterstitialActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         overridePendingTransition(0, 0);
+
+        // Analytics uses the same URI scheme. Only a validated game event
+        // may open an interstitial, never an analytics tracking request.
+        if (!InterstitialCadence.recordAndShouldShow(this, getIntent().getData())) {
+            finishSafely();
+            return;
+        }
 
         AdMobInterstitialManager.preload(getApplicationContext());
 
