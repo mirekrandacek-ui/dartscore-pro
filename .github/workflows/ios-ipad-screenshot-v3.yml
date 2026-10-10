@@ -1,0 +1,116 @@
+name: Capture iPad simulator screenshot v3
+
+on:
+  push:
+    branches:
+      - feature/ios-v97
+    paths:
+      - .github/workflows/ios-ipad-screenshot-v3.yml
+
+jobs:
+  capture:
+    runs-on: macos-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Prepare app
+        run: |
+          npm ci
+          npm run build
+          npx cap sync ios
+
+      - name: Build iOS Simulator app
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -derivedDataPath build/ios-derived \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Boot exact iPad Pro 13-inch on iOS 26.5
+        run: |
+          set -euo pipefail
+
+          UDID="$(xcrun simctl list devices -j | python3 -c '
+          import json,sys
+          d=json.load(sys.stdin)["devices"]
+          key=next((k for k in d if k.endswith("iOS-26-5")),None)
+          if not key:
+              raise SystemExit("iOS 26.5 runtime not found")
+          xs=[x for x in d[key] if x.get("isAvailable") and x["name"]=="iPad Pro 13-inch (M5)"]
+          if not xs:
+              raise SystemExit("iPad Pro 13-inch (M5) not found")
+          print(xs[0]["udid"])
+          ')"
+
+          echo "SIM_UDID=$UDID" >> "$GITHUB_ENV"
+          echo "Using $UDID"
+
+          xcrun simctl shutdown "$UDID" >/dev/null 2>&1 || true
+          open -a Simulator --args -CurrentDeviceUDID "$UDID" >/dev/null 2>&1 || true
+          (xcrun simctl boot "$UDID" >/tmp/dartscore-ipad-boot.log 2>&1 || true) &
+
+          BOOTED=0
+          for i in $(seq 1 90); do
+            STATE="$(xcrun simctl list devices -j | python3 -c '
+          import json,sys
+          u=sys.argv[1]
+          d=json.load(sys.stdin)["devices"]
+          print(next((x["state"] for xs in d.values() for x in xs if x["udid"]==u),"Missing"))
+          ' "$UDID")"
+            echo "state=$STATE"
+            if [ "$STATE" = "Booted" ]; then
+              BOOTED=1
+              break
+            fi
+            sleep 2
+          done
+
+          if [ "$BOOTED" != "1" ]; then
+            echo "Simulator failed to boot"
+            cat /tmp/dartscore-ipad-boot.log || true
+            exit 1
+          fi
+
+          sleep 15
+
+      - name: Install and launch DartScore Pro in English
+        run: |
+          set -euo pipefail
+          APP_PATH="$GITHUB_WORKSPACE/build/ios-derived/Build/Products/Release-iphonesimulator/App.app"
+          test -d "$APP_PATH"
+
+          xcrun simctl install "$SIM_UDID" "$APP_PATH"
+
+          xcrun simctl spawn "$SIM_UDID" defaults write NSGlobalDomain AppleLanguages -array en
+          xcrun simctl spawn "$SIM_UDID" defaults write NSGlobalDomain AppleLocale en_US
+
+          xcrun simctl launch "$SIM_UDID" com.randis2288.dartscorepro
+          sleep 18
+
+          mkdir -p "$RUNNER_TEMP/ipad-shot"
+          SHOT="$RUNNER_TEMP/ipad-shot/DartScore_iPad_13_EN_lobby.png"
+          xcrun simctl io "$SIM_UDID" screenshot "$SHOT"
+
+          echo "SCREENSHOT:"
+          sips -g pixelWidth -g pixelHeight "$SHOT"
+
+      - name: Upload real iPad screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: DartScore_iPad_13_EN_real
+          path: ${{ runner.temp }}/ipad-shot/DartScore_iPad_13_EN_lobby.png
+          if-no-files-found: error
