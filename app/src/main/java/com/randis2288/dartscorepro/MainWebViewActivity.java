@@ -524,6 +524,30 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         );
     }
 
+    private void recordNonX01LobbyStartInternal(String mode) {
+        if (currentPremiumState || isFinishing()) return;
+        if (!("cricket".equals(mode) || "around".equals(mode)
+                || "roulette".equals(mode) || "rouletteDouble".equals(mode))) return;
+
+        // The native counter persists between app launches and increments on
+        // EVERY explicit lobby Start. No empty Activity appears on starts 1/2.
+        Uri countedStart = new Uri.Builder()
+                .scheme("dartscorepro")
+                .authority("show-interstitial")
+                .appendQueryParameter("ad_event", "legacy")
+                .appendQueryParameter("mode", mode)
+                .build();
+        if (!InterstitialCadence.recordAndShouldShow(this, countedStart)) return;
+
+        // Counted already; the bridge event checks cooldown without counting again.
+        // The counter only resets after onAdShowedFullScreenContent.
+        startActivity(
+            new Intent(this, AdMobInterstitialActivity.class).setData(
+                Uri.parse("dartscorepro://show-interstitial?ad_event=legacy_bridge")
+            )
+        );
+    }
+
     private void initInAppUpdate() {
         appUpdateManager = AppUpdateManagerFactory.create(this);
         checkForAppUpdate();
@@ -1141,6 +1165,16 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         @JavascriptInterface
         public void shareApp(String title, String text, String url) {
             runOnUiThread(() -> shareAppNative(title, text, url));
+        }
+
+        @JavascriptInterface
+        public void recordNonX01Start(String mode) {
+            runOnUiThread(() -> recordNonX01LobbyStartInternal(mode));
+        }
+
+        @JavascriptInterface
+        public String getLastInterstitialShownAt() {
+            return String.valueOf(InterstitialCadence.lastShownAt(getApplicationContext()));
         }
 
         @JavascriptInterface
