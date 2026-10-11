@@ -1297,7 +1297,10 @@ function App() {
     if (screenRef.current !== 'lobby' || document.visibilityState !== 'visible') return false;
     try {
       const lastAdAttemptAt = Number(localStorage.getItem(REVIEW_AD_REQUEST_KEY) || 0);
-      if (lastAdAttemptAt > 0 && Date.now() - lastAdAttemptAt < REVIEW_AD_QUIET_MS) return false;
+      // On Android WebView, inspect real ad-show callbacks via native SharedPreferences.
+      const lastAdShownAt = Number(window.DartScoreAndroid?.getLastInterstitialShownAt?.() || 0);
+      const lastAdAt = Math.max(lastAdAttemptAt, lastAdShownAt);
+      if (lastAdAt > 0 && Date.now() - lastAdAt < REVIEW_AD_QUIET_MS) return false;
     } catch { }
     const state = readReviewState();
     if (!canShowReviewPrompt(state)) return false;
@@ -1937,7 +1940,17 @@ function App() {
       recordClassicAdEvent(previousGame, 'abandoned');
     }
     if (countAsLobbyStart && isNonX01LobbyAdMode(mode)) {
-      void emitInterstitialEvent({ ad_event: 'legacy', mode });
+      // WebView: count natively, only open ad Activity when actually eligible.
+      // iOS/TWA fallback: typed event goes to their supported ad controller.
+      if (!IS_IOS && window.DartScoreAndroid?.recordNonX01Start) {
+        try {
+          window.DartScoreAndroid.recordNonX01Start(mode);
+        } catch {
+          void emitInterstitialEvent({ ad_event: 'legacy', mode });
+        }
+      } else {
+        void emitInterstitialEvent({ ad_event: 'legacy', mode });
+      }
     }
     adCountedForGameRef.current = false;
     gameSessionRef.current += 1;
