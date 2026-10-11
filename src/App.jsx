@@ -1697,7 +1697,10 @@ function App() {
         });
         const key = quick ? 'dspIosQuickInterstitialCount' : 'dspIosLegacyInterstitialCount';
         let eligible = true;
-        if (quick || event.ad_event === 'legacy') {
+        if (event.ad_event === 'non_x01_boundary') {
+          // Non-X01 starts were counted at Lobby Start; only display at a boundary.
+          eligible = getCount('dspIosLegacyInterstitialCount') >= 3;
+        } else if (quick || event.ad_event === 'legacy') {
           const count = getCount(key) + 1;
           localStorage.setItem(key, String(count));
           eligible = count >= 3;
@@ -1718,6 +1721,43 @@ function App() {
       }
     }
     return showInterstitialAd(event);
+  };
+
+  const markNonX01LobbyStart = (gameMode) => {
+    if (isPremium || !isNonX01LobbyAdMode(gameMode)) return;
+    // Explicit Lobby Start only arms the ad; NEVER show before playing.
+    if (IS_IOS) {
+      try {
+        const key = 'dspIosLegacyInterstitialCount';
+        const count = Math.max(0, Number(localStorage.getItem(key)) || 0);
+        localStorage.setItem(key, String(Math.min(3, count + 1)));
+      } catch { }
+      return;
+    }
+    if (window.DartScoreAndroid?.recordNonX01Start) {
+      try {
+        window.DartScoreAndroid.recordNonX01Start(gameMode);
+        return;
+      } catch (err) {
+        console.warn('Native non-X01 start tracking failed:', err);
+      }
+    }
+    // Android TWA fallback uses native URI counting, never ad display.
+    void showInterstitialAd({ ad_event: 'non_x01_start', mode: gameMode });
+  };
+
+  const requestNonX01InterstitialAfterBoundary = () => {
+    if (isPremium || screenRef.current !== 'game' || !isNonX01LobbyAdMode(mode)) return;
+    if (!IS_IOS && window.DartScoreAndroid?.showNonX01AfterGameBoundary) {
+      try {
+        window.DartScoreAndroid.showNonX01AfterGameBoundary(mode);
+        return;
+      } catch (err) {
+        console.warn('Native non-X01 exit ad request failed:', err);
+      }
+    }
+    // iOS/TWA fallback checks the same threshold + cooldown at the exit boundary.
+    void emitInterstitialEvent({ ad_event: 'non_x01_boundary', mode });
   };
 
   const flushClassicAd = () => {
@@ -1952,17 +1992,7 @@ function App() {
       recordClassicAdEvent(previousGame, 'abandoned');
     }
     if (countAsLobbyStart && isNonX01LobbyAdMode(mode)) {
-      // WebView: count natively, only open ad Activity when actually eligible.
-      // iOS/TWA fallback: typed event goes to their supported ad controller.
-      if (!IS_IOS && window.DartScoreAndroid?.recordNonX01Start) {
-        try {
-          window.DartScoreAndroid.recordNonX01Start(mode);
-        } catch {
-          void emitInterstitialEvent({ ad_event: 'legacy', mode });
-        }
-      } else {
-        void emitInterstitialEvent({ ad_event: 'legacy', mode });
-      }
+      markNonX01LobbyStart(mode);
     }
     adCountedForGameRef.current = false;
     gameSessionRef.current += 1;
@@ -2030,7 +2060,11 @@ function App() {
     setScreen('game');
   };
 
-  const restartGame = () => startGame(false);
+  const restartGame = () => {
+    // Repeat is a post-game boundary, not another lobby Start.
+    startGame(false);
+    requestNonX01InterstitialAfterBoundary();
+  };
 
   function shuffle(a) {
     const arr = [...a];
@@ -3640,6 +3674,8 @@ const restorePremiumPurchase = async () => {
       else recordClassicAdEvent(makeSnapshot(), 'abandoned');
       saveSnapshot();
       setScreen('lobby');
+      // Both Back buttons flow here. Only now may a pending non-X01 ad appear.
+      requestNonX01InterstitialAfterBoundary();
       // Never ask for a rating immediately after the match or its ad.
     };
 
