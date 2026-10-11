@@ -12,7 +12,6 @@ import android.speech.tts.TextToSpeech;
 import android.speech.tts.Voice;
 import android.view.Gravity;
 import android.view.View;
-import android.view.WindowInsets;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
@@ -20,6 +19,12 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.Toast;
+
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.android.billingclient.api.AcknowledgePurchaseParams;
 import com.android.billingclient.api.BillingClient;
@@ -78,6 +83,9 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private AdView adView;
     private boolean bannerLoaded = false;
     private int bannerHeightPx = 0;
+    private int leftSystemInsetPx = 0;
+    private int topSystemInsetPx = 0;
+    private int rightSystemInsetPx = 0;
     private int bottomSystemInsetPx = 0;
 
     private TextToSpeech textToSpeech;
@@ -105,7 +113,14 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        WindowCompat.enableEdgeToEdge(getWindow());
+        WindowInsetsControllerCompat insetsController =
+            WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        insetsController.setAppearanceLightStatusBars(false);
+        insetsController.setAppearanceLightNavigationBars(false);
+
         root = new FrameLayout(this);
+        root.setBackgroundColor(Color.rgb(17, 24, 39));
 
         webView = new WebView(this);
         webView.setBackgroundColor(Color.TRANSPARENT);
@@ -152,21 +167,29 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         );
         adHost.bringToFront();
 
-        root.setOnApplyWindowInsetsListener((v, insets) -> {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                int navBottom = insets.getInsets(WindowInsets.Type.navigationBars()).bottom;
-                int gestureBottom = insets.getInsets(WindowInsets.Type.mandatorySystemGestures()).bottom;
-                int cutoutBottom = insets.getInsets(WindowInsets.Type.displayCutout()).bottom;
-                bottomSystemInsetPx = Math.max(navBottom, Math.max(gestureBottom, cutoutBottom));
-            } else {
-                bottomSystemInsetPx = insets.getSystemWindowInsetBottom();
-            }
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            Insets safeInsets = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars()
+                    | WindowInsetsCompat.Type.displayCutout()
+            );
+            Insets mandatoryGestures = insets.getInsets(
+                WindowInsetsCompat.Type.mandatorySystemGestures()
+            );
+
+            leftSystemInsetPx = safeInsets.left;
+            topSystemInsetPx = safeInsets.top;
+            rightSystemInsetPx = safeInsets.right;
+            bottomSystemInsetPx = Math.max(
+                safeInsets.bottom,
+                mandatoryGestures.bottom
+            );
+
             updateBannerLayout();
             return insets;
         });
 
         setContentView(root);
-        root.requestApplyInsets();
+        ViewCompat.requestApplyInsets(root);
 
         initInAppUpdate();
         initConsentAndAds();
@@ -311,9 +334,15 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             bannerLoaded = false;
             return;
         }
-        int widthPx = getResources().getDisplayMetrics().widthPixels;
+        int windowWidthPx = root != null && root.getWidth() > 0
+            ? root.getWidth()
+            : getResources().getDisplayMetrics().widthPixels;
+        int availableWidthPx = Math.max(
+            1,
+            windowWidthPx - leftSystemInsetPx - rightSystemInsetPx
+        );
         float density = getResources().getDisplayMetrics().density;
-        int adWidthDp = Math.max(320, (int) (widthPx / density));
+        int adWidthDp = Math.max(1, (int) (availableWidthPx / density));
 
         AdSize adSize = AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(
             this,
@@ -387,14 +416,17 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
                 : FrameLayout.LayoutParams.WRAP_CONTENT,
             Gravity.BOTTOM
         );
+        hostParams.leftMargin = leftSystemInsetPx;
+        hostParams.rightMargin = rightSystemInsetPx;
         hostParams.bottomMargin = bottomSystemInsetPx;
         adHost.setLayoutParams(hostParams);
 
         FrameLayout.LayoutParams webParams =
             (FrameLayout.LayoutParams) webView.getLayoutParams();
-        webParams.bottomMargin = visibleBannerHeight > 0
-            ? visibleBannerHeight + bottomSystemInsetPx
-            : 0;
+        webParams.leftMargin = leftSystemInsetPx;
+        webParams.topMargin = topSystemInsetPx;
+        webParams.rightMargin = rightSystemInsetPx;
+        webParams.bottomMargin = visibleBannerHeight + bottomSystemInsetPx;
         webView.setLayoutParams(webParams);
     }
 
