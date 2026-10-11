@@ -1310,20 +1310,23 @@ function App() {
   };
 
   useEffect(() => {
-    // On a fresh launch, require a full 10 seconds without lobby interactions.
-    // A player configuring a game must not be interrupted by a rating prompt.
-    let timer;
-    const reschedule = () => {
+    // Offer reviews only on a genuinely idle *fresh launch*.
+    // The first user interaction cancels the offer for this whole session:
+    // it must never reappear after playing or after leaving an advertisement.
+    let cancelled = false;
+    const cancel = () => {
+      cancelled = true;
       window.clearTimeout(timer);
-      timer = window.setTimeout(() => maybeShowReviewPrompt(), REVIEW_FRESH_LOBBY_DELAY_MS);
     };
-    window.addEventListener('pointerdown', reschedule, { passive: true });
-    window.addEventListener('keydown', reschedule);
-    reschedule();
+    const timer = window.setTimeout(() => {
+      if (!cancelled) maybeShowReviewPrompt();
+    }, REVIEW_FRESH_LOBBY_DELAY_MS);
+    window.addEventListener('pointerdown', cancel, { once: true, passive: true });
+    window.addEventListener('keydown', cancel, { once: true });
     return () => {
       window.clearTimeout(timer);
-      window.removeEventListener('pointerdown', reschedule);
-      window.removeEventListener('keydown', reschedule);
+      window.removeEventListener('pointerdown', cancel);
+      window.removeEventListener('keydown', cancel);
     };
   }, []);
 
