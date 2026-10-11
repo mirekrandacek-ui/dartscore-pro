@@ -6,13 +6,14 @@ import android.net.Uri;
 
 /**
  * Native source of truth for interstitial pacing.
- * The request is only counted when a game has ended or a qualified short game was left.
+ * X01 requests count completed/qualified games; non-X01 starts arm a boundary event.
  * The cooldown and counters survive app restarts and reset only after an ad actually opens.
  */
 final class InterstitialCadence {
     private static final String PREFS = "dartscore_interstitial_v2";
     private static final String SHORT_GAME_COUNT = "short_game_count";
-    private static final String OTHER_GAME_COUNT = "other_game_count";
+    // New counter key intentionally resets stale v100 starts once on upgrading to v101.
+    private static final String OTHER_GAME_COUNT = "non_x01_lobby_starts_v101";
     private static final String LAST_SHOWN_AT = "last_shown_at";
     private static final long MIN_GAP_MS = 5L * 60L * 1000L;
 
@@ -31,7 +32,17 @@ final class InterstitialCadence {
             // WebView versions without typed ad events already enforced a
             // three-start threshold; apply only the native cooldown here.
             eligible = true;
+        } else if ("non_x01_start".equals(event)) {
+            // Arm the next boundary; NEVER show an ad on Start.
+            recordNonX01Start(context);
+            return false;
+        } else if ("non_x01_boundary".equals(event)) {
+            // The count was accumulated only at explicit Start from lobby.
+            // Repeat and either Back button do not increment it.
+            eligible = prefs.getInt(OTHER_GAME_COUNT, 0) >= 3;
         } else if ("legacy".equals(event)) {
+            // Compatibility with old non-X01 event sources:
+            // this legacy path still counts starts and is kept as-is.
             int count = prefs.getInt(OTHER_GAME_COUNT, 0) + 1;
             prefs.edit().putInt(OTHER_GAME_COUNT, count).apply();
             eligible = count >= 3;
@@ -63,6 +74,29 @@ final class InterstitialCadence {
         long now = System.currentTimeMillis();
         long last = prefs.getLong(LAST_SHOWN_AT, 0L);
         return last <= 0L || (now >= last && now - last >= MIN_GAP_MS);
+    }
+
+    /** Count an explicit non-X01 lobby Start, without opening any ad. */
+    static synchronized void recordNonX01Start(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        int count = prefs.getInt(OTHER_GAME_COUNT, 0);
+        // Saturate at three. A failed fill or active cooldown never loses eligibility.
+        prefs.edit().putInt(OTHER_GAME_COUNT, Math.min(3, count + 1)).apply();
+    }
+
+    /** Inspect eligibility without incrementing the counter or touching the cooldown. */
+    static synchronized boolean shouldShowNonX01Boundary(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        if (prefs.getInt(OTHER_GAME_COUNT, 0) < 3) return false;
+        long last = prefs.getLong(LAST_SHOWN_AT, 0L);
+        long now = System.currentTimeMillis();
+        return last <= 0L || (now >= last && now - last >= MIN_GAP_MS);
+    }
+
+    /** Timestamp of the last interstitial that actually opened, for safe review prompts. */
+    static synchronized long lastShownAt(Context context) {
+        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getLong(LAST_SHOWN_AT, 0L);
     }
 
     /** Called ONLY from onAdShowedFullScreenContent, never from load or show attempts. */

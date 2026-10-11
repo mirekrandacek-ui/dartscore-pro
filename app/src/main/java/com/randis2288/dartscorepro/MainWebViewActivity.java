@@ -524,6 +524,32 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         );
     }
 
+    private boolean isNonX01Mode(String mode) {
+        return "cricket".equals(mode) || "around".equals(mode)
+                || "roulette".equals(mode) || "rouletteDouble".equals(mode);
+    }
+
+    private void recordNonX01LobbyStartInternal(String mode) {
+        if (currentPremiumState || isFinishing() || !isNonX01Mode(mode)) return;
+        // Count only: start means the player wants to PLAY, not watch an ad.
+        InterstitialCadence.recordNonX01Start(this);
+    }
+
+    private void showNonX01AfterGameBoundaryInternal(String mode) {
+        if (currentPremiumState || isFinishing() || !isNonX01Mode(mode)) return;
+        if (!InterstitialCadence.shouldShowNonX01Boundary(this)) return;
+
+        // Ad screen opens only AFTER Repeat or either Back control.
+        // Its own onCreate checks the same threshold and cooldown again.
+        Uri uri = new Uri.Builder()
+                .scheme("dartscorepro")
+                .authority("show-interstitial")
+                .appendQueryParameter("ad_event", "non_x01_boundary")
+                .appendQueryParameter("mode", mode)
+                .build();
+        startActivity(new Intent(this, AdMobInterstitialActivity.class).setData(uri));
+    }
+
     private void initInAppUpdate() {
         appUpdateManager = AppUpdateManagerFactory.create(this);
         checkForAppUpdate();
@@ -1141,6 +1167,21 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         @JavascriptInterface
         public void shareApp(String title, String text, String url) {
             runOnUiThread(() -> shareAppNative(title, text, url));
+        }
+
+        @JavascriptInterface
+        public void recordNonX01Start(String mode) {
+            runOnUiThread(() -> recordNonX01LobbyStartInternal(mode));
+        }
+
+        @JavascriptInterface
+        public void showNonX01AfterGameBoundary(String mode) {
+            runOnUiThread(() -> showNonX01AfterGameBoundaryInternal(mode));
+        }
+
+        @JavascriptInterface
+        public String getLastInterstitialShownAt() {
+            return String.valueOf(InterstitialCadence.lastShownAt(getApplicationContext()));
         }
 
         @JavascriptInterface

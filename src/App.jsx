@@ -9,7 +9,7 @@ import {
 } from '@capacitor-community/admob';
 import './app.css';
 import { botThrowAround, botThrowClassic, botThrowCricket, botThrowRoulette, normalizeBotLevel } from './botEngine.js';
-import { hasRecordedScore, isQuickClassic, isSupportedX01 } from './interstitialPolicy.js';
+import { hasRecordedScore, isQuickClassic, isSupportedX01, isNonX01LobbyAdMode } from './interstitialPolicy.js';
 
 const DartScoreIOS = registerPlugin('DartScoreIOS');
 const PLATFORM = Capacitor.getPlatform();
@@ -74,6 +74,7 @@ const SPEECH_LANG_MAP = {
 };
 import {
   canShowReviewPrompt,
+  isReviewAdQuietPeriodOver,
   normalizeReviewState,
   onAppLaunch,
   onGameCompleted,
@@ -1135,6 +1136,12 @@ function formatAvg(a) {
 
 /* ===== AdMob interstitial handler ===== */
 const ADMOB_INTERSTITIAL_SCHEME_URL = "dartscorepro://show-interstitial";
+const REVIEW_AD_REQUEST_KEY = "dspLastFullscreenAdRequestAtV101";
+const REVIEW_FRESH_LOBBY_DELAY_MS = 10 * 1000;
+
+function recordFullscreenAdRequest() {
+  try { localStorage.setItem(REVIEW_AD_REQUEST_KEY, String(Date.now())); } catch { }
+}
 
 async function showInterstitialAd(eventDetails) {
   try {
@@ -1150,6 +1157,7 @@ async function showInterstitialAd(eventDetails) {
       await AdMob.prepareInterstitial({
         adId: IOS_ADMOB_INTERSTITIAL_ID
       });
+      recordFullscreenAdRequest();
       await AdMob.showInterstitial();
       return true;
     }
@@ -1159,6 +1167,7 @@ async function showInterstitialAd(eventDetails) {
     // Typed events go through the native Activity on both TWA and WebView.
     // This avoids the legacy bridge bypassing the native cadence.
     const query = new URLSearchParams(eventDetails);
+    if (eventDetails.ad_event !== 'non_x01_start') recordFullscreenAdRequest();
     window.location.href = `${ADMOB_INTERSTITIAL_SCHEME_URL}?${query}`;
     return true;
   } catch (err) {
@@ -1283,12 +1292,43 @@ function App() {
   };
 
   const maybeShowReviewPrompt = () => {
+    // A review can be offered only in a fresh, idle lobby session,
+    // never after an interstitial attempt or when leaving a completed match.
+    if (screenRef.current !== 'lobby' || document.visibilityState !== 'visible') return false;
+    try {
+      const lastAdAttemptAt = Number(localStorage.getItem(REVIEW_AD_REQUEST_KEY) || 0);
+      // On Android WebView, inspect real ad-show callbacks via native SharedPreferences.
+      const lastAdShownAt = Number(window.DartScoreAndroid?.getLastInterstitialShownAt?.() || 0);
+      const lastAdAt = Math.max(lastAdAttemptAt, lastAdShownAt);
+      if (!isReviewAdQuietPeriodOver(lastAdAt)) return false;
+    } catch { }
     const state = readReviewState();
     if (!canShowReviewPrompt(state)) return false;
     writeReviewState(onPromptShown(state));
     setShowReviewPrompt(true);
     return true;
   };
+
+  useEffect(() => {
+    // Offer reviews only on a genuinely idle *fresh launch*.
+    // The first user interaction cancels the offer for this whole session:
+    // it must never reappear after playing or after leaving an advertisement.
+    let cancelled = false;
+    const cancel = () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+    const timer = window.setTimeout(() => {
+      if (!cancelled) maybeShowReviewPrompt();
+    }, REVIEW_FRESH_LOBBY_DELAY_MS);
+    window.addEventListener('pointerdown', cancel, { once: true, passive: true });
+    window.addEventListener('keydown', cancel, { once: true });
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('pointerdown', cancel);
+      window.removeEventListener('keydown', cancel);
+    };
+  }, []);
 
   const [toast, setToast] = useState(null);
   const showToast = (msg) => {
@@ -1364,8 +1404,6 @@ function App() {
     try {
       if (isPremium) {
         localStorage.setItem('premium', 'true');
-        localStorage.setItem(INTERSTITIAL_START_COUNT_KEY, '0');
-        localStorage.setItem(INTERSTITIAL_PENDING_KEY, 'false');
       }
     } catch { }
   }, [isPremium]);
@@ -1446,7 +1484,7 @@ function App() {
   const winAudioRef = useRef(null);
   /* persist screen */
 
-  const APP_VERSION = '1.1.66';
+  const APP_VERSION = '1.1.67';
   const LOBBY_DEFAULTS_VERSION = '1.1.62';
 
   /* načti lobby z localStorage */
@@ -1643,12 +1681,6 @@ function App() {
   const [winner, setWinner] = useState(null);
   const [pendingWin, setPendingWin] = useState(null);
 
-  // Free interstitial cadence:
-  // every third explicit Lobby Start arms one interstitial.
-  // The count and pending state persist across app restarts.
-  const INTERSTITIAL_START_COUNT_KEY = 'interstitialStartCount';
-  const INTERSTITIAL_PENDING_KEY = 'interstitialPending';
-  const interstitialShowScheduledRef = useRef(false);
   const adCountedForGameRef = useRef(false);
   const pendingClassicAdRef = useRef(null);
   const PENDING_CLASSIC_AD_KEY = 'dspPendingClassicAdV98';
@@ -1668,7 +1700,10 @@ function App() {
         });
         const key = quick ? 'dspIosQuickInterstitialCount' : 'dspIosLegacyInterstitialCount';
         let eligible = true;
-        if (quick || event.ad_event === 'legacy') {
+        if (event.ad_event === 'non_x01_boundary') {
+          // Non-X01 starts were counted at Lobby Start; only display at a boundary.
+          eligible = getCount('dspIosLegacyInterstitialCount') >= 3;
+        } else if (quick || event.ad_event === 'legacy') {
           const count = getCount(key) + 1;
           localStorage.setItem(key, String(count));
           eligible = count >= 3;
@@ -1689,6 +1724,43 @@ function App() {
       }
     }
     return showInterstitialAd(event);
+  };
+
+  const markNonX01LobbyStart = (gameMode) => {
+    if (isPremium || !isNonX01LobbyAdMode(gameMode)) return;
+    // Explicit Lobby Start only arms the ad; NEVER show before playing.
+    if (IS_IOS) {
+      try {
+        const key = 'dspIosLegacyInterstitialCount';
+        const count = Math.max(0, Number(localStorage.getItem(key)) || 0);
+        localStorage.setItem(key, String(Math.min(3, count + 1)));
+      } catch { }
+      return;
+    }
+    if (window.DartScoreAndroid?.recordNonX01Start) {
+      try {
+        window.DartScoreAndroid.recordNonX01Start(gameMode);
+        return;
+      } catch (err) {
+        console.warn('Native non-X01 start tracking failed:', err);
+      }
+    }
+    // Android TWA fallback uses native URI counting, never ad display.
+    void showInterstitialAd({ ad_event: 'non_x01_start', mode: gameMode });
+  };
+
+  const requestNonX01InterstitialAfterBoundary = () => {
+    if (isPremium || screenRef.current !== 'game' || !isNonX01LobbyAdMode(mode)) return;
+    if (!IS_IOS && window.DartScoreAndroid?.showNonX01AfterGameBoundary) {
+      try {
+        window.DartScoreAndroid.showNonX01AfterGameBoundary(mode);
+        return;
+      } catch (err) {
+        console.warn('Native non-X01 exit ad request failed:', err);
+      }
+    }
+    // iOS/TWA fallback checks the same threshold + cooldown at the exit boundary.
+    void emitInterstitialEvent({ ad_event: 'non_x01_boundary', mode });
   };
 
   const flushClassicAd = () => {
@@ -1741,45 +1813,6 @@ function App() {
     };
     if (event === 'completed') queueClassicAdAfterFanfare(details);
     else emitInterstitialEvent(details);
-  };
-
-  const readInterstitialStartCount = () => {
-    try {
-      const value = Number.parseInt(
-        localStorage.getItem(INTERSTITIAL_START_COUNT_KEY) || '0',
-        10
-      );
-      if (!Number.isFinite(value)) return 0;
-      return Math.min(2, Math.max(0, value));
-    } catch {
-      return 0;
-    }
-  };
-
-  const isInterstitialPending = () => {
-    try {
-      return localStorage.getItem(INTERSTITIAL_PENDING_KEY) === 'true';
-    } catch {
-      return false;
-    }
-  };
-
-  const markLobbyStartForInterstitial = () => {
-    if (isPremium || isInterstitialPending()) return;
-
-    const nextCount = readInterstitialStartCount() + 1;
-
-    try {
-      if (nextCount >= 3) {
-        localStorage.setItem(INTERSTITIAL_START_COUNT_KEY, '0');
-        localStorage.setItem(INTERSTITIAL_PENDING_KEY, 'true');
-      } else {
-        localStorage.setItem(
-          INTERSTITIAL_START_COUNT_KEY,
-          String(nextCount)
-        );
-      }
-    } catch { }
   };
 
   const [cricket, setCricket] = useState(null);
@@ -1954,14 +1987,15 @@ function App() {
       return;
     }
 
-    // Keep the legacy three-Lobby-Start cadence for non-X01 modes only.
-    // X01 uses completed matches (or a qualified short-game exit).
+    // X01 counts completed matches or qualified abandoned quick matches.
+    // Non-X01 counts explicit lobby Start clicks, even when a game is abandoned.
+    // Android enforces the third-start threshold and persistent five-minute cooldown.
     flushClassicAd();
     if (previousGame?.mode === 'classic' && previousGame.winner == null) {
       recordClassicAdEvent(previousGame, 'abandoned');
     }
-    if (countAsLobbyStart && mode !== 'classic') {
-      markLobbyStartForInterstitial();
+    if (countAsLobbyStart && isNonX01LobbyAdMode(mode)) {
+      markNonX01LobbyStart(mode);
     }
     adCountedForGameRef.current = false;
     gameSessionRef.current += 1;
@@ -2029,7 +2063,11 @@ function App() {
     setScreen('game');
   };
 
-  const restartGame = () => startGame(false);
+  const restartGame = () => {
+    // Repeat is a post-game boundary, not another lobby Start.
+    startGame(false);
+    requestNonX01InterstitialAfterBoundary();
+  };
 
   function shuffle(a) {
     const arr = [...a];
@@ -2768,56 +2806,6 @@ const commitCricket = (value, mOverride) => {
       return commitAround(value, mOverride);
     };
 
-    const showPendingInterstitialAfterFanfare = () => {
-      if (isPremium || !isInterstitialPending()) return;
-      if (interstitialShowScheduledRef.current) return;
-
-      interstitialShowScheduledRef.current = true;
-
-      let fired = false;
-      let fallbackTimer = null;
-
-      const fire = async () => {
-        if (fired) return;
-        fired = true;
-
-        if (fallbackTimer != null) {
-          window.clearTimeout(fallbackTimer);
-        }
-
-        const requested = await emitInterstitialEvent({ ad_event: 'legacy_bridge' });
-
-        if (requested) {
-          try {
-            localStorage.setItem(INTERSTITIAL_PENDING_KEY, 'false');
-            localStorage.setItem(INTERSTITIAL_START_COUNT_KEY, '0');
-          } catch { }
-        }
-
-        interstitialShowScheduledRef.current = false;
-      };
-
-      const fanfare = soundOn ? winAudioRef.current : null;
-
-      if (!fanfare) {
-        window.setTimeout(fire, 250);
-        return;
-      }
-
-      fanfare.addEventListener(
-        'ended',
-        () => window.setTimeout(fire, 150),
-        { once: true }
-      );
-
-      const durationMs =
-        Number.isFinite(fanfare.duration) && fanfare.duration > 0
-          ? Math.ceil(fanfare.duration * 1000) + 1000
-          : 7000;
-
-      fallbackTimer = window.setTimeout(fire, durationMs);
-    };
-
     const finalizeWin = (pIdx, opts = {}) => {
       try {
         if (soundOn && winAudioRef.current) {
@@ -2830,9 +2818,8 @@ const commitCricket = (value, mOverride) => {
       recordReviewCompletedGame();
       if (mode === 'classic') {
         recordClassicAdEvent({ mode, startScore, legsToWinSet, setsToWin }, 'completed');
-      } else {
-        showPendingInterstitialAfterFanfare();
       }
+      // Non-X01 advertising happens on lobby Start, never after the fanfare.
 
       {
         try {
@@ -3690,7 +3677,9 @@ const restorePremiumPurchase = async () => {
       else recordClassicAdEvent(makeSnapshot(), 'abandoned');
       saveSnapshot();
       setScreen('lobby');
-      if (completedGame) maybeShowReviewPrompt();
+      // Both Back buttons flow here. Only now may a pending non-X01 ad appear.
+      requestNonX01InterstitialAfterBoundary();
+      // Never ask for a rating immediately after the match or its ad.
     };
 
     const modeLabel = (() => {

@@ -65,3 +65,11 @@ export const onReviewDone = (state) => ({
   ...normalizeReviewState(state),
   done: true
 });
+
+/** A review is inappropriate until an hour after any full-screen ad/show attempt. */
+export const REVIEW_AD_QUIET_MS = 60 * 60 * 1000;
+export const isReviewAdQuietPeriodOver = (lastAdAt, now = Date.now()) => {
+  const adAt = Number(lastAdAt) || 0;
+  if (adAt <= 0) return true;
+  return now >= adAt && now - adAt >= REVIEW_AD_QUIET_MS;
+};

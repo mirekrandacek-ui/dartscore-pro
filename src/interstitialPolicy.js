@@ -18,3 +18,10 @@ export const hasRecordedScore = game =>
   || (game?.classicVisitHistory?.length || 0) > 0
   || (game?.classicLegsWon || []).some(n => Number(n) > 0)
   || (game?.classicSetsWon || []).some(n => Number(n) > 0);
+
+/**
+ * Only these four modes request a full-screen ad on explicit lobby Start.
+ * Android's InterstitialCadence owns the 3-start count and 5-minute cooldown.
+ */
+export const isNonX01LobbyAdMode = mode =>
+  ['cricket', 'around', 'roulette', 'rouletteDouble'].includes(mode);

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { hasRecordedScore, isQuickClassic, isSupportedX01 } from '../src/interstitialPolicy.js';
+import { hasRecordedScore, isQuickClassic, isSupportedX01, isNonX01LobbyAdMode } from '../src/interstitialPolicy.js';
 
 test('only supported X01 variants, with no 1001', () => {
   for (const score of [101, 301, 501, 701, 901]) {
@@ -37,4 +37,13 @@ test('a single entered score, including an unfinished turn, is progress', () => 
 
 test('previously won legs still count as progress within a long match', () => {
   assert.equal(hasRecordedScore({ startScore: 501, scores: [501, 501], classicLegsWon: [1, 0] }), true);
+});
+
+test('Cricket, Around, Roulette, and Roulette Double share lobby-start ad cadence', () => {
+  for (const mode of ['cricket', 'around', 'roulette', 'rouletteDouble']) {
+    assert.equal(isNonX01LobbyAdMode(mode), true, mode);
+  }
+  for (const mode of ['classic', 'classicX01', null, undefined]) {
+    assert.equal(isNonX01LobbyAdMode(mode), false, String(mode));
+  }
 });
