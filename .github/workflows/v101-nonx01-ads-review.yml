@@ -1,9 +1,9 @@
 name: v101 Non-X01 Ads and Review Safety - Android 16 smoke
 on:
   pull_request:
-    branches: [fix/v101-nonx01-ads-review-timing]
+    branches: [hotfix/v100-restore-android-startup]
   push:
-    branches: [hotfix/v101-restore-android-startup]
+    branches: [fix/v101-nonx01-ads-review-timing]
     paths:
       - 'src/**'
       - 'qa/android-startup-smoke-v101.sh'
@@ -14,7 +14,7 @@ on:
       - 'build.gradle'
       - 'gradle/**'
       - 'package*.json'
-      - '.github/workflows/v101-hotfix-startup.yml'
+      - '.github/workflows/v101-nonx01-ads-review.yml'
   workflow_dispatch:
 
 permissions:
