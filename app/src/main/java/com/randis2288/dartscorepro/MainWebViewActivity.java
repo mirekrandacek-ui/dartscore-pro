@@ -524,28 +524,30 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         );
     }
 
-    private void recordNonX01LobbyStartInternal(String mode) {
-        if (currentPremiumState || isFinishing()) return;
-        if (!("cricket".equals(mode) || "around".equals(mode)
-                || "roulette".equals(mode) || "rouletteDouble".equals(mode))) return;
+    private boolean isNonX01Mode(String mode) {
+        return "cricket".equals(mode) || "around".equals(mode)
+                || "roulette".equals(mode) || "rouletteDouble".equals(mode);
+    }
 
-        // The native counter persists between app launches and increments on
-        // EVERY explicit lobby Start. No empty Activity appears on starts 1/2.
-        Uri countedStart = new Uri.Builder()
+    private void recordNonX01LobbyStartInternal(String mode) {
+        if (currentPremiumState || isFinishing() || !isNonX01Mode(mode)) return;
+        // Count only: start means the player wants to PLAY, not watch an ad.
+        InterstitialCadence.recordNonX01Start(this);
+    }
+
+    private void showNonX01AfterGameBoundaryInternal(String mode) {
+        if (currentPremiumState || isFinishing() || !isNonX01Mode(mode)) return;
+        if (!InterstitialCadence.shouldShowNonX01Boundary(this)) return;
+
+        // Ad screen opens only AFTER Repeat or either Back control.
+        // Its own onCreate checks the same threshold and cooldown again.
+        Uri uri = new Uri.Builder()
                 .scheme("dartscorepro")
                 .authority("show-interstitial")
-                .appendQueryParameter("ad_event", "legacy")
+                .appendQueryParameter("ad_event", "non_x01_boundary")
                 .appendQueryParameter("mode", mode)
                 .build();
-        if (!InterstitialCadence.recordAndShouldShow(this, countedStart)) return;
-
-        // Counted already; the bridge event checks cooldown without counting again.
-        // The counter only resets after onAdShowedFullScreenContent.
-        startActivity(
-            new Intent(this, AdMobInterstitialActivity.class).setData(
-                Uri.parse("dartscorepro://show-interstitial?ad_event=legacy_bridge")
-            )
-        );
+        startActivity(new Intent(this, AdMobInterstitialActivity.class).setData(uri));
     }
 
     private void initInAppUpdate() {
@@ -1170,6 +1172,11 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         @JavascriptInterface
         public void recordNonX01Start(String mode) {
             runOnUiThread(() -> recordNonX01LobbyStartInternal(mode));
+        }
+
+        @JavascriptInterface
+        public void showNonX01AfterGameBoundary(String mode) {
+            runOnUiThread(() -> showNonX01AfterGameBoundaryInternal(mode));
         }
 
         @JavascriptInterface
