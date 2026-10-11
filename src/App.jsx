@@ -74,6 +74,7 @@ const SPEECH_LANG_MAP = {
 };
 import {
   canShowReviewPrompt,
+  isReviewAdQuietPeriodOver,
   normalizeReviewState,
   onAppLaunch,
   onGameCompleted,
@@ -1136,7 +1137,6 @@ function formatAvg(a) {
 /* ===== AdMob interstitial handler ===== */
 const ADMOB_INTERSTITIAL_SCHEME_URL = "dartscorepro://show-interstitial";
 const REVIEW_AD_REQUEST_KEY = "dspLastFullscreenAdRequestAtV101";
-const REVIEW_AD_QUIET_MS = 60 * 60 * 1000;
 const REVIEW_FRESH_LOBBY_DELAY_MS = 10 * 1000;
 
 function recordFullscreenAdRequest() {
@@ -1300,7 +1300,7 @@ function App() {
       // On Android WebView, inspect real ad-show callbacks via native SharedPreferences.
       const lastAdShownAt = Number(window.DartScoreAndroid?.getLastInterstitialShownAt?.() || 0);
       const lastAdAt = Math.max(lastAdAttemptAt, lastAdShownAt);
-      if (lastAdAt > 0 && Date.now() - lastAdAt < REVIEW_AD_QUIET_MS) return false;
+      if (!isReviewAdQuietPeriodOver(lastAdAt)) return false;
     } catch { }
     const state = readReviewState();
     if (!canShowReviewPrompt(state)) return false;
