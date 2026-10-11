@@ -15,6 +15,10 @@ final class InterstitialCadence {
     // New counter key intentionally resets stale v100 starts once on upgrading to v101.
     private static final String OTHER_GAME_COUNT = "non_x01_lobby_starts_v101";
     private static final String LAST_SHOWN_AT = "last_shown_at";
+    // Added in v102: conservative reservation at ad.show(), not merely callback.
+    // The previous version recorded only onAdShowedFullScreenContent, leaving a gap
+    // if Android dismissed/destroyed the host Activity before that callback.
+    private static final String LAST_ATTEMPT_AT = "last_ad_show_attempt_at_v102";
     private static final long MIN_GAP_MS = 5L * 60L * 1000L;
 
     private InterstitialCadence() {}
@@ -71,9 +75,34 @@ final class InterstitialCadence {
 
         if (!eligible) return false;
 
-        long now = System.currentTimeMillis();
-        long last = prefs.getLong(LAST_SHOWN_AT, 0L);
+        return cooldownExpired(prefs, System.currentTimeMillis());
+    }
+
+    private static boolean cooldownExpired(SharedPreferences prefs, long now) {
+        final long lastShown = prefs.getLong(LAST_SHOWN_AT, 0L);
+        final long lastAttempt = prefs.getLong(LAST_ATTEMPT_AT, 0L);
+        final long last = Math.max(lastShown, lastAttempt);
         return last <= 0L || (now >= last && now - last >= MIN_GAP_MS);
+    }
+
+    // The definitive gate. Every real SDK fullscreen presentation passes
+    // through here even if some Activity missed the earlier eligibility check.
+    // Only reserve if a loaded interstitial exists and is about to be shown.
+    static synchronized long claimBeforeAdShow(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        final long now = System.currentTimeMillis();
+        if (!cooldownExpired(prefs, now)) return 0L;
+        prefs.edit().putLong(LAST_ATTEMPT_AT, now).commit();
+        return now;
+    }
+
+    // A genuine SDK onAdFailedToShow is not a display; undo its reservation.
+    static synchronized void releaseFailedShow(Context context, long claimedAt) {
+        if (claimedAt <= 0L) return;
+        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        if (prefs.getLong(LAST_ATTEMPT_AT, 0L) == claimedAt) {
+            prefs.edit().remove(LAST_ATTEMPT_AT).commit();
+        }
     }
 
     /** Count an explicit non-X01 lobby Start, without opening any ad. */
@@ -88,9 +117,7 @@ final class InterstitialCadence {
     static synchronized boolean shouldShowNonX01Boundary(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         if (prefs.getInt(OTHER_GAME_COUNT, 0) < 3) return false;
-        long last = prefs.getLong(LAST_SHOWN_AT, 0L);
-        long now = System.currentTimeMillis();
-        return last <= 0L || (now >= last && now - last >= MIN_GAP_MS);
+        return cooldownExpired(prefs, System.currentTimeMillis());
     }
 
     /** Timestamp of the last interstitial that actually opened, for safe review prompts. */
@@ -105,7 +132,7 @@ final class InterstitialCadence {
                 .putLong(LAST_SHOWN_AT, System.currentTimeMillis())
                 .putInt(SHORT_GAME_COUNT, 0)
                 .putInt(OTHER_GAME_COUNT, 0)
-                .apply();
+                .commit();
     }
 
     private static int intParam(Uri uri, String key) {

@@ -119,24 +119,48 @@ public final class AdMobInterstitialManager {
             return false;
         }
 
+        // Mandatory shared SDK-level cooldown gate. The Activity-level check
+        // is only an optimization; it is not sufficient on some Android builds
+        // if a fullscreen callback was missed during lifecycle transitions.
+        final long claimAt = InterstitialCadence.claimBeforeAdShow(
+            activity.getApplicationContext()
+        );
+        if (claimAt == 0L) {
+            Log.i(TAG, "Interstitial suppressed by global 5-minute cooldown.");
+            return false;
+        }
+
         InterstitialAd adToShow = interstitialAd;
         interstitialAd = null;
         loadedAtMs = 0L;
 
         adToShow.setFullScreenContentCallback(
             new FullScreenContentCallback() {
+                private boolean confirmedShown = false;
+
                 private void finishAndPreload() {
                     preload(activity.getApplicationContext());
                     onFinished.run();
                 }
 
-                @Override
-                public void onAdShowedFullScreenContent() {
+                private void markDisplayedOnce() {
+                    if (confirmedShown) return;
+                    confirmedShown = true;
+                    // Persist the real time; the reservation already prevented
+                    // any other interstitial opening during callback delivery.
                     onShown.run();
                 }
 
                 @Override
+                public void onAdShowedFullScreenContent() {
+                    markDisplayedOnce();
+                }
+
+                @Override
                 public void onAdDismissedFullScreenContent() {
+                    // Defensive: if an SDK callback is missed but the user
+                    // dismissed the ad, it was shown. Retain the cooldown.
+                    markDisplayedOnce();
                     finishAndPreload();
                 }
 
@@ -145,12 +169,24 @@ public final class AdMobInterstitialManager {
                     @NonNull AdError error
                 ) {
                     Log.w(TAG, "Interstitial failed to show: " + error);
+                    if (!confirmedShown) {
+                        InterstitialCadence.releaseFailedShow(
+                            activity.getApplicationContext(), claimAt
+                        );
+                    }
                     finishAndPreload();
                 }
             }
         );
 
-        adToShow.show(activity);
-        return true;
+        try {
+            adToShow.show(activity);
+            return true;
+        } catch (RuntimeException e) {
+            Log.e(TAG, "Interstitial show threw before SDK display.", e);
+            InterstitialCadence.releaseFailedShow(activity.getApplicationContext(), claimAt);
+            preload(activity.getApplicationContext());
+            return false;
+        }
     }
 }
