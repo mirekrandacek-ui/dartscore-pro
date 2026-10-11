@@ -28,6 +28,7 @@
         android:label="@string/appName"
         android:manageSpaceActivity="com.google.androidbrowserhelper.trusted.ManageDataLauncherActivity"
         android:supportsRtl="true"
+        android:resizeableActivity="true"
         android:theme="@android:style/Theme.Translucent.NoTitleBar">
 
         <meta-data
@@ -77,7 +78,6 @@
         <activity
             android:name=".ConsentLauncherActivity"
             android:exported="true"
-            android:screenOrientation="portrait"
             android:theme="@android:style/Theme.Material.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -90,7 +90,6 @@
             android:configChanges="orientation|screenSize"
             android:exported="false"
             android:hardwareAccelerated="true"
-            android:screenOrientation="portrait"
             android:theme="@android:style/Theme.Material.NoActionBar" />
 
         <activity android:name=".UpdateLauncherActivity"
@@ -140,9 +139,6 @@
 
             <meta-data android:name="android.support.customtabs.trusted.FALLBACK_STRATEGY"
                 android:value="@string/fallbackType" />
-
-            <meta-data android:name="android.support.customtabs.trusted.SCREEN_ORIENTATION"
-                android:value="@string/orientation"/>
 
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
