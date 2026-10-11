@@ -12,7 +12,8 @@ import android.net.Uri;
 final class InterstitialCadence {
     private static final String PREFS = "dartscore_interstitial_v2";
     private static final String SHORT_GAME_COUNT = "short_game_count";
-    private static final String OTHER_GAME_COUNT = "other_game_count";
+    // New counter key intentionally resets stale v100 starts once on upgrading to v101.
+    private static final String OTHER_GAME_COUNT = "non_x01_lobby_starts_v101";
     private static final String LAST_SHOWN_AT = "last_shown_at";
     private static final long MIN_GAP_MS = 5L * 60L * 1000L;
 
