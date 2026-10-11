@@ -1,5 +1,7 @@
 name: v100 Startup Hotfix - Signed Android and Android 16 smoke
 on:
+  pull_request:
+    branches: [release/v99-android15-16-play-recommendations]
   push:
     branches: [hotfix/v100-restore-android-startup]
     paths:
