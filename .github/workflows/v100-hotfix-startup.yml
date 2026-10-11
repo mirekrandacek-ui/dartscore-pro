@@ -1,0 +1,108 @@
+name: v100 Startup Hotfix - Signed Android and Android 16 smoke
+on:
+  push:
+    branches: [hotfix/v100-restore-android-startup]
+    paths:
+      - 'src/**'
+      - 'app/**'
+      - 'build.gradle'
+      - 'gradle/**'
+      - 'package*.json'
+      - '.github/workflows/v100-hotfix-startup.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  signed-bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: Verify emergency rollback
+        run: |
+          set -euo pipefail
+          grep -q 'versionCode 100' app/build.gradle
+          grep -q 'versionName "1.1.66"' app/build.gradle
+          grep -q "const APP_VERSION = '1.1.66'" src/App.jsx
+          grep -q 'com.android.tools.build:gradle:8.9.1' build.gradle
+          grep -q 'androidbrowserhelper:2.6.2' app/build.gradle
+          ! grep -q 'WindowCompat.enableEdgeToEdge' app/src/main/java/com/randis2288/dartscorepro/ConsentLauncherActivity.java
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: ''
+      - run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Build signed release AAB and installable APK
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:bundleRelease :app:assembleRelease --stacktrace --no-daemon
+      - name: Verify release payload
+        run: |
+          set -euo pipefail
+          test -s app/build/outputs/bundle/release/app-release.aab
+          test -s app/build/outputs/apk/release/app-release.apk
+          unzip -l app/build/outputs/bundle/release/app-release.aab | grep -q 'base/assets/offline/index.html'
+          jarsigner -verify app/build/outputs/bundle/release/app-release.aab
+      - run: |
+          cp app/build/outputs/bundle/release/app-release.aab DartScorePro_v100_1.1.66.aab
+          cp app/build/outputs/apk/release/app-release.apk DartScorePro_v100_1.1.66.apk
+      - name: Upload signed AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: DartScorePro_v100_1.1.66_AAB
+          path: DartScorePro_v100_1.1.66.aab
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload startup smoke APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: DartScorePro_v100_1.1.66_APK
+          path: DartScorePro_v100_1.1.66.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  emulator-startup:
+    needs: signed-bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: DartScorePro_v100_1.1.66_APK
+      - name: Boot Android 16 and launch real signed release
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: |
+            set -eu
+            adb install DartScorePro_v100_1.1.66.apk
+            adb logcat -c
+            adb shell am start -W -n com.randis2288.dartscorepro/.ConsentLauncherActivity
+            sleep 12
+            if adb logcat -d -s AndroidRuntime:E | grep -E 'FATAL EXCEPTION|Process: com.randis2288.dartscorepro'; then
+              echo 'FAIL: fatal exception during startup'
+              exit 1
+            fi
+            pid="$(adb shell pidof com.randis2288.dartscorepro | tr -d '\r')"
+            if [ -z "$pid" ]; then
+              echo 'FAIL: DartScore process exited during startup'
+              exit 1
+            fi
+            echo "PASS: DartScore still running after 12 seconds, PID $pid"
