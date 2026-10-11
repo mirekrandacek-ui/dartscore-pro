@@ -6,6 +6,7 @@ on:
     branches: [hotfix/v100-restore-android-startup]
     paths:
       - 'src/**'
+      - 'qa/android-startup-smoke.sh'
       - 'app/**'
       - 'build.gradle'
       - 'gradle/**'
@@ -81,6 +82,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: DartScorePro_v100_1.1.66_APK
@@ -92,19 +94,14 @@ jobs:
           arch: x86_64
           profile: pixel_6
           disable-animations: true
-          script: |
-            set -eu
-            adb install DartScorePro_v100_1.1.66.apk
-            adb logcat -c
-            adb shell am start -W -n com.randis2288.dartscorepro/.ConsentLauncherActivity
-            sleep 12
-            if adb logcat -d -s AndroidRuntime:E | grep -E 'FATAL EXCEPTION|Process: com.randis2288.dartscorepro'; then
-              echo 'FAIL: fatal exception during startup'
-              exit 1
-            fi
-            pid="$(adb shell pidof com.randis2288.dartscorepro | tr -d '\r')"
-            if [ -z "$pid" ]; then
-              echo 'FAIL: DartScore process exited during startup'
-              exit 1
-            fi
-            echo "PASS: DartScore still running after 12 seconds, PID $pid"
+          script: bash qa/android-startup-smoke.sh
+      - name: Upload Android 16 smoke diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DartScorePro_v100_1.1.66_Android16_logs
+          path: |
+            dartscore-v100-1.1.66-startup-logcat.txt
+            dartscore-v100-1.1.66-activities.txt
+          if-no-files-found: ignore
+          retention-days: 7
