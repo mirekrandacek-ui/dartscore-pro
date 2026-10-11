@@ -1167,7 +1167,7 @@ async function showInterstitialAd(eventDetails) {
     // Typed events go through the native Activity on both TWA and WebView.
     // This avoids the legacy bridge bypassing the native cadence.
     const query = new URLSearchParams(eventDetails);
-    recordFullscreenAdRequest();
+    if (eventDetails.ad_event !== 'non_x01_start') recordFullscreenAdRequest();
     window.location.href = `${ADMOB_INTERSTITIAL_SCHEME_URL}?${query}`;
     return true;
   } catch (err) {
