@@ -1310,9 +1310,21 @@ function App() {
   };
 
   useEffect(() => {
-    // Prompt only on a new launch, after idle time on lobby.
-    const timer = window.setTimeout(() => maybeShowReviewPrompt(), REVIEW_FRESH_LOBBY_DELAY_MS);
-    return () => window.clearTimeout(timer);
+    // On a fresh launch, require a full 10 seconds without lobby interactions.
+    // A player configuring a game must not be interrupted by a rating prompt.
+    let timer;
+    const reschedule = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => maybeShowReviewPrompt(), REVIEW_FRESH_LOBBY_DELAY_MS);
+    };
+    window.addEventListener('pointerdown', reschedule, { passive: true });
+    window.addEventListener('keydown', reschedule);
+    reschedule();
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('pointerdown', reschedule);
+      window.removeEventListener('keydown', reschedule);
+    };
   }, []);
 
   const [toast, setToast] = useState(null);
