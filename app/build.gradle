@@ -41,7 +41,6 @@ def twaManifest = [
     generatorApp: 'bubblewrap-cli',
     fallbackType: 'customtabs',
     enableSiteSettingsShortcut: 'true',
-    orientation: 'portrait',
 ]
 
 android {
@@ -61,8 +60,8 @@ android {
         applicationId "com.randis2288.dartscorepro"
         minSdkVersion 24
         targetSdkVersion 36
-        versionCode 98
-        versionName "1.1.64"
+        versionCode 99
+        versionName "1.1.65"
 
         resValue "string", "appName", twaManifest.name
         resValue "string", "launcherName", twaManifest.launcherName
@@ -93,7 +92,6 @@ android {
         resValue "string", "generatorApp", twaManifest.generatorApp
         resValue "string", "fallbackType", twaManifest.fallbackType
         resValue "bool", "enableSiteSettingsShortcut", twaManifest.enableSiteSettingsShortcut
-        resValue "string", "orientation", twaManifest.orientation
     }
 
     sourceSets {
@@ -102,9 +100,15 @@ android {
         }
     }
 
+    buildFeatures {
+        resValues = true
+    }
+
     buildTypes {
         release {
-            minifyEnabled true
+            optimization {
+                enable = true
+            }
             signingConfig signingConfigs.release
             ndk {
                 debugSymbolLevel 'SYMBOL_TABLE'
@@ -127,8 +131,8 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    lintOptions {
-        checkReleaseBuilds false
+    lint {
+        checkReleaseBuilds = false
     }
 }
 
@@ -189,5 +193,6 @@ dependencies {
     implementation 'com.google.android.ump:user-messaging-platform:4.0.0'
     implementation 'com.android.billingclient:billing:9.1.0'
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.6.2'
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.7.4'
+    implementation 'androidx.core:core:1.17.0'
 }
