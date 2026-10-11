@@ -65,6 +65,12 @@ final class InterstitialCadence {
         return last <= 0L || (now >= last && now - last >= MIN_GAP_MS);
     }
 
+    /** Timestamp of the last interstitial that actually opened, for safe review prompts. */
+    static synchronized long lastShownAt(Context context) {
+        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getLong(LAST_SHOWN_AT, 0L);
+    }
+
     /** Called ONLY from onAdShowedFullScreenContent, never from load or show attempts. */
     static synchronized void markShown(Context context) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
