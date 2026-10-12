@@ -1,0 +1,50 @@
+name: Fix iOS app icon
+
+on:
+  push:
+    branches:
+      - feature/ios-v97
+    paths:
+      - .github/workflows/ios-fix-app-icon.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/ios-v97
+          fetch-depth: 0
+
+      - name: Build 1024x1024 opaque iOS icon from store icon
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          source "$RUNNER_TEMP/venv/bin/activate"
+          python -m pip install --quiet pillow
+          python - <<'PY'
+          from PIL import Image
+          src="store_icon.png"
+          dst="ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png"
+          im=Image.open(src).convert("RGBA")
+          print("SOURCE_SIZE", im.size, "MODE", im.mode)
+          bg=Image.new("RGBA", im.size, (255,255,255,255))
+          bg.alpha_composite(im)
+          out=bg.convert("RGB").resize((1024,1024), Image.Resampling.LANCZOS)
+          out.save(dst, "PNG", optimize=True)
+          check=Image.open(dst)
+          print("OUTPUT_SIZE", check.size, "MODE", check.mode)
+          assert check.size==(1024,1024)
+          assert check.mode=="RGB"
+          PY
+
+      - name: Commit corrected iOS icon
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png
+          git commit -m "fix(ios): use DartScore store icon for App Store"
+          git push origin HEAD:feature/ios-v97

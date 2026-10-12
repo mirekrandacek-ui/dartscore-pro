@@ -1,0 +1,44 @@
+name: Add iOS AdMob dependency
+
+on:
+  push:
+    branches:
+      - feature/ios-v97
+    paths:
+      - .github/workflows/ios-add-admob.yml
+
+permissions:
+  contents: write
+
+jobs:
+  add-admob:
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/ios-v97
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install AdMob plugin
+        run: npm install @capacitor-community/admob@8.2.0 --save-exact
+
+      - name: Sync iOS native dependencies
+        run: npx cap sync ios
+
+      - name: Commit dependency changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json ios/App/CapApp-SPM
+          if git diff --cached --quiet; then
+            echo "No dependency changes"
+          else
+            git commit -m "feat(ios): add native AdMob and UMP plugin"
+            git push origin HEAD:feature/ios-v97
+          fi
