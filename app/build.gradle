@@ -20,31 +20,25 @@ plugins {
     id 'com.android.application'
 }
 
+apply plugin: 'com.google.gms.google-services'
+
 def twaManifest = [
     applicationId: 'com.randis2288.dartscorepro',
-    hostName: 'dartscore-pro.vercel.app', // The domain being opened in the TWA.
-    launchUrl: '/', // The start path for the TWA. Must be relative to the domain.
-    name: 'DartScore Pro', // The application name.
-    launcherName: 'DartScore Pro', // The name shown on the Android Launcher.
-    themeColor: '#111827', // The color used for the status bar.
-    themeColorDark: '#000000', // The color used for the dark status bar.
-    navigationColor: '#000000', // The color used for the navigation bar.
-    navigationColorDark: '#000000', // The color used for the dark navbar.
-    navigationDividerColor: '#000000', // The navbar divider color.
-    navigationDividerColorDark: '#000000', // The dark navbar divider color.
-    backgroundColor: '#111827', // The color used for the splash screen background.
-    enableNotifications: true, // Set to true to enable notification delegation.
-    // Every shortcut must include the following fields:
-    // - name: String that will show up in the shortcut.
-    // - short_name: Shorter string used if |name| is too long.
-    // - url: Absolute path of the URL to launch the app with (e.g '/create').
-    // - icon: Name of the resource in the drawable folder to use as an icon.
+    hostName: 'dartscore-pro.vercel.app',
+    launchUrl: '/',
+    name: 'DartScore Pro',
+    launcherName: 'DartScore Pro',
+    themeColor: '#111827',
+    themeColorDark: '#000000',
+    navigationColor: '#000000',
+    navigationColorDark: '#000000',
+    navigationDividerColor: '#000000',
+    navigationDividerColorDark: '#000000',
+    backgroundColor: '#111827',
+    enableNotifications: true,
     shortcuts: [],
-    // The duration of fade out animation in milliseconds to be played when removing splash screen.
     splashScreenFadeOutDuration: 300,
-    generatorApp: 'bubblewrap-cli', // Application that generated the Android Project
-    // The fallback strategy for when Trusted Web Activity is not available. Possible values are
-    // 'customtabs' and 'webview'.
+    generatorApp: 'bubblewrap-cli',
     fallbackType: 'customtabs',
     enableSiteSettingsShortcut: 'true',
     orientation: 'portrait',
@@ -65,10 +59,10 @@ android {
 
     defaultConfig {
         applicationId "com.randis2288.dartscorepro"
-        minSdkVersion 23
+        minSdkVersion 24
         targetSdkVersion 36
-        versionCode 67
-        versionName "1.1.33"
+        versionCode 102
+        versionName "1.1.68"
 
         resValue "string", "appName", twaManifest.name
         resValue "string", "launcherName", twaManifest.launcherName
@@ -102,10 +96,29 @@ android {
         resValue "string", "orientation", twaManifest.orientation
     }
 
+    sourceSets {
+        main {
+            assets.srcDirs += ["$buildDir/generated/offlineAssets"]
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled true
             signingConfig signingConfigs.release
+            ndk {
+                debugSymbolLevel 'SYMBOL_TABLE'
+            }
+        }
+    }
+
+    packaging {
+        jniLibs {
+            // The only native code in the bundle is AndroidX DataStore's
+            // multiprocess shared-counter helper. DartScore does not use
+            // multiprocess DataStore, and this prebuilt library ships stripped,
+            // which is what triggers the Play Console debug-symbol warning.
+            excludes += "**/libdatastore_shared_counter.so"
         }
     }
 
@@ -129,44 +142,52 @@ task generateShorcutsFile {
     }
 
     def shortcutsFile = new File("$projectDir/src/main/res/xml", "shortcuts.xml")
-
     def xmlWriter = new StringWriter()
     def xmlMarkup = new MarkupBuilder(new IndentPrinter(xmlWriter, "    ", true))
 
     xmlMarkup
         .'shortcuts'('xmlns:android': 'http://schemas.android.com/apk/res/android') {
-            twaManifest.shortcuts.eachWithIndex { s, i ->
+            twaManifest.shortcuts.eachWithIndex { shortcut, index ->
                 'shortcut'(
-                        'android:shortcutId': 'shortcut' + i,
+                        'android:shortcutId': 'shortcut' + index,
                         'android:enabled': 'true',
-                        'android:icon': '@drawable/' + s.icon,
-                        'android:shortcutShortLabel': '@string/shortcut_short_name_' + i,
-                        'android:shortcutLongLabel': '@string/shortcut_name_' + i) {
+                        'android:icon': '@drawable/' + shortcut.icon,
+                        'android:shortcutShortLabel': '@string/shortcut_short_name_' + index,
+                        'android:shortcutLongLabel': '@string/shortcut_name_' + index) {
                     'intent'(
-                            'android:action': 'android.intent.action.MAIN',
-                            'android:targetPackage': twaManifest.applicationId,
-                            'android:targetClass': twaManifest.applicationId + '.LauncherActivity',
-                            'android:data': s.url)
+                        'android:action': 'android.intent.action.MAIN',
+                        'android:targetPackage': twaManifest.applicationId,
+                        'android:targetClass': twaManifest.applicationId + '.LauncherActivity',
+                        'android:data': shortcut.url)
                     'categories'('android:name': 'android.intent.category.LAUNCHER')
                 }
-            }
         }
+    }
     shortcutsFile.text = xmlWriter.toString() + '\n'
 }
 
+task bundleOfflineWebApp(type: Copy) {
+    from "$rootDir/dist"
+    into "$buildDir/generated/offlineAssets/offline"
+}
+
 preBuild.dependsOn(generateShorcutsFile)
+preBuild.dependsOn(bundleOfflineWebApp)
 
 repositories {
-    
 }
 
 dependencies {
+    implementation platform('com.google.firebase:firebase-bom:34.19.0')
+    implementation 'com.google.firebase:firebase-analytics'
     implementation 'com.google.android.play:app-update:2.1.0'
     implementation 'com.google.android.gms:play-services-ads:24.9.0'
+    implementation 'com.unity3d.ads:unity-ads:4.16.6'
+    implementation 'com.google.ads.mediation:unity:4.16.6.0'
+    implementation 'com.google.ads.mediation:facebook:6.21.0.1'
+    implementation 'com.facebook.infer.annotation:infer-annotation:0.18.0'
+    implementation 'com.google.android.ump:user-messaging-platform:4.0.0'
     implementation 'com.android.billingclient:billing:9.1.0'
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    
-    
-        implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.6.2'
-    
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.6.2'
 }

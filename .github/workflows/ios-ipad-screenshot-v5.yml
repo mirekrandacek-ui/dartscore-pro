@@ -1,0 +1,97 @@
+name: Capture iPad simulator screenshot v5
+
+on:
+  push:
+    branches:
+      - feature/ios-v97
+    paths:
+      - .github/workflows/ios-ipad-screenshot-v5.yml
+
+jobs:
+  capture:
+    runs-on: macos-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Prepare and build
+        run: |
+          npm ci
+          npm run build
+          npx cap sync ios
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -derivedDataPath build/ios-derived \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Boot 13-inch iPad
+        run: |
+          set -euo pipefail
+          UDID="$(xcrun simctl list devices -j | python3 -c '
+          import json,sys
+          d=json.load(sys.stdin)["devices"]
+          key=next(k for k in d if k.endswith("iOS-26-5"))
+          xs=[x for x in d[key] if x.get("isAvailable") and x["name"]=="iPad Pro 13-inch (M5)"]
+          print(xs[0]["udid"])
+          ')"
+          echo "SIM_UDID=$UDID" >> "$GITHUB_ENV"
+          open -a Simulator --args -CurrentDeviceUDID "$UDID" >/dev/null 2>&1 || true
+
+          python3 - "$UDID" <<'PY'
+          import subprocess,sys,time,json
+          u=sys.argv[1]
+          try:
+              subprocess.run(["xcrun","simctl","boot",u],timeout=30,check=False)
+          except subprocess.TimeoutExpired:
+              pass
+          for _ in range(120):
+              d=json.loads(subprocess.check_output(["xcrun","simctl","list","devices","-j"]))["devices"]
+              state=next((x["state"] for xs in d.values() for x in xs if x["udid"]==u),"Missing")
+              print("state",state)
+              if state=="Booted":
+                  break
+              time.sleep(2)
+          else:
+              raise SystemExit("Simulator did not boot")
+          time.sleep(60)
+          PY
+
+      - name: Install launch in background and capture
+        run: |
+          set -euo pipefail
+          APP_PATH="$GITHUB_WORKSPACE/build/ios-derived/Build/Products/Release-iphonesimulator/App.app"
+          SHOT="$RUNNER_TEMP/DartScore_iPad_13_EN_lobby.png"
+
+          xcrun simctl install "$SIM_UDID" "$APP_PATH"
+          xcrun simctl spawn "$SIM_UDID" defaults write NSGlobalDomain AppleLanguages -array en
+          xcrun simctl spawn "$SIM_UDID" defaults write NSGlobalDomain AppleLocale en_US
+
+          nohup xcrun simctl launch "$SIM_UDID" com.randis2288.dartscorepro >"$RUNNER_TEMP/launch.log" 2>&1 &
+          echo "Launch started in background"
+          sleep 35
+
+          echo "Launch log:"
+          cat "$RUNNER_TEMP/launch.log" || true
+
+          echo "Processes:"
+          xcrun simctl spawn "$SIM_UDID" launchctl print system 2>/dev/null | grep -i dartscore -C2 || true
+
+          xcrun simctl io "$SIM_UDID" screenshot "$SHOT"
+          sips -g pixelWidth -g pixelHeight "$SHOT"
+
+      - name: Upload screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: DartScore_iPad_13_EN_real_v5
+          path: ${{ runner.temp }}/DartScore_iPad_13_EN_lobby.png
+          if-no-files-found: error

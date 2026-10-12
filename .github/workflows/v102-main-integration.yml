@@ -1,0 +1,62 @@
+name: DartScore v102 integration into main
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [integration/v102-1.1.68-into-main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install and test
+        run: |
+          npm ci
+          npm test
+          npm run build
+      - name: Check v102 and retained production web files
+        run: |
+          set -euo pipefail
+          grep -q 'versionCode 102' app/build.gradle
+          grep -q 'versionName "1.1.68"' app/build.gradle
+          grep -q "const APP_VERSION = '1.1.68'" src/App.jsx
+          grep -q 'claimBeforeAdShow' app/src/main/java/com/randis2288/dartscorepro/AdMobInterstitialManager.java
+          grep -q 'LAST_ATTEMPT_AT' app/src/main/java/com/randis2288/dartscorepro/InterstitialCadence.java
+          test -s public/app-ads.txt
+          test -s public/about/index.html
+          test -s public/how-to-play/index.html
+          test -s public/robots.txt
+          test -s public/sitemap.xml
+          test -s public/privacy/index.html
+          test -s public/support.html
+          test -s ios/App/App.xcodeproj/project.pbxproj
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: ''
+      - name: Install Android 36 SDK
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Build Android app bundle and APK
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:bundleRelease :app:assembleRelease --stacktrace --no-daemon
+      - name: Verify Android artifacts
+        run: |
+          set -euo pipefail
+          test -s app/build/outputs/bundle/release/app-release.aab
+          test -s app/build/outputs/apk/release/app-release.apk
+          unzip -l app/build/outputs/bundle/release/app-release.aab | grep 'base/assets/offline/index.html'
+          jarsigner -verify app/build/outputs/bundle/release/app-release.aab

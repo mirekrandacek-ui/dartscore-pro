@@ -7,10 +7,12 @@ import android.content.pm.ApplicationInfo;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.Voice;
 import android.view.Gravity;
 import android.view.View;
+import android.view.WindowInsets;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
@@ -33,9 +35,15 @@ import com.android.billingclient.api.QueryProductDetailsParams;
 import com.android.billingclient.api.QueryProductDetailsResult;
 import com.android.billingclient.api.QueryPurchasesParams;
 
+import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.LoadAdError;
+
+import com.google.android.ump.ConsentInformation;
+import com.google.android.ump.ConsentRequestParameters;
+import com.google.android.ump.UserMessagingPlatform;
 
 import com.google.android.play.core.appupdate.AppUpdateInfo;
 import com.google.android.play.core.appupdate.AppUpdateManager;
@@ -59,8 +67,9 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private static final String TEST_BANNER_ID = "ca-app-pub-3940256099942544/6300978111";
 
     private static final int IN_APP_UPDATE_REQUEST_CODE = 610;
+    private static final int TTS_INSTALL_REQUEST_CODE = 611;
 
-    // Od v12 už testujeme skutečné Premium chování.
+    // Production behavior: Premium remains ad-free.
     private static final boolean FORCE_FREE_BANNER_TEST = false;
 
     private WebView webView;
@@ -68,12 +77,15 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private FrameLayout adHost;
     private AdView adView;
     private boolean bannerLoaded = false;
+    private int bannerHeightPx = 0;
+    private int bottomSystemInsetPx = 0;
 
     private TextToSpeech textToSpeech;
     private boolean ttsReady = false;
     private String pendingSpeechText;
     private String pendingSpeechLang;
     private String activeSpeechLanguageTag;
+    private String lastTtsInstallPromptLanguageTag;
 
     private BillingClient billingClient;
     private boolean billingConnecting = false;
@@ -83,6 +95,11 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private AppUpdateManager appUpdateManager;
     private InstallStateUpdatedListener updateInstallListener;
     private boolean updateFlowStarted = false;
+
+    private ConsentInformation consentInformation;
+    private boolean adsReady = false;
+    private boolean currentPremiumState = false;
+    private boolean premiumStateKnown = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,25 +124,15 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
 
         initTextToSpeech();
 
-        webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                return handleUrl(request.getUrl());
-            }
-
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                return handleUrl(Uri.parse(url));
-            }
-
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
+        webView.setWebViewClient(new OfflineWebViewClient(
+            this,
+            this::handleUrl,
+            (view, url) -> {
                 injectWebFixes(view);
                 view.postDelayed(() -> injectWebFixes(view), 1000);
                 view.postDelayed(() -> injectWebFixes(view), 3000);
             }
-        });
+        ));
 
         root.addView(
             webView,
@@ -140,16 +147,34 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT,
-                Gravity.TOP
+                Gravity.BOTTOM
             )
         );
         adHost.bringToFront();
 
+        root.setOnApplyWindowInsetsListener((v, insets) -> {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                int navBottom = insets.getInsets(WindowInsets.Type.navigationBars()).bottom;
+                int gestureBottom = insets.getInsets(WindowInsets.Type.mandatorySystemGestures()).bottom;
+                int cutoutBottom = insets.getInsets(WindowInsets.Type.displayCutout()).bottom;
+                bottomSystemInsetPx = Math.max(navBottom, Math.max(gestureBottom, cutoutBottom));
+            } else {
+                bottomSystemInsetPx = insets.getSystemWindowInsetBottom();
+            }
+            updateBannerLayout();
+            return insets;
+        });
+
         setContentView(root);
+        root.requestApplyInsets();
 
         initInAppUpdate();
+        initConsentAndAds();
         initBilling();
-        setPremiumState(false);
+        // Keep ads suppressed until Play Billing has resolved Premium ownership.
+        // The web layer may safely promote the state to Premium earlier, but a
+        // temporary/free-looking web state must never trigger a banner request.
+        applyBannerState();
         webView.loadUrl(START_URL);
     }
 
@@ -177,6 +202,17 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             "var css='.toast{bottom:90px!important;}';" +
             "var st=document.getElementById('native-admob-toast-offset');" +
             "if(!st){st=document.createElement('style');st.id='native-admob-toast-offset';st.textContent=css;document.head.appendChild(st);}" +
+            "if(window.DartScoreAndroid&&window.DartScoreAndroid.isPrivacyOptionsRequired&&window.DartScoreAndroid.isPrivacyOptionsRequired()){" +
+            "var nav=document.querySelector('.webPublisherLinks');" +
+            "if(nav&&!document.getElementById('native-privacy-options')){" +
+            "var a=document.createElement('a');a.id='native-privacy-options';a.href='#';" +
+            "var l=(document.documentElement.lang||navigator.language||'en').toLowerCase();" +
+            "var labels={cs:'Nastavení soukromí',de:'Datenschutzeinstellungen',es:'Opciones de privacidad',nl:'Privacykeuzes',ru:'Настройки конфиденциальности',zh:'隐私选项',en:'Privacy choices'};" +
+            "a.textContent=labels[l.slice(0,2)]||labels.en;" +
+            "a.addEventListener('click',function(ev){ev.preventDefault();window.DartScoreAndroid.showPrivacyOptions();});" +
+            "nav.appendChild(a);" +
+            "}" +
+            "}else{var p=document.getElementById('native-privacy-options');if(p)p.remove();}" +
             "if(!window.__dspNativeBillingHook){" +
             "window.__dspNativeBillingHook=true;" +
             "document.addEventListener('click',function(ev){" +
@@ -221,12 +257,46 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     }
 
     private void setPremiumState(boolean isPremium) {
-        if (!FORCE_FREE_BANNER_TEST && isPremium) {
+        // A positive Premium signal is always safe to honor immediately.
+        // A negative signal from the web is only authoritative after native
+        // Play Billing has completed its ownership check.
+        if (isPremium) {
+            currentPremiumState = true;
+            premiumStateKnown = true;
+        } else if (premiumStateKnown) {
+            currentPremiumState = false;
+        }
+
+        applyBannerState();
+    }
+
+    private void resolvePremiumState(boolean isPremium) {
+        currentPremiumState = isPremium;
+        premiumStateKnown = true;
+        applyBannerState();
+    }
+
+    private void applyBannerState() {
+        boolean premiumBlocksAds = !FORCE_FREE_BANNER_TEST && currentPremiumState;
+
+        if (!premiumStateKnown || premiumBlocksAds || !adsReady) {
             adHost.setVisibility(View.GONE);
+            bannerHeightPx = 0;
+            updateBannerLayout();
+
+            if (premiumBlocksAds && adView != null) {
+                adView.destroy();
+                adView = null;
+                bannerLoaded = false;
+                adHost.removeAllViews();
+            }
             return;
         }
 
-        adHost.setVisibility(View.VISIBLE);
+        // Keep the banner host collapsed until an ad actually loads.
+        // This prevents an empty grey bar when there is no fill or mediation fails.
+        adHost.setVisibility(View.GONE);
+        updateBannerLayout();
 
         if (!bannerLoaded) {
             bannerLoaded = true;
@@ -235,6 +305,12 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     }
 
     private void loadBanner() {
+        if (!premiumStateKnown
+            || (!FORCE_FREE_BANNER_TEST && currentPremiumState)
+            || !adsReady) {
+            bannerLoaded = false;
+            return;
+        }
         int widthPx = getResources().getDisplayMetrics().widthPixels;
         float density = getResources().getDisplayMetrics().density;
         int adWidthDp = Math.max(320, (int) (widthPx / density));
@@ -245,14 +321,8 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         );
 
         int adHeightPx = adSize.getHeightInPixels(this);
-
-        adHost.setLayoutParams(
-            new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                adHeightPx,
-                Gravity.TOP
-            )
-        );
+        bannerHeightPx = adHeightPx;
+        updateBannerLayout();
 
         adView = new AdView(this);
         adView.setAdSize(adSize);
@@ -261,30 +331,227 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
         adView.setAdUnitId(isDebug ? TEST_BANNER_ID : PROD_BANNER_ID);
 
+        adView.setAdListener(new AdListener() {
+            @Override
+            public void onAdLoaded() {
+                if (!premiumStateKnown
+                    || (!FORCE_FREE_BANNER_TEST && currentPremiumState)
+                    || !adsReady) {
+                    adHost.setVisibility(View.GONE);
+                    bannerHeightPx = 0;
+                    updateBannerLayout();
+                    if (adView != null) {
+                        adView.destroy();
+                        adView = null;
+                    }
+                    bannerLoaded = false;
+                    return;
+                }
+
+                adHost.setVisibility(View.VISIBLE);
+                updateBannerLayout();
+            }
+
+            @Override
+            public void onAdFailedToLoad(LoadAdError adError) {
+                adHost.setVisibility(View.GONE);
+                bannerHeightPx = 0;
+                updateBannerLayout();
+                bannerLoaded = false;
+            }
+        });
+
         adHost.removeAllViews();
         adHost.addView(
             adView,
             new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 adHeightPx,
-                Gravity.TOP
+                Gravity.CENTER
             )
         );
 
         adView.loadAd(new AdRequest.Builder().build());
     }
 
+    private void updateBannerLayout() {
+        if (root == null || webView == null || adHost == null) return;
+
+        int visibleBannerHeight =
+            adHost.getVisibility() == View.VISIBLE ? bannerHeightPx : 0;
+
+        FrameLayout.LayoutParams hostParams = new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            visibleBannerHeight > 0
+                ? visibleBannerHeight
+                : FrameLayout.LayoutParams.WRAP_CONTENT,
+            Gravity.BOTTOM
+        );
+        hostParams.bottomMargin = bottomSystemInsetPx;
+        adHost.setLayoutParams(hostParams);
+
+        FrameLayout.LayoutParams webParams =
+            (FrameLayout.LayoutParams) webView.getLayoutParams();
+        webParams.bottomMargin = visibleBannerHeight > 0
+            ? visibleBannerHeight + bottomSystemInsetPx
+            : 0;
+        webView.setLayoutParams(webParams);
+    }
+
+
+    private void initConsentAndAds() {
+        consentInformation = UserMessagingPlatform.getConsentInformation(this);
+
+        ConsentRequestParameters params =
+            new ConsentRequestParameters.Builder().build();
+
+        // Google recommends refreshing consent information on every app launch.
+        consentInformation.requestConsentInfoUpdate(
+            this,
+            params,
+            () -> {
+                refreshPrivacyOptionsEntryPoint();
+
+                // Cached valid consent can already allow requests at this point.
+                initializeAdsIfAllowed();
+
+                UserMessagingPlatform.loadAndShowConsentFormIfRequired(
+                    this,
+                    formError -> {
+                        refreshPrivacyOptionsEntryPoint();
+
+                        if (formError != null && !consentInformation.canRequestAds()) {
+                            nativeToast(
+                                "Souhlas pro reklamy se nepodařilo načíst: " +
+                                formError.getMessage()
+                            );
+                        }
+
+                        initializeAdsIfAllowed();
+                    }
+                );
+            },
+            requestConsentError -> {
+                refreshPrivacyOptionsEntryPoint();
+
+                // If a previous consent decision is still valid, ads may continue.
+                initializeAdsIfAllowed();
+
+                if (!consentInformation.canRequestAds()) {
+                    nativeToast(
+                        "Reklamy čekají na souhlas: " +
+                        requestConsentError.getMessage()
+                    );
+                }
+            }
+        );
+
+        // After requestConsentInfoUpdate() has been called, cached valid consent
+        // may already permit ads and avoids unnecessary startup latency.
+        initializeAdsIfAllowed();
+    }
+
+    private void initializeAdsIfAllowed() {
+        if (consentInformation == null || !consentInformation.canRequestAds()) {
+            return;
+        }
+
+        Application application = (Application) getApplication();
+        application.initializeMobileAdsAfterConsent(
+            () -> runOnUiThread(() -> {
+                adsReady = true;
+                setPremiumState(currentPremiumState);
+            })
+        );
+    }
+
+    private void refreshPrivacyOptionsEntryPoint() {
+        if (webView == null) return;
+        webView.post(() -> injectWebFixes(webView));
+    }
+
+    private boolean isPrivacyOptionsRequired() {
+        return consentInformation != null
+            && consentInformation.getPrivacyOptionsRequirementStatus()
+                == ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED;
+    }
+
+    private void showPrivacyOptionsNative() {
+        if (consentInformation == null) return;
+
+        UserMessagingPlatform.showPrivacyOptionsForm(
+            this,
+            formError -> {
+                refreshPrivacyOptionsEntryPoint();
+
+                if (formError != null) {
+                    nativeToast(
+                        "Nastavení soukromí nejde otevřít: " +
+                        formError.getMessage()
+                    );
+                }
+
+                if (consentInformation.canRequestAds()) {
+                    initializeAdsIfAllowed();
+                } else {
+                    adsReady = false;
+                    bannerLoaded = false;
+                    bannerHeightPx = 0;
+
+                    if (adView != null) {
+                        adView.destroy();
+                        adView = null;
+                    }
+
+                    adHost.removeAllViews();
+                    adHost.setVisibility(View.GONE);
+                    updateBannerLayout();
+                }
+            }
+        );
+    }
+
+    private void showInterstitialInternal() {
+        if (currentPremiumState || isFinishing()) {
+            return;
+        }
+
+        startActivity(
+            new Intent(
+                MainWebViewActivity.this,
+                AdMobInterstitialActivity.class
+            ).setData(Uri.parse("dartscorepro://show-interstitial?ad_event=legacy_bridge"))
+        );
+    }
+
+    private boolean isNonX01Mode(String mode) {
+        return "cricket".equals(mode) || "around".equals(mode)
+                || "roulette".equals(mode) || "rouletteDouble".equals(mode);
+    }
+
+    private void recordNonX01LobbyStartInternal(String mode) {
+        if (currentPremiumState || isFinishing() || !isNonX01Mode(mode)) return;
+        // Count only: start means the player wants to PLAY, not watch an ad.
+        InterstitialCadence.recordNonX01Start(this);
+    }
+
+    private void showNonX01AfterGameBoundaryInternal(String mode) {
+        if (currentPremiumState || isFinishing() || !isNonX01Mode(mode)) return;
+        if (!InterstitialCadence.shouldShowNonX01Boundary(this)) return;
+
+        // Ad screen opens only AFTER Repeat or either Back control.
+        // Its own onCreate checks the same threshold and cooldown again.
+        Uri uri = new Uri.Builder()
+                .scheme("dartscorepro")
+                .authority("show-interstitial")
+                .appendQueryParameter("ad_event", "non_x01_boundary")
+                .appendQueryParameter("mode", mode)
+                .build();
+        startActivity(new Intent(this, AdMobInterstitialActivity.class).setData(uri));
+    }
 
     private void initInAppUpdate() {
         appUpdateManager = AppUpdateManagerFactory.create(this);
-
-        updateInstallListener = state -> {
-            if (state.installStatus() == InstallStatus.DOWNLOADED) {
-                completeFlexibleUpdate();
-            }
-        };
-
-        appUpdateManager.registerListener(updateInstallListener);
         checkForAppUpdate();
     }
 
@@ -293,47 +560,37 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
 
         appUpdateManager.getAppUpdateInfo()
             .addOnSuccessListener(appUpdateInfo -> {
-                if (appUpdateInfo.installStatus() == InstallStatus.DOWNLOADED) {
-                    completeFlexibleUpdate();
+                int availability = appUpdateInfo.updateAvailability();
+
+                if (availability == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS) {
+                    startImmediateUpdate(appUpdateInfo);
                     return;
                 }
 
                 if (updateFlowStarted) return;
 
-                if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                if (availability == UpdateAvailability.UPDATE_AVAILABLE
                     && appUpdateInfo.isUpdateTypeAllowed(
-                        AppUpdateOptions.defaultOptions(AppUpdateType.FLEXIBLE)
+                        AppUpdateOptions.defaultOptions(AppUpdateType.IMMEDIATE)
                     )) {
-                    startFlexibleUpdate(appUpdateInfo);
+                    startImmediateUpdate(appUpdateInfo);
                 }
             });
     }
 
-    private void startFlexibleUpdate(AppUpdateInfo appUpdateInfo) {
+    private void startImmediateUpdate(AppUpdateInfo appUpdateInfo) {
         try {
             updateFlowStarted = true;
 
             appUpdateManager.startUpdateFlowForResult(
                 appUpdateInfo,
                 this,
-                AppUpdateOptions.defaultOptions(AppUpdateType.FLEXIBLE),
+                AppUpdateOptions.defaultOptions(AppUpdateType.IMMEDIATE),
                 IN_APP_UPDATE_REQUEST_CODE
             );
         } catch (IntentSender.SendIntentException e) {
             updateFlowStarted = false;
             nativeToast("Aktualizaci nejde spustit.");
-        }
-    }
-
-    private void completeFlexibleUpdate() {
-        if (appUpdateManager == null) return;
-
-        nativeToast("Aktualizace je stažená. Dokončuji instalaci…");
-
-        if (root != null) {
-            root.postDelayed(() -> appUpdateManager.completeUpdate(), 1200);
-        } else {
-            appUpdateManager.completeUpdate();
         }
     }
 
@@ -349,6 +606,25 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
 
         if (requestCode == IN_APP_UPDATE_REQUEST_CODE) {
             updateFlowStarted = false;
+
+            if (resultCode != RESULT_OK) {
+                nativeToast("Aktualizace nebyla dokončena.");
+            }
+            return;
+        }
+
+        if (requestCode == TTS_INSTALL_REQUEST_CODE) {
+            lastTtsInstallPromptLanguageTag = null;
+            activeSpeechLanguageTag = null;
+            ttsReady = false;
+
+            if (textToSpeech != null) {
+                textToSpeech.stop();
+                textToSpeech.shutdown();
+                textToSpeech = null;
+            }
+
+            initTextToSpeech();
         }
     }
 
@@ -531,6 +807,10 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
                     }
                 }
 
+                if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+                    runOnUiThread(() -> resolvePremiumState(false));
+                }
+
                 if (showMessageIfMissing) {
                     nativeToast("Premium nákup nebyl nalezen.");
                 }
@@ -583,6 +863,44 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
                 );
             }
         });
+    }
+
+    private void openStoreListingNative() {
+        String packageId = getPackageName();
+        Intent marketIntent = new Intent(
+            Intent.ACTION_VIEW,
+            Uri.parse("market://details?id=" + packageId)
+        );
+
+        try {
+            startActivity(marketIntent);
+        } catch (Exception ignored) {
+            startActivity(new Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("https://play.google.com/store/apps/details?id=" + packageId)
+            ));
+        }
+    }
+
+    private void shareAppNative(String title, String text, String url) {
+        String safeTitle = (title == null || title.trim().isEmpty()) ? "DartScore Pro" : title.trim();
+        String safeText = text == null ? "" : text.trim();
+        String safeUrl = (url == null || url.trim().isEmpty())
+            ? "https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro"
+            : url.trim();
+
+        String message = safeText.isEmpty() ? safeUrl : safeText + "\n" + safeUrl;
+
+        Intent sendIntent = new Intent(Intent.ACTION_SEND);
+        sendIntent.setType("text/plain");
+        sendIntent.putExtra(Intent.EXTRA_SUBJECT, safeTitle);
+        sendIntent.putExtra(Intent.EXTRA_TEXT, message);
+
+        try {
+            startActivity(Intent.createChooser(sendIntent, null));
+        } catch (Exception e) {
+            nativeToast("Sdílení nejde otevřít.");
+        }
     }
 
     private void nativeToast(String message) {
@@ -699,6 +1017,36 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         return sameLanguageVoice;
     }
 
+    private String languageDisplayName(String languageTag) {
+        Locale locale = Locale.forLanguageTag(languageTag);
+        String displayName = locale.getDisplayLanguage(locale);
+
+        if (displayName == null || displayName.trim().isEmpty()) {
+            return languageTag;
+        }
+
+        return displayName;
+    }
+
+    private void promptInstallTtsData(String languageTag) {
+        nativeToast("Hlas pro jazyk " + languageDisplayName(languageTag)
+            + " v telefonu chybí. Stáhni hlasová data.");
+
+        if (languageTag != null
+            && languageTag.equalsIgnoreCase(lastTtsInstallPromptLanguageTag)) {
+            return;
+        }
+
+        lastTtsInstallPromptLanguageTag = languageTag;
+
+        try {
+            Intent installIntent = new Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
+            startActivityForResult(installIntent, TTS_INSTALL_REQUEST_CODE);
+        } catch (Exception e) {
+            nativeToast("Instalaci hlasů nejde otevřít. Zkontroluj Převod textu na řeč v Androidu.");
+        }
+    }
+
     private void speakNative(String text, String lang) {
         if (text == null || text.trim().isEmpty()) return;
 
@@ -722,15 +1070,20 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
 
         int result = textToSpeech.setLanguage(locale);
 
-        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-            textToSpeech.setLanguage(Locale.getDefault());
-        } else {
-            Voice voice = chooseVoiceForLocale(locale);
-            if (voice != null) {
-                int voiceResult = textToSpeech.setVoice(voice);
-                if (voiceResult == TextToSpeech.ERROR) {
-                    textToSpeech.setLanguage(locale);
-                }
+        if (result == TextToSpeech.LANG_MISSING_DATA
+            || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+            pendingSpeechText = text;
+            pendingSpeechLang = lang;
+            activeSpeechLanguageTag = null;
+            promptInstallTtsData(requestedLanguageTag);
+            return;
+        }
+
+        Voice voice = chooseVoiceForLocale(locale);
+        if (voice != null) {
+            int voiceResult = textToSpeech.setVoice(voice);
+            if (voiceResult == TextToSpeech.ERROR) {
+                textToSpeech.setLanguage(locale);
             }
         }
 
@@ -792,8 +1145,48 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         }
 
         @JavascriptInterface
+        public void rateApp() {
+            runOnUiThread(MainWebViewActivity.this::openStoreListingNative);
+        }
+
+        @JavascriptInterface
         public void restorePremium() {
             runOnUiThread(() -> restorePremiumInternal(true));
+        }
+
+        @JavascriptInterface
+        public boolean isPrivacyOptionsRequired() {
+            return MainWebViewActivity.this.isPrivacyOptionsRequired();
+        }
+
+        @JavascriptInterface
+        public void showPrivacyOptions() {
+            runOnUiThread(MainWebViewActivity.this::showPrivacyOptionsNative);
+        }
+
+        @JavascriptInterface
+        public void shareApp(String title, String text, String url) {
+            runOnUiThread(() -> shareAppNative(title, text, url));
+        }
+
+        @JavascriptInterface
+        public void recordNonX01Start(String mode) {
+            runOnUiThread(() -> recordNonX01LobbyStartInternal(mode));
+        }
+
+        @JavascriptInterface
+        public void showNonX01AfterGameBoundary(String mode) {
+            runOnUiThread(() -> showNonX01AfterGameBoundaryInternal(mode));
+        }
+
+        @JavascriptInterface
+        public String getLastInterstitialShownAt() {
+            return String.valueOf(InterstitialCadence.lastShownAt(getApplicationContext()));
+        }
+
+        @JavascriptInterface
+        public void showInterstitial() {
+            runOnUiThread(MainWebViewActivity.this::showInterstitialInternal);
         }
 
         @JavascriptInterface

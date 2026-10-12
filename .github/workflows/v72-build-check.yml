@@ -1,0 +1,82 @@
+name: v94 Remove Winner Voice
+
+on:
+  pull_request:
+    branches:
+      - ci/v94-build-base
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch v93 reference
+        run: git fetch origin release/v93c-round-total-symbols-clean:refs/remotes/origin/release/v93c-round-total-symbols-clean
+
+      - name: Verify only requested files changed
+        run: |
+          git diff --name-only origin/release/v93c-round-total-symbols-clean...HEAD | sort > /tmp/changed.txt
+          printf '%s\n' '.github/workflows/v72-build-check.yml' 'app/build.gradle' 'src/App.jsx' | sort > /tmp/expected.txt
+          diff -u /tmp/expected.txt /tmp/changed.txt
+          git diff --check origin/release/v93c-round-total-symbols-clean...HEAD
+
+          ! grep -q "speak(lang, 'Vítěz!', voiceOn)" src/App.jsx
+          ! grep -q "'Vítěz!'" src/App.jsx
+
+          grep -q 'versionCode 94' app/build.gradle
+          grep -q 'versionName "1.1.60"' app/build.gradle
+
+          grep -q 'excludes += "\*\*/libdatastore_shared_counter.so"' app/build.gradle
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build web bundle
+        run: |
+          npm ci
+          npm run build
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: ''
+
+      - name: Install Android SDK 36
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Prepare bundled production UI
+        run: python3 tools/apply-v78-offline-client.py
+
+      - name: Build signed release bundle
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:bundleRelease --stacktrace
+
+      - name: Verify no native libraries remain
+        run: |
+          if unzip -l app/build/outputs/bundle/release/app-release.aab | grep -E 'base/lib/.+\.so$'; then
+            echo "Unexpected native library remains in AAB"
+            exit 1
+          fi
+          echo "No native .so libraries remain."
+
+      - name: Verify AAB signature
+        run: jarsigner -verify app/build/outputs/bundle/release/app-release.aab
+
+      - name: Upload bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: DartScorePro_v94_1.1.60
+          path: app/build/outputs/bundle/release/app-release.aab

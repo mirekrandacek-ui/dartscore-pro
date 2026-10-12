@@ -1,7 +1,86 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Capacitor, registerPlugin } from '@capacitor/core';
+import {
+  AdMob,
+  AdmobConsentStatus,
+  BannerAdPosition,
+  BannerAdSize
+} from '@capacitor-community/admob';
 import './app.css';
 import { botThrowAround, botThrowClassic, botThrowCricket, botThrowRoulette, normalizeBotLevel } from './botEngine.js';
+import { hasRecordedScore, isQuickClassic, isSupportedX01, isNonX01LobbyAdMode } from './interstitialPolicy.js';
+
+const DartScoreIOS = registerPlugin('DartScoreIOS');
+const PLATFORM = Capacitor.getPlatform();
+const IS_IOS = PLATFORM === 'ios';
+const APP_STORE_ID = '6817341039';
+const IOS_APP_STORE_URL = `https://apps.apple.com/app/id${APP_STORE_ID}`;
+const IOS_PREMIUM_PRODUCT_ID = 'premium_unlock';
+
+// Filled only after the iOS app + ad units are created in AdMob.
+// Keeping these blank prevents accidental ad requests with Android IDs.
+const IOS_ADMOB_APP_ID = 'ca-app-pub-9232105399279318~8707407752';
+const IOS_ADMOB_BANNER_ID = 'ca-app-pub-9232105399279318/8268424056';
+const IOS_ADMOB_INTERSTITIAL_ID = 'ca-app-pub-9232105399279318/1981293860';
+const IOS_BANNER_CONFIGURED = Boolean(IOS_ADMOB_APP_ID && IOS_ADMOB_BANNER_ID);
+const IOS_INTERSTITIAL_CONFIGURED = Boolean(IOS_ADMOB_APP_ID && IOS_ADMOB_INTERSTITIAL_ID);
+
+let iosAdMobInitialized = false;
+
+async function ensureIOSAdMobReady() {
+  if (!IS_IOS || !IOS_ADMOB_APP_ID) return false;
+
+  let consentInfo = await AdMob.requestConsentInfo();
+
+  if (
+    consentInfo?.isConsentFormAvailable &&
+    consentInfo?.status === AdmobConsentStatus.REQUIRED
+  ) {
+    consentInfo = await AdMob.showConsentForm();
+  }
+
+  if (!consentInfo?.canRequestAds) return false;
+
+  if (!iosAdMobInitialized) {
+    await AdMob.initialize();
+    iosAdMobInitialized = true;
+  }
+
+  return true;
+}
+
+async function showIOSBanner() {
+  if (!IOS_BANNER_CONFIGURED) return false;
+  const ready = await ensureIOSAdMobReady();
+  if (!ready) return false;
+
+  await AdMob.showBanner({
+    adId: IOS_ADMOB_BANNER_ID,
+    adSize: BannerAdSize.ADAPTIVE_BANNER,
+    position: BannerAdPosition.BOTTOM_CENTER,
+    margin: 0
+  });
+  return true;
+}
+const SPEECH_LANG_MAP = {
+  cs: 'cs-CZ',
+  en: 'en-US',
+  de: 'de-DE',
+  es: 'es-ES',
+  nl: 'nl-NL',
+  ru: 'ru-RU',
+  zh: 'zh-CN'
+};
+import {
+  canShowReviewPrompt,
+  isReviewAdQuietPeriodOver,
+  normalizeReviewState,
+  onAppLaunch,
+  onGameCompleted,
+  onPromptShown,
+  onReviewDone
+} from './reviewPrompt.js';
 
 
 /* ===== Checkout hint: display-only helper, does not alter scoring ===== */
@@ -226,11 +305,34 @@ const T = {
     rouletteHitButton: 'Zásah +1',
     rouletteSwitchButton: 'Přepnout hráče',
     rateAppButton: 'Líbí se ti aplikace?',
+    reviewPromptTitle: 'Baví tě DartScore Pro?',
+    reviewPromptText: 'Předem díky za šipkově rychlou recenzi! 🎯',
+    reviewNow: 'Ohodnotit',
+    reviewLater: 'Později',
+    reviewNoThanks: 'Ne, díky',
     premiumInfoButton: 'Co obsahuje Premium',
     premiumMode: 'Premium režim',
     activatePremium: 'Aktivuj Premium',
     premiumAlreadyOwned: 'Kámo, Premium máš už koupené 🙂',
     gameSavedToast: 'Uloženo',
+    needPlayer: 'Přidej alespoň jednoho hráče.',
+    roundTotalInvalid: 'Zadej číslo od 0 do 180.',
+    appearanceLabel: 'Vzhled aplikace:',
+    premiumActivated: 'Premium aktivováno',
+    premiumActivatedTest: 'Premium aktivováno (test)',
+    billingUnavailable: 'Nákup Premium teď není dostupný.',
+    purchasePending: 'Nákup čeká na potvrzení.',
+    restorePurchases: 'Obnovit nákupy',
+    nothingToRestore: 'Žádný nákup k obnovení.',
+    purchaseUnavailable: 'Nákup teď není dostupný. Zavři a znovu otevři aplikaci a zkus to znovu.',
+    purchaseCancelled: 'Nákup byl zrušen.',
+    purchaseFailed: 'Nákup Premium selhal',
+    nothingToContinue: 'Nic k pokračování',
+    restoreFailed: 'Obnova selhala',
+    errorTitle: 'Ups, něco se pokazilo.',
+    errorReload: 'Zkusit znovu načíst',
+    draw: 'Remíza',
+    colorBlack: 'černá', colorGreen: 'zelená', colorBlue: 'modrá', colorRed: 'červená', colorPurple: 'fialová',
     filter: 'Filtr', all: 'Vše', week: 'Týden', month: 'Měsíc', year: 'Rok',
     h2h: 'Vzájemné zápasy', selectPlayer: 'Vyber hráče', wins: 'výhry',
     // Pravidla – plně lokalizovaná
@@ -290,6 +392,11 @@ premiumNote: "Jednorázová platba. Žádné předplatné.",
     rouletteHitButton: 'Hit +1',
     rouletteSwitchButton: 'Switch player',
     rateAppButton: 'Do you like the app?',
+    reviewPromptTitle: 'Enjoying DartScore Pro?',
+    reviewPromptText: 'Thanks in advance for a quick bullseye review! 🎯',
+    reviewNow: 'Rate now',
+    reviewLater: 'Later',
+    reviewNoThanks: 'No, thanks',
     premiumInfoButton: 'What Premium includes',
     premiumMode: 'Premium Mode',
     filter: 'Filter', all: 'All', week: 'Week', month: 'Month', year: 'Year',
@@ -313,6 +420,24 @@ premiumNote: "One-time payment. No subscription.",
 activatePremium: 'Activate Premium',
   premiumAlreadyOwned: 'Buddy, you already own Premium 🙂',
   gameSavedToast: 'Saved',
+  needPlayer: 'Add at least one player.',
+  roundTotalInvalid: 'Enter a number from 0 to 180.',
+  appearanceLabel: 'App appearance:',
+  premiumActivated: 'Premium activated',
+  premiumActivatedTest: 'Premium activated (test)',
+  billingUnavailable: 'Premium purchase is not available right now.',
+  purchasePending: 'Purchase is awaiting confirmation.',
+  restorePurchases: 'Restore purchases',
+  nothingToRestore: 'No purchase to restore.',
+  purchaseUnavailable: 'Purchases are unavailable right now. Close and reopen the app, then try again.',
+  purchaseCancelled: 'Purchase cancelled.',
+  purchaseFailed: 'Premium purchase failed',
+  nothingToContinue: 'No saved game to continue.',
+  restoreFailed: 'Restore failed.',
+  errorTitle: 'Oops, something went wrong.',
+  errorReload: 'Reload the app',
+  draw: 'Draw',
+  colorBlack: 'black', colorGreen: 'green', colorBlue: 'blue', colorRed: 'red', colorPurple: 'purple',
     },
   de: {
     app: 'DartScore Pro', sound: 'Ton', voice: 'Stimme', back: 'Zurück',
@@ -353,11 +478,34 @@ activatePremium: 'Activate Premium',
     rouletteHitButton: 'Treffer +1',
     rouletteSwitchButton: 'Spieler wechseln',
     rateAppButton: 'Gefällt dir die App?',
+    reviewPromptTitle: 'Macht dir DartScore Pro Spaß?',
+    reviewPromptText: 'Danke vorab für eine pfeilschnelle Bewertung! 🎯',
+    reviewNow: 'Jetzt bewerten',
+    reviewLater: 'Später',
+    reviewNoThanks: 'Nein, danke',
     premiumInfoButton: 'Was enthält Premium?',
     premiumMode: 'Premium-Modus',
     activatePremium: 'Premium aktivieren',
     premiumAlreadyOwned: 'Premium gehört dir schon 🙂',
     gameSavedToast: 'Gespeichert',
+    needPlayer: 'Füge mindestens einen Spieler hinzu.',
+    roundTotalInvalid: 'Gib eine Zahl von 0 bis 180 ein.',
+    appearanceLabel: 'App-Darstellung:',
+    premiumActivated: 'Premium aktiviert',
+    premiumActivatedTest: 'Premium aktiviert (Test)',
+    billingUnavailable: 'Der Premium-Kauf ist derzeit nicht verfügbar.',
+    purchasePending: 'Der Kauf wartet auf Bestätigung.',
+    restorePurchases: 'Käufe wiederherstellen',
+    nothingToRestore: 'Keine Käufe zum Wiederherstellen.',
+    purchaseUnavailable: 'Käufe sind momentan nicht verfügbar. Schließe und öffne die App erneut und versuche es noch einmal.',
+    purchaseCancelled: 'Kauf abgebrochen.',
+    purchaseFailed: 'Premium-Kauf fehlgeschlagen',
+    nothingToContinue: 'Kein gespeichertes Spiel zum Fortsetzen.',
+    restoreFailed: 'Wiederherstellung fehlgeschlagen.',
+    errorTitle: 'Ups, etwas ist schiefgelaufen.',
+    errorReload: 'App neu laden',
+    draw: 'Unentschieden',
+    colorBlack: 'schwarz', colorGreen: 'grün', colorBlue: 'blau', colorRed: 'rot', colorPurple: 'lila',
     filter: 'Filter', all: 'Alle', week: 'Woche', month: 'Monat', year: 'Jahr',
     h2h: 'Direkte Duelle', selectPlayer: 'Spieler wählen', wins: 'Siege',
     rulesClassic:
@@ -416,11 +564,34 @@ premiumNote: "Einmalige Zahlung. Kein Abo.",
     rouletteHitButton: 'Acierto +1',
     rouletteSwitchButton: 'Cambiar jugador',
     rateAppButton: '¿Te gusta la app?',
+    reviewPromptTitle: '¿Disfrutas DartScore Pro?',
+    reviewPromptText: '¡Gracias de antemano por una reseña rápida como un dardo! 🎯',
+    reviewNow: 'Valorar',
+    reviewLater: 'Más tarde',
+    reviewNoThanks: 'No, gracias',
     premiumInfoButton: 'Qué incluye Premium',
     premiumMode: 'Modo Premium',
     activatePremium: 'Activar Premium',
     premiumAlreadyOwned: 'Premium ya es tuyo 🙂',
     gameSavedToast: 'Guardado',
+    needPlayer: 'Añade al menos un jugador.',
+    roundTotalInvalid: 'Introduce un número de 0 a 180.',
+    appearanceLabel: 'Apariencia de la app:',
+    premiumActivated: 'Premium activado',
+    premiumActivatedTest: 'Premium activado (prueba)',
+    billingUnavailable: 'La compra Premium no está disponible ahora.',
+    purchasePending: 'La compra está pendiente de confirmación.',
+    restorePurchases: 'Restaurar compras',
+    nothingToRestore: 'No hay compras para restaurar.',
+    purchaseUnavailable: 'Las compras no están disponibles ahora. Cierra y vuelve a abrir la app e inténtalo de nuevo.',
+    purchaseCancelled: 'Compra cancelada.',
+    purchaseFailed: 'La compra de Premium ha fallado',
+    nothingToContinue: 'No hay una partida guardada para continuar.',
+    restoreFailed: 'La restauración ha fallado.',
+    errorTitle: 'Ups, algo salió mal.',
+    errorReload: 'Volver a cargar la app',
+    draw: 'Empate',
+    colorBlack: 'negro', colorGreen: 'verde', colorBlue: 'azul', colorRed: 'rojo', colorPurple: 'morado',
     filter: 'Filtro', all: 'Todo', week: 'Semana', month: 'Mes', year: 'Año',
     h2h: 'Cara a cara', selectPlayer: 'Elige jugador', wins: 'victorias',
     rulesClassic:
@@ -479,11 +650,34 @@ premiumNote: "Pago único. Sin suscripción.",
     rouletteHitButton: 'Raak +1',
     rouletteSwitchButton: 'Speler wisselen',
     rateAppButton: 'Vind je de app leuk?',
+    reviewPromptTitle: 'Bevalt DartScore Pro?',
+    reviewPromptText: 'Alvast bedankt voor een pijlsnelle review! 🎯',
+    reviewNow: 'Beoordelen',
+    reviewLater: 'Later',
+    reviewNoThanks: 'Nee, bedankt',
     premiumInfoButton: 'Wat bevat Premium?',
     premiumMode: 'Premium-modus',
     activatePremium: 'Premium activeren',
     premiumAlreadyOwned: 'Premium is al van jou 🙂',
     gameSavedToast: 'Opgeslagen',
+    needPlayer: 'Voeg minimaal één speler toe.',
+    roundTotalInvalid: 'Voer een getal van 0 tot 180 in.',
+    appearanceLabel: 'App-weergave:',
+    premiumActivated: 'Premium geactiveerd',
+    premiumActivatedTest: 'Premium geactiveerd (test)',
+    billingUnavailable: 'Premium kopen is momenteel niet beschikbaar.',
+    purchasePending: 'De aankoop wacht op bevestiging.',
+    restorePurchases: 'Aankopen herstellen',
+    nothingToRestore: 'Geen aankoop om te herstellen.',
+    purchaseUnavailable: 'Aankopen zijn nu niet beschikbaar. Sluit en open de app opnieuw en probeer het nog eens.',
+    purchaseCancelled: 'Aankoop geannuleerd.',
+    purchaseFailed: 'Premium-aankoop mislukt',
+    nothingToContinue: 'Geen opgeslagen spel om verder te gaan.',
+    restoreFailed: 'Herstellen mislukt.',
+    errorTitle: 'Oeps, er ging iets mis.',
+    errorReload: 'App opnieuw laden',
+    draw: 'Gelijkspel',
+    colorBlack: 'zwart', colorGreen: 'groen', colorBlue: 'blauw', colorRed: 'rood', colorPurple: 'paars',
     filter: 'Filter', all: 'Alles', week: 'Week', month: 'Maand', year: 'Jaar',
     h2h: 'Onderling', selectPlayer: 'Kies speler', wins: 'zeges',
     rulesClassic:
@@ -542,11 +736,34 @@ premiumNote: "Eenmalige betaling. Geen abonnement.",
     rouletteHitButton: 'Попадание +1',
     rouletteSwitchButton: 'Сменить игрока',
     rateAppButton: 'Нравится приложение?',
+    reviewPromptTitle: 'Нравится DartScore Pro?',
+    reviewPromptText: 'Заранее спасибо за отзыв — быстрый, как дротик! 🎯',
+    reviewNow: 'Оценить',
+    reviewLater: 'Позже',
+    reviewNoThanks: 'Нет, спасибо',
     premiumInfoButton: 'Что включает Premium',
     premiumMode: 'Премиум-режим',
     activatePremium: 'Активировать Premium',
     premiumAlreadyOwned: 'Premium уже у тебя 🙂',
     gameSavedToast: 'Сохранено',
+    needPlayer: 'Добавь хотя бы одного игрока.',
+    roundTotalInvalid: 'Введи число от 0 до 180.',
+    appearanceLabel: 'Внешний вид приложения:',
+    premiumActivated: 'Premium активирован',
+    premiumActivatedTest: 'Premium активирован (тест)',
+    billingUnavailable: 'Покупка Premium сейчас недоступна.',
+    purchasePending: 'Покупка ожидает подтверждения.',
+    restorePurchases: 'Восстановить покупки',
+    nothingToRestore: 'Нет покупок для восстановления.',
+    purchaseUnavailable: 'Покупки сейчас недоступны. Закрой и снова открой приложение, затем попробуй ещё раз.',
+    purchaseCancelled: 'Покупка отменена.',
+    purchaseFailed: 'Не удалось купить Premium',
+    nothingToContinue: 'Нет сохранённой игры для продолжения.',
+    restoreFailed: 'Не удалось восстановить игру.',
+    errorTitle: 'Упс, что-то пошло не так.',
+    errorReload: 'Перезагрузить приложение',
+    draw: 'Ничья',
+    colorBlack: 'чёрный', colorGreen: 'зелёный', colorBlue: 'синий', colorRed: 'красный', colorPurple: 'фиолетовый',
     filter: 'Фильтр', all: 'Все', week: 'Неделя', month: 'Месяц', year: 'Год',
     h2h: 'Личные встречи', selectPlayer: 'Выбери игрока', wins: 'побед',
     rulesClassic:
@@ -593,6 +810,9 @@ premiumNote: "Разовая оплата. Без подписки.",
     teamC: '团队 C',
     teamNeedPlayers: '至少两个团队必须有玩家。',
     rouletteTotalPoints: '总分', roundCount: '轮数',
+    shareApp: '分享应用',
+    shareText: 'DartScore Pro – 飞镖计分器',
+    linkCopied: '链接已复制',
     scoreInputType: '计分方式',
       scoreInput: '输入',
       scoreByDarts: '按镖输入',
@@ -604,11 +824,34 @@ premiumNote: "Разовая оплата. Без подписки.",
     rouletteHitButton: '命中 +1',
     rouletteSwitchButton: '切换玩家',
     rateAppButton: '喜欢这个应用吗？',
+    reviewPromptTitle: '喜欢 DartScore Pro 吗？',
+    reviewPromptText: '提前感谢你的飞镖般快速评价！🎯',
+    reviewNow: '去评分',
+    reviewLater: '稍后',
+    reviewNoThanks: '不用了，谢谢',
     premiumInfoButton: 'Premium 包含什么',
     premiumMode: '高级模式',
     activatePremium: '激活 Premium',
     premiumAlreadyOwned: '你已经拥有高级版 🙂',
     gameSavedToast: '已保存',
+    needPlayer: '请至少添加一名玩家。',
+    roundTotalInvalid: '请输入 0 到 180 之间的数字。',
+    appearanceLabel: '应用外观：',
+    premiumActivated: 'Premium 已激活',
+    premiumActivatedTest: 'Premium 已激活（测试）',
+    billingUnavailable: '目前无法购买高级版。',
+    purchasePending: '购买正在等待确认。',
+    restorePurchases: '恢复购买',
+    nothingToRestore: '没有可恢复的购买。',
+    purchaseUnavailable: '当前无法购买。请关闭并重新打开应用后再试。',
+    purchaseCancelled: '购买已取消。',
+    purchaseFailed: 'Premium 购买失败',
+    nothingToContinue: '没有可继续的已保存对局。',
+    restoreFailed: '恢复失败。',
+    errorTitle: '糟糕，出现了问题。',
+    errorReload: '重新加载应用',
+    draw: '平局',
+    colorBlack: '黑色', colorGreen: '绿色', colorBlue: '蓝色', colorRed: '红色', colorPurple: '紫色',
     filter: '筛选', all: '全部', week: '一周', month: '一月', year: '一年',
     h2h: '对战', selectPlayer: '选玩家', wins: '胜',
     rulesClassic:
@@ -798,6 +1041,13 @@ const autoNameRx = [/^Hráč (\d+)$/, /^Player (\d+)$/, /^Spieler (\d+)$/, /^Jug
 function speak(lang, text, enabled) {
   if (!enabled || typeof window === 'undefined') return;
 
+  const targetLang = SPEECH_LANG_MAP[lang] || 'en-US';
+
+  if (IS_IOS) {
+    DartScoreIOS.speak({ text: String(text), lang: targetLang }).catch(() => {});
+    return;
+  }
+
   try {
     if (window.DartScoreAndroid?.speak) {
       window.DartScoreAndroid.speak(String(text), lang || 'cs');
@@ -809,18 +1059,6 @@ function speak(lang, text, enabled) {
 
   const synth = window.speechSynthesis;
   const utter = new SpeechSynthesisUtterance(String(text));
-
-  const langMap = {
-    cs: 'cs-CZ',
-    en: 'en-US',
-    de: 'de-DE',
-    es: 'es-ES',
-    nl: 'nl-NL',
-    ru: 'ru-RU',
-    zh: 'zh-CN'
-  };
-
-  const targetLang = langMap[lang] || 'en-US';
   utter.lang = targetLang;
 
   // pokus o výběr ženského hlasu pro daný jazyk
@@ -866,7 +1104,7 @@ class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div style={{ padding: 16, color: '#fff', background: '#111', minHeight: '100vh' }}>
-          <h2>Ups, něco se pokazilo.</h2>
+          <h2>{t(this.props.lang || 'en', 'errorTitle')}</h2>
           <div style={{ opacity: .8, whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: 12, marginTop: 12 }}>
             {this.state.info}
           </div>
@@ -874,7 +1112,7 @@ class ErrorBoundary extends React.Component {
             onClick={() => location.reload()}
             style={{ marginTop: 16 }}
           >
-            Zkusit znovu načíst
+            {t(this.props.lang || 'en', 'errorReload')}
           </button>
         </div>
       );
@@ -898,18 +1136,39 @@ function formatAvg(a) {
 
 /* ===== AdMob interstitial handler ===== */
 const ADMOB_INTERSTITIAL_SCHEME_URL = "dartscorepro://show-interstitial";
+const REVIEW_AD_REQUEST_KEY = "dspLastFullscreenAdRequestAtV101";
+const REVIEW_FRESH_LOBBY_DELAY_MS = 10 * 1000;
 
-async function showInterstitialAd() {
+function recordFullscreenAdRequest() {
+  try { localStorage.setItem(REVIEW_AD_REQUEST_KEY, String(Date.now())); } catch { }
+}
+
+async function showInterstitialAd(eventDetails) {
   try {
     if (typeof window === 'undefined') return false;
+
+    if (!eventDetails?.ad_event) return false;
+
+    if (IS_IOS) {
+      if (!IOS_INTERSTITIAL_CONFIGURED) return false;
+      const ready = await ensureIOSAdMobReady();
+      if (!ready) return false;
+
+      await AdMob.prepareInterstitial({
+        adId: IOS_ADMOB_INTERSTITIAL_ID
+      });
+      recordFullscreenAdRequest();
+      await AdMob.showInterstitial();
+      return true;
+    }
+
     if (!/Android/i.test(navigator.userAgent)) return false;
 
-    window.DartScoreAnalytics?.track('interstitial_requested', {
-      ad_format: 'interstitial',
-      plan_tier: localStorage.getItem('premium') === 'true' ? 'premium' : 'free'
-    });
-
-    window.location.href = ADMOB_INTERSTITIAL_SCHEME_URL;
+    // Typed events go through the native Activity on both TWA and WebView.
+    // This avoids the legacy bridge bypassing the native cadence.
+    const query = new URLSearchParams(eventDetails);
+    if (eventDetails.ad_event !== 'non_x01_start') recordFullscreenAdRequest();
+    window.location.href = `${ADMOB_INTERSTITIAL_SCHEME_URL}?${query}`;
     return true;
   } catch (err) {
     console.warn("AdMob interstitial skipped:", err?.message || err);
@@ -973,6 +1232,23 @@ function AdSenseBanner() {
   );
 }
 
+const REVIEW_STATE_KEY = 'reviewPromptStateV1';
+const REVIEW_SESSION_KEY = 'reviewPromptLaunchCountedV1';
+
+const readReviewState = () => {
+  try {
+    return normalizeReviewState(JSON.parse(localStorage.getItem(REVIEW_STATE_KEY) || '{}'));
+  } catch {
+    return normalizeReviewState();
+  }
+};
+
+const writeReviewState = (state) => {
+  try {
+    localStorage.setItem(REVIEW_STATE_KEY, JSON.stringify(normalizeReviewState(state)));
+  } catch { }
+};
+
 function App() {
   const ADS_ENABLED = false;
   /* viewport fix */
@@ -995,6 +1271,64 @@ function App() {
   /* === STATE === */
 
   const [screen, setScreen] = useState('lobby');
+  const screenRef = useRef('lobby');
+  screenRef.current = screen;
+  const [showReviewPrompt, setShowReviewPrompt] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(REVIEW_SESSION_KEY) === 'true') return;
+      sessionStorage.setItem(REVIEW_SESSION_KEY, 'true');
+      writeReviewState(onAppLaunch(readReviewState()));
+    } catch { }
+  }, []);
+
+  const recordReviewCompletedGame = () => {
+    writeReviewState(onGameCompleted(readReviewState()));
+  };
+
+  const markReviewDone = () => {
+    writeReviewState(onReviewDone(readReviewState()));
+  };
+
+  const maybeShowReviewPrompt = () => {
+    // A review can be offered only in a fresh, idle lobby session,
+    // never after an interstitial attempt or when leaving a completed match.
+    if (screenRef.current !== 'lobby' || document.visibilityState !== 'visible') return false;
+    try {
+      const lastAdAttemptAt = Number(localStorage.getItem(REVIEW_AD_REQUEST_KEY) || 0);
+      // On Android WebView, inspect real ad-show callbacks via native SharedPreferences.
+      const lastAdShownAt = Number(window.DartScoreAndroid?.getLastInterstitialShownAt?.() || 0);
+      const lastAdAt = Math.max(lastAdAttemptAt, lastAdShownAt);
+      if (!isReviewAdQuietPeriodOver(lastAdAt)) return false;
+    } catch { }
+    const state = readReviewState();
+    if (!canShowReviewPrompt(state)) return false;
+    writeReviewState(onPromptShown(state));
+    setShowReviewPrompt(true);
+    return true;
+  };
+
+  useEffect(() => {
+    // Offer reviews only on a genuinely idle *fresh launch*.
+    // The first user interaction cancels the offer for this whole session:
+    // it must never reappear after playing or after leaving an advertisement.
+    let cancelled = false;
+    const cancel = () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+    const timer = window.setTimeout(() => {
+      if (!cancelled) maybeShowReviewPrompt();
+    }, REVIEW_FRESH_LOBBY_DELAY_MS);
+    window.addEventListener('pointerdown', cancel, { once: true, passive: true });
+    window.addEventListener('keydown', cancel, { once: true });
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('pointerdown', cancel);
+      window.removeEventListener('keydown', cancel);
+    };
+  }, []);
 
   const [toast, setToast] = useState(null);
   const showToast = (msg) => {
@@ -1021,10 +1355,27 @@ function App() {
       return false;
     }
   });
+  const [premiumStateResolved, setPremiumStateResolved] = useState(!IS_IOS);
+  const [iosBannerVisible, setIosBannerVisible] = useState(false);
 
   useEffect(() => {
     const restorePremium = async () => {
       try {
+        if (IS_IOS) {
+          const result = await DartScoreIOS.restorePremium({
+            productId: IOS_PREMIUM_PRODUCT_ID,
+            sync: false
+          });
+          if (result?.owned) {
+            setIsPremium(true);
+            localStorage.setItem('premium', 'true');
+          } else {
+            setIsPremium(false);
+            localStorage.removeItem('premium');
+          }
+          return;
+        }
+
         if (!window.getDigitalGoodsService) return;
 
         const service = await window.getDigitalGoodsService(
@@ -1041,6 +1392,8 @@ function App() {
         }
       } catch (e) {
         console.warn('Restore premium failed', e);
+      } finally {
+        if (IS_IOS) setPremiumStateResolved(true);
       }
     };
 
@@ -1049,7 +1402,9 @@ function App() {
 
   useEffect(() => {
     try {
-      if (isPremium) localStorage.setItem('premium', 'true');
+      if (isPremium) {
+        localStorage.setItem('premium', 'true');
+      }
     } catch { }
   }, [isPremium]);
 
@@ -1060,6 +1415,34 @@ function App() {
       }
     } catch { }
   }, [isPremium]);
+
+  useEffect(() => {
+    if (!IS_IOS || !premiumStateResolved) return undefined;
+
+    let cancelled = false;
+
+    const syncIOSBanner = async () => {
+      if (isPremium || !IOS_ADS_CONFIGURED) {
+        try { await AdMob.removeBanner(); } catch { }
+        if (!cancelled) setIosBannerVisible(false);
+        return;
+      }
+
+      try {
+        const shown = await showIOSBanner();
+        if (!cancelled) setIosBannerVisible(Boolean(shown));
+      } catch (err) {
+        console.warn('iOS banner skipped:', err?.message || err);
+        if (!cancelled) setIosBannerVisible(false);
+      }
+    };
+
+    syncIOSBanner();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isPremium, premiumStateResolved]);
 
   const [themeColor, setThemeColor] = useState('default');
 
@@ -1101,8 +1484,8 @@ function App() {
   const winAudioRef = useRef(null);
   /* persist screen */
 
-  const APP_VERSION = '1.1.19';
-  const LOBBY_DEFAULTS_VERSION = APP_VERSION;
+  const APP_VERSION = '1.1.68';
+  const LOBBY_DEFAULTS_VERSION = '1.1.62';
 
   /* načti lobby z localStorage */
   useEffect(() => {
@@ -1298,10 +1681,139 @@ function App() {
   const [winner, setWinner] = useState(null);
   const [pendingWin, setPendingWin] = useState(null);
 
-  // Interstitial cadence: a game counts only after at least 3 completed visits.
-  // Show one interstitial on Start/Restart after every 3 counted games.
-  const playedVisitsRef = useRef(0);
-  const playedGamesSinceAdRef = useRef(0);
+  const adCountedForGameRef = useRef(false);
+  const pendingClassicAdRef = useRef(null);
+  const PENDING_CLASSIC_AD_KEY = 'dspPendingClassicAdV98';
+  const gameSessionRef = useRef(0);
+
+  const emitInterstitialEvent = async (event) => {
+    if (isPremium || !event?.ad_event) return false;
+
+    if (IS_IOS) {
+      // iOS does not use the Android SharedPreferences cadence controller.
+      // Persist the count here and reset it only on successful display.
+      try {
+        const getCount = key => Math.max(0, Number(localStorage.getItem(key)) || 0);
+        const quick = isQuickClassic({
+          mode: event.mode, startScore: event.score,
+          legsToWinSet: event.legs, setsToWin: event.sets
+        });
+        const key = quick ? 'dspIosQuickInterstitialCount' : 'dspIosLegacyInterstitialCount';
+        let eligible = true;
+        if (event.ad_event === 'non_x01_boundary') {
+          // Non-X01 starts were counted at Lobby Start; only display at a boundary.
+          eligible = getCount('dspIosLegacyInterstitialCount') >= 3;
+        } else if (quick || event.ad_event === 'legacy') {
+          const count = getCount(key) + 1;
+          localStorage.setItem(key, String(count));
+          eligible = count >= 3;
+        }
+        if (!eligible) return false;
+        const last = Number(localStorage.getItem('dspIosInterstitialLastShown') || 0);
+        if (last > 0 && Date.now() >= last && Date.now() - last < 5 * 60 * 1000) return false;
+        const shown = await showInterstitialAd(event);
+        if (shown) {
+          localStorage.setItem('dspIosInterstitialLastShown', String(Date.now()));
+          localStorage.setItem('dspIosQuickInterstitialCount', '0');
+          localStorage.setItem('dspIosLegacyInterstitialCount', '0');
+        }
+        return shown;
+      } catch (err) {
+        console.warn('iOS interstitial pacing unavailable:', err);
+        return false;
+      }
+    }
+    return showInterstitialAd(event);
+  };
+
+  const markNonX01LobbyStart = (gameMode) => {
+    if (isPremium || !isNonX01LobbyAdMode(gameMode)) return;
+    // Explicit Lobby Start only arms the ad; NEVER show before playing.
+    if (IS_IOS) {
+      try {
+        const key = 'dspIosLegacyInterstitialCount';
+        const count = Math.max(0, Number(localStorage.getItem(key)) || 0);
+        localStorage.setItem(key, String(Math.min(3, count + 1)));
+      } catch { }
+      return;
+    }
+    if (window.DartScoreAndroid?.recordNonX01Start) {
+      try {
+        window.DartScoreAndroid.recordNonX01Start(gameMode);
+        return;
+      } catch (err) {
+        console.warn('Native non-X01 start tracking failed:', err);
+      }
+    }
+    // Android TWA fallback uses native URI counting, never ad display.
+    void showInterstitialAd({ ad_event: 'non_x01_start', mode: gameMode });
+  };
+
+  const requestNonX01InterstitialAfterBoundary = () => {
+    if (isPremium || screenRef.current !== 'game' || !isNonX01LobbyAdMode(mode)) return;
+    if (!IS_IOS && window.DartScoreAndroid?.showNonX01AfterGameBoundary) {
+      try {
+        window.DartScoreAndroid.showNonX01AfterGameBoundary(mode);
+        return;
+      } catch (err) {
+        console.warn('Native non-X01 exit ad request failed:', err);
+      }
+    }
+    // iOS/TWA fallback checks the same threshold + cooldown at the exit boundary.
+    void emitInterstitialEvent({ ad_event: 'non_x01_boundary', mode });
+  };
+
+  const flushClassicAd = () => {
+    let event = pendingClassicAdRef.current?.event || null;
+    if (!event) {
+      try { event = JSON.parse(localStorage.getItem(PENDING_CLASSIC_AD_KEY) || 'null'); }
+      catch { event = null; }
+    }
+    pendingClassicAdRef.current = null;
+    if (!event) return;
+    try { localStorage.removeItem(PENDING_CLASSIC_AD_KEY); } catch { }
+    emitInterstitialEvent(event);
+  };
+
+  const queueClassicAdAfterFanfare = (event) => {
+    if (isPremium) return;
+    const pending = { event, session: gameSessionRef.current };
+    pendingClassicAdRef.current = pending;
+    // A victory during app shutdown must still count at the next game boundary.
+    try { localStorage.setItem(PENDING_CLASSIC_AD_KEY, JSON.stringify(event)); } catch { }
+    const fire = () => {
+      if (pendingClassicAdRef.current !== pending) return;
+      if (screenRef.current !== 'game' || gameSessionRef.current !== pending.session) return;
+      flushClassicAd();
+    };
+    const fanfare = soundOn ? winAudioRef.current : null;
+    if (!fanfare) {
+      window.setTimeout(fire, 250);
+      return;
+    }
+    fanfare.addEventListener('ended', () => window.setTimeout(fire, 150), { once: true });
+    const delay = Number.isFinite(fanfare.duration) && fanfare.duration > 0
+      ? Math.ceil(fanfare.duration * 1000) + 1000
+      : 7000;
+    window.setTimeout(fire, delay);
+  };
+
+  const recordClassicAdEvent = (game, event) => {
+    if (isPremium || adCountedForGameRef.current || game?.adEventCounted || game?.mode !== 'classic') return;
+    if (!isSupportedX01(game)) return;
+    if (event === 'abandoned' && (!isQuickClassic(game) || !hasRecordedScore(game))) return;
+
+    adCountedForGameRef.current = true;
+    const details = {
+      ad_event: event,
+      mode: 'classic',
+      score: Number(game.startScore),
+      legs: Number(game.legsToWinSet),
+      sets: Number(game.setsToWin)
+    };
+    if (event === 'completed') queueClassicAdAfterFanfare(details);
+    else emitInterstitialEvent(details);
+  };
 
   const [cricket, setCricket] = useState(null);
   const [around, setAround] = useState(null);
@@ -1425,23 +1937,33 @@ function App() {
   const finishRouletteIfComplete = (nextScores, nextThrown, nextRoulette) => {
     if (!isRouletteGameComplete(nextThrown, nextRoulette)) return false;
 
-    let bestIdx = 0;
-    let bestScore = nextScores[0] ?? 0;
+    const bestScore = Math.max(...nextScores.map(score => score ?? 0));
+    const bestIndexes = nextScores
+      .map((score, ix) => ({ score: score ?? 0, ix }))
+      .filter(item => item.score === bestScore)
+      .map(item => item.ix);
 
-    nextScores.forEach((score, ix) => {
-      if ((score ?? 0) > bestScore) {
-        bestScore = score ?? 0;
-        bestIdx = ix;
-      }
-    });
+    if (bestIndexes.length > 1) {
+      finalizeWin(-1, {
+        silentVoice: false,
+        draw: true,
+        tiedIndexes: bestIndexes
+      });
+      return true;
+    }
 
-    finalizeWin(bestIdx, { silentVoice: false });
+    finalizeWin(bestIndexes[0], { silentVoice: false });
     return true;
   };
 
-  const startGame = () => {
+  const startGame = (countAsLobbyStart = true) => {
+    if (!Array.isArray(players) || players.length === 0) {
+      showToast(t(lang, 'needPlayer'));
+      return;
+    }
+
+    let previousGame = null;
     try {
-      let previousGame = null;
       if (screen === 'game') {
         previousGame = normalizeSavedGame(makeSnapshot());
       } else {
@@ -1465,17 +1987,18 @@ function App() {
       return;
     }
 
-    const completedVisits = playedVisitsRef.current;
-    playedVisitsRef.current = 0;
-
-    if (!isPremium && completedVisits >= 3) {
-      playedGamesSinceAdRef.current += 1;
-
-      if (playedGamesSinceAdRef.current >= 3) {
-        playedGamesSinceAdRef.current = 0;
-        showInterstitialAd();
-      }
+    // X01 counts completed matches or qualified abandoned quick matches.
+    // Non-X01 counts explicit lobby Start clicks, even when a game is abandoned.
+    // Android enforces the third-start threshold and persistent five-minute cooldown.
+    flushClassicAd();
+    if (previousGame?.mode === 'classic' && previousGame.winner == null) {
+      recordClassicAdEvent(previousGame, 'abandoned');
     }
+    if (countAsLobbyStart && isNonX01LobbyAdMode(mode)) {
+      markNonX01LobbyStart(mode);
+    }
+    adCountedForGameRef.current = false;
+    gameSessionRef.current += 1;
 
     const ord = teamMode
       ? teamOrder
@@ -1540,7 +2063,11 @@ function App() {
     setScreen('game');
   };
 
-  const restartGame = () => startGame();
+  const restartGame = () => {
+    // Repeat is a post-game boundary, not another lobby Start.
+    startGame(false);
+    requestNonX01InterstitialAfterBoundary();
+  };
 
   function shuffle(a) {
     const arr = [...a];
@@ -1817,17 +2344,9 @@ function App() {
     }
 
     if (tentative === 0) {
-      let finishOk = true;
-
-      if (anyOutSelected) {
-        finishOk = window.confirm(t(lang, 'confirmCheckoutRound'));
-      }
-
-      if (!finishOk) {
-        doBust();
-        return;
-      }
-
+      // In "Round total" mode the entered total is authoritative.
+      // If it exactly reaches zero, treat it as a valid checkout regardless
+      // of Double-out / Triple-out. The app cannot infer the final dart here.
       playHitSound();
 
       const finishVisit = {
@@ -2288,9 +2807,6 @@ const commitCricket = (value, mOverride) => {
     };
 
     const finalizeWin = (pIdx, opts = {}) => {
-      if (!opts.silentVoice && mode === 'classic') {
-        speak(lang, 'Vítěz!', voiceOn);
-      }
       try {
         if (soundOn && winAudioRef.current) {
           winAudioRef.current.currentTime = 0;
@@ -2299,22 +2815,32 @@ const commitCricket = (value, mOverride) => {
       } catch { }
 
       setWinner(pIdx);
-
-      if (!opts.visitAlreadyCounted) {
-        playedVisitsRef.current += 1;
+      recordReviewCompletedGame();
+      if (mode === 'classic') {
+        recordClassicAdEvent({ mode, startScore, legsToWinSet, setsToWin }, 'completed');
       }
+      // Non-X01 advertising happens on lobby Start, never after the fanfare.
 
       {
         try {
           const list = JSON.parse(localStorage.getItem('finishedGames') || '[]');
+          const classicTeamWin = mode === 'classic' && playerMode === 'teams' && !opts.draw;
           const gameRecord = {
             ts: Date.now(),
             mode, startScore,
             outDouble, outTriple, outMaster,
             randomOrder, playThrough,
             players: players.map(p => p.name),
-            winner: players[pIdx]?.name || ''
+            winner: opts.draw
+              ? ''
+              : (classicTeamWin ? teamNameByIndex(pIdx) : (players[pIdx]?.name || ''))
           };
+          if (opts.draw) {
+            gameRecord.result = 'draw';
+            gameRecord.tiedPlayers = (opts.tiedIndexes || [])
+              .map(ix => players[ix]?.name)
+              .filter(Boolean);
+          }
           if (mode === 'classic' && playerMode === 'individual') {
             const visitsForRecord = opts.finalVisit
               ? [...classicVisitHistory, opts.finalVisit]
@@ -2335,16 +2861,20 @@ const commitCricket = (value, mOverride) => {
                   .filter(ix => players.some((_, pIx) => scoreIndexForPlayer(pIx) === ix))
                   .map(ix => ({
                     name: teamNameByIndex(ix),
-                    remaining: scores[ix] ?? 0
+                    remaining: ix === pIdx ? 0 : (scores[ix] ?? 0)
                   }))
               : players.map((p, ix) => ({
                   name: p.name,
-                  remaining: scores[ix] ?? 0
+                  remaining: ix === pIdx ? 0 : (scores[ix] ?? 0)
                 }));
           }
           list.unshift(gameRecord);
           localStorage.setItem('finishedGames', JSON.stringify(list.slice(0, 200)));
         } catch { }
+      }
+
+      if (opts.draw) {
+        showToast(t(lang, 'draw'));
       }
     };
 
@@ -2449,8 +2979,6 @@ const nextPlayerSafe = () => {
     return;
   }
 
-  playedVisitsRef.current += 1;
-
   setCurrIdx((i) => {
     const ord = orderRef.current || [];
     const len = ord.length || 0;
@@ -2489,7 +3017,7 @@ const nextPlayerSafe = () => {
       pendingWinRef.current &&
       winnerRef.current == null
     ) {
-      completeClassicLeg(pendingWinRef.current.pIdx, { visitAlreadyCounted: true });
+      completeClassicLeg(pendingWinRef.current.pIdx);
       setPendingWin(null);
     }
 
@@ -2727,6 +3255,37 @@ const buyPremium = async () => {
   }
 
   try {
+    if (IS_IOS) {
+      const result = await DartScoreIOS.purchasePremium({
+        productId: IOS_PREMIUM_PRODUCT_ID
+      });
+
+      if (result?.owned || result?.status === 'purchased' || result?.status === 'alreadyOwned') {
+        setIsPremium(true);
+        localStorage.setItem('premium', 'true');
+        setShowAd(false);
+        showToast(
+          result?.status === 'alreadyOwned'
+            ? t(lang, 'premiumAlreadyOwned')
+            : t(lang, 'premiumActivated')
+        );
+        return;
+      }
+
+      if (result?.status === 'cancelled') {
+        showToast(t(lang, 'purchaseCancelled'));
+        return;
+      }
+
+      if (result?.status === 'pending') {
+        showToast(t(lang, 'purchasePending'));
+        return;
+      }
+
+      showToast(t(lang, 'billingUnavailable'));
+      return;
+    }
+
     const hasWindow = typeof window !== 'undefined';
     const hasDigitalGoods =
       hasWindow && typeof window.getDigitalGoodsService === 'function';
@@ -2741,12 +3300,12 @@ const buyPremium = async () => {
       setIsPremium(true);
       localStorage.setItem('premium', 'true');
       setShowAd(false);
-      showToast('Premium aktivováno (test)');
+      showToast(t(lang, 'premiumActivatedTest'));
       return;
     }
 
     if (!hasDigitalGoods || !hasPaymentRequest) {
-      showToast('Google Play nákup není v této verzi dostupný');
+      showToast(t(lang, 'billingUnavailable'));
       return;
     }
 
@@ -2818,7 +3377,7 @@ const buyPremium = async () => {
     setIsPremium(true);
     localStorage.setItem('premium', 'true');
     setShowAd(false);
-    showToast('Premium aktivováno');
+    showToast(t(lang, 'premiumActivated'));
   } catch (err) {
     const msg = String(err?.message || err || '');
     const msgLower = msg.toLowerCase();
@@ -2850,18 +3409,43 @@ const buyPremium = async () => {
       msg.includes('clientAppUnavailable') ||
       msg.includes('Billing service is unavailable')
     ) {
-      showToast('Nákup teď není dostupný. Zavři a znovu otevři aplikaci a zkus to znovu.');
+      showToast(t(lang, 'purchaseUnavailable'));
       return;
     }
 
     if (msg.includes('AbortError')) {
-      showToast('Nákup byl zrušen.');
+      showToast(t(lang, 'purchaseCancelled'));
       return;
     }
 
-    showToast(`Nákup Premium selhal: ${msg}`);
+    showToast(`${t(lang, 'purchaseFailed')}: ${msg}`);
   }
 };
+
+const restorePremiumPurchase = async () => {
+  if (!IS_IOS) return;
+
+  try {
+    const result = await DartScoreIOS.restorePremium({
+      productId: IOS_PREMIUM_PRODUCT_ID,
+      sync: true
+    });
+
+    if (result?.owned) {
+      setIsPremium(true);
+      localStorage.setItem('premium', 'true');
+      setShowAd(false);
+      showToast(t(lang, 'premiumActivated'));
+      return;
+    }
+
+    showToast(t(lang, 'nothingToRestore'));
+  } catch (err) {
+    console.error('RESTORE PREMIUM ERROR:', err);
+    showToast(t(lang, 'restoreFailed'));
+  }
+};
+
     const makeSnapshot = () => ({
       version: 2,
       screen: 'game',
@@ -2876,7 +3460,8 @@ const buyPremium = async () => {
       classicVisitHistory, classicLegSeq,
       winner, pendingWin,
       cricket, around, roulette,
-      isPremium, themeColor
+      isPremium, themeColor,
+      adEventCounted: adCountedForGameRef.current
     });
 
     const normalizeSavedGame = (snap) => {
@@ -2957,7 +3542,7 @@ const buyPremium = async () => {
 
         if (!isValidSavedGame(s)) {
           localStorage.removeItem('savedGame');
-          showToast('Nic k pokračování');
+          showToast(t(lang, 'nothingToContinue'));
           return;
         }
 
@@ -2981,6 +3566,8 @@ const buyPremium = async () => {
         setClassicLegSeq(Number.isInteger(s.classicLegSeq) ? Math.max(1, s.classicLegSeq) : 1);
         setWinner(s.winner ?? null);
         setPendingWin(s.pendingWin ?? null);
+        adCountedForGameRef.current = Boolean(s.adEventCounted);
+        gameSessionRef.current += 1;
         const savedScoreSlots = (s.mode === 'classic' && s.playerMode === 'teams') ? 3 : (s.players?.length || 0);
         setClassicLegsWon(Array.from({ length: savedScoreSlots }, (_, ix) => s.classicLegsWon?.[ix] || 0));
         setClassicSetsWon(Array.from({ length: savedScoreSlots }, (_, ix) => s.classicSetsWon?.[ix] || 0));
@@ -2999,7 +3586,7 @@ const buyPremium = async () => {
       } catch (e) {
         console.error(e);
         localStorage.removeItem('savedGame');
-        showToast('Obnova selhala');
+        showToast(t(lang, 'restoreFailed'));
       }
     };
 
@@ -3051,18 +3638,48 @@ const buyPremium = async () => {
 
 
     // text režimu do hlavičky vedle výběru jazyka
-    const rateApp = () => {
-      const url = 'https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro';
+    const openRating = async (source = 'lobby') => {
+      markReviewDone();
 
       window.DartScoreAnalytics?.track('rate_app_clicked', {
-        source: 'lobby'
+        source
       });
 
-      try {
-        window.open(url, '_blank', 'noopener,noreferrer');
-      } catch {
-        window.location.href = url;
+      if (IS_IOS) {
+        try {
+          await DartScoreIOS.openReview({ appId: APP_STORE_ID });
+        } catch (err) {
+          console.warn('App Store review page could not be opened', err);
+        }
+        return;
       }
+
+      const url = 'https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro';
+
+      try {
+        if (window.DartScoreAndroid?.rateApp) {
+          window.DartScoreAndroid.rateApp();
+          return;
+        }
+
+        const opened = window.open(url, '_blank', 'noopener,noreferrer');
+        if (!opened) window.location.assign(url);
+      } catch {
+        window.location.assign(url);
+      }
+    };
+
+    const rateApp = () => openRating('lobby');
+
+    const returnToLobbyFromGame = () => {
+      const completedGame = winner != null;
+      if (completedGame) flushClassicAd();
+      else recordClassicAdEvent(makeSnapshot(), 'abandoned');
+      saveSnapshot();
+      setScreen('lobby');
+      // Both Back buttons flow here. Only now may a pending non-X01 ad appear.
+      requestNonX01InterstitialAfterBoundary();
+      // Never ask for a rating immediately after the match or its ad.
     };
 
     const modeLabel = (() => {
@@ -3082,7 +3699,7 @@ const buyPremium = async () => {
     })();
 
     return (
-      <ErrorBoundary>
+      <ErrorBoundary lang={lang}>
         <div
           className="container"
           data-mode={mode}
@@ -3090,7 +3707,7 @@ const buyPremium = async () => {
           data-premium={isPremium ? '1' : '0'}
           style={{
             paddingTop: 'max(var(--sat, 0px), var(--sat-fallback, 28px))',
-            paddingBottom: 0,
+            paddingBottom: iosBannerVisible ? 60 : 0,
           }}
         >
           {/* HEADER */}
@@ -3126,10 +3743,7 @@ const buyPremium = async () => {
                   <button
                     type="button"
                     className="btn ghost"
-                    onClick={() => {
-                      saveSnapshot();
-                      setScreen('lobby');
-                    }}
+                    onClick={returnToLobbyFromGame}
                     title={t(lang, 'back')}
                     style={{ flexShrink: 0 }}
                   >
@@ -3280,6 +3894,7 @@ const buyPremium = async () => {
       showToast={showToast}
       hasSaved={hasSaved}
       buyPremium={buyPremium}
+      restorePremiumPurchase={restorePremiumPurchase}
       isPremium={isPremium} setIsPremium={setIsPremium}
       themeColor={themeColor} setThemeColor={setThemeColor}
     />
@@ -3356,34 +3971,90 @@ const buyPremium = async () => {
     undo={undo}
     winner={winner}
     saveGame={() => {
-      try {
-        const list = JSON.parse(localStorage.getItem('finishedGames') || '[]');
-        list.unshift({
-          ts: Date.now(),
-          mode,
-          startScore,
-          outDouble,
-          outTriple,
-          outMaster,
-          randomOrder,
-          playThrough,
-          players: players.map(p => p.name),
-          winner: players[order[currIdx]]?.name || ''
-        });
-        localStorage.setItem('finishedGames', JSON.stringify(list.slice(0, 200)));
-      } catch {}
+      saveSnapshot();
       showToast(t(lang, 'gameSavedToast'));
     }}
     restartGame={restartGame}
     cardRefs={cardRefs}
     setScreen={(scr) => {
-      if (scr === 'lobby') saveSnapshot();
+      if (scr === 'lobby') {
+        returnToLobbyFromGame();
+        return;
+      }
       setScreen(scr);
     }}
   />
 )}
           {!isPremium && ADS_ENABLED && (
             <AdSenseBanner />
+          )}
+
+          {showReviewPrompt && (
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={t(lang, 'reviewPromptTitle')}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 10020,
+                background: 'rgba(0,0,0,0.72)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 18
+              }}
+            >
+              <div
+                style={{
+                  width: '100%',
+                  maxWidth: 360,
+                  background: '#111827',
+                  border: '2px solid var(--accent)',
+                  borderRadius: 16,
+                  padding: 20,
+                  boxShadow: '0 18px 50px rgba(0,0,0,.55)',
+                  textAlign: 'center'
+                }}
+              >
+                <div style={{ fontSize: 22, fontWeight: 900 }}>
+                  {t(lang, 'reviewPromptTitle')}
+                </div>
+                <div style={{ marginTop: 10, fontSize: 15, lineHeight: 1.4, opacity: 0.92 }}>
+                  {t(lang, 'reviewPromptText')}
+                </div>
+
+                <div style={{ display: 'grid', gap: 10, marginTop: 18 }}>
+                  <button
+                    type="button"
+                    className="btn primary"
+                    onClick={() => {
+                      setShowReviewPrompt(false);
+                      openRating('auto_prompt');
+                    }}
+                  >
+                    ⭐ {t(lang, 'reviewNow')}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    onClick={() => setShowReviewPrompt(false)}
+                  >
+                    {t(lang, 'reviewLater')}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    onClick={() => {
+                      markReviewDone();
+                      setShowReviewPrompt(false);
+                    }}
+                  >
+                    {t(lang, 'reviewNoThanks')}
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
 
           <audio ref={hitAudioRef} src="/dart-hit.mp3" preload="auto" />
@@ -3502,6 +4173,7 @@ function Lobby({
     showToast,
     hasSaved,
     buyPremium,
+    restorePremiumPurchase,
     isPremium, setIsPremium,
     themeColor, setThemeColor
   }) {
@@ -3511,7 +4183,9 @@ function Lobby({
       typeof window !== 'undefined' && Boolean(window.DartScoreAndroid);
 
     const shareApp = async () => {
-      const url = 'https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro';
+      const url = IS_IOS
+        ? IOS_APP_STORE_URL
+        : 'https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro';
       const payload = { title: 'DartScore Pro', text: t(lang, 'shareText'), url };
 
       window.DartScoreAnalytics?.track('app_share_clicked', {
@@ -3519,6 +4193,10 @@ function Lobby({
       });
 
       try {
+        if (IS_IOS) {
+          await DartScoreIOS.shareApp({ text: payload.text, url: payload.url });
+          return;
+        }
         if (window.DartScoreAndroid?.shareApp) {
           window.DartScoreAndroid.shareApp(payload.title, payload.text, payload.url);
           return;
@@ -3766,21 +4444,32 @@ function Lobby({
 >
   {t(lang, 'premiumInfoButton')}
 </button>
+            {!isPremium && (
+              <button
+                type="button"
+                className="btn"
+                data-analytics-action="premium_purchase_started"
+                onClick={buyPremium}
+                style={{
+                  minWidth: 90,
+                  fontWeight: 800,
+                  borderColor: 'var(--accent)'
+                }}
+              >
+                {t(lang, 'activatePremium')}
+              </button>
+            )}
+                     </div>
+          {IS_IOS && !isPremium && (
             <button
               type="button"
-              className="btn"
-              data-analytics-action="premium_purchase_started"
-              onClick={buyPremium}           
-              style={{
-                minWidth: 90,
-                fontWeight: 800,
-                borderColor: 'var(--accent)',
-                boxShadow: isPremium ? '0 0 6px var(--accent)' : 'none'
-              }}
+              className="gameTextAction"
+              onClick={restorePremiumPurchase}
+              style={{ marginBottom: 8 }}
             >
-            {t(lang, 'activatePremium')}
+              {t(lang, 'restorePurchases')}
             </button>
-                     </div>
+          )}
 {showPremiumDetails && (
   <div style={{
     marginTop: '8px',
@@ -3805,7 +4494,7 @@ function Lobby({
                   fontWeight: 600
                 }}
               >
-                Vzhled aplikace:
+                {t(lang, 'appearanceLabel')}
               </div>
 
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -3822,7 +4511,7 @@ function Lobby({
                     cursor: 'pointer',
                     boxShadow: themeColor === 'black' ? '0 0 6px #fff' : 'none'
                   }}
-                  title="černá"
+                  title={t(lang, 'colorBlack')}
                 />
 
                 <button
@@ -3837,7 +4526,7 @@ function Lobby({
                     cursor: 'pointer',
                     boxShadow: themeColor === 'green' ? '0 0 6px #fff' : 'none'
                   }}
-                  title="zelená"
+                  title={t(lang, 'colorGreen')}
                 />
 
                 <button
@@ -3852,7 +4541,7 @@ function Lobby({
                     cursor: 'pointer',
                     boxShadow: themeColor === 'blue' ? '0 0 6px #fff' : 'none'
                   }}
-                  title="modrá"
+                  title={t(lang, 'colorBlue')}
                 />
 
                 <button
@@ -3867,7 +4556,7 @@ function Lobby({
                     cursor: 'pointer',
                     boxShadow: themeColor === 'red' ? '0 0 6px #fff' : 'none'
                   }}
-                  title="červená"
+                  title={t(lang, 'colorRed')}
                 />
 
                 <button
@@ -3882,7 +4571,7 @@ function Lobby({
                     cursor: 'pointer',
                     boxShadow: themeColor === 'purple' ? '0 0 6px #fff' : 'none'
                   }}
-                  title="fialová"
+                  title={t(lang, 'colorPurple')}
                 />
               </div>
             </div>
@@ -3895,7 +4584,7 @@ function Lobby({
             <button
               type="button"
               className="btn green"
-              onClick={startGame}
+              onClick={() => startGame(true)}
             >
               {t(lang, 'startGame')}
             </button>
@@ -4113,13 +4802,13 @@ function Lobby({
     const [p2, setP2] = useState('');
 
     const STATS_I18N = {
-      cs:{statistics:'Statistiky',noSaved:'Zatím nejsou odehrané žádné uložené zápasy.',overview:'Přehled',h2h:'Vzájemné zápasy',all:'Vše',week:'Týden',month:'Měsíc',year:'Rok',avg3:'Průměr / 3 šipky',first9:'Prvních 9',checkoutPct:'Checkout %',checkoutPending:'Přesná evidence pokusů bude doplněna',highestCheckout:'Nejvyšší checkout',scoring:'Náhozy',performance:'Výkony',bestLeg:'Nejlepší leg (šipky)',avgDartsLeg:'Průměr šipek / leg',highestScore:'Nejvyšší nához',winRate:'Úspěšnost výher',matches:'vzájemných zápasů',legs:'Legy',sets:'Sety',last5:'Forma posledních 5',avgTrend:'Trend průměru',matchHistory:'Historie vzájemných zápasů',won:'vyhrál',checkout:'Checkout',detailed:({detailed,total})=>`Detailní metriky jsou dostupné u ${detailed} z ${total} zápasů. Starší zápasy zůstávají započítané do výher.`,older:'Starší zápasy jsou započítané do H2H skóre a úspěšnosti výher. Detailní metriky se plní jen u nově uložených zápasů.'},
-      en:{statistics:'Statistics',noSaved:'No saved matches yet.',overview:'Overview',h2h:'Head-to-Head',all:'All',week:'Week',month:'Month',year:'Year',avg3:'3-dart AVG',first9:'First 9',checkoutPct:'Checkout %',checkoutPending:'Exact attempt tracking pending',highestCheckout:'Highest checkout',scoring:'Scoring',performance:'Performance',bestLeg:'Best leg (darts)',avgDartsLeg:'Avg darts / leg',highestScore:'Highest score',winRate:'Win rate',matches:'matches',legs:'Legs',sets:'Sets',last5:'Last 5 form',avgTrend:'AVG trend',matchHistory:'Match history',won:'won',checkout:'Checkout',detailed:({detailed,total})=>`Detailed metrics are available for ${detailed} of ${total} matches. Older matches still count toward wins.`,older:'Older matches count toward H2H score and win rate. Detailed metrics populate for newly saved matches.'},
-      de:{statistics:'Statistiken',noSaved:'Noch keine gespeicherten Spiele.',overview:'Übersicht',h2h:'Direkte Duelle',all:'Alle',week:'Woche',month:'Monat',year:'Jahr',avg3:'3-Dart-Schnitt',first9:'Erste 9',checkoutPct:'Checkout %',checkoutPending:'Exakte Versuchsstatistik folgt',highestCheckout:'Höchstes Checkout',scoring:'Scoring',performance:'Leistung',bestLeg:'Bestes Leg (Darts)',avgDartsLeg:'Ø Darts / Leg',highestScore:'Höchster Score',winRate:'Siegquote',matches:'direkte Duelle',legs:'Legs',sets:'Sätze',last5:'Form letzte 5',avgTrend:'AVG-Trend',matchHistory:'Duell-Historie',won:'gewann',checkout:'Checkout',detailed:({detailed,total})=>`Detaillierte Werte sind für ${detailed} von ${total} Spielen verfügbar. Ältere Spiele zählen weiter für Siege.`,older:'Ältere Spiele zählen für H2H und Siegquote. Detailwerte werden nur bei neu gespeicherten Spielen erfasst.'},
-      es:{statistics:'Estadísticas',noSaved:'Aún no hay partidas guardadas.',overview:'Resumen',h2h:'Cara a cara',all:'Todo',week:'Semana',month:'Mes',year:'Año',avg3:'Promedio / 3 dardos',first9:'Primeros 9',checkoutPct:'Checkout %',checkoutPending:'El registro exacto de intentos se añadirá',highestCheckout:'Checkout más alto',scoring:'Puntuación',performance:'Rendimiento',bestLeg:'Mejor leg (dardos)',avgDartsLeg:'Prom. dardos / leg',highestScore:'Puntuación más alta',winRate:'Porcentaje de victorias',matches:'enfrentamientos',legs:'Legs',sets:'Sets',last5:'Forma últimos 5',avgTrend:'Tendencia AVG',matchHistory:'Historial de enfrentamientos',won:'ganó',checkout:'Checkout',detailed:({detailed,total})=>`Las métricas detalladas están disponibles en ${detailed} de ${total} partidas. Las anteriores siguen contando para las victorias.`,older:'Las partidas anteriores cuentan para el H2H y el porcentaje de victorias. Las métricas detalladas solo se guardan en partidas nuevas.'},
-      nl:{statistics:'Statistieken',noSaved:'Nog geen opgeslagen wedstrijden.',overview:'Overzicht',h2h:'Onderling',all:'Alles',week:'Week',month:'Maand',year:'Jaar',avg3:'Gem. / 3 darts',first9:'Eerste 9',checkoutPct:'Checkout %',checkoutPending:'Exacte pogingregistratie volgt',highestCheckout:'Hoogste checkout',scoring:'Scores',performance:'Prestaties',bestLeg:'Beste leg (darts)',avgDartsLeg:'Gem. darts / leg',highestScore:'Hoogste score',winRate:'Winstpercentage',matches:'onderlinge wedstrijden',legs:'Legs',sets:'Sets',last5:'Vorm laatste 5',avgTrend:'AVG-trend',matchHistory:'Onderlinge historie',won:'won',checkout:'Checkout',detailed:({detailed,total})=>`Gedetailleerde statistieken zijn beschikbaar voor ${detailed} van ${total} wedstrijden. Oudere wedstrijden blijven meetellen voor winst.`,older:'Oudere wedstrijden tellen mee voor H2H en winstpercentage. Detailstatistieken worden alleen bij nieuwe wedstrijden opgeslagen.'},
-      ru:{statistics:'Статистика',noSaved:'Сохранённых матчей пока нет.',overview:'Обзор',h2h:'Личные встречи',all:'Все',week:'Неделя',month:'Месяц',year:'Год',avg3:'Среднее / 3 дротика',first9:'Первые 9',checkoutPct:'Checkout %',checkoutPending:'Точный учёт попыток будет добавлен',highestCheckout:'Максимальный checkout',scoring:'Наборы',performance:'Результаты',bestLeg:'Лучший лег (дротики)',avgDartsLeg:'Ср. дротиков / лег',highestScore:'Максимальный набор',winRate:'Процент побед',matches:'очных матчей',legs:'Леги',sets:'Сеты',last5:'Форма за 5 матчей',avgTrend:'Тренд среднего',matchHistory:'История личных встреч',won:'победил',checkout:'Checkout',detailed:({detailed,total})=>`Подробная статистика доступна для ${detailed} из ${total} матчей. Старые матчи по-прежнему учитываются в победах.`,older:'Старые матчи учитываются в H2H и проценте побед. Подробные метрики сохраняются только для новых матчей.'},
-      zh:{statistics:'统计',noSaved:'暂无已保存的比赛。',overview:'概览',h2h:'对战',all:'全部',week:'一周',month:'一月',year:'一年',avg3:'3镖平均',first9:'前9镖',checkoutPct:'结镖率',checkoutPending:'精确尝试次数统计稍后加入',highestCheckout:'最高结镖',scoring:'得分',performance:'表现',bestLeg:'最佳局（镖数）',avgDartsLeg:'平均镖数 / 局',highestScore:'最高得分',winRate:'胜率',matches:'场对战',legs:'局',sets:'盘',last5:'最近5场状态',avgTrend:'平均分趋势',matchHistory:'对战记录',won:'获胜',checkout:'结镖',detailed:({detailed,total})=>`详细数据适用于 ${detailed}/${total} 场比赛。旧比赛仍计入胜场。`,older:'旧比赛仍计入对战比分和胜率。详细数据仅记录新保存的比赛。'}
+      cs:{statistics:'Statistiky',noSaved:'Zatím nejsou odehrané žádné uložené zápasy.',overview:'Přehled',h2h:'Vzájemné zápasy',all:'Vše',week:'Týden',month:'Měsíc',year:'Rok',avg3:'Průměr / 3 šipky',first9:'Prvních 9',checkoutPct:'Checkout %',checkoutPending:'Přesná evidence pokusů bude doplněna',highestCheckout:'Nejvyšší checkout',scoring:'Náhozy',performance:'Výkony',bestLeg:'Nejlepší leg (šipky)',avgDartsLeg:'Průměr šipek / leg',highestScore:'Nejvyšší nához',winRate:'Úspěšnost výher',matches:'vzájemných zápasů',legs:'Legy',sets:'Sety',last5:'Forma posledních 5',avgTrend:'Trend průměru',matchHistory:'Historie vzájemných zápasů',won:'vyhrál',draw:'remíza',checkout:'Checkout',detailed:({detailed,total})=>`Detailní metriky jsou dostupné u ${detailed} z ${total} zápasů. Starší zápasy zůstávají započítané do výher.`,older:'Starší zápasy jsou započítané do H2H skóre a úspěšnosti výher. Detailní metriky se plní jen u nově uložených zápasů.'},
+      en:{statistics:'Statistics',noSaved:'No saved matches yet.',overview:'Overview',h2h:'Head-to-Head',all:'All',week:'Week',month:'Month',year:'Year',avg3:'3-dart AVG',first9:'First 9',checkoutPct:'Checkout %',checkoutPending:'Exact attempt tracking pending',highestCheckout:'Highest checkout',scoring:'Scoring',performance:'Performance',bestLeg:'Best leg (darts)',avgDartsLeg:'Avg darts / leg',highestScore:'Highest score',winRate:'Win rate',matches:'matches',legs:'Legs',sets:'Sets',last5:'Last 5 form',avgTrend:'AVG trend',matchHistory:'Match history',won:'won',draw:'draw',checkout:'Checkout',detailed:({detailed,total})=>`Detailed metrics are available for ${detailed} of ${total} matches. Older matches still count toward wins.`,older:'Older matches count toward H2H score and win rate. Detailed metrics populate for newly saved matches.'},
+      de:{statistics:'Statistiken',noSaved:'Noch keine gespeicherten Spiele.',overview:'Übersicht',h2h:'Direkte Duelle',all:'Alle',week:'Woche',month:'Monat',year:'Jahr',avg3:'3-Dart-Schnitt',first9:'Erste 9',checkoutPct:'Checkout %',checkoutPending:'Exakte Versuchsstatistik folgt',highestCheckout:'Höchstes Checkout',scoring:'Scoring',performance:'Leistung',bestLeg:'Bestes Leg (Darts)',avgDartsLeg:'Ø Darts / Leg',highestScore:'Höchster Score',winRate:'Siegquote',matches:'direkte Duelle',legs:'Legs',sets:'Sätze',last5:'Form letzte 5',avgTrend:'AVG-Trend',matchHistory:'Duell-Historie',won:'gewann',draw:'Unentschieden',checkout:'Checkout',detailed:({detailed,total})=>`Detaillierte Werte sind für ${detailed} von ${total} Spielen verfügbar. Ältere Spiele zählen weiter für Siege.`,older:'Ältere Spiele zählen für H2H und Siegquote. Detailwerte werden nur bei neu gespeicherten Spielen erfasst.'},
+      es:{statistics:'Estadísticas',noSaved:'Aún no hay partidas guardadas.',overview:'Resumen',h2h:'Cara a cara',all:'Todo',week:'Semana',month:'Mes',year:'Año',avg3:'Promedio / 3 dardos',first9:'Primeros 9',checkoutPct:'Checkout %',checkoutPending:'El registro exacto de intentos se añadirá',highestCheckout:'Checkout más alto',scoring:'Puntuación',performance:'Rendimiento',bestLeg:'Mejor leg (dardos)',avgDartsLeg:'Prom. dardos / leg',highestScore:'Puntuación más alta',winRate:'Porcentaje de victorias',matches:'enfrentamientos',legs:'Legs',sets:'Sets',last5:'Forma últimos 5',avgTrend:'Tendencia AVG',matchHistory:'Historial de enfrentamientos',won:'ganó',draw:'empate',checkout:'Checkout',detailed:({detailed,total})=>`Las métricas detalladas están disponibles en ${detailed} de ${total} partidas. Las anteriores siguen contando para las victorias.`,older:'Las partidas anteriores cuentan para el H2H y el porcentaje de victorias. Las métricas detalladas solo se guardan en partidas nuevas.'},
+      nl:{statistics:'Statistieken',noSaved:'Nog geen opgeslagen wedstrijden.',overview:'Overzicht',h2h:'Onderling',all:'Alles',week:'Week',month:'Maand',year:'Jaar',avg3:'Gem. / 3 darts',first9:'Eerste 9',checkoutPct:'Checkout %',checkoutPending:'Exacte pogingregistratie volgt',highestCheckout:'Hoogste checkout',scoring:'Scores',performance:'Prestaties',bestLeg:'Beste leg (darts)',avgDartsLeg:'Gem. darts / leg',highestScore:'Hoogste score',winRate:'Winstpercentage',matches:'onderlinge wedstrijden',legs:'Legs',sets:'Sets',last5:'Vorm laatste 5',avgTrend:'AVG-trend',matchHistory:'Onderlinge historie',won:'won',draw:'gelijkspel',checkout:'Checkout',detailed:({detailed,total})=>`Gedetailleerde statistieken zijn beschikbaar voor ${detailed} van ${total} wedstrijden. Oudere wedstrijden blijven meetellen voor winst.`,older:'Oudere wedstrijden tellen mee voor H2H en winstpercentage. Detailstatistieken worden alleen bij nieuwe wedstrijden opgeslagen.'},
+      ru:{statistics:'Статистика',noSaved:'Сохранённых матчей пока нет.',overview:'Обзор',h2h:'Личные встречи',all:'Все',week:'Неделя',month:'Месяц',year:'Год',avg3:'Среднее / 3 дротика',first9:'Первые 9',checkoutPct:'Checkout %',checkoutPending:'Точный учёт попыток будет добавлен',highestCheckout:'Максимальный checkout',scoring:'Наборы',performance:'Результаты',bestLeg:'Лучший лег (дротики)',avgDartsLeg:'Ср. дротиков / лег',highestScore:'Максимальный набор',winRate:'Процент побед',matches:'очных матчей',legs:'Леги',sets:'Сеты',last5:'Форма за 5 матчей',avgTrend:'Тренд среднего',matchHistory:'История личных встреч',won:'победил',draw:'ничья',checkout:'Checkout',detailed:({detailed,total})=>`Подробная статистика доступна для ${detailed} из ${total} матчей. Старые матчи по-прежнему учитываются в победах.`,older:'Старые матчи учитываются в H2H и проценте побед. Подробные метрики сохраняются только для новых матчей.'},
+      zh:{statistics:'统计',noSaved:'暂无已保存的比赛。',overview:'概览',h2h:'对战',all:'全部',week:'一周',month:'一月',year:'一年',avg3:'3镖平均',first9:'前9镖',checkoutPct:'结镖率',checkoutPending:'精确尝试次数统计稍后加入',highestCheckout:'最高结镖',scoring:'得分',performance:'表现',bestLeg:'最佳局（镖数）',avgDartsLeg:'平均镖数 / 局',highestScore:'最高得分',winRate:'胜率',matches:'场对战',legs:'局',sets:'盘',last5:'最近5场状态',avgTrend:'平均分趋势',matchHistory:'对战记录',won:'获胜',draw:'平局',checkout:'结镖',detailed:({detailed,total})=>`详细数据适用于 ${detailed}/${total} 场比赛。旧比赛仍计入胜场。`,older:'旧比赛仍计入对战比分和胜率。详细数据仅记录新保存的比赛。'}
     };
     const S=(key,vars)=>{const pack=STATS_I18N[lang]||STATS_I18N.en;const value=pack[key]??STATS_I18N.en[key]??key;return typeof value==='function'?value(vars||{}):value;};
     const now = Date.now();
@@ -4302,7 +4991,9 @@ function Lobby({
                 {h2hGames.length ? h2hGames.map((g,idx) => {
                   const s1=(g.playerStats||[]).find(s=>s.name===p1), s2=(g.playerStats||[]).find(s=>s.name===p2);
                   return <details key={`${g.ts}-${idx}`} style={{ border:'1px solid var(--line)', borderRadius:10, padding:'8px 10px', background:'rgba(255,255,255,.02)' }}>
-                    <summary style={{ cursor:'pointer', fontWeight:800 }}>{new Date(g.ts).toLocaleDateString()} · {g.winner === p1 ? p1 : p2} {S('won')}</summary>
+                    <summary style={{ cursor:'pointer', fontWeight:800 }}>
+                      {new Date(g.ts).toLocaleDateString()} · {g.result === 'draw' ? S('draw') : `${g.winner === p1 ? p1 : p2} ${S('won')}`}
+                    </summary>
                     <div style={{ marginTop:8 }}>{compareRow(fmt(s1?.avg3), 'AVG', fmt(s2?.avg3))}{compareRow(fmt(s1?.first9Avg), 'First 9', fmt(s2?.first9Avg))}{compareRow(s1?.legsWon ?? '—', 'Legs', s2?.legsWon ?? '—')}{compareRow(s1?.setsWon ?? '—', 'Sets', s2?.setsWon ?? '—')}{compareRow(s1?.highestCheckout ?? '—', S('checkout'), s2?.highestCheckout ?? '—')}</div>
                   </details>;
                 }) : <div style={{ opacity:.65 }}>—</div>}
@@ -4329,6 +5020,10 @@ function Lobby({
   }) {
     const HEAD_H = 40;
     const [roundScoreInput, setRoundScoreInput] = React.useState('');
+    const roundScoreNumber = roundScoreInput === '' ? null : Number(roundScoreInput);
+    const roundScoreInvalid = roundScoreInput !== '' && (
+      !Number.isInteger(roundScoreNumber) || roundScoreNumber < 0 || roundScoreNumber > 180
+    );
     const inputLocked = Boolean(players[order[currIdx]]?.bot);
 
     React.useEffect(() => {
@@ -4373,10 +5068,6 @@ function Lobby({
         const next = nextRaw.slice(0, 3);
 
         if (!/^\d{1,3}$/.test(next)) return prev;
-
-        const n = Number(next);
-        if (!Number.isInteger(n) || n < 0 || n > 180) return prev;
-
         return next;
       });
     }, []);
@@ -4609,6 +5300,21 @@ function Lobby({
             </button>
           </div>
         </div>
+
+        {winner === -1 && (
+          <div
+            className="lobbyCard"
+            style={{
+              marginBottom: 10,
+              textAlign: 'center',
+              fontWeight: 900,
+              fontSize: 18,
+              borderColor: 'var(--accent)'
+            }}
+          >
+            {t(lang, 'draw')}
+          </div>
+        )}
 
         {/* SCOREBOARD */}
           {mode === 'classic' && playerMode === 'teams' ? (
@@ -5049,7 +5755,7 @@ function Lobby({
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
-                      background: 'var(--accent)',
+                      background: roundScoreInvalid ? '#b91c1c' : 'var(--accent)',
                       color: '#fff',
                       border: '3px solid #000',
                       boxShadow: '0 0 0 1px rgba(255,255,255,0.15)'
@@ -5108,7 +5814,7 @@ function Lobby({
                               type="button"
                               className="btn green"
                               onClick={submitRoundScore}
-                              disabled={roundScoreInput === ''}
+                              disabled={roundScoreInput === '' || roundScoreInvalid}
                               style={{
                                 flex: 1,
                                 minWidth: 0,
@@ -5149,7 +5855,7 @@ function Lobby({
                   ))}
 
                   <div style={{ fontSize: 12, opacity: .75, textAlign: 'center', paddingTop: 4 }}>
-                    {t(lang, 'roundTotalHint')}
+                    {roundScoreInvalid ? t(lang, 'roundTotalInvalid') : t(lang, 'roundTotalHint')}
                   </div>
                 </>
               ) : hideDartControls ? null : (

@@ -1,0 +1,108 @@
+name: Capture iPad simulator screenshot v2
+
+on:
+  push:
+    branches:
+      - feature/ios-v97
+    paths:
+      - .github/workflows/ios-ipad-screenshot-v2.yml
+
+jobs:
+  capture:
+    runs-on: macos-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout iOS branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web bundle
+        run: npm run build
+
+      - name: Sync Capacitor iOS
+        run: npx cap sync ios
+
+      - name: Build for Simulator
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -derivedDataPath build/ios-derived \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Boot an available 13-inch iPad
+        run: |
+          set -euo pipefail
+          xcrun simctl shutdown all || true
+
+          python3 - <<'PY' > "$RUNNER_TEMP/ipad_udid.txt"
+          import json,subprocess
+          data=json.loads(subprocess.check_output(["xcrun","simctl","list","devices","available","-j"]))
+          candidates=[]
+          for runtime,devices in data["devices"].items():
+              if "iOS" not in runtime:
+                  continue
+              for d in devices:
+                  if "iPad Pro 13-inch" in d["name"]:
+                      candidates.append((runtime,d["udid"],d["name"]))
+          if not candidates:
+              raise SystemExit("No available 13-inch iPad simulator device")
+          candidates.sort()
+          print(candidates[-1][1])
+          PY
+
+          UDID="$(cat "$RUNNER_TEMP/ipad_udid.txt")"
+          echo "SIM_UDID=$UDID" >> "$GITHUB_ENV"
+          echo "Using simulator $UDID"
+          xcrun simctl boot "$UDID" || true
+
+          for i in $(seq 1 60); do
+            STATE="$(xcrun simctl list devices -j | python3 -c 'import json,sys,os; d=json.load(sys.stdin)["devices"]; u=os.environ["SIM_UDID"]; print(next((x["state"] for xs in d.values() for x in xs if x["udid"]==u),"Missing"))')"
+            echo "Simulator state: $STATE"
+            if [ "$STATE" = "Booted" ]; then
+              break
+            fi
+            sleep 2
+          done
+
+          STATE="$(xcrun simctl list devices -j | python3 -c 'import json,sys,os; d=json.load(sys.stdin)["devices"]; u=os.environ["SIM_UDID"]; print(next((x["state"] for xs in d.values() for x in xs if x["udid"]==u),"Missing"))')"
+          test "$STATE" = "Booted"
+
+          sleep 10
+
+      - name: Install and capture real app UI
+        run: |
+          set -euo pipefail
+          APP_PATH="$GITHUB_WORKSPACE/build/ios-derived/Build/Products/Release-iphonesimulator/App.app"
+          test -d "$APP_PATH"
+
+          xcrun simctl install "$SIM_UDID" "$APP_PATH"
+          xcrun simctl launch "$SIM_UDID" com.randis2288.dartscorepro --args -AppleLanguages "(en)" -AppleLocale en_US
+
+          sleep 15
+
+          mkdir -p "$RUNNER_TEMP/ipad-shot"
+          SHOT="$RUNNER_TEMP/ipad-shot/DartScore_iPad_13_EN_lobby.png"
+          xcrun simctl io "$SIM_UDID" screenshot "$SHOT"
+
+          sips -g pixelWidth -g pixelHeight "$SHOT"
+
+      - name: Upload screenshot artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DartScore_iPad_13_EN_sample_v2
+          path: ${{ runner.temp }}/ipad-shot/DartScore_iPad_13_EN_lobby.png
+          if-no-files-found: error

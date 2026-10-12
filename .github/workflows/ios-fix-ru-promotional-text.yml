@@ -1,0 +1,44 @@
+name: Fix Russian promotional text
+
+on:
+  push:
+    branches:
+      - feature/ios-v97
+    paths:
+      - .github/workflows/ios-fix-ru-promotional-text.yml
+
+jobs:
+  fix:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    env:
+      APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+      APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+      APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fix Russian promotional text
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          source "$RUNNER_TEMP/venv/bin/activate"
+          python -m pip install --quiet PyJWT cryptography requests
+          python - <<'PY'
+          import os,time,jwt,requests,json
+          key=os.environ["APPSTORE_PRIVATE_KEY"]
+          kid=os.environ["APPSTORE_KEY_ID"]
+          issuer=os.environ["APPSTORE_ISSUER_ID"]
+          now=int(time.time())
+          token=jwt.encode({"iss":issuer,"iat":now,"exp":now+600,"aud":"appstoreconnect-v1"},key,algorithm="ES256",headers={"kid":kid,"typ":"JWT"})
+          headers={"Authorization":"Bearer "+token,"Content-Type":"application/json"}
+          base="https://api.appstoreconnect.apple.com"
+          loc_id="88a18622-da1b-44da-9d54-578c7cda819b"
+          text="X01, Cricket, Roulette Double — тренировка даблов, Around the Clock, команды, статистика и подсказки checkout. Быстрый и удобный подсчёт очков на 7 языках."
+          payload={"data":{"type":"appStoreVersionLocalizations","id":loc_id,"attributes":{"promotionalText":text}}}
+          r=requests.patch(f"{base}/v1/appStoreVersionLocalizations/{loc_id}",headers=headers,json=payload)
+          print("PATCH",r.status_code,r.text)
+          r.raise_for_status()
+          verify=requests.get(f"{base}/v1/appStoreVersionLocalizations/{loc_id}",headers={"Authorization":"Bearer "+token})
+          verify.raise_for_status()
+          print("VERIFY",json.dumps(verify.json()["data"]["attributes"].get("promotionalText"),ensure_ascii=False))
+          PY
