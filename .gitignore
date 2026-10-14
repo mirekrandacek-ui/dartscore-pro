@@ -5,6 +5,12 @@ android/
 *.aab
 *.apk
 *.keystore
+*.jks
+keystore.properties
+signing.properties
+*.p8
+*.p12
+*.pem
 .env
 .env.local
 .DS_Store

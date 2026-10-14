@@ -40,6 +40,16 @@ jobs:
           test -s public/privacy/index.html
           test -s public/support.html
           test -s ios/App/App.xcodeproj/project.pbxproj
+      - name: Check signing secrets are not tracked
+        run: |
+          set -euo pipefail
+          test ! -e android.keystore
+          test ! -e app/signing.keystore
+          ! grep -q '^MYAPP_UPLOAD_STORE_PASSWORD=' gradle.properties
+          ! grep -q '^MYAPP_UPLOAD_KEY_PASSWORD=' gradle.properties
+          grep -q '^\*.keystore$' .gitignore
+          grep -q '^\*.jks$' .gitignore
+          grep -q '^keystore.properties$' .gitignore
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -49,14 +59,13 @@ jobs:
           packages: ''
       - name: Install Android 36 SDK
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
-      - name: Build Android app bundle and APK
+      - name: Build unsigned release bundle and debug APK
         run: |
           chmod +x gradlew
-          ./gradlew :app:bundleRelease :app:assembleRelease --stacktrace --no-daemon
+          ./gradlew :app:bundleRelease :app:assembleDebug --stacktrace --no-daemon
       - name: Verify Android artifacts
         run: |
           set -euo pipefail
           test -s app/build/outputs/bundle/release/app-release.aab
-          test -s app/build/outputs/apk/release/app-release.apk
+          test -s app/build/outputs/apk/debug/app-debug.apk
           unzip -l app/build/outputs/bundle/release/app-release.aab | grep 'base/assets/offline/index.html'
-          jarsigner -verify app/build/outputs/bundle/release/app-release.aab

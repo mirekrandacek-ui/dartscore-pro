@@ -15,6 +15,7 @@
  */
 
 import groovy.xml.MarkupBuilder
+import java.util.Properties
 
 plugins {
     id 'com.android.application'
@@ -44,16 +45,32 @@ def twaManifest = [
     orientation: 'portrait',
 ]
 
+def signingProperties = new Properties()
+def signingPropertiesFile = rootProject.file('keystore.properties')
+if (signingPropertiesFile.exists()) {
+    signingPropertiesFile.withInputStream { stream ->
+        signingProperties.load(stream)
+    }
+}
+
+def uploadStoreFile = signingProperties.getProperty('storeFile') ?: System.getenv('DARTSCORE_UPLOAD_STORE_FILE')
+def uploadStorePassword = signingProperties.getProperty('storePassword') ?: System.getenv('DARTSCORE_UPLOAD_STORE_PASSWORD')
+def uploadKeyAlias = signingProperties.getProperty('keyAlias') ?: System.getenv('DARTSCORE_UPLOAD_KEY_ALIAS')
+def uploadKeyPassword = signingProperties.getProperty('keyPassword') ?: System.getenv('DARTSCORE_UPLOAD_KEY_PASSWORD')
+def uploadSigningConfigured = [uploadStoreFile, uploadStorePassword, uploadKeyAlias, uploadKeyPassword].every { it }
+
 android {
     compileSdkVersion 36
     namespace "com.randis2288.dartscorepro"
 
     signingConfigs {
         release {
-            storeFile file(MYAPP_UPLOAD_STORE_FILE)
-            storePassword MYAPP_UPLOAD_STORE_PASSWORD
-            keyAlias MYAPP_UPLOAD_KEY_ALIAS
-            keyPassword MYAPP_UPLOAD_KEY_PASSWORD
+            if (uploadSigningConfigured) {
+                storeFile rootProject.file(uploadStoreFile)
+                storePassword uploadStorePassword
+                keyAlias uploadKeyAlias
+                keyPassword uploadKeyPassword
+            }
         }
     }
 
@@ -105,7 +122,9 @@ android {
     buildTypes {
         release {
             minifyEnabled true
-            signingConfig signingConfigs.release
+            if (uploadSigningConfigured) {
+                signingConfig signingConfigs.release
+            }
             ndk {
                 debugSymbolLevel 'SYMBOL_TABLE'
             }
