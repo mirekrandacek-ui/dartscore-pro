@@ -38,13 +38,13 @@ try {
   }
   assert.ok(page, 'Scoring page must exist');
   await page.locator('.lobbyWrap').waitFor({ timeout: 30000 });
-  await page.evaluate(() => localStorage.setItem('savedGame', JSON.stringify({
+  await page.addInitScript(() => localStorage.setItem('savedGame', JSON.stringify({
     screen: 'game', mode: 'classic', lang: 'cs',
     players: [{ id: 1, name: 'Dlouhé jméno hráče' }, { id: 2, name: 'Robot', bot: true, level: 1 }],
     order: [0, 1], currIdx: 0, scores: [100, 44], lastTurn: [180, 100], thrown: [21, 21]
   })));
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.getByRole('button', { name: 'Pokračovat ve hře', exact: true }).click();
+  await page.getByRole('button', { name: /^(Pokračovat ve hře|Continue game)$/ }).click();
   await page.locator('.classicTurn').first().waitFor();
   assert.deepEqual(await page.locator('.classicAroundPane .playerScore').allTextContents(), ['100', '44']);
   assert.deepEqual(await page.locator('.classicAroundPane .lastTotal').allTextContents(), ['Poslední hod: 180', 'Poslední hod: 100']);
