@@ -47,7 +47,12 @@ try {
     }));
   });
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.getByRole('button', { name: /^(Pokračovat ve hře|Continue game)$/ }).click({ noWaitAfter: true });
+  // The native app's WebView CDP session may report a pending navigation for a
+  // Playwright click even when React has already handled the click. Dispatch the
+  // normal DOM click instead and wait for the game view, not for navigation.
+  const continueButton = page.getByRole('button', { name: /^(Pokračovat ve hře|Continue game)$/ });
+  await continueButton.waitFor({ state: 'visible', timeout: 15000 });
+  await continueButton.evaluate(button => button.click());
   await page.locator('.classicTurn').first().waitFor();
   assert.deepEqual(await page.locator('.classicAroundPane .playerScore').allTextContents(), ['100', '44']);
   assert.deepEqual(await page.locator('.classicAroundPane .lastTotal').allTextContents(), ['Poslední hod: 180', 'Poslední hod: 100']);
