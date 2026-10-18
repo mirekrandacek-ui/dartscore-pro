@@ -8,6 +8,7 @@ on:
     paths:
       - src/**
       - tests/**
+      - qa/ios-webkit-ui.mjs
       - public/**
       - package.json
       - package-lock.json
@@ -38,6 +39,29 @@ jobs:
 
       - name: Build frozen web bundle
         run: npm run build
+
+      - name: Run interactive mobile WebKit UI checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install webkit
+          npm run preview -- --host 127.0.0.1 --port 4173 --strictPort > /tmp/dartscore-vite-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          for i in {1..40}; do
+            if curl -fsS http://127.0.0.1:4173/ > /dev/null; then break; fi
+            sleep 1
+          done
+          node qa/ios-webkit-ui.mjs
+
+      - name: Upload WebKit mobile UI results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dartscore-webkit-ui-evidence
+          path: build/mobile-ui-evidence/
+          if-no-files-found: ignore
 
       - name: Sync Capacitor iOS
         run: npx cap sync ios
