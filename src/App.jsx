@@ -4181,6 +4181,9 @@ function Lobby({
     const matchOptions = Array.from({ length: 21 }, (_, ix) => ix + 1);
     const isNativeAndroidApp =
       typeof window !== 'undefined' && Boolean(window.DartScoreAndroid);
+    // Native iOS and Android (including TWA) should never show web-only SEO copy.
+    const isMobileAppView = IS_IOS || isNativeAndroidApp ||
+      (typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent));
 
     const shareApp = async () => {
       const url = IS_IOS
@@ -4714,7 +4717,7 @@ function Lobby({
         </div>
         {/* >>> DARTSCORE_UNIQUE_ANCHOR__RULES_BLOCK__END__9F31 <<< */}
 
-        {!isNativeAndroidApp && (
+        {!isMobileAppView && (
           <section className="webPublisherContent" aria-labelledby="dartscore-web-about">
             {lang === 'cs' ? (
               <>
