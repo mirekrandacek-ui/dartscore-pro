@@ -1111,7 +1111,8 @@ html, body{
 
 .classicAroundPane .classicTurn{
   display:grid;
-  grid-template-columns:repeat(3, minmax(42px, 1fr)) minmax(78px, 1.3fr);
+  /* Reserve the complete last-visit label and value before sharing dart space. */
+  grid-template-columns:repeat(3, minmax(42px, 1fr)) max-content;
 }
 
 .classicAroundPane .aroundTurn{
