@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.Voice;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowInsets;
@@ -49,6 +50,9 @@ import com.google.android.play.core.appupdate.AppUpdateInfo;
 import com.google.android.play.core.appupdate.AppUpdateManager;
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
 import com.google.android.play.core.appupdate.AppUpdateOptions;
+import com.google.android.play.core.review.ReviewInfo;
+import com.google.android.play.core.review.ReviewManager;
+import com.google.android.play.core.review.ReviewManagerFactory;
 import com.google.android.play.core.install.InstallStateUpdatedListener;
 import com.google.android.play.core.install.model.AppUpdateType;
 import com.google.android.play.core.install.model.InstallStatus;
@@ -95,6 +99,7 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private AppUpdateManager appUpdateManager;
     private InstallStateUpdatedListener updateInstallListener;
     private boolean updateFlowStarted = false;
+    private boolean inAppReviewInProgress = false;
 
     private ConsentInformation consentInformation;
     private boolean adsReady = false;
@@ -865,6 +870,59 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         });
     }
 
+    /**
+     * Automatically requested after meaningful play from the idle lobby.
+     * Google Play alone decides whether its review card appears. There is no
+     * callback indicating that the user rated the app or even saw the card.
+     */
+    private void requestInAppReviewNative() {
+        if (inAppReviewInProgress || isFinishing() || isDestroyed()) return;
+        inAppReviewInProgress = true;
+        try {
+            ReviewManager manager = ReviewManagerFactory.create(this);
+            manager.requestReviewFlow().addOnCompleteListener(this, request -> {
+                if (!request.isSuccessful()) {
+                    Log.w("DartScoreReview", "In-app review request unavailable", request.getException());
+                    inAppReviewInProgress = false;
+                    return;
+                }
+                try {
+                    ReviewInfo info = request.getResult();
+                    if (webView == null) {
+                        inAppReviewInProgress = false;
+                        return;
+                    }
+                    // Preparing ReviewInfo is async; the user may have begun a match.
+                    // Never interrupt an active game just because they were idle earlier.
+                    webView.evaluateJavascript(
+                        "document.visibilityState === 'visible' && !!document.querySelector('.lobbyWrap')",
+                        stillIdle -> {
+                            if (!"true".equals(stillIdle) || isFinishing() || isDestroyed()) {
+                                inAppReviewInProgress = false;
+                                return;
+                            }
+                            try {
+                                manager.launchReviewFlow(this, info).addOnCompleteListener(this, finished -> {
+                                    // The result does not reveal a rating or even card visibility.
+                                    inAppReviewInProgress = false;
+                                });
+                            } catch (Exception error) {
+                                Log.w("DartScoreReview", "Could not launch in-app review", error);
+                                inAppReviewInProgress = false;
+                            }
+                        }
+                    );
+                } catch (Exception error) {
+                    Log.w("DartScoreReview", "Could not prepare in-app review", error);
+                    inAppReviewInProgress = false;
+                }
+            });
+        } catch (Exception error) {
+            Log.w("DartScoreReview", "In-app review API unavailable", error);
+            inAppReviewInProgress = false;
+        }
+    }
+
     private void openStoreListingNative() {
         String packageId = getPackageName();
         Intent marketIntent = new Intent(
@@ -1146,7 +1204,14 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
 
         @JavascriptInterface
         public void rateApp() {
+            // A user-tapped rating button opens Play Store; the quota-controlled
+            // review API is intentionally reserved for automatic prompts.
             runOnUiThread(MainWebViewActivity.this::openStoreListingNative);
+        }
+
+        @JavascriptInterface
+        public void requestInAppReview() {
+            runOnUiThread(MainWebViewActivity.this::requestInAppReviewNative);
         }
 
         @JavascriptInterface

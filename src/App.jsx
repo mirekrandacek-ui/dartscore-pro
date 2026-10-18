@@ -1310,6 +1310,20 @@ function App() {
     } catch { }
     const state = readReviewState();
     if (!canShowReviewPrompt(state)) return false;
+    // On Android v103+ use Google's native, quota-managed review card directly.
+    // The API never reports whether the card was shown or a rating was submitted.
+    if (!IS_IOS && typeof window.DartScoreAndroid?.requestInAppReview === 'function') {
+      try {
+        window.DartScoreAndroid.requestInAppReview();
+        writeReviewState(onPromptShown(state));
+        return true;
+      } catch (err) {
+        console.warn('Native in-app review unavailable:', err);
+        return false;
+      }
+    }
+
+    // Preserve the previous flow for iOS, web and older Android releases.
     writeReviewState(onPromptShown(state));
     setShowReviewPrompt(true);
     return true;
