@@ -9,6 +9,7 @@ on:
       - src/**
       - tests/**
       - qa/ios-webkit-ui.mjs
+      - qa/ios-webkit-modes.mjs
       - public/**
       - package.json
       - package-lock.json
@@ -54,6 +55,7 @@ jobs:
             sleep 1
           done
           node qa/ios-webkit-ui.mjs
+          node qa/ios-webkit-modes.mjs
 
       - name: Upload WebKit mobile UI results
         if: always()
