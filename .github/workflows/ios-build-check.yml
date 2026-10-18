@@ -18,7 +18,7 @@ on:
 jobs:
   ios-build:
     runs-on: macos-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
 
     steps:
       - name: Checkout iOS branch
@@ -53,3 +53,45 @@ jobs:
       - name: Compile iOS app without signing
         run: |
           xcodebuild             -project ios/App/App.xcodeproj             -scheme App             -configuration Release             -sdk iphonesimulator             -derivedDataPath build/ios-derived             CODE_SIGNING_ALLOWED=NO             build
+
+
+      - name: Boot iPhone Simulator and launch DartScore Pro
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcrun simctl list devices available
+          export DARTSCORE_SIM_UDID="$(
+            xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          data = json.load(sys.stdin)
+          candidates = [
+              d for devices in data["devices"].values() for d in devices
+              if d.get("isAvailable") and d.get("name", "").startswith("iPhone")
+          ]
+          if not candidates:
+              raise SystemExit("No available iPhone simulator devices")
+          preferred = next((d for d in candidates if "iPhone 16 Pro" in d["name"]), candidates[0])
+          print(preferred["udid"])
+          '
+          )"
+          echo "Using iPhone Simulator: $DARTSCORE_SIM_UDID"
+          xcrun simctl boot "$DARTSCORE_SIM_UDID"
+          xcrun simctl bootstatus "$DARTSCORE_SIM_UDID" -b
+          APP_PATH="build/ios-derived/Build/Products/Release-iphonesimulator/App.app"
+          test -d "$APP_PATH"
+          xcrun simctl install "$DARTSCORE_SIM_UDID" "$APP_PATH"
+          xcrun simctl launch "$DARTSCORE_SIM_UDID" com.randis2288.dartscorepro
+          sleep 12
+          mkdir -p build/simulator-evidence
+          xcrun simctl io "$DARTSCORE_SIM_UDID" screenshot build/simulator-evidence/dartscore-lobby.png
+          test -s build/simulator-evidence/dartscore-lobby.png
+          sips -g pixelWidth -g pixelHeight build/simulator-evidence/dartscore-lobby.png
+          xcrun simctl terminate "$DARTSCORE_SIM_UDID" com.randis2288.dartscorepro
+
+      - name: Upload iPhone Simulator screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dartscore-iphone-simulator-lobby
+          path: build/simulator-evidence/dartscore-lobby.png
+          if-no-files-found: ignore
