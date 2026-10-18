@@ -1,12 +1,7 @@
 name: X01 score fix - Android test and iOS TestFlight 7
 
 on:
-  push:
-    branches:
-      - test/x01-score-clipping-20261018
-    paths:
-      - .github/workflows/x01-score-test-builds.yml
-      - qa/android-score-clipping.mjs
+  workflow_dispatch:
 
 permissions:
   contents: read
