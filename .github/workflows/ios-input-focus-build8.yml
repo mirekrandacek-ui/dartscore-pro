@@ -1,4 +1,4 @@
-name: iOS input focus fix - TestFlight build 8
+name: iOS input focus fix - signed IPA build 8
 
 on:
   push:
@@ -158,26 +158,9 @@ jobs:
             --apiIssuer "$APPSTORE_ISSUER_ID" \
             --p8-file-path "$APPSTORE_KEY_PATH"
 
-      - name: Upload build to App Store Connect
-        run: |
-          set -euo pipefail
-          xcrun altool \
-            --upload-app \
-            -f "$RUNNER_TEMP/export/DartScorePro_1.1.63_build8.ipa" \
-            -t ios \
-            --apiKey "$APPSTORE_KEY_ID" \
-            --apiIssuer "$APPSTORE_ISSUER_ID" \
-            --p8-file-path "$APPSTORE_KEY_PATH"
-
       - name: Upload signed IPA artifact
         uses: actions/upload-artifact@v4
         with:
           name: DartScorePro_iOS_1.1.63_build8
           path: ${{ runner.temp }}/export/DartScorePro_1.1.63_build8.ipa
           if-no-files-found: error
-
-      - name: Assign build 8 to internal TestFlight testers
-        shell: bash
-        run: |
-          set -euo pipefail
-          ruby scripts/asc_assign_internal_build8.rb
