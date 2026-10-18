@@ -888,12 +888,32 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
                 }
                 try {
                     ReviewInfo info = request.getResult();
-                    manager.launchReviewFlow(this, info).addOnCompleteListener(this, finished -> {
-                        // Completion says nothing about a submitted rating or card visibility.
+                    if (webView == null) {
                         inAppReviewInProgress = false;
-                    });
+                        return;
+                    }
+                    // Preparing ReviewInfo is async; the user may have begun a match.
+                    // Never interrupt an active game just because they were idle earlier.
+                    webView.evaluateJavascript(
+                        "document.visibilityState === 'visible' && !!document.querySelector('.lobbyWrap')",
+                        stillIdle -> {
+                            if (!"true".equals(stillIdle) || isFinishing() || isDestroyed()) {
+                                inAppReviewInProgress = false;
+                                return;
+                            }
+                            try {
+                                manager.launchReviewFlow(this, info).addOnCompleteListener(this, finished -> {
+                                    // The result does not reveal a rating or even card visibility.
+                                    inAppReviewInProgress = false;
+                                });
+                            } catch (Exception error) {
+                                Log.w("DartScoreReview", "Could not launch in-app review", error);
+                                inAppReviewInProgress = false;
+                            }
+                        }
+                    );
                 } catch (Exception error) {
-                    Log.w("DartScoreReview", "Could not launch in-app review", error);
+                    Log.w("DartScoreReview", "Could not prepare in-app review", error);
                     inAppReviewInProgress = false;
                 }
             });
