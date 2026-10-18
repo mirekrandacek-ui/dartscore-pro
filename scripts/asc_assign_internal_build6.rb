@@ -77,16 +77,34 @@ end
 raise "Build #{BUILD_NUMBER} not yet ready for internal testing; upload may still have succeeded" unless build
 build_id = build.fetch('id')
 
-# If the group automatically distributes all builds, POST may return 409.
-# In every case, verify the resulting relationship before claiming success.
-body = { data: [{ type: 'builds', id: build_id }] }
-code, response = request(:post, "/v1/betaGroups/#{group_id}/relationships/builds", token, body)
-unless [204, 409].include?(code)
-  raise "Failed to add build #{BUILD_NUMBER} to internal group (HTTP #{code}): #{response.fetch('errors', []).map { |e| e['detail'] }.join('; ')}"
+# Automatic internal groups already have access to all eligible builds.
+# The ASC API rejects adding them explicitly with HTTP 422 even though
+# TestFlight access can already be active. Only POST to manual groups.
+automatic = group.dig('attributes', 'hasAccessToAllBuilds') == true
+puts "Internal group automatic distribution: #{automatic}"
+
+unless automatic
+  body = { data: [{ type: 'builds', id: build_id }] }
+  code, response = request(:post, "/v1/betaGroups/#{group_id}/relationships/builds", token, body)
+  if code == 422 &&
+      response.fetch('errors', []).any? { |e| e['detail'].to_s.include?('Cannot add internal group to a build') }
+    puts 'Apple rejected manual linking; checking whether the build is already automatically assigned'
+  elsif ![204, 409].include?(code)
+    raise "Failed to add build #{BUILD_NUMBER} to internal group (HTTP #{code}): #{response.fetch('errors', []).map { |e| e['detail'] }.join('; ')}"
+  end
 end
-code, response = request(:get, "/v1/betaGroups/#{group_id}/relationships/builds", token, nil, { 'limit' => 200 })
-raise "Failed to verify internal group association (HTTP #{code})" unless code == 200
-unless response.fetch('data', []).any? { |b| b['id'] == build_id }
-  raise "Build #{BUILD_NUMBER} was not confirmed in internal group #{GROUP_NAME}"
+
+# Verify the actual Apple relationship, not just a successful upload.
+confirmed = false
+12.times do |attempt|
+  code, response = request(:get, "/v1/betaGroups/#{group_id}/relationships/builds", token, nil, { 'limit' => 200 })
+  raise "Failed to verify internal group association (HTTP #{code})" unless code == 200
+  if response.fetch('data', []).any? { |b| b['id'] == build_id }
+    confirmed = true
+    break
+  end
+  puts "Waiting for build #{BUILD_NUMBER} to appear in internal group (#{attempt + 1}/12)"
+  sleep(20) if attempt < 11
 end
+raise "Build #{BUILD_NUMBER} not confirmed in internal group #{GROUP_NAME}" unless confirmed
 puts "SUCCESS: DartScore Pro 1.1.63 (#{BUILD_NUMBER}) is assigned to INTERNAL TestFlight group '#{GROUP_NAME}'."
