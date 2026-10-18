@@ -15,7 +15,8 @@ test('mobile flex containers and player cards cannot expand past viewport width'
   const css = read('src/app.css');
   const selectors = ['.container', '.lobbyWrap', '.lobbyCard', '.gameWrap', '.playersPane', '.padPane', '.playerCard'];
   for (const selector of selectors) {
-    const start = css.indexOf(selector + '{');
+    const selectorPattern = new RegExp(selector.replaceAll('.', '\\.') + '\\s*\\{');
+    const start = css.search(selectorPattern);
     assert.ok(start >= 0, selector + ' must exist');
     const end = css.indexOf('}', start);
     const block = css.slice(start, end);
