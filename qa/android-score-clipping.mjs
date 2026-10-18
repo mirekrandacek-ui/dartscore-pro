@@ -7,7 +7,7 @@ const pkg = 'com.randis2288.dartscorepro';
 const out = 'build/android-score-evidence';
 mkdirSync(out, { recursive: true });
 const serial = process.env.ANDROID_SERIAL;
-const adb = (...args) => execFileSync('adb', [...(serial ? ['-s', serial] : []), ...args], { encoding: 'utf8', timeout: 20000, maxBuffer: 8 * 1024 * 1024 });
+const adb = (...args) => execFileSync('adb', [...(serial ? ['-s', serial] : []), ...args], { encoding: 'utf8', timeout: args[0] === 'install' ? 120000 : 20000, maxBuffer: 8 * 1024 * 1024 });
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 let browser;
 try {
@@ -26,7 +26,7 @@ try {
   }
   assert.ok(socket, 'Native scoring WebView debugging socket must appear');
   adb('forward', 'tcp:9224', `localabstract:${socket}`);
-  browser = await chromium.connectOverCDP('http://127.0.0.1:9224', { timeout: 20000 });
+  browser = await chromium.connectOverCDP('http://127.0.0.1:9224', { timeout: 20000, noDefaults: true });
   const context = browser.contexts()[0];
   const page = context.pages().find(p => p.url().includes('dartscore-pro')) || context.pages()[0];
   assert.ok(page, 'Scoring page must exist');
