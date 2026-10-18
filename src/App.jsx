@@ -1044,7 +1044,20 @@ function speak(lang, text, enabled) {
   const targetLang = SPEECH_LANG_MAP[lang] || 'en-US';
 
   if (IS_IOS) {
-    DartScoreIOS.speak({ text: String(text), lang: targetLang }).catch(() => {});
+    DartScoreIOS.speak({ text: String(text), lang: targetLang }).catch((err) => {
+      // Surface native bridge/audio errors and provide a last-resort WebKit
+      // fallback instead of silently losing an entire X01 announcement.
+      console.warn('iOS native speech failed, trying Web Speech:', err);
+      try {
+        if (!window.speechSynthesis) return;
+        const utterance = new SpeechSynthesisUtterance(String(text));
+        utterance.lang = targetLang;
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
+      } catch (fallbackErr) {
+        console.warn('iOS Web Speech fallback failed:', fallbackErr);
+      }
+    });
     return;
   }
 
