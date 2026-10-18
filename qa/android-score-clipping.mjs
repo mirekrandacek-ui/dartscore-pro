@@ -20,7 +20,9 @@ try {
     let pid = '';
     try { pid = adb('shell', 'pidof', pkg).trim(); } catch {}
     socket = sockets.match(new RegExp(`@(webview_devtools_remote_${pid})(?:\\s|$)`))?.[1];
-    if (socket) break;
+    const mainVisible = adb('shell', 'dumpsys', 'activity', 'activities').includes(pkg + '/.MainWebViewActivity');
+    if (socket && mainVisible) break;
+    socket = undefined;
     if (attempt % 10 === 0) console.log('Waiting for native scoring WebView', attempt);
     await delay(2000);
   }
@@ -28,7 +30,12 @@ try {
   adb('forward', 'tcp:9224', `localabstract:${socket}`);
   browser = await chromium.connectOverCDP('http://127.0.0.1:9224', { timeout: 20000, noDefaults: true });
   const context = browser.contexts()[0];
-  const page = context.pages().find(p => p.url().includes('dartscore-pro')) || context.pages()[0];
+  let page;
+  for (let attempt = 0; attempt < 30; attempt++) {
+    page = context.pages().find(p => p.url().includes('dartscore-pro'));
+    if (page) break;
+    await delay(1000);
+  }
   assert.ok(page, 'Scoring page must exist');
   await page.locator('.lobbyWrap').waitFor({ timeout: 30000 });
   await page.evaluate(() => localStorage.setItem('savedGame', JSON.stringify({
