@@ -48,6 +48,8 @@ test('Android native Play review is automatic and never replaces the manual Stor
   assert.match(java, /ReviewManagerFactory\.create\(this\)/);
   assert.match(java, /manager\.requestReviewFlow\(\)/);
   assert.match(java, /manager\.launchReviewFlow\(this, info\)/);
+  assert.match(java, /document\.querySelector\('\.lobbyWrap'\)/);
+  assert.match(java, /!"true"\.equals\(stillIdle\)/);
   assert.match(java, /public void requestInAppReview\(\)/);
   assert.match(java, /MainWebViewActivity\.this::requestInAppReviewNative/);
 
