@@ -25,13 +25,16 @@
 @media (max-height: 720px){ :root{ --padH: 220px; } }
 
 *{box-sizing:border-box}
-html,body,#root{height:100%}
+html,body,#root{height:100%;width:100%;max-width:100%}
 body{
   margin:0;background:var(--bg);color:var(--text);
   font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
 }
 .container{
   height:calc(var(--vh,1vh)*100);
+  width:100%;
+  min-width:0;
+  max-width:100%;
   display:flex;
   flex-direction:column;
   min-height:0;
@@ -53,6 +56,7 @@ body{
 
 /* HEADER */
 .header{
+  width:100%;min-width:0;max-width:100%;
   display:flex;align-items:center;justify-content:space-between;
   gap:8px;padding:6px 8px;padding-top: max(6px, var(--sat), 28px);
 background:#13161a;border-bottom:1px solid var(--line)
@@ -125,6 +129,7 @@ input[type="text"]{color:#fff}
 
 /* LOBBY */
 .lobbyWrap{
+  width:100%;min-width:0;max-width:100%;
   display:flex;
   flex-direction:column;
   gap:8px;
@@ -136,10 +141,12 @@ input[type="text"]{color:#fff}
   -webkit-overflow-scrolling:touch;
 }
 .lobbyCard{
+  width:100%;min-width:0;max-width:100%;
   flex:0 0 auto;background:var(--panel);border:1px solid var(--line);
   border-radius:14px;padding:8px
 }
 .lobbyControls{
+  min-width:0;max-width:100%;
   display:flex;align-items:center;gap:6px;flex-wrap:wrap
 }
 .lobbyControls span{color:#fff;font-weight:800}
@@ -150,7 +157,8 @@ input[type="text"]{color:#fff}
 .tab input{accent-color:#16a34a}
 .tab.active{background:var(--green);border-color:#14532d}
 .playerRow{
-  display:grid;grid-template-columns:1fr auto auto auto;gap:8px;align-items:center;
+  min-width:0;
+  display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:8px;align-items:center;
   padding:6px;border:1px solid var(--line);border-radius:10px;background:#1c2026
 }
 .playerName input{width:100%}
@@ -174,6 +182,7 @@ input[type="text"]{color:#fff}
 .savedSub{color:#cbd5e1;font-size:12px}
 /* GAME WRAP */
 .gameWrap{
+  width:100%;min-width:0;max-width:100%;
   display:flex;
   flex-direction:column;
   gap:8px;
@@ -185,6 +194,7 @@ input[type="text"]{color:#fff}
 
 /* horní lišta – jeden pevný řádek */
 .gameTopBar{
+  min-width:0;max-width:100%;
   display:flex;
   align-items:center;
   flex:0 0 auto;
@@ -222,6 +232,7 @@ input[type="text"]{color:#fff}
 }
 
 .playersPane{
+  width:100%;min-width:0;max-width:100%;
   flex:1 1 calc(100% - var(--padH));
   min-height:0;
   overflow:auto;
@@ -467,13 +478,14 @@ input[type="text"]{color:#fff}
 }
 /* PAD */
 .padPane{
+  width:100%;min-width:0;
   flex:0 0 var(--padH);     /* společná výška pro všechny módy */
   background:var(--panel);
   border:1px solid var(--line);
   border-radius:14px;
   padding:8px;
   overflow:hidden;
-  max-width:100vw;
+  max-width:100%;
   /* BEZ margin-top – ten řešíme jen pro cricket níž */
 }
 /* Extra mezera mezi tabulkou a klávesnicí jen v Cricketu */
@@ -599,7 +611,7 @@ input[type="text"]{color:#fff}
 .container:not([data-mode="cricket"]) .padPane{
   /* rámeček drží obsah */
   overflow:hidden;
-  max-width:100vw;
+  max-width:100%;
   padding:8px;
   box-sizing:border-box;
 
