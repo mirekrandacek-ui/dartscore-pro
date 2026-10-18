@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/ios-v97
+      - fix/ios-testflight-layout-voice-20261018
     paths:
       - src/**
       - public/**
@@ -30,6 +31,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Run regression tests
+        run: npm test
 
       - name: Build frozen web bundle
         run: npm run build
