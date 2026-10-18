@@ -7,6 +7,7 @@ on:
       - fix/ios-testflight-layout-voice-20261018
     paths:
       - src/**
+      - tests/**
       - public/**
       - package.json
       - package-lock.json
