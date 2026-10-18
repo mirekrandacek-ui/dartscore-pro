@@ -6,13 +6,15 @@ on:
   push:
     branches:
       - feature/ios-v97
+      - fix/ios-testflight-layout-voice-20261018
+      - test/x01-score-clipping-20261018
     paths:
       - .github/workflows/ios-signed-archive.yml
 
 jobs:
   signed-archive:
     runs-on: macos-latest
-    timeout-minutes: 35
+    timeout-minutes: 50
     env:
       APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
       APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
@@ -56,7 +58,7 @@ jobs:
           grep -q "DEVELOPMENT_TEAM = MQG667M2B8;" ios/App/App.xcodeproj/project.pbxproj
           grep -q "PRODUCT_BUNDLE_IDENTIFIER = com.randis2288.dartscorepro;" ios/App/App.xcodeproj/project.pbxproj
           grep -q "MARKETING_VERSION = 1.1.63;" ios/App/App.xcodeproj/project.pbxproj
-          grep -q "CURRENT_PROJECT_VERSION = 5;" ios/App/App.xcodeproj/project.pbxproj
+          grep -q "CURRENT_PROJECT_VERSION = 7;" ios/App/App.xcodeproj/project.pbxproj
 
       - name: Create unsigned archive
         run: |
@@ -109,14 +111,14 @@ jobs:
           mkdir -p "$RUNNER_TEMP/export"
           xcodebuild             -exportArchive             -archivePath "$RUNNER_TEMP/DartScorePro.xcarchive"             -exportPath "$RUNNER_TEMP/export"             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"             -allowProvisioningUpdates             -authenticationKeyPath "$APPSTORE_KEY_PATH"             -authenticationKeyID "$APPSTORE_KEY_ID"             -authenticationKeyIssuerID "$APPSTORE_ISSUER_ID"
           test -f "$RUNNER_TEMP/export/App.ipa"
-          mv "$RUNNER_TEMP/export/App.ipa" "$RUNNER_TEMP/export/DartScorePro_1.1.63_build5.ipa"
+          mv "$RUNNER_TEMP/export/App.ipa" "$RUNNER_TEMP/export/DartScorePro_1.1.63_build7.ipa"
 
       - name: Validate IPA with App Store Connect
         run: |
           set -euo pipefail
           xcrun altool \
             --validate-app \
-            -f "$RUNNER_TEMP/export/DartScorePro_1.1.63_build5.ipa" \
+            -f "$RUNNER_TEMP/export/DartScorePro_1.1.63_build7.ipa" \
             -t ios \
             --apiKey "$APPSTORE_KEY_ID" \
             --apiIssuer "$APPSTORE_ISSUER_ID" \
@@ -127,7 +129,7 @@ jobs:
           set -euo pipefail
           xcrun altool \
             --upload-app \
-            -f "$RUNNER_TEMP/export/DartScorePro_1.1.63_build5.ipa" \
+            -f "$RUNNER_TEMP/export/DartScorePro_1.1.63_build7.ipa" \
             -t ios \
             --apiKey "$APPSTORE_KEY_ID" \
             --apiIssuer "$APPSTORE_ISSUER_ID" \
@@ -136,6 +138,12 @@ jobs:
       - name: Upload signed IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DartScorePro_iOS_1.1.63_build5
-          path: ${{ runner.temp }}/export/DartScorePro_1.1.63_build5.ipa
+          name: DartScorePro_iOS_1.1.63_build7
+          path: ${{ runner.temp }}/export/DartScorePro_1.1.63_build7.ipa
           if-no-files-found: error
+
+      - name: Assign build 7 to internal TestFlight testers
+        shell: bash
+        run: |
+          set -euo pipefail
+          ruby scripts/asc_assign_internal_build7.rb

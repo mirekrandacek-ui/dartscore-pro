@@ -1,0 +1,93 @@
+name: Upload verified iOS build 8 to internal TestFlight
+
+on:
+  push:
+    branches:
+      - test/ios-input-focus-20261018
+    paths:
+      - .github/workflows/ios-upload-build8.yml
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: ios-testflight-upload-build8
+  cancel-in-progress: false
+
+jobs:
+  internal-testflight:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    env:
+      APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+      APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+      APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify original build run succeeded at the tested commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api repos/mirekrandacek-ui/dartscore-pro/actions/runs/39131472547 > "$RUNNER_TEMP/build8-run.json"
+          python3 - <<'PY'
+          import json, os
+          with open(os.path.join(os.environ['RUNNER_TEMP'], 'build8-run.json')) as f:
+              run = json.load(f)
+          assert run['status'] == 'completed' and run['conclusion'] == 'success', 'Build run must succeed first'
+          assert run['head_sha'] == 'd1eaa567fbbe5fab095cc96fc07c0fea256c91c0', 'Unexpected build source'
+          print('Verified successful source run and exact build commit')
+          PY
+
+      - name: Download the verified signed build 8 without rebuilding
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 39131472547
+          name: DartScorePro_iOS_1.1.63_build8
+          path: ${{ runner.temp }}/build8-export
+
+      - name: Verify packaged iOS app identity
+        run: |
+          python3 - <<'PY'
+          import os, plistlib, zipfile
+          path = os.path.join(os.environ['RUNNER_TEMP'], 'build8-export', 'DartScorePro_1.1.63_build8.ipa')
+          with zipfile.ZipFile(path) as ipa:
+              info = plistlib.loads(ipa.read('Payload/App.app/Info.plist'))
+          assert info['CFBundleIdentifier'] == 'com.randis2288.dartscorepro'
+          assert info['CFBundleShortVersionString'] == '1.1.63'
+          assert str(info['CFBundleVersion']) == '8'
+          print('Verified DartScore Pro 1.1.63 (8) inside signed IPA')
+          PY
+
+      - name: Prepare App Store Connect API key
+        run: |
+          set -euo pipefail
+          test -n "$APPSTORE_ISSUER_ID"
+          test -n "$APPSTORE_KEY_ID"
+          test -n "$APPSTORE_PRIVATE_KEY"
+          KEY_DIR="$RUNNER_TEMP/appstore-key"
+          mkdir -p "$KEY_DIR"
+          KEY_PATH="$KEY_DIR/AuthKey_${APPSTORE_KEY_ID}.p8"
+          printf '%s' "$APPSTORE_PRIVATE_KEY" > "$KEY_PATH"
+          chmod 600 "$KEY_PATH"
+          echo "APPSTORE_KEY_PATH=$KEY_PATH" >> "$GITHUB_ENV"
+
+      - name: Upload build 8 to App Store Connect
+        run: |
+          set -euo pipefail
+          xcrun altool \
+            --upload-app \
+            -f "$RUNNER_TEMP/build8-export/DartScorePro_1.1.63_build8.ipa" \
+            -t ios \
+            --apiKey "$APPSTORE_KEY_ID" \
+            --apiIssuer "$APPSTORE_ISSUER_ID" \
+            --p8-file-path "$APPSTORE_KEY_PATH"
+
+      - name: Assign and verify build 8 in existing internal TestFlight group
+        run: |
+          set -euo pipefail
+          ruby -c scripts/asc_assign_internal_build8.rb
+          ruby scripts/asc_assign_internal_build8.rb

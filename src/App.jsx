@@ -1044,7 +1044,20 @@ function speak(lang, text, enabled) {
   const targetLang = SPEECH_LANG_MAP[lang] || 'en-US';
 
   if (IS_IOS) {
-    DartScoreIOS.speak({ text: String(text), lang: targetLang }).catch(() => {});
+    DartScoreIOS.speak({ text: String(text), lang: targetLang }).catch((err) => {
+      // Surface native bridge/audio errors and provide a last-resort WebKit
+      // fallback instead of silently losing an entire X01 announcement.
+      console.warn('iOS native speech failed, trying Web Speech:', err);
+      try {
+        if (!window.speechSynthesis) return;
+        const utterance = new SpeechSynthesisUtterance(String(text));
+        utterance.lang = targetLang;
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
+      } catch (fallbackErr) {
+        console.warn('iOS Web Speech fallback failed:', fallbackErr);
+      }
+    });
     return;
   }
 
@@ -4181,6 +4194,9 @@ function Lobby({
     const matchOptions = Array.from({ length: 21 }, (_, ix) => ix + 1);
     const isNativeAndroidApp =
       typeof window !== 'undefined' && Boolean(window.DartScoreAndroid);
+    // Native iOS and Android (including TWA) should never show web-only SEO copy.
+    const isMobileAppView = IS_IOS || isNativeAndroidApp ||
+      (typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent));
 
     const shareApp = async () => {
       const url = IS_IOS
@@ -4714,7 +4730,7 @@ function Lobby({
         </div>
         {/* >>> DARTSCORE_UNIQUE_ANCHOR__RULES_BLOCK__END__9F31 <<< */}
 
-        {!isNativeAndroidApp && (
+        {!isMobileAppView && (
           <section className="webPublisherContent" aria-labelledby="dartscore-web-about">
             {lang === 'cs' ? (
               <>

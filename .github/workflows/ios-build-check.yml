@@ -4,8 +4,13 @@ on:
   push:
     branches:
       - feature/ios-v97
+      - fix/ios-testflight-layout-voice-20261018
     paths:
       - src/**
+      - tests/**
+      - qa/ios-webkit-ui.mjs
+      - qa/ios-webkit-modes.mjs
+      - scripts/asc_assign_internal_build6.rb
       - public/**
       - package.json
       - package-lock.json
@@ -16,7 +21,7 @@ on:
 jobs:
   ios-build:
     runs-on: macos-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
 
     steps:
       - name: Checkout iOS branch
@@ -31,8 +36,38 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Run regression tests
+        run: npm test
+
+      - name: Validate internal TestFlight assignment script
+        run: ruby -c scripts/asc_assign_internal_build6.rb
+
       - name: Build frozen web bundle
         run: npm run build
+
+      - name: Run interactive mobile WebKit UI checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install webkit
+          npm run preview -- --host 127.0.0.1 --port 4173 --strictPort > /tmp/dartscore-vite-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          for i in {1..40}; do
+            if curl -fsS http://127.0.0.1:4173/ > /dev/null; then break; fi
+            sleep 1
+          done
+          node qa/ios-webkit-ui.mjs
+          node qa/ios-webkit-modes.mjs
+
+      - name: Upload WebKit mobile UI results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dartscore-webkit-ui-evidence
+          path: build/mobile-ui-evidence/
+          if-no-files-found: ignore
 
       - name: Sync Capacitor iOS
         run: npx cap sync ios
@@ -41,10 +76,52 @@ jobs:
         run: |
           grep -q "PRODUCT_BUNDLE_IDENTIFIER = com.randis2288.dartscorepro;" ios/App/App.xcodeproj/project.pbxproj
           grep -q "MARKETING_VERSION = 1.1.63;" ios/App/App.xcodeproj/project.pbxproj
-          grep -q "CURRENT_PROJECT_VERSION = 5;" ios/App/App.xcodeproj/project.pbxproj
+          grep -q "CURRENT_PROJECT_VERSION = 6;" ios/App/App.xcodeproj/project.pbxproj
           grep -q "IPHONEOS_DEPLOYMENT_TARGET = 15.0;" ios/App/App.xcodeproj/project.pbxproj
           /usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" ios/App/App/Info.plist | grep -qx "DartScore Pro"
 
       - name: Compile iOS app without signing
         run: |
           xcodebuild             -project ios/App/App.xcodeproj             -scheme App             -configuration Release             -sdk iphonesimulator             -derivedDataPath build/ios-derived             CODE_SIGNING_ALLOWED=NO             build
+
+
+      - name: Boot iPhone Simulator and launch DartScore Pro
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcrun simctl list devices available
+          export DARTSCORE_SIM_UDID="$(
+            xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          data = json.load(sys.stdin)
+          candidates = [
+              d for devices in data["devices"].values() for d in devices
+              if d.get("isAvailable") and d.get("name", "").startswith("iPhone")
+          ]
+          if not candidates:
+              raise SystemExit("No available iPhone simulator devices")
+          preferred = next((d for d in candidates if "iPhone 16 Pro" in d["name"]), candidates[0])
+          print(preferred["udid"])
+          '
+          )"
+          echo "Using iPhone Simulator: $DARTSCORE_SIM_UDID"
+          xcrun simctl boot "$DARTSCORE_SIM_UDID"
+          xcrun simctl bootstatus "$DARTSCORE_SIM_UDID" -b
+          APP_PATH="build/ios-derived/Build/Products/Release-iphonesimulator/App.app"
+          test -d "$APP_PATH"
+          xcrun simctl install "$DARTSCORE_SIM_UDID" "$APP_PATH"
+          xcrun simctl launch "$DARTSCORE_SIM_UDID" com.randis2288.dartscorepro
+          sleep 12
+          mkdir -p build/simulator-evidence
+          xcrun simctl io "$DARTSCORE_SIM_UDID" screenshot build/simulator-evidence/dartscore-lobby.png
+          test -s build/simulator-evidence/dartscore-lobby.png
+          sips -g pixelWidth -g pixelHeight build/simulator-evidence/dartscore-lobby.png
+          xcrun simctl terminate "$DARTSCORE_SIM_UDID" com.randis2288.dartscorepro
+
+      - name: Upload iPhone Simulator screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dartscore-iphone-simulator-lobby
+          path: build/simulator-evidence/dartscore-lobby.png
+          if-no-files-found: ignore
