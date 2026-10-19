@@ -1174,6 +1174,14 @@ async function showInterstitialAd(eventDetails) {
     // This avoids the legacy bridge bypassing the native cadence.
     const query = new URLSearchParams(eventDetails);
     if (eventDetails.ad_event !== 'non_x01_start') recordFullscreenAdRequest();
+    // Native Android WebView must not navigate away from the game to show an ad.
+    // A custom-scheme location change could leave a transient Activity as the
+    // foreground task and make the entire game appear to close after the ad.
+    if (typeof window.DartScoreAndroid?.requestInterstitialEvent === 'function') {
+      window.DartScoreAndroid.requestInterstitialEvent(query.toString());
+      return true;
+    }
+    // Preserve the original deep-link route for TWA / browser installations.
     window.location.href = `${ADMOB_INTERSTITIAL_SCHEME_URL}?${query}`;
     return true;
   } catch (err) {

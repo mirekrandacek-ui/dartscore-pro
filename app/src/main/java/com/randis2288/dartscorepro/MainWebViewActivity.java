@@ -244,8 +244,10 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         String scheme = uri.getScheme();
         String host = uri.getHost();
 
-        if ("dartscorepro".equals(scheme)) {
-            startActivity(new Intent(Intent.ACTION_VIEW, uri));
+        if ("dartscorepro".equals(scheme) && "show-interstitial".equals(host)) {
+            // Always launch the ad inside this app's existing task, not via an
+            // implicit VIEW intent that could change task or browser history.
+            startActivity(new Intent(this, AdMobInterstitialActivity.class).setData(uri));
             return true;
         }
 
@@ -514,6 +516,36 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
                 }
             }
         );
+    }
+
+    private void logAnalyticsEventInternal(String encodedQuery) {
+        if (encodedQuery == null || encodedQuery.length() > 512 || isFinishing() || isDestroyed()) return;
+        try {
+            // Use the existing whitelist/parser without ever opening an Activity.
+            Uri uri = Uri.parse("dartscorepro://show-interstitial?" + encodedQuery);
+            AdMobInterstitialActivity.handleAnalyticsIntent(this, uri);
+        } catch (RuntimeException e) {
+            Log.w("DartScoreAdMob", "Rejected malformed Analytics event.", e);
+        }
+    }
+
+    private void requestInterstitialEventInternal(String encodedQuery) {
+        // JavaScript interfaces run off the UI thread. This method is invoked
+        // on the UI thread by DartScoreBridge, preserving the game Activity.
+        if (currentPremiumState || isFinishing() || isDestroyed()) return;
+        if (encodedQuery == null || encodedQuery.length() > 512) return;
+        try {
+            Uri uri = Uri.parse("dartscorepro://show-interstitial?" + encodedQuery);
+            String event = uri.getQueryParameter("ad_event");
+            if (!"completed".equals(event) && !"abandoned".equals(event)
+                && !"non_x01_start".equals(event)
+                && !"non_x01_boundary".equals(event)
+                && !"legacy".equals(event)
+                && !"legacy_bridge".equals(event)) return;
+            startActivity(new Intent(this, AdMobInterstitialActivity.class).setData(uri));
+        } catch (RuntimeException e) {
+            Log.w("DartScoreAdMob", "Rejected malformed in-app ad event.", e);
+        }
     }
 
     private void showInterstitialInternal() {
@@ -1247,6 +1279,16 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         @JavascriptInterface
         public String getLastInterstitialShownAt() {
             return String.valueOf(InterstitialCadence.lastShownAt(getApplicationContext()));
+        }
+
+        @JavascriptInterface
+        public void logAnalyticsEvent(String encodedQuery) {
+            runOnUiThread(() -> logAnalyticsEventInternal(encodedQuery));
+        }
+
+        @JavascriptInterface
+        public void requestInterstitialEvent(String encodedQuery) {
+            runOnUiThread(() -> requestInterstitialEventInternal(encodedQuery));
         }
 
         @JavascriptInterface

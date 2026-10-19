@@ -7,6 +7,14 @@ on:
       - qa/android-score-clipping.mjs
       - .github/workflows/android-score-qa.yml
   workflow_dispatch:
+  pull_request:
+    paths:
+      - 'app/src/main/**'
+      - 'src/App.jsx'
+      - 'src/analyticsEvents.js'
+      - 'qa/android-interstitial-resume.mjs'
+      - 'tests/androidInterstitialReturn.test.mjs'
+      - '.github/workflows/android-score-qa.yml'
 
 permissions:
   contents: read
@@ -15,6 +23,10 @@ jobs:
   android-qa:
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        android_api: [35, 36]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -58,12 +70,14 @@ jobs:
       - name: Test real Android WebView (not browser emulation)
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 35
+          api-level: ${{ matrix.android_api }}
           target: google_apis
           arch: x86_64
           profile: pixel_6
           disable-animations: true
-          script: node qa/android-score-clipping.mjs
+          script: |
+            node qa/android-score-clipping.mjs
+            node qa/android-interstitial-resume.mjs
       - name: Retain Android APK and UI screenshot evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -73,4 +87,5 @@ jobs:
             app/build/outputs/apk/debug/app-debug.apk
             build/x01-score-evidence/
             build/android-score-evidence/
+            build/android-ad-resume-evidence/
           if-no-files-found: ignore
