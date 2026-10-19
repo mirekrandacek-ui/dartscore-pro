@@ -1270,7 +1270,16 @@ function App() {
   useEffect(() => {
     // iOS standalone / Android cutouts fallback
     const root = document.documentElement;
-    root.style.setProperty('--sat-fallback', '28px');
+    // Native Android now applies actual status/navigation/cutout insets to
+    // the WebView itself. Do not add CSS safe-area padding a second time.
+    if (window.DartScoreAndroid) {
+      for (const side of ['--sat', '--sar', '--sab', '--sal', '--sat-fallback']) {
+        root.style.setProperty(side, '0px');
+      }
+      root.classList.add('native-android-insets');
+    } else {
+      root.style.setProperty('--sat-fallback', '28px');
+    }
 
     const setVh = () => {
       document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
@@ -1512,7 +1521,7 @@ function App() {
   const winAudioRef = useRef(null);
   /* persist screen */
 
-  const APP_VERSION = '1.1.68';
+  const APP_VERSION = '1.1.70';
   const LOBBY_DEFAULTS_VERSION = '1.1.62';
 
   /* načti lobby z localStorage */

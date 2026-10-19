@@ -7,6 +7,7 @@ android/
 *.keystore
 *.jks
 keystore.properties
+local.properties
 signing.properties
 *.p8
 *.p12

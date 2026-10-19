@@ -69,11 +69,13 @@ try {
   }
   let before;
   for (let i = 0; i < 35; i++) {
-    before = await evaluate('({url: location.href, lobby: !!document.querySelector(".lobbyWrap"), premium: (() => { try { return localStorage.getItem("premium"); } catch { return null; } })(), bridge: typeof window.DartScoreAndroid?.requestInterstitialEvent, analytics: typeof window.DartScoreAndroid?.logAnalyticsEvent})');
-    if (before.lobby) break;
+    before = await evaluate('({url: location.href, width: innerWidth, scrollWidth: document.documentElement?.scrollWidth ?? 0, nativeInsets: document.documentElement?.classList.contains("native-android-insets") ?? false, lobby: !!document.querySelector(".lobbyWrap"), premium: (() => { try { return localStorage.getItem("premium"); } catch { return null; } })(), bridge: typeof window.DartScoreAndroid?.requestInterstitialEvent, analytics: typeof window.DartScoreAndroid?.logAnalyticsEvent})');
+    if (before.lobby && before.nativeInsets) break;
     await delay(500);
   }
   assert.ok(before.lobby, 'lobby is rendered');
+  assert.ok(before.nativeInsets, 'Android insets class applied to native WebView');
+  assert.ok(before.scrollWidth <= before.width + 2, 'no horizontal overflow in Android WebView');
   // Google Play may restore a Premium purchase even after pm clear. Force Free
   // only inside this debug emulator so the ad code can still be exercised.
   if (before.premium === 'true') {
@@ -104,6 +106,8 @@ try {
   const after = await evaluate('({url: location.href, lobby: !!document.querySelector(".lobbyWrap")})');
   assert.equal(after.url, before.url);
   assert.equal(after.lobby, true);
+  const finalGeometry = await evaluate('({width: innerWidth, scrollWidth: document.documentElement.scrollWidth})');
+  assert.ok(finalGeometry.scrollWidth <= finalGeometry.width + 2, 'no clipping after ad');
   assert.ok(adb('shell', 'pidof', pkg), 'Android app process must survive the ad attempt');
   const recent = adb('logcat', '-d', '-s', 'AndroidRuntime:E', 'DartScoreAdMob:D');
   assert.doesNotMatch(recent, /FATAL EXCEPTION/, 'no fatal native crash');
