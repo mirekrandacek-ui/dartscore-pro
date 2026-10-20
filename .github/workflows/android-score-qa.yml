@@ -93,7 +93,7 @@ jobs:
           disable-animations: true
           script: |
             node qa/android-score-clipping.mjs
-            node qa/android-interstitial-resume.mjs
+            DARTSCORE_REQUIRE_TEST_AD=1 node qa/android-interstitial-resume.mjs
             node qa/android-release-startup.mjs
       - name: Retain Android APK and UI screenshot evidence
         if: always()
