@@ -3,6 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 
 const pkg = 'com.randis2288.dartscorepro';
+const requireDisplayedTestAd = process.env.DARTSCORE_REQUIRE_TEST_AD === '1';
 const adbBin = process.env.ADB_PATH || 'adb';
 const adb = (...args) => execFileSync(adbBin, args, { encoding: 'utf8', timeout: 25000 }).trim();
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -88,6 +89,19 @@ try {
   assert.equal(before.bridge, 'function');
   assert.equal(before.analytics, 'function');
 
+  if (requireDisplayedTestAd) {
+    const preloadMethod = await evaluate('typeof window.DartScoreAndroid?.preloadInterstitialTestAd');
+    assert.equal(preloadMethod, 'function', 'QA build must expose debug-only test ad preload');
+    await evaluate('window.DartScoreAndroid.preloadInterstitialTestAd(); true');
+    let loaded = false;
+    for (let i = 0; i < 60; i++) {
+      await delay(1000);
+      const adsLog = adb('logcat', '-d', '-s', 'DartScoreAdMob:D');
+      if (adsLog.includes('Interstitial preloaded.')) { loaded = true; break; }
+    }
+    assert.ok(loaded, 'Google demo interstitial must actually load before game #3');
+  }
+
   // Reproduce the reported Free 101 case: an ad becomes eligible only on
   // the third short-game completion. Each win also emits Analytics.
   for (let completedGames = 1; completedGames <= 3; completedGames++) {
@@ -99,6 +113,24 @@ try {
     await delay(completedGames === 3 ? 5200 : 900);
     assert.ok(adb('shell', 'pidof', pkg), 'Free 101 game ' + completedGames + ' must not kill the Android process');
   }
+  if (requireDisplayedTestAd) {
+    const log = () => adb('logcat', '-d', '-s', 'DartScoreAdMob:D');
+    assert.match(log(), /Interstitial SDK showed fullscreen creative\./,
+      'Google SDK must confirm the actual fullscreen test ad displayed');
+    adb('shell', 'input', 'keyevent', '4');
+    for (let attempt = 0; attempt < 12 && !log().includes('Interstitial SDK dismissed fullscreen creative.'); attempt++) {
+      await delay(1000);
+      if (attempt === 5) {
+        // Fallback for interstitials with a close icon rather than back-key dismissal.
+        const wm = adb('shell', 'wm', 'size');
+        const m = wm.match(/(\d+)x(\d+)/);
+        if (m) adb('shell', 'input', 'tap', String(Number(m[1]) - 50), '115');
+      }
+    }
+    assert.match(log(), /Interstitial SDK dismissed fullscreen creative\./,
+      'Google SDK must confirm fullscreen test ad dismissal');
+  }
+
   let activities = adb('shell', 'dumpsys', 'activity', 'activities');
   // Dismiss a test network's full-screen ad only when it actually covers the app.
   if (!activities.match(/topResumedActivity=.*MainWebViewActivity/)) {
@@ -115,7 +147,7 @@ try {
   assert.ok(adb('shell', 'pidof', pkg), 'Android app process must survive the ad attempt');
   const recent = adb('logcat', '-d', '-s', 'AndroidRuntime:E', 'DartScoreAdMob:D');
   assert.doesNotMatch(recent, /FATAL EXCEPTION/, 'no fatal native crash');
-  const summary = { before, after, resumed: true, api: adb('shell', 'getprop', 'ro.build.version.sdk'), recentLog: recent.slice(-3500) };
+  const summary = { before, after, displayedTestAd: requireDisplayedTestAd, resumed: true, api: adb('shell', 'getprop', 'ro.build.version.sdk'), recentLog: recent.slice(-3500) };
   writeFileSync(output + '/results.json', JSON.stringify(summary, null, 2));
   writeFileSync(output + '/screenshot.png', execFileSync(adbBin, ['exec-out', 'screencap', '-p'], { timeout: 25000 }));
   console.log('PASS Android emulator: Analytics + interstitial completed without closing the scoring app', summary.api);
