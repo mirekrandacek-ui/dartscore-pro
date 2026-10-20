@@ -1248,6 +1248,13 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     }
 
     private class DartScoreBridge {
+        // Called only by emulator QA. It has no effect in production builds.
+        @JavascriptInterface
+        public void preloadInterstitialTestAd() {
+            if ((getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) == 0) return;
+            runOnUiThread(() -> AdMobInterstitialManager.preload(getApplicationContext()));
+        }
+
         @JavascriptInterface
         public void setPremium(boolean isPremium) {
             runOnUiThread(() -> setPremiumState(isPremium));
