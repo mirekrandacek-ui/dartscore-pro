@@ -117,15 +117,28 @@ try {
     const log = () => adb('logcat', '-d', '-s', 'DartScoreAdMob:D');
     assert.match(log(), /Interstitial SDK showed fullscreen creative\./,
       'Google SDK must confirm the actual fullscreen test ad displayed');
+    writeFileSync(output + '/test-ad-before-dismiss.png',
+      execFileSync(adbBin, ['exec-out', 'screencap', '-p'], { timeout: 25000 }));
+    const wm = adb('shell', 'wm', 'size');
+    const m = wm.match(/(\d+)x(\d+)/);
+    const width = m ? Number(m[1]) : 1080;
     adb('shell', 'input', 'keyevent', '4');
-    for (let attempt = 0; attempt < 12 && !log().includes('Interstitial SDK dismissed fullscreen creative.'); attempt++) {
+    // Video and rewarded-like test creatives may disable Close while a
+    // countdown is running. Allow sufficient time, then try close controls.
+    for (let attempt = 0; attempt < 50 && !log().includes('Interstitial SDK dismissed fullscreen creative.'); attempt++) {
       await delay(1000);
-      if (attempt === 5) {
-        // Fallback for interstitials with a close icon rather than back-key dismissal.
-        const wm = adb('shell', 'wm', 'size');
-        const m = wm.match(/(\d+)x(\d+)/);
-        if (m) adb('shell', 'input', 'tap', String(Number(m[1]) - 50), '115');
-      }
+      if (attempt === 10 || attempt === 20) adb('shell', 'input', 'keyevent', '4');
+      if (attempt === 30) adb('shell', 'input', 'tap', String(width - 55), '115');
+      if (attempt === 36) adb('shell', 'input', 'tap', '55', '115');
+      if (attempt === 42) adb('shell', 'input', 'keyevent', '4');
+    }
+    if (!log().includes('Interstitial SDK dismissed fullscreen creative.')) {
+      writeFileSync(output + '/test-ad-failed-dismiss.png',
+        execFileSync(adbBin, ['exec-out', 'screencap', '-p'], { timeout: 25000 }));
+      const activity = adb('shell', 'dumpsys', 'activity', 'activities');
+      writeFileSync(output + '/test-ad-failed-dismiss-activity.txt', activity);
+      writeFileSync(output + '/test-ad-failed-dismiss-log.txt', log());
+      console.log('QA DEMO AD DISMISS DIAG:', activity.match(/topResumedActivity=.*$/m)?.[0] || 'unknown');
     }
     assert.match(log(), /Interstitial SDK dismissed fullscreen creative\./,
       'Google SDK must confirm fullscreen test ad dismissal');
