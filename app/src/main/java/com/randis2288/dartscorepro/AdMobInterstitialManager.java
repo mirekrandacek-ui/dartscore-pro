@@ -2,6 +2,7 @@ package com.randis2288.dartscorepro;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -20,6 +21,9 @@ public final class AdMobInterstitialManager {
     private static final String TAG = "DartScoreAdMob";
     private static final String AD_UNIT_ID =
         "ca-app-pub-9232105399279318/3900554547";
+    // QA builds only: Google-provided non-monetizing interstitial creative.
+    private static final String DEBUG_TEST_AD_UNIT_ID =
+        "ca-app-pub-3940256099942544/1033173712";
 
     private static final long MAX_AD_AGE_MS = 55L * 60L * 1000L;
     private static final long LOAD_RETRY_DELAY_MS = 5000L;
@@ -32,7 +36,13 @@ public final class AdMobInterstitialManager {
     private AdMobInterstitialManager() {
     }
 
+    private static boolean isDebugTestBuild(Context context) {
+        return (context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+    }
+
     private static boolean canRequestAds(Context context) {
+        // Only QA/debug builds can bypass UMP for non-monetizing Google demo ads.
+        if (isDebugTestBuild(context)) return true;
         ConsentInformation consentInformation =
             UserMessagingPlatform.getConsentInformation(context.getApplicationContext());
         return consentInformation.canRequestAds();
@@ -67,7 +77,7 @@ public final class AdMobInterstitialManager {
 
         InterstitialAd.load(
             context.getApplicationContext(),
-            AD_UNIT_ID,
+            isDebugTestBuild(context) ? DEBUG_TEST_AD_UNIT_ID : AD_UNIT_ID,
             request,
             new InterstitialAdLoadCallback() {
                 @Override
@@ -153,11 +163,13 @@ public final class AdMobInterstitialManager {
 
                 @Override
                 public void onAdShowedFullScreenContent() {
+                    Log.d(TAG, "Interstitial SDK showed fullscreen creative.");
                     markDisplayedOnce();
                 }
 
                 @Override
                 public void onAdDismissedFullScreenContent() {
+                    Log.d(TAG, "Interstitial SDK dismissed fullscreen creative.");
                     // Defensive: if an SDK callback is missed but the user
                     // dismissed the ad, it was shown. Retain the cooldown.
                     markDisplayedOnce();
