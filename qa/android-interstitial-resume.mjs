@@ -88,13 +88,17 @@ try {
   assert.equal(before.bridge, 'function');
   assert.equal(before.analytics, 'function');
 
-  // Simulate the two concurrent events normally issued after a Free X01 win.
-  await evaluate('window.DartScoreAndroid.logAnalyticsEvent("analytics_event=game_completed&game_type=classic&plan_tier=free"); true');
-  await delay(250);
-  const afterAnalytics = await evaluate('location.href');
-  assert.equal(afterAnalytics, before.url, 'Analytics must not navigate or close the scoring WebView');
-  await evaluate('window.DartScoreAndroid.requestInterstitialEvent("ad_event=completed&mode=classic&score=501&legs=1&sets=1"); true');
-  await delay(5200);
+  // Reproduce the reported Free 101 case: an ad becomes eligible only on
+  // the third short-game completion. Each win also emits Analytics.
+  for (let completedGames = 1; completedGames <= 3; completedGames++) {
+    await evaluate('window.DartScoreAndroid.logAnalyticsEvent("analytics_event=game_completed&game_type=classic&plan_tier=free"); true');
+    await delay(250);
+    const afterAnalytics = await evaluate('location.href');
+    assert.equal(afterAnalytics, before.url, 'Analytics must never navigate or close the scoring WebView');
+    await evaluate('window.DartScoreAndroid.requestInterstitialEvent("ad_event=completed&mode=classic&score=101&legs=1&sets=1"); true');
+    await delay(completedGames === 3 ? 5200 : 900);
+    assert.ok(adb('shell', 'pidof', pkg), 'Free 101 game ' + completedGames + ' must not kill the Android process');
+  }
   let activities = adb('shell', 'dumpsys', 'activity', 'activities');
   // Dismiss a test network's full-screen ad only when it actually covers the app.
   if (!activities.match(/topResumedActivity=.*MainWebViewActivity/)) {
