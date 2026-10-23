@@ -162,3 +162,4 @@ appads.in, 106246, RESELLER
 prado.co, 14260, RESELLER
 pubnative.net, 1009458, RESELLER, d641df8625486a7b
 voisetech.com, 1066, RESELLER
+vungle.com, 6adb2761432de742530a10fd, DIRECT, c107d686becd2d77
