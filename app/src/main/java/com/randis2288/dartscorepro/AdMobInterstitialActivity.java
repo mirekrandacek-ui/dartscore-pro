@@ -49,7 +49,7 @@ public class AdMobInterstitialActivity extends Activity {
         super.onCreate(savedInstanceState);
         overridePendingTransition(0, 0);
 
-        if (handleAnalyticsIntent(getIntent() != null ? getIntent().getData() : null)) {
+        if (handleAnalyticsIntent(this, getIntent() != null ? getIntent().getData() : null)) {
             finish();
             overridePendingTransition(0, 0);
             return;
@@ -67,7 +67,7 @@ public class AdMobInterstitialActivity extends Activity {
         handler.postDelayed(timeoutRunnable, SHOW_TIMEOUT_MS);
     }
 
-    private boolean handleAnalyticsIntent(Uri uri) {
+    static boolean handleAnalyticsIntent(android.content.Context context, Uri uri) {
         if (uri == null) return false;
 
         String eventName = uri.getQueryParameter("analytics_event");
@@ -99,7 +99,7 @@ public class AdMobInterstitialActivity extends Activity {
             params.putString(key, value.length() > 100 ? value.substring(0, 100) : value);
         }
 
-        FirebaseAnalytics.getInstance(this).logEvent(eventName, params);
+        FirebaseAnalytics.getInstance(context).logEvent(eventName, params);
         Log.d(TAG, "Logged Analytics event: " + eventName);
         return true;
     }

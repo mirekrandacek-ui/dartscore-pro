@@ -7,6 +7,20 @@ on:
       - qa/android-score-clipping.mjs
       - .github/workflows/android-score-qa.yml
   workflow_dispatch:
+  pull_request:
+    paths:
+      - 'app/src/main/**'
+      - 'app/build.gradle'
+      - 'build.gradle'
+      - 'gradle/**'
+      - 'src/app.css'
+      - 'tests/android15-16Recommendations.test.mjs'
+      - 'qa/android-release-startup.mjs'
+      - 'src/App.jsx'
+      - 'src/analyticsEvents.js'
+      - 'qa/android-interstitial-resume.mjs'
+      - 'tests/androidInterstitialReturn.test.mjs'
+      - '.github/workflows/android-score-qa.yml'
 
 permissions:
   contents: read
@@ -15,6 +29,10 @@ jobs:
   android-qa:
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        android_api: [35, 36]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -38,6 +56,16 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew :app:assembleDebug --no-daemon --console=plain
+      - name: Build R8-optimized release APK with disposable CI signing key
+        run: |
+          keytool -genkeypair -noprompt -keyalg RSA -keysize 2048 -validity 365 -alias qa \
+            -keystore "$RUNNER_TEMP/dartscore-qa-signing.jks" -storepass qachangeit -keypass qachangeit \
+            -dname "CN=Temporary QA, O=DartScore CI, C=US"
+          DARTSCORE_UPLOAD_STORE_FILE="$RUNNER_TEMP/dartscore-qa-signing.jks" \
+          DARTSCORE_UPLOAD_STORE_PASSWORD=qachangeit \
+          DARTSCORE_UPLOAD_KEY_ALIAS=qa \
+          DARTSCORE_UPLOAD_KEY_PASSWORD=qachangeit \
+            ./gradlew :app:assembleRelease --no-daemon --console=plain
       - name: Install Chromium and WebKit scoring tests
         run: |
           npm install --no-save --package-lock=false playwright@1.62.1
@@ -58,19 +86,26 @@ jobs:
       - name: Test real Android WebView (not browser emulation)
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 35
+          api-level: ${{ matrix.android_api }}
           target: google_apis
           arch: x86_64
           profile: pixel_6
           disable-animations: true
-          script: node qa/android-score-clipping.mjs
+          script: |
+            node qa/android-score-clipping.mjs
+            node qa/android-interstitial-resume.mjs
+            node qa/android-release-startup.mjs
       - name: Retain Android APK and UI screenshot evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: DartScore-Android-score-qa
+          name: DartScore-Android-score-qa-api-${{ matrix.android_api }}
           path: |
             app/build/outputs/apk/debug/app-debug.apk
+            app/build/outputs/apk/release/app-release.apk
+            app/build/outputs/mapping/release/usage.txt
             build/x01-score-evidence/
             build/android-score-evidence/
+            build/android-ad-resume-evidence/
+            build/android-release-startup-evidence/
           if-no-files-found: ignore

@@ -11,6 +11,8 @@ permissions:
 
 jobs:
   build-and-check:
+    # This historical version-102 release check must not fail modern v104+ PRs.
+    if: github.event_name != 'pull_request' || github.head_ref == 'integration/v102-1.1.68-into-main'
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:

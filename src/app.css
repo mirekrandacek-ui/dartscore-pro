@@ -61,6 +61,8 @@ body{
   gap:8px;padding:6px 8px;padding-top: max(6px, var(--sat), 28px);
 background:#13161a;border-bottom:1px solid var(--line)
 }
+/* Native WebView is laid out below the real Android status bar by Java insets. */
+.native-android-insets .header{padding-top:6px}
 .header .left{display:flex;align-items:center;gap:8px;min-width:0}
 .logo{
   display:flex;align-items:center;gap:8px;font-weight:900;white-space:nowrap

@@ -1,6 +1,6 @@
 {
   "name": "DartScore Pro",
-  "short_name": "DartScore",
+  "short_name": "DartScore Pro",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#111827",
