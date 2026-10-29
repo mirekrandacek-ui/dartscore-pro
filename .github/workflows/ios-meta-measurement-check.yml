@@ -1,0 +1,44 @@
+name: iOS Meta measurement - build check only
+
+on:
+  push:
+    branches:
+      - codex/ios-meta-measurement-20261029
+    paths:
+      - ios/**
+      - src/**
+      - tests/**
+      - qa/meta-consent-policy/**
+      - .github/workflows/ios-meta-measurement-check.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Run native consent decisions
+        run: |
+          swiftc ios/App/App/MetaConsentPolicy.swift qa/meta-consent-policy/main.swift -o /tmp/meta-consent-check
+          /tmp/meta-consent-check
+      - run: npm run build
+      - run: npx cap sync ios
+      - name: Validate and compile simulator app without signing
+        run: |
+          plutil -lint ios/App/App/Info.plist ios/App/App.xcodeproj/project.pbxproj
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -sdk iphonesimulator -derivedDataPath build/ios-meta-derived CODE_SIGNING_ALLOWED=NO build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DartScorePro-iOS-Meta-simulator
+          path: build/ios-meta-derived/Build/Products/Debug-iphonesimulator/App.app
+          if-no-files-found: error

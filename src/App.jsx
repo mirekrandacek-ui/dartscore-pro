@@ -3,15 +3,16 @@ import { createPortal } from 'react-dom';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import {
   AdMob,
-  AdmobConsentStatus,
   BannerAdPosition,
   BannerAdSize
 } from '@capacitor-community/admob';
 import './app.css';
+import { createIOSPrivacy, privacyChoicesLabel } from './iosPrivacy.js';
 import { botThrowAround, botThrowClassic, botThrowCricket, botThrowRoulette, normalizeBotLevel } from './botEngine.js';
 import { hasRecordedScore, isQuickClassic, isSupportedX01, isNonX01LobbyAdMode } from './interstitialPolicy.js';
 
 const DartScoreIOS = registerPlugin('DartScoreIOS');
+const iosPrivacy = createIOSPrivacy(DartScoreIOS);
 const PLATFORM = Capacitor.getPlatform();
 const IS_IOS = PLATFORM === 'ios';
 const APP_STORE_ID = '6817341039';
@@ -31,14 +32,7 @@ let iosAdMobInitialized = false;
 async function ensureIOSAdMobReady() {
   if (!IS_IOS || !IOS_ADMOB_APP_ID) return false;
 
-  let consentInfo = await AdMob.requestConsentInfo();
-
-  if (
-    consentInfo?.isConsentFormAvailable &&
-    consentInfo?.status === AdmobConsentStatus.REQUIRED
-  ) {
-    consentInfo = await AdMob.showConsentForm();
-  }
+  const consentInfo = await iosPrivacy.prepare();
 
   if (!consentInfo?.canRequestAds) return false;
 
@@ -1370,6 +1364,44 @@ function App() {
   });
   const [premiumStateResolved, setPremiumStateResolved] = useState(!IS_IOS);
   const [iosBannerVisible, setIosBannerVisible] = useState(false);
+  const [privacyOptionsRequired, setPrivacyOptionsRequired] = useState(false);
+  const [privacyBusy, setPrivacyBusy] = useState(false);
+
+  useEffect(() => {
+    if (!IS_IOS || !premiumStateResolved) return undefined;
+    let cancelled = false;
+    const refresh = async (force = false) => {
+      try {
+        const result = await iosPrivacy.prepare({ refresh: force });
+        if (!cancelled) setPrivacyOptionsRequired(Boolean(result?.privacyOptionsRequired));
+      } catch (error) {
+        console.warn('iOS privacy update unavailable; measurement stays disabled');
+      }
+    };
+    const onVisible = () => { if (!document.hidden) void refresh(true); };
+    void refresh();
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [premiumStateResolved]);
+
+  const openIOSPrivacy = async () => {
+    setPrivacyBusy(true);
+    // Stop an existing ad before changing its consent, even if the form fails.
+    try { await AdMob.removeBanner(); } catch { }
+    setIosBannerVisible(false);
+    try {
+      const result = await iosPrivacy.showOptions();
+      setPrivacyOptionsRequired(Boolean(result?.privacyOptionsRequired));
+      if (!isPremium && result?.canRequestAds) {
+        setIosBannerVisible(Boolean(await showIOSBanner()));
+      }
+    } catch (error) {
+      console.warn('iOS privacy options unavailable; measurement stays disabled');
+    } finally { setPrivacyBusy(false); }
+  };
 
   useEffect(() => {
     const restorePremium = async () => {
@@ -4729,6 +4761,14 @@ function Lobby({
           </details>
         </div>
         {/* >>> DARTSCORE_UNIQUE_ANCHOR__RULES_BLOCK__END__9F31 <<< */}
+
+        {IS_IOS && privacyOptionsRequired && (
+          <div className="lobbyCard">
+            <button type="button" className="btn ghost" disabled={privacyBusy} onClick={openIOSPrivacy}>
+              {privacyChoicesLabel[lang] || privacyChoicesLabel.en}
+            </button>
+          </div>
+        )}
 
         {!isMobileAppView && (
           <section className="webPublisherContent" aria-labelledby="dartscore-web-about">

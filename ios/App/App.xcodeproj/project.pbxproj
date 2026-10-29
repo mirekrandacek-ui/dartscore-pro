@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A12900000000000000000001 /* MetaMeasurement.swift in Sources */ = {isa = PBXBuildFile; fileRef = A12900000000000000000002 /* MetaMeasurement.swift */; };
+		A12900000000000000000003 /* MetaConsentPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A12900000000000000000004 /* MetaConsentPolicy.swift */; };
+		A12900000000000000000005 /* FacebookCore in Frameworks */ = {isa = PBXBuildFile; productRef = A12900000000000000000006 /* FacebookCore */; };
+		A12900000000000000000008 /* GoogleUserMessagingPlatform in Frameworks */ = {isa = PBXBuildFile; productRef = A12900000000000000000009 /* GoogleUserMessagingPlatform */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 4D22ABE82AF431CB00220026 /* CapApp-SPM */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
@@ -19,6 +23,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A12900000000000000000002 /* MetaMeasurement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetaMeasurement.swift; sourceTree = "<group>"; };
+		A12900000000000000000004 /* MetaConsentPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetaConsentPolicy.swift; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -38,6 +44,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */,
+				A12900000000000000000005 /* FacebookCore in Frameworks */,
+				A12900000000000000000008 /* GoogleUserMessagingPlatform in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +73,8 @@
 			isa = PBXGroup;
 			children = (
 				9582B6822FE993A50072D4E8 /* SceneDelegate.swift */,
+				A12900000000000000000002 /* MetaMeasurement.swift */,
+				A12900000000000000000004 /* MetaConsentPolicy.swift */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
@@ -95,6 +105,8 @@
 			name = App;
 			packageProductDependencies = (
 				4D22ABE82AF431CB00220026 /* CapApp-SPM */,
+				A12900000000000000000006 /* FacebookCore */,
+				A12900000000000000000009 /* GoogleUserMessagingPlatform */,
 			);
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
@@ -126,6 +138,8 @@
 			);
 			mainGroup = 504EC2FB1FED79650016851F;
 			packageReferences = (
+				A12900000000000000000007 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */,
+				A1290000000000000000000A /* XCRemoteSwiftPackageReference "google-user-messaging-platform" */,
 				D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */,
 			);
 			productRefGroup = 504EC3051FED79650016851F /* Products */;
@@ -160,6 +174,8 @@
 			files = (
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,
+				A12900000000000000000001 /* MetaMeasurement.swift in Sources */,
+				A12900000000000000000003 /* MetaConsentPolicy.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -301,14 +317,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = MQG667M2B8;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1.63;
+				MARKETING_VERSION = 1.1.64;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = com.randis2288.dartscorepro;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -324,14 +340,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = MQG667M2B8;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1.63;
+				MARKETING_VERSION = 1.1.64;
 				PRODUCT_BUNDLE_IDENTIFIER = com.randis2288.dartscorepro;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
@@ -371,12 +387,35 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		A12900000000000000000006 /* FacebookCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A12900000000000000000007 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */;
+			productName = FacebookCore;
+		};
+		A12900000000000000000009 /* GoogleUserMessagingPlatform */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1290000000000000000000A /* XCRemoteSwiftPackageReference "google-user-messaging-platform" */;
+			productName = GoogleUserMessagingPlatform;
+		};
 		4D22ABE82AF431CB00220026 /* CapApp-SPM */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */;
 			productName = "CapApp-SPM";
 		};
 /* End XCSwiftPackageProductDependency section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A12900000000000000000007 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/facebook/facebook-ios-sdk.git";
+			requirement = {kind = exactVersion; version = 18.1.1; };
+		};
+		A1290000000000000000000A /* XCRemoteSwiftPackageReference "google-user-messaging-platform" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googleads/swift-package-manager-google-user-messaging-platform.git";
+			requirement = {kind = exactVersion; version = 3.1.0; };
+		};
+/* End XCRemoteSwiftPackageReference section */
 	};
 	rootObject = 504EC2FC1FED79650016851F /* Project object */;
 }

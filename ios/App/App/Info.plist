@@ -29,7 +29,21 @@
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-9232105399279318~8707407752</string>
 	<key>NSUserTrackingUsageDescription</key>
-	<string>Identifikátor může být použit k zobrazování relevantnějších reklam.</string>
+	<string>Your permission helps us measure which ads bring players to DartScore Pro. You can play without allowing tracking.</string>
+	<key>FacebookAppID</key>
+	<string>1714207943552602</string>
+	<key>FacebookClientToken</key>
+	<string>d0755b1754f49ed90542c4b3501bcd69</string>
+	<key>FacebookDisplayName</key>
+	<string>DartScore Pro</string>
+	<key>FacebookAutoLogAppEventsEnabled</key>
+	<false/>
+	<key>FacebookAdvertiserIDCollectionEnabled</key>
+	<false/>
+	<key>FacebookSKAdNetworkReportEnabled</key>
+	<false/>
+	<key>FBSDKAemAutoSetupEnabled</key>
+	<false/>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>
