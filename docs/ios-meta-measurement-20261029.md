@@ -1,6 +1,12 @@
 # iOS Meta measurement candidate — 29 October 2026
 
-Status: local implementation, NOT an iOS build or release approval.
+Status: uploaded and successfully compiled for the iOS simulator; NOT a device
+runtime, privacy, paid-attribution or release approval.
+
+Verified code commit: bf4588bda70d3fcfaaa5fbc2c89b34df30da323c.
+GitHub Actions: https://github.com/mirekrandacek-ui/dartscore-pro/actions/runs/40879109249
+Run completed successfully on 29 October 2026. Artifact: 12900235126,
+DartScorePro-iOS-Meta-simulator (12,183,403 bytes).
 
 Base: ded543bc1a425812a548dfe8201eca89233417b3, the build-8 iOS branch
 test/ios-input-focus-20261018. The local statistics WIP and Android checkout
@@ -36,18 +42,24 @@ were not changed. Candidate iOS version: 1.1.64 (9).
   Xcode project parsed successfully with the xcode package. This is structural
   validation, not a Swift compile.
 
-These do NOT prove the Swift code compiles, SDK network behavior, or paid
-attribution. Windows has no Xcode. The manual-only workflow
-ios-meta-measurement-check.yml performs the native policy's 19 scenarios and
-an unsigned simulator build on macOS. It contains no App Store upload step,
-no signing credentials and no campaign operations. It has not been run.
+Fresh macOS CI evidence: all 25 JS tests and all 19 native consent-policy
+scenarios passed; Vite build and cap sync passed; plutil validated both files;
+Xcode resolved Facebook 18.1.1 and returned BUILD SUCCEEDED. The workflow
+contains no App Store upload step, signing credentials or campaign operations.
+It runs only on the isolated branch's relevant changes or a manual dispatch.
+
+Downloaded artifact inspected on Randy: com.randis2288.dartscorepro,
+1.1.64 (9), platform iPhoneSimulator. Embedded FacebookAppID is correct;
+auto events, IDFA collection and default SKAdNetwork reporting are all false.
+The built app embeds FBSDKCoreKit, FBSDKCoreKit_Basics, FBAEMKit and UMP.
+These results do NOT prove SDK network behavior, withdrawal or paid attribution.
 
 ## Required gates before any release or advertising launch
 
-1. Approve uploading the isolated change to a new GitHub branch and running
-   only the unsigned macOS check. Do not reuse an automatic upload workflow.
-2. Resolve packages and compile; run the actual native consent tests. Inspect
-   the simulator app's embedded Info.plist and linked SDKs after cap sync.
+1. DONE: user approved upload to the isolated branch and unsigned macOS check.
+   No automatic store-upload workflow was used.
+2. DONE: packages resolved, Swift app compiled, native policy tested and
+   built metadata/frameworks inspected after cap sync.
 3. Verify that the published UMP message specifically covers Meta app ad
    measurement and permits purpose 7; provider consent alone is not proof of
    the published message's scope. Inspect current Meta server-side codeless
