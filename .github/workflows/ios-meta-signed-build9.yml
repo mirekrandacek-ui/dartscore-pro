@@ -162,7 +162,7 @@ jobs:
               assert info['FacebookAdvertiserIDCollectionEnabled'] is False
               assert info['FacebookSKAdNetworkReportEnabled'] is False
               sdk = plistlib.loads(ipa.read('Payload/App.app/Frameworks/FBSDKCoreKit.framework/Info.plist'))
-              assert sdk['CFBundleShortVersionString'] == '18.1.1'
+              assert sdk['CFBundleVersion'] == '18.1.1'
           print('Signed IPA: DartScore Pro 1.1.64 (9), Meta SDK 18.1.1, defaults disabled')
           PY
 
