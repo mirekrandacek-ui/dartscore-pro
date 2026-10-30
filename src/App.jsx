@@ -1467,7 +1467,7 @@ function App() {
     let cancelled = false;
 
     const syncIOSBanner = async () => {
-      if (isPremium || !IOS_ADS_CONFIGURED) {
+      if (isPremium || !IOS_BANNER_CONFIGURED) {
         try { await AdMob.removeBanner(); } catch { }
         if (!cancelled) setIosBannerVisible(false);
         return;
