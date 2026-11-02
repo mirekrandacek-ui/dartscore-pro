@@ -20,7 +20,9 @@ final class MetaMeasurement {
     }
 
     func suspend() {
-        updated = false
+        // Keep the consent update for this native app session. Returning from
+        // background (or a system dialog) must not force UMP to prompt again.
+        // Measurement stays off until the app becomes active and is re-checked.
         activatedThisForeground = false
         if initialized {
             Settings.shared.isAutoLogAppEventsEnabled = false
@@ -31,7 +33,15 @@ final class MetaMeasurement {
     }
 
     func prepare(from controller: UIViewController, completion: @escaping (Result<[String: Any], Error>) -> Void) {
+        // WebView remounts and re-entrant ad requests do not constitute a new
+        // native app launch. Ask UMP only once per process; the SDK persists
+        // the user's decision across actual launches.
+        if updated {
+            finish(completion: completion)
+            return
+        }
         suspend()
+        updated = false
         ConsentInformation.shared.requestConsentInfoUpdate(with: RequestParameters()) { error in
             DispatchQueue.main.async {
                 if let error = error { completion(.failure(error)); return }
@@ -47,7 +57,9 @@ final class MetaMeasurement {
     }
 
     func showOptions(from controller: UIViewController, completion: @escaping (Result<[String: Any], Error>) -> Void) {
+        // This is initiated only by the user's Privacy choices button.
         suspend()
+        updated = false
         Task { @MainActor in
             do {
                 try await ConsentForm.presentPrivacyOptionsForm(from: controller)
