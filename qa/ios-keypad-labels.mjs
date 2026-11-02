@@ -62,8 +62,8 @@ try {
                 if (label.length > 1 && (leftGap < 3 || rightGap < 3)) {
                   issues.push({ label, kind: 'no-inner-edge-clearance', leftGap, rightGap, fontSize });
                 }
-                if (label.length > 1 && glyph.width / key.width < 0.61) {
-                  issues.push({ label, kind: 'text-too-small-for-button', ratio: glyph.width / key.width, fontSize });
+                if (glyph.top < key.top + 2 || glyph.bottom > key.bottom - 2) {
+                  issues.push({ label, kind: 'vertical-edge-clearance', topGap: glyph.top - key.top, bottomGap: key.bottom - glyph.bottom, fontSize });
                 }
                 if (key.left < pad.left - 1 || key.right > pad.right + 1) {
                   issues.push({ label, kind: 'button-outside-keypad', left: key.left, right: key.right, paneLeft: pad.left, paneRight: pad.right });
