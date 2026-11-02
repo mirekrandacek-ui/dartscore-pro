@@ -18,10 +18,11 @@ try {
   for (const [engine, browserType] of Object.entries({ webkit, chromium })) {
     const browser = await browserType.launch();
     try {
-      for (const width of [320, 360, 375, 390, 430]) {
+      for (const width of [320, 360, 375, 390, 393, 430]) {
+        for (const height of [667, 844]) {
         for (const mode of cases) {
           const context = await browser.newContext({
-            viewport: { width, height: 844 },
+            viewport: { width, height },
             deviceScaleFactor: 2,
             isMobile: true,
             hasTouch: true,
@@ -55,6 +56,15 @@ try {
                 range.selectNodeContents(el);
                 const glyph = range.getBoundingClientRect();
                 const label = el.textContent.trim();
+                const fontSize = parseFloat(getComputedStyle(el).fontSize);
+                const leftGap = glyph.left - key.left;
+                const rightGap = key.right - glyph.right;
+                if (label.length > 1 && (leftGap < 3 || rightGap < 3)) {
+                  issues.push({ label, kind: 'no-inner-edge-clearance', leftGap, rightGap, fontSize });
+                }
+                if (label.length > 1 && glyph.width / key.width < 0.61) {
+                  issues.push({ label, kind: 'text-too-small-for-button', ratio: glyph.width / key.width, fontSize });
+                }
                 if (key.left < pad.left - 1 || key.right > pad.right + 1) {
                   issues.push({ label, kind: 'button-outside-keypad', left: key.left, right: key.right, paneLeft: pad.left, paneRight: pad.right });
                 }
@@ -71,15 +81,16 @@ try {
               }
               return { keyCount: keys.length, viewportWidth, paneWidth: pad.width, issues };
             });
-            results.push({ engine, width, mode: mode.mode, ...geometry });
-            await page.screenshot({ path: output + '/' + engine + '-' + width + '-' + mode.mode + '.png' });
+            results.push({ engine, width, height, mode: mode.mode, ...geometry });
+            await page.screenshot({ path: output + '/' + engine + '-' + width + 'x' + height + '-' + mode.mode + '.png' });
             assert.equal(geometry.keyCount, mode.expected, 'Missing buttons in ' + mode.mode);
-            assert.deepEqual(geometry.issues, [], engine + '/' + width + '/' + mode.mode + ' clipped digits');
+            assert.deepEqual(geometry.issues, [], engine + '/' + width + 'x' + height + '/' + mode.mode + ' clipped digits');
             assert.deepEqual(runtimeErrors, [], 'Unexpected page errors');
-            console.log('PASS', engine, width, mode.mode, 'all labels inside buttons');
+            console.log('PASS', engine, width, height, mode.mode, 'large labels safely inside unchanged buttons');
           } finally {
             await context.close();
           }
+        }
         }
       }
     } finally {
