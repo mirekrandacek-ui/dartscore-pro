@@ -6,6 +6,8 @@ on:
       - fix/ios-keypad-max-font-20261102
     paths:
       - .github/workflows/ios-keypad-maxfont-appetize.yml
+      - src/app.css
+      - qa/ios-keypad-labels.mjs
   workflow_dispatch:
 
 permissions:
