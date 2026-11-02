@@ -1,0 +1,72 @@
+name: iOS consent resume QA and Appetize simulator
+
+on:
+  push:
+    branches:
+      - fix/ios-consent-repeat-20261102
+    paths:
+      - .github/workflows/ios-consent-resume-appetize.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-consent:
+    runs-on: macos-latest
+    timeout-minutes: 55
+    steps:
+      - name: Checkout iOS consent fix
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Verify consent regression tests and build web UI
+        run: |
+          set -euo pipefail
+          npm ci
+          npm test
+          npm run build
+          npx cap sync ios
+
+      - name: Compile actual native iOS Simulator app with UMP and Meta SDK
+        run: |
+          set -euo pipefail
+          xcodebuild -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/dartscore-consent-simulator" \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+          APP="$RUNNER_TEMP/dartscore-consent-simulator/Build/Products/Debug-iphonesimulator/App.app"
+          test -f "$APP/App"
+          test -f "$APP/public/index.html"
+          lipo -archs "$APP/App" | grep -q arm64
+
+      - name: Create Appetize ZIP with root App.app
+        run: |
+          set -euo pipefail
+          APP_DIR="$RUNNER_TEMP/dartscore-consent-simulator/Build/Products/Debug-iphonesimulator"
+          ZIP="$RUNNER_TEMP/DartScorePro_iOS_ConsentNoRepeat_Appetize.zip"
+          cd "$APP_DIR"
+          /usr/bin/ditto -c -k --sequesterRsrc --keepParent App.app "$ZIP"
+          unzip -t "$ZIP" >/dev/null
+          unzip -Z -1 "$ZIP" | grep -q '^App.app/Info.plist$'
+          unzip -Z -1 "$ZIP" | grep -q '^App.app/public/index.html$'
+          echo "APPETIZE_ZIP=$ZIP" >> "$GITHUB_ENV"
+
+      - name: Upload Appetize ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: DartScorePro-iOS-ConsentNoRepeat-Appetize
+          path: ${{ env.APPETIZE_ZIP }}
+          if-no-files-found: error
+          retention-days: 14
