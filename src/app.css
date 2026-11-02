@@ -1612,12 +1612,16 @@ html, body{
   grid-template-columns:repeat(5,minmax(0,1fr));
 }
 .container[data-screen="game"]:not([data-mode="cricket"]) .padPane.dartKeypad > .padRow:not(:first-child) .key {
-  font-size:clamp(21px,6vw,27px);
+  font-size:clamp(27px, min(11vw, 6.3vh), 48px);
 }
 .container[data-screen="game"][data-mode="cricket"] .padPane.dartKeypad > .padRow:not(:first-child) {
   grid-template-columns:repeat(7,minmax(0,1fr));
 }
 .container[data-screen="game"][data-mode="cricket"] .padPane.dartKeypad > .padRow:not(:first-child) .key {
   min-width:0;
-  font-size:clamp(15px,4.1vw,20px);
+  font-size:clamp(22px, min(7.4vw, 5.5vh), 32px);
+}
+/* The full-width Cricket zero is limited by button height, not 7-column width. */
+.container[data-screen="game"][data-mode="cricket"] .padPane.dartKeypad > .padRow:last-child .key {
+  font-size:clamp(30px, min(11vw, 6vh), 44px);
 }
