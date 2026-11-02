@@ -56,14 +56,20 @@ try {
                 range.selectNodeContents(el);
                 const glyph = range.getBoundingClientRect();
                 const label = el.textContent.trim();
-                const fontSize = parseFloat(getComputedStyle(el).fontSize);
+                const computed = getComputedStyle(el);
+                const fontSize = parseFloat(computed.fontSize);
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                ctx.font = computed.fontWeight + ' ' + computed.fontSize + ' ' + computed.fontFamily;
+                const metrics = ctx.measureText(label);
+                const inkHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
                 const leftGap = glyph.left - key.left;
                 const rightGap = key.right - glyph.right;
                 if (label.length > 1 && (leftGap < 3 || rightGap < 3)) {
                   issues.push({ label, kind: 'no-inner-edge-clearance', leftGap, rightGap, fontSize });
                 }
-                if (glyph.top < key.top + 2 || glyph.bottom > key.bottom - 2) {
-                  issues.push({ label, kind: 'vertical-edge-clearance', topGap: glyph.top - key.top, bottomGap: key.bottom - glyph.bottom, fontSize });
+                if (inkHeight > key.height - 4) {
+                  issues.push({ label, kind: 'vertical-ink-clearance', inkHeight, buttonHeight: key.height, fontSize });
                 }
                 if (key.left < pad.left - 1 || key.right > pad.right + 1) {
                   issues.push({ label, kind: 'button-outside-keypad', left: key.left, right: key.right, paneLeft: pad.left, paneRight: pad.right });
