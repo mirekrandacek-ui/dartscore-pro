@@ -1,0 +1,74 @@
+name: iOS simulator ZIP for Appetize - fixed privacy crash
+
+on:
+  push:
+    branches:
+      - fix/ios-v164-privacy-lobby-crash-20261102
+    paths:
+      - .github/workflows/ios-appetize-simulator.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  simulator-package:
+    runs-on: macos-latest
+    timeout-minutes: 50
+    steps:
+      - name: Checkout fixed iOS source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Verify source and build embedded web assets
+        run: |
+          set -euo pipefail
+          npm ci
+          npm test
+          npm run build
+          npx cap sync ios
+          grep -q 'privacyOptionsRequired={privacyOptionsRequired}' src/App.jsx
+          grep -q 'privacyOptionsRequired, privacyBusy, openIOSPrivacy' src/App.jsx
+
+      - name: Build ARM64 iOS Simulator App.app
+        run: |
+          set -euo pipefail
+          xcodebuild -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/dartscore-appetize-build" \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+          test -f "$RUNNER_TEMP/dartscore-appetize-build/Build/Products/Debug-iphonesimulator/App.app/App"
+          test -f "$RUNNER_TEMP/dartscore-appetize-build/Build/Products/Debug-iphonesimulator/App.app/public/index.html"
+
+      - name: Produce ZIP accepted by Appetize
+        run: |
+          set -euo pipefail
+          APP_DIR="$RUNNER_TEMP/dartscore-appetize-build/Build/Products/Debug-iphonesimulator"
+          DEST="$RUNNER_TEMP/DartScorePro_iOS_Simulator_fixed.zip"
+          cd "$APP_DIR"
+          /usr/bin/ditto -c -k --sequesterRsrc --keepParent App.app "$DEST"
+          unzip -t "$DEST" >/dev/null
+          unzip -Z -1 "$DEST" | grep -q '^App.app/Info.plist$'
+          unzip -Z -1 "$DEST" | grep -q '^App.app/public/index.html$'
+          lipo -archs App.app/App | grep -q arm64
+          echo "APPETIZE_ZIP=$DEST" >> "$GITHUB_ENV"
+          ls -lh "$DEST"
+
+      - name: Upload Appetize-ready ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: DartScorePro-Appetize-iOS-Fixed
+          path: ${{ env.APPETIZE_ZIP }}
+          if-no-files-found: error
+          retention-days: 14
