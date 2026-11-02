@@ -1370,21 +1370,18 @@ function App() {
   useEffect(() => {
     if (!IS_IOS || !premiumStateResolved) return undefined;
     let cancelled = false;
-    const refresh = async (force = false) => {
+    const checkConsentAtLaunch = async () => {
       try {
-        const result = await iosPrivacy.prepare({ refresh: force });
+        // UMP refreshes the decision at each real app launch; coming back from
+        // a consent sheet, ATT dialog or Home must not open it a second time.
+        const result = await iosPrivacy.prepare();
         if (!cancelled) setPrivacyOptionsRequired(Boolean(result?.privacyOptionsRequired));
       } catch (error) {
         console.warn('iOS privacy update unavailable; measurement stays disabled');
       }
     };
-    const onVisible = () => { if (!document.hidden) void refresh(true); };
-    void refresh();
-    document.addEventListener('visibilitychange', onVisible);
-    return () => {
-      cancelled = true;
-      document.removeEventListener('visibilitychange', onVisible);
-    };
+    void checkConsentAtLaunch();
+    return () => { cancelled = true; };
   }, [premiumStateResolved]);
 
   const openIOSPrivacy = async () => {
