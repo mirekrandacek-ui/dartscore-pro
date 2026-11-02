@@ -1,0 +1,99 @@
+name: iOS maximized keypad font QA and Appetize ZIP
+
+on:
+  push:
+    branches:
+      - fix/ios-keypad-max-font-20261102
+    paths:
+      - .github/workflows/ios-keypad-maxfont-appetize.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-package:
+    runs-on: macos-latest
+    timeout-minutes: 55
+    steps:
+      - name: Checkout isolated keypad fix
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Run unit tests and build web app
+        run: |
+          set -euo pipefail
+          npm ci
+          node --check qa/ios-keypad-labels.mjs
+          npm test
+          npm run build
+
+      - name: Verify keypad geometry in mobile WebKit and Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.62.1
+          npx playwright install webkit chromium
+          npm run preview -- --host 127.0.0.1 --port 4173 --strictPort > "$RUNNER_TEMP/dartscore-vite.log" 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for i in {1..45}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 1
+          done
+          node qa/ios-keypad-labels.mjs
+
+      - name: Upload visual QA screenshots on success or failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DartScorePro-large-font-WebKit-geometry
+          path: build/ios-keypad-evidence/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Sync Capacitor iOS
+        run: npx cap sync ios
+
+      - name: Compile ARM64 iOS Simulator bundle
+        run: |
+          set -euo pipefail
+          xcodebuild -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/dartscore-keypad-ios" \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+          APP="$RUNNER_TEMP/dartscore-keypad-ios/Build/Products/Debug-iphonesimulator/App.app"
+          test -f "$APP/App"
+          test -f "$APP/public/index.html"
+          lipo -archs "$APP/App" | grep -q arm64
+
+      - name: Produce ZIP with root App.app for Appetize
+        run: |
+          set -euo pipefail
+          DIR="$RUNNER_TEMP/dartscore-keypad-ios/Build/Products/Debug-iphonesimulator"
+          ZIP="$RUNNER_TEMP/DartScorePro_iOS_LargeDigits_Appetize.zip"
+          cd "$DIR"
+          /usr/bin/ditto -c -k --sequesterRsrc --keepParent App.app "$ZIP"
+          unzip -t "$ZIP" > /dev/null
+          unzip -Z -1 "$ZIP" | grep -q '^App.app/Info.plist$'
+          unzip -Z -1 "$ZIP" | grep -q '^App.app/public/index.html$'
+          echo "SIMULATOR_ZIP=$ZIP" >> "$GITHUB_ENV"
+
+      - name: Publish Appetize upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DartScorePro-iOS-LargeDigits-Appetize
+          path: ${{ env.SIMULATOR_ZIP }}
+          if-no-files-found: error
+          retention-days: 14
