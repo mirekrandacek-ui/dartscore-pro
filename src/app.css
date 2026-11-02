@@ -1619,5 +1619,5 @@ html, body{
 }
 .container[data-screen="game"][data-mode="cricket"] .padPane.dartKeypad > .padRow:not(:first-child) .key {
   min-width:0;
-  font-size:clamp(23px, min(8.5vw, 5.5vh), 36px);
+  font-size:clamp(22px, min(7.4vw, 5.5vh), 32px);
 }
