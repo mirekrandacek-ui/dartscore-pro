@@ -1621,3 +1621,7 @@ html, body{
   min-width:0;
   font-size:clamp(22px, min(7.4vw, 5.5vh), 32px);
 }
+/* The full-width Cricket zero is limited by button height, not 7-column width. */
+.container[data-screen="game"][data-mode="cricket"] .padPane.dartKeypad > .padRow:last-child .key {
+  font-size:clamp(30px, min(11vw, 6vh), 44px);
+}
