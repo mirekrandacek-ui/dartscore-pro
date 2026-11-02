@@ -3942,6 +3942,9 @@ const restorePremiumPurchase = async () => {
       restorePremiumPurchase={restorePremiumPurchase}
       isPremium={isPremium} setIsPremium={setIsPremium}
       themeColor={themeColor} setThemeColor={setThemeColor}
+      privacyOptionsRequired={privacyOptionsRequired}
+      privacyBusy={privacyBusy}
+      openIOSPrivacy={openIOSPrivacy}
     />
     {false && (
       <div
@@ -4220,7 +4223,8 @@ function Lobby({
     buyPremium,
     restorePremiumPurchase,
     isPremium, setIsPremium,
-    themeColor, setThemeColor
+    themeColor, setThemeColor,
+    privacyOptionsRequired, privacyBusy, openIOSPrivacy
   }) {
     const [showPremiumDetails, setShowPremiumDetails] = useState(false);
     const matchOptions = Array.from({ length: 21 }, (_, ix) => ix + 1);
