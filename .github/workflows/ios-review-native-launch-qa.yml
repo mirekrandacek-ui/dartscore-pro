@@ -1,0 +1,92 @@
+name: iOS 1.1.64 native launch smoke (QA only)
+
+on:
+  push:
+    branches:
+      - qa/ios-v164-native-launch-20261102
+    paths:
+      - .github/workflows/ios-review-native-launch-qa.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-launch:
+    runs-on: macos-latest
+    timeout-minutes: 50
+    steps:
+      - name: Checkout exact rejected build 10 source
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Build exactly the frozen web app
+        run: |
+          npm ci
+          npm test
+          npm run build
+          npx cap sync ios
+
+      - name: Build executable for iOS Simulator
+        run: |
+          set -euo pipefail
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/ios-review-build" \
+            CODE_SIGNING_ALLOWED=NO build
+          test -f "$RUNNER_TEMP/ios-review-build/Build/Products/Debug-iphonesimulator/App.app/App"
+          test -f "$RUNNER_TEMP/ios-review-build/Build/Products/Debug-iphonesimulator/App.app/public/index.html"
+
+      - name: Install and launch the real native app on iPhone and iPad
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/native-launch-evidence"
+          python3 - <<'PY' > "$RUNNER_TEMP/simulators"
+          import json, subprocess, shlex
+          d = json.loads(subprocess.check_output(['xcrun','simctl','list','devices','available','-j']))
+          all_devices = [x for group in d['devices'].values() for x in group if x.get('isAvailable', True)]
+          for label, prefix in [('IPHONE','iPhone'),('IPAD','iPad')]:
+              matches = [x for x in all_devices if x['name'].startswith(prefix)]
+              if not matches:
+                  raise SystemExit(f'No available {prefix} simulator')
+              print(f'{label}={shlex.quote(matches[0]["udid"])}')
+              print(f'{label}_NAME={shlex.quote(matches[0]["name"])}')
+          PY
+          source "$RUNNER_TEMP/simulators"
+          echo "Testing $IPHONE_NAME and $IPAD_NAME"
+          APP="$RUNNER_TEMP/ios-review-build/Build/Products/Debug-iphonesimulator/App.app"
+          for KIND in IPHONE IPAD; do
+            UDID="${!KIND}"
+            echo "Booting $KIND ($UDID)"
+            xcrun simctl boot "$UDID"
+            xcrun simctl bootstatus "$UDID" -b
+            xcrun simctl install "$UDID" "$APP"
+            xcrun simctl launch "$UDID" com.randis2288.dartscorepro
+            sleep 15
+            xcrun simctl io "$UDID" screenshot "$RUNNER_TEMP/native-launch-evidence/$KIND.png"
+            xcrun simctl spawn "$UDID" log show --last 3m --style compact --predicate 'process == "App" AND (messageType == error OR messageType == fault)' \
+              > "$RUNNER_TEMP/native-launch-evidence/$KIND.errors.log" || true
+            xcrun simctl spawn "$UDID" /bin/ps -A \
+              > "$RUNNER_TEMP/native-launch-evidence/$KIND.processes.txt" || true
+            if ! grep -Eq '/App.app/App($| )|[[:space:]]App$' "$RUNNER_TEMP/native-launch-evidence/$KIND.processes.txt"; then
+              echo "::error::$KIND: App process not found 15 seconds after launch"
+              cat "$RUNNER_TEMP/native-launch-evidence/$KIND.processes.txt"
+              exit 1
+            fi
+            xcrun simctl terminate "$UDID" com.randis2288.dartscorepro || true
+            xcrun simctl shutdown "$UDID"
+          done
+
+      - name: Preserve launch screenshots and native logs even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build10-native-iphone-ipad-smoke
+          path: ${{ runner.temp }}/native-launch-evidence/
+          if-no-files-found: warn
