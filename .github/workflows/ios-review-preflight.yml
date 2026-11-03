@@ -6,6 +6,7 @@ on:
       - release/ios-1.1.64-build11-review-20261103
     paths:
       - .github/workflows/ios-review-preflight.yml
+      - scripts/asc_build11_preflight.rb
   workflow_dispatch:
 
 permissions:
