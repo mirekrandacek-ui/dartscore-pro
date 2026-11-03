@@ -57,4 +57,16 @@ rescue => e
  puts "REVIEW_SUBMISSIONS_UNAVAILABLE #{e.message}"
 end
 raise 'Expected App Store version 1.1.64 was not found' unless versions.any?{|ver|ver.dig('attributes','versionString')=='1.1.64'}
+begin
+  review=get('/v1/reviewSubmissions/1403ccf3-3776-49cc-931c-671f2006b90e/items',{'limit'=>100})
+  review.fetch('data',[]).each do |item|
+    relations=item['relationships']||{}
+    type=['appStoreVersion','inAppPurchaseVersion','subscriptionVersion','appEvent'].find{|t|relations.dig(t,'data','id')}
+    relation_id=type ? relations.dig(type,'data','id') : nil
+    puts "REVIEW_ITEM id=#{item['id']} state=#{item.dig('attributes','state')} resource=#{type||'unknown'} relatedId=#{relation_id}"
+  end
+rescue => e
+  puts "REVIEW_ITEMS_UNAVAILABLE #{e.message}"
+end
+
 puts 'READONLY_PREFLIGHT=SUCCESS'
