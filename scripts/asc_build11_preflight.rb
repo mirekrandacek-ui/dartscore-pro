@@ -72,3 +72,5 @@ rescue => e
 end
 
 puts 'READONLY_PREFLIGHT=SUCCESS'
+
+# Read-only status check after signed build 11 upload.
