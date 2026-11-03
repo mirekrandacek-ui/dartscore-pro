@@ -1,0 +1,90 @@
+name: iOS 1.1.64 build 11 - upload and resubmit rejected version for review
+
+on:
+  push:
+    branches:
+      - release/ios-1.1.64-build11-review-20261103
+    paths:
+      - .github/workflows/ios-build11-upload-review.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: ios-build11-apple-review-resubmit
+  cancel-in-progress: false
+
+jobs:
+  upload-and-resubmit:
+    runs-on: macos-latest
+    timeout-minutes: 50
+    env:
+      APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+      APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+      APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+      IPA_PATH: ${{ github.workspace }}/ipa/DartScorePro_1.1.64_build11.ipa
+
+    steps:
+      - name: Checkout reviewed release scripts
+        uses: actions/checkout@v4
+
+      - name: Download exact signed and previously validated build 11
+        uses: actions/download-artifact@v4
+        with:
+          name: DartScorePro_iOS_1.1.64_build11
+          run-id: 41606922715
+          github-token: ${{ github.token }}
+          path: ipa
+
+      - name: Verify file identity SHA256 and archive metadata before upload
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "$IPA_PATH"
+          printf '%s  %s\n' '7d44394f265a4afdddc04d3d8e00bf0c7d432c23e346aff6d1bfcf5defcf15f7' "$IPA_PATH" | shasum -a 256 -c -
+          python3 - <<'PY'
+          import os,plistlib,zipfile
+          path=os.environ['IPA_PATH']
+          with zipfile.ZipFile(path) as ipa:
+              info=plistlib.loads(ipa.read('Payload/App.app/Info.plist'))
+              assert info['CFBundleIdentifier']=='com.randis2288.dartscorepro'
+              assert info['CFBundleShortVersionString']=='1.1.64'
+              assert str(info['CFBundleVersion'])=='11'
+              assert info['FacebookAutoLogAppEventsEnabled'] is False
+              assert info['FacebookAdvertiserIDCollectionEnabled'] is False
+              assert info['FacebookSKAdNetworkReportEnabled'] is False
+          print('Verified exact signed build 1.1.64 (11) — same SHA256 as saved on Randy')
+          PY
+
+      - name: Prepare secure App Store Connect key and check review script syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          ruby -c scripts/asc_review_build11_resubmit.rb
+          test -n "$APPSTORE_ISSUER_ID"
+          test -n "$APPSTORE_KEY_ID"
+          test -n "$APPSTORE_PRIVATE_KEY"
+          mkdir -p "$RUNNER_TEMP/appstore-key"
+          KEY_PATH="$RUNNER_TEMP/appstore-key/AuthKey_${APPSTORE_KEY_ID}.p8"
+          printf '%s' "$APPSTORE_PRIVATE_KEY" > "$KEY_PATH"
+          chmod 600 "$KEY_PATH"
+          echo "APPSTORE_KEY_PATH=$KEY_PATH" >> "$GITHUB_ENV"
+
+      - name: Upload signed build 11 to Apple App Store Connect
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcrun altool --upload-app \
+            -f "$IPA_PATH" \
+            -t ios \
+            --apiKey "$APPSTORE_KEY_ID" \
+            --apiIssuer "$APPSTORE_ISSUER_ID" \
+            --p8-file-path "$APPSTORE_KEY_PATH"
+
+      - name: Confirm processing and resubmit existing rejected iOS version
+        shell: bash
+        run: |
+          set -euo pipefail
+          ruby scripts/asc_review_build11_resubmit.rb

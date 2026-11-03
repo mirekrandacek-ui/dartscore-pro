@@ -3,15 +3,16 @@ import { createPortal } from 'react-dom';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import {
   AdMob,
-  AdmobConsentStatus,
   BannerAdPosition,
   BannerAdSize
 } from '@capacitor-community/admob';
 import './app.css';
+import { createIOSPrivacy, privacyChoicesLabel } from './iosPrivacy.js';
 import { botThrowAround, botThrowClassic, botThrowCricket, botThrowRoulette, normalizeBotLevel } from './botEngine.js';
 import { hasRecordedScore, isQuickClassic, isSupportedX01, isNonX01LobbyAdMode } from './interstitialPolicy.js';
 
 const DartScoreIOS = registerPlugin('DartScoreIOS');
+const iosPrivacy = createIOSPrivacy(DartScoreIOS);
 const PLATFORM = Capacitor.getPlatform();
 const IS_IOS = PLATFORM === 'ios';
 const APP_STORE_ID = '6817341039';
@@ -31,14 +32,7 @@ let iosAdMobInitialized = false;
 async function ensureIOSAdMobReady() {
   if (!IS_IOS || !IOS_ADMOB_APP_ID) return false;
 
-  let consentInfo = await AdMob.requestConsentInfo();
-
-  if (
-    consentInfo?.isConsentFormAvailable &&
-    consentInfo?.status === AdmobConsentStatus.REQUIRED
-  ) {
-    consentInfo = await AdMob.showConsentForm();
-  }
+  const consentInfo = await iosPrivacy.prepare();
 
   if (!consentInfo?.canRequestAds) return false;
 
@@ -1377,6 +1371,41 @@ function App() {
   });
   const [premiumStateResolved, setPremiumStateResolved] = useState(!IS_IOS);
   const [iosBannerVisible, setIosBannerVisible] = useState(false);
+  const [privacyOptionsRequired, setPrivacyOptionsRequired] = useState(false);
+  const [privacyBusy, setPrivacyBusy] = useState(false);
+
+  useEffect(() => {
+    if (!IS_IOS || !premiumStateResolved) return undefined;
+    let cancelled = false;
+    const checkConsentAtLaunch = async () => {
+      try {
+        // UMP refreshes the decision at each real app launch; coming back from
+        // a consent sheet, ATT dialog or Home must not open it a second time.
+        const result = await iosPrivacy.prepare();
+        if (!cancelled) setPrivacyOptionsRequired(Boolean(result?.privacyOptionsRequired));
+      } catch (error) {
+        console.warn('iOS privacy update unavailable; measurement stays disabled');
+      }
+    };
+    void checkConsentAtLaunch();
+    return () => { cancelled = true; };
+  }, [premiumStateResolved]);
+
+  const openIOSPrivacy = async () => {
+    setPrivacyBusy(true);
+    // Stop an existing ad before changing its consent, even if the form fails.
+    try { await AdMob.removeBanner(); } catch { }
+    setIosBannerVisible(false);
+    try {
+      const result = await iosPrivacy.showOptions();
+      setPrivacyOptionsRequired(Boolean(result?.privacyOptionsRequired));
+      if (!isPremium && result?.canRequestAds) {
+        setIosBannerVisible(Boolean(await showIOSBanner()));
+      }
+    } catch (error) {
+      console.warn('iOS privacy options unavailable; measurement stays disabled');
+    } finally { setPrivacyBusy(false); }
+  };
 
   useEffect(() => {
     const restorePremium = async () => {
@@ -1442,7 +1471,7 @@ function App() {
     let cancelled = false;
 
     const syncIOSBanner = async () => {
-      if (isPremium || !IOS_ADS_CONFIGURED) {
+      if (isPremium || !IOS_BANNER_CONFIGURED) {
         try { await AdMob.removeBanner(); } catch { }
         if (!cancelled) setIosBannerVisible(false);
         return;
@@ -3917,6 +3946,9 @@ const restorePremiumPurchase = async () => {
       restorePremiumPurchase={restorePremiumPurchase}
       isPremium={isPremium} setIsPremium={setIsPremium}
       themeColor={themeColor} setThemeColor={setThemeColor}
+      privacyOptionsRequired={privacyOptionsRequired}
+      privacyBusy={privacyBusy}
+      openIOSPrivacy={openIOSPrivacy}
     />
     {false && (
       <div
@@ -4195,7 +4227,8 @@ function Lobby({
     buyPremium,
     restorePremiumPurchase,
     isPremium, setIsPremium,
-    themeColor, setThemeColor
+    themeColor, setThemeColor,
+    privacyOptionsRequired, privacyBusy, openIOSPrivacy
   }) {
     const [showPremiumDetails, setShowPremiumDetails] = useState(false);
     const matchOptions = Array.from({ length: 21 }, (_, ix) => ix + 1);
@@ -4735,6 +4768,14 @@ function Lobby({
           </details>
         </div>
         {/* >>> DARTSCORE_UNIQUE_ANCHOR__RULES_BLOCK__END__9F31 <<< */}
+
+        {IS_IOS && privacyOptionsRequired && (
+          <div className="lobbyCard">
+            <button type="button" className="btn ghost" disabled={privacyBusy} onClick={openIOSPrivacy}>
+              {privacyChoicesLabel[lang] || privacyChoicesLabel.en}
+            </button>
+          </div>
+        )}
 
         {!isMobileAppView && (
           <section className="webPublisherContent" aria-labelledby="dartscore-web-about">

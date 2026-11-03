@@ -8,6 +8,8 @@ public class DartScoreIOSPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "DartScoreIOSPlugin"
     public let jsName = "DartScoreIOS"
     public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "preparePrivacy", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "showPrivacyOptions", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "speak", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "openReview", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "shareApp", returnType: CAPPluginReturnPromise),
@@ -17,6 +19,33 @@ public class DartScoreIOSPlugin: CAPPlugin, CAPBridgedPlugin {
     ]
 
     private let synthesizer = AVSpeechSynthesizer()
+
+    @objc func preparePrivacy(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            guard let controller = self.bridge?.viewController else {
+                call.reject("Privacy controller unavailable")
+                return
+            }
+            MetaMeasurement.shared.prepare(from: controller) { self.resolvePrivacy(call, $0) }
+        }
+    }
+
+    @objc func showPrivacyOptions(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            guard let controller = self.bridge?.viewController else {
+                call.reject("Privacy controller unavailable")
+                return
+            }
+            MetaMeasurement.shared.showOptions(from: controller) { self.resolvePrivacy(call, $0) }
+        }
+    }
+
+    private func resolvePrivacy(_ call: CAPPluginCall, _ result: Result<[String: Any], Error>) {
+        switch result {
+        case .success(let info): call.resolve(info)
+        case .failure: call.reject("Privacy update unavailable; measurement disabled")
+        }
+    }
 
     @objc func speak(_ call: CAPPluginCall) {
         let text = call.getString("text") ?? ""
@@ -209,6 +238,14 @@ class DartScoreBridgeViewController: CAPBridgeViewController {
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
+
+    func sceneDidEnterBackground(_ scene: UIScene) {
+        MetaMeasurement.shared.suspend()
+    }
+
+    func sceneDidBecomeActive(_ scene: UIScene) {
+        MetaMeasurement.shared.becameActive()
+    }
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = scene as? UIWindowScene else { return }

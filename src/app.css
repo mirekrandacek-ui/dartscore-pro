@@ -1590,3 +1590,38 @@ html, body{
   text-decoration:underline;
   text-underline-offset:3px;
 }
+
+
+/* === iOS-safe responsive dart keypad: keep every two-digit label visible ===
+   Chrome/Android and WebKit both use this layout; no gameplay logic changes.
+   The existing .key min-width:48px and 30px text caused 7-column Cricket
+   to overflow. Large labels also clipped inside X01/Around 5-column cells. */
+.container[data-screen="game"] .padPane.dartKeypad .key {
+  box-sizing:border-box;
+  min-width:0;
+  max-width:100%;
+  padding:0 1px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+  -webkit-text-size-adjust:100%;
+}
+.container[data-screen="game"]:not([data-mode="cricket"]) .padPane.dartKeypad {
+  grid-template-columns:repeat(5,minmax(0,1fr));
+}
+.container[data-screen="game"]:not([data-mode="cricket"]) .padPane.dartKeypad > .padRow:not(:first-child) .key {
+  font-size:clamp(27px, min(11vw, 6.3vh), 48px);
+}
+.container[data-screen="game"][data-mode="cricket"] .padPane.dartKeypad > .padRow:not(:first-child) {
+  grid-template-columns:repeat(7,minmax(0,1fr));
+}
+.container[data-screen="game"][data-mode="cricket"] .padPane.dartKeypad > .padRow:not(:first-child) .key {
+  min-width:0;
+  font-size:clamp(22px, min(7.4vw, 5.5vh), 32px);
+}
+/* The full-width Cricket zero is limited by button height, not 7-column width. */
+.container[data-screen="game"][data-mode="cricket"] .padPane.dartKeypad > .padRow:last-child .key {
+  font-size:clamp(30px, min(11vw, 6vh), 44px);
+}
