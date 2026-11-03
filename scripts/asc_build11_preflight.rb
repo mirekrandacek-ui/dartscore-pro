@@ -71,6 +71,21 @@ rescue => e
   puts "REVIEW_ITEMS_UNAVAILABLE #{e.message}"
 end
 
+begin
+  uploads=get("/v1/apps/#{APP_ID}/buildUploads",{'limit'=>100,'sort'=>'-uploadedDate'})
+  found=uploads.fetch('data',[]).select do |item|
+    item.dig('attributes','cfBundleShortVersionString')=='1.1.64' &&
+    %w[10 11].include?(item.dig('attributes','cfBundleVersion').to_s)
+  end
+  found.each do |item|
+    a=item.fetch('attributes',{})
+    puts "BUILD_UPLOAD version=#{a['cfBundleShortVersionString']} build=#{a['cfBundleVersion']} state=#{a['state'].inspect} uploadedDate=#{a['uploadedDate']} id=#{item['id']}"
+  end
+  puts "BUILD_UPLOAD_COUNT_MATCHES=#{found.size}"
+rescue => e
+  puts "BUILD_UPLOADS_UNAVAILABLE #{e.message}"
+end
+
 puts 'READONLY_PREFLIGHT=SUCCESS'
 
 # Read-only status check after signed build 11 upload.
