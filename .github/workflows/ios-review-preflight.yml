@@ -1,0 +1,35 @@
+name: iOS 1.1.64 review status - read-only ASC preflight
+
+on:
+  push:
+    branches:
+      - release/ios-1.1.64-build11-review-20261103
+    paths:
+      - .github/workflows/ios-review-preflight.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  read-only-status:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    env:
+      APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+      APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+      APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check syntax and prepare auth key
+        run: |
+          set -euo pipefail
+          ruby -c scripts/asc_build11_preflight.rb
+          test -n "$APPSTORE_PRIVATE_KEY"
+          mkdir -p "$RUNNER_TEMP/asc-key"
+          KEY="$RUNNER_TEMP/asc-key/AuthKey_${APPSTORE_KEY_ID}.p8"
+          printf '%s' "$APPSTORE_PRIVATE_KEY" > "$KEY"
+          chmod 600 "$KEY"
+          echo "APPSTORE_KEY_PATH=$KEY" >> "$GITHUB_ENV"
+      - name: Inspect version and active review status without modifying it
+        run: ruby scripts/asc_build11_preflight.rb
