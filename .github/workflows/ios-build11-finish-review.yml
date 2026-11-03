@@ -1,0 +1,50 @@
+name: iOS build 11 - finish App Store review after Apple processing
+
+on:
+  push:
+    branches:
+      - release/ios-1.1.64-build11-review-20261103
+    paths:
+      - .github/workflows/ios-build11-finish-review.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-build11-apple-review-resubmit
+  cancel-in-progress: false
+
+jobs:
+  resubmit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+      APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+      APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+    steps:
+      - name: Checkout precise version 1.1.64 build 11 resubmission script
+        uses: actions/checkout@v4
+
+      - name: Prepare App Store Connect key
+        shell: bash
+        run: |
+          set -euo pipefail
+          ruby -c scripts/asc_review_build11_resubmit.rb
+          test -n "$APPSTORE_ISSUER_ID"
+          test -n "$APPSTORE_KEY_ID"
+          test -n "$APPSTORE_PRIVATE_KEY"
+          mkdir -p "$RUNNER_TEMP/asc-key"
+          KEY_PATH="$RUNNER_TEMP/asc-key/AuthKey_${APPSTORE_KEY_ID}.p8"
+          printf '%s' "$APPSTORE_PRIVATE_KEY" > "$KEY_PATH"
+          chmod 600 "$KEY_PATH"
+          echo "APPSTORE_KEY_PATH=$KEY_PATH" >> "$GITHUB_ENV"
+
+      - name: Wait for Apple's build 11 processing, then attach and resubmit review
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The IPA was uploaded successfully by run 41608095034. Do not re-upload.
+          # Only modify the known rejected appStoreVersion and review submission.
+          ruby scripts/asc_review_build11_resubmit.rb
