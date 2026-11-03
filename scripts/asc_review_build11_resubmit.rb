@@ -85,7 +85,7 @@ raise "Unexpected review item state #{item.dig('attributes','state')}" unless %w
 
 # Apple may take time to process a validated upload.
 selected=nil
-36.times do |attempt|
+120.times do |attempt|
   builds=request(:get,'/v1/builds',nil,{'filter[app]'=>APP_ID,'include'=>'preReleaseVersion','limit'=>200})
   selected=builds.fetch('data',[]).find do |b|
     next false unless b.dig('attributes','version').to_s==BUILD
@@ -99,8 +99,8 @@ selected=nil
     puts "VERIFIED: uploaded build #{VERSION} (#{BUILD}) is VALID"
     break
   end
-  puts "Build #{VERSION} (#{BUILD}) processing: #{state||'not listed'} (#{attempt+1}/36)"
-  sleep(20) if attempt<35
+  puts "Build #{VERSION} (#{BUILD}) processing: #{state||'not listed'} (#{attempt+1}/120)"
+  sleep(20) if attempt<119
 end
 raise 'Build 11 is not processed; no review changes were made' unless selected && selected.dig('attributes','processingState')=='VALID'
 build_id=selected.fetch('id')
