@@ -86,6 +86,8 @@ jobs:
 
       - name: Verify release identity and untouched app source
         run: |
+          # actions/checkout is shallow; deepen to load the verified build-12 commit.
+          git fetch --no-tags --deepen=5 origin "$GITHUB_REF_NAME"
           git diff --exit-code 4750558acb6eee4d08eb0541f827db6a8c3db122 HEAD -- ios src
           ruby -c scripts/asc_assign_internal_build12.rb
           grep -q "DEVELOPMENT_TEAM = MQG667M2B8;" ios/App/App.xcodeproj/project.pbxproj
