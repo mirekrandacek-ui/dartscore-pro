@@ -14,11 +14,11 @@ permissions:
 
 concurrency:
   group: ios-att-build-only
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 40
     env:
       SOURCE_SHA: d7d07e682d51463f35e25d095c639d3131136744
