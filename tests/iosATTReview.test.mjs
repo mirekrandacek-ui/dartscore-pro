@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 
-const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8');
+const app = (await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
 const native = await readFile(new URL('../ios/App/App/MetaMeasurement.swift', import.meta.url), 'utf8');
 const plugin = await readFile(new URL('../ios/App/App/SceneDelegate.swift', import.meta.url), 'utf8');
 
