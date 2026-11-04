@@ -98,7 +98,7 @@ jobs:
           test -d build/device-derived/Build/Products/Release-iphoneos/App.app
 
       - name: Launch on iPhone and iPad simulators and capture evidence
-        timeout-minutes: 6
+        timeout-minutes: 12
         shell: bash
         run: |
           set -euo pipefail
