@@ -14,7 +14,7 @@ permissions:
 
 concurrency:
   group: ios-att-build-only
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -86,7 +86,19 @@ jobs:
           test -d build/simulator-derived/Build/Products/Release-iphonesimulator/App.app
           ditto -c -k --keepParent build/simulator-derived/Build/Products/Release-iphonesimulator/App.app build/evidence/DartScorePro-PR53-Simulator.zip
 
+      - name: Compile for physical iOS devices without signing (not installable)
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            -derivedDataPath build/device-derived \
+            -resultBundlePath build/evidence/device-build.xcresult \
+            CODE_SIGNING_ALLOWED=NO build 2>&1 | tee build/evidence/device-build.log
+          test -d build/device-derived/Build/Products/Release-iphoneos/App.app
+
       - name: Launch on iPhone and iPad simulators and capture evidence
+        timeout-minutes: 6
         shell: bash
         run: |
           set -euo pipefail
@@ -107,29 +119,14 @@ jobs:
             xcrun simctl boot "$udid"
             xcrun simctl bootstatus "$udid" -b
             xcrun simctl install "$udid" build/simulator-derived/Build/Products/Release-iphonesimulator/App.app
-            xcrun simctl io "$udid" recordVideo "build/evidence/$family-launch.mp4" > "build/evidence/$family-recording.log" 2>&1 &
-            video_pid=$!
             xcrun simctl launch --terminate-running-process "$udid" "$APP_ID" | tee "build/evidence/$family-launch.txt"
             sleep 20
-            kill -INT "$video_pid"
-            wait "$video_pid" || true
             xcrun simctl spawn "$udid" launchctl list | grep -F "$APP_ID" | tee "build/evidence/$family-running.txt"
             xcrun simctl io "$udid" screenshot "build/evidence/$family-launch.png"
             xcrun simctl spawn "$udid" log show --style compact --last 2m --predicate 'process == "App"' > "build/evidence/$family-runtime.log" 2>&1 || true
             xcrun simctl terminate "$udid" "$APP_ID"
             xcrun simctl shutdown "$udid"
           done < build/evidence/selected-simulators.tsv
-
-      - name: Compile for physical iOS devices without signing (not installable)
-        shell: bash
-        run: |
-          set -euo pipefail
-          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
-            -sdk iphoneos -destination 'generic/platform=iOS' \
-            -derivedDataPath build/device-derived \
-            -resultBundlePath build/evidence/device-build.xcresult \
-            CODE_SIGNING_ALLOWED=NO build 2>&1 | tee build/evidence/device-build.log
-          test -d build/device-derived/Build/Products/Release-iphoneos/App.app
 
       - name: Record verification limits
         if: always()
@@ -154,3 +151,5 @@ jobs:
           path: build/evidence/
           if-no-files-found: error
           retention-days: 14
+
+
