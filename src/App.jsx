@@ -36,6 +36,11 @@ async function ensureIOSAdMobReady() {
 
   if (!consentInfo?.canRequestAds) return false;
 
+  // Free ads can involve tracking outside GDPR regions too. Wait for the
+  // system ATT decision before starting AdMob, including when an iOS sheet
+  // is still dismissing. Denial does not prevent non-tracking ads.
+  await DartScoreIOS.requestTrackingAuthorizationIfNeeded();
+
   if (!iosAdMobInitialized) {
     await AdMob.initialize();
     iosAdMobInitialized = true;

@@ -10,6 +10,7 @@ public class DartScoreIOSPlugin: CAPPlugin, CAPBridgedPlugin {
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "preparePrivacy", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "showPrivacyOptions", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "requestTrackingAuthorizationIfNeeded", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "speak", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "openReview", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "shareApp", returnType: CAPPluginReturnPromise),
@@ -37,6 +38,14 @@ public class DartScoreIOSPlugin: CAPPlugin, CAPBridgedPlugin {
                 return
             }
             MetaMeasurement.shared.showOptions(from: controller) { self.resolvePrivacy(call, $0) }
+        }
+    }
+
+    @objc func requestTrackingAuthorizationIfNeeded(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            MetaMeasurement.shared.requestTrackingAuthorizationIfNeeded { authorized in
+                call.resolve(["authorized": authorized])
+            }
         }
     }
 
