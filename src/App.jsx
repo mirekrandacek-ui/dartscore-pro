@@ -31,13 +31,6 @@ let iosAdMobInitialized = false;
 async function ensureIOSAdMobReady() {
   if (!IS_IOS || !IOS_ADMOB_APP_ID) return false;
 
-  // Request ATT on iOS before any consent or advertising SDK activity.
-  // iOS shows its system permission dialog only while the app is active.
-  const tracking = await AdMob.trackingAuthorizationStatus();
-  if (tracking?.status === 'notDetermined') {
-    await AdMob.requestTrackingAuthorization();
-  }
-
   let consentInfo = await AdMob.requestConsentInfo();
 
   if (
@@ -48,6 +41,13 @@ async function ensureIOSAdMobReady() {
   }
 
   if (!consentInfo?.canRequestAds) return false;
+
+  // UMP can show ATT itself when IDFA messages are configured. If it has
+  // not done so, request permission before initializing the ads SDK.
+  const tracking = await AdMob.trackingAuthorizationStatus();
+  if (tracking?.status === 'notDetermined') {
+    await AdMob.requestTrackingAuthorization();
+  }
 
   if (!iosAdMobInitialized) {
     await AdMob.initialize();
