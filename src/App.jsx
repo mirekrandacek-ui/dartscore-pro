@@ -31,6 +31,13 @@ let iosAdMobInitialized = false;
 async function ensureIOSAdMobReady() {
   if (!IS_IOS || !IOS_ADMOB_APP_ID) return false;
 
+  // Request ATT on iOS before any consent or advertising SDK activity.
+  // iOS shows its system permission dialog only while the app is active.
+  const tracking = await AdMob.trackingAuthorizationStatus();
+  if (tracking?.status === 'notDetermined') {
+    await AdMob.requestTrackingAuthorization();
+  }
+
   let consentInfo = await AdMob.requestConsentInfo();
 
   if (
@@ -1442,7 +1449,7 @@ function App() {
     let cancelled = false;
 
     const syncIOSBanner = async () => {
-      if (isPremium || !IOS_ADS_CONFIGURED) {
+      if (isPremium || !IOS_BANNER_CONFIGURED) {
         try { await AdMob.removeBanner(); } catch { }
         if (!cancelled) setIosBannerVisible(false);
         return;
