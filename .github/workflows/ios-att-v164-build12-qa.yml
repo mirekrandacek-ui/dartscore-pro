@@ -1,0 +1,103 @@
+name: iOS 1.1.64 (12) ATT review - build and QA only
+
+on:
+  push:
+    branches:
+      - fix/ios-v164-att-review-build12-20261104
+    paths:
+      - .github/workflows/ios-att-v164-build12-qa.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-att-build12-qa
+  cancel-in-progress: false
+
+jobs:
+  build-and-test:
+    runs-on: macos-latest
+    timeout-minutes: 50
+    steps:
+      - name: Checkout corrected iOS 1.1.64 build 12 source
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install locked dependencies, test and build web assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npm test
+          npm run build
+          npx cap sync ios
+
+      - name: Verify ATT and release metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 12;' ios/App/App.xcodeproj/project.pbxproj)" = 2
+          test "$(grep -c 'MARKETING_VERSION = 1.1.64;' ios/App/App.xcodeproj/project.pbxproj)" = 2
+          grep -q 'NSUserTrackingUsageDescription' ios/App/App/Info.plist
+          grep -q 'requestTrackingAuthorizationIfNeeded' ios/App/App/SceneDelegate.swift
+          grep -q 'requestTrackingAuthorizationIfNeeded' src/App.jsx
+          grep -q 'applicationState == .active' ios/App/App/MetaMeasurement.swift
+          xcodebuild -version
+
+      - name: Compile iPhone and iPad Simulator release without signing
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/ios-att-evidence
+          xcodebuild -project ios/App/App.xcodeproj \
+            -scheme App -configuration Release \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/dartscore-att-build12-simulator" \
+            CODE_SIGNING_ALLOWED=NO build \
+            2>&1 | tee build/ios-att-evidence/simulator-build.log
+          APP_DIR="$RUNNER_TEMP/dartscore-att-build12-simulator/Build/Products/Release-iphonesimulator/App.app"
+          test -f "$APP_DIR/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP_DIR/Info.plist" | grep -qx 12
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_DIR/Info.plist" | grep -qx 1.1.64
+          /usr/libexec/PlistBuddy -c 'Print :NSUserTrackingUsageDescription' "$APP_DIR/Info.plist"
+          ditto -c -k --keepParent "$APP_DIR" build/ios-att-evidence/DartScorePro_iOS_1.1.64_12_Simulator.zip
+          unzip -t build/ios-att-evidence/DartScorePro_iOS_1.1.64_12_Simulator.zip >/dev/null
+
+      - name: Compile physical device target without signing
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ios/App/App.xcodeproj \
+            -scheme App -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/dartscore-att-build12-device" \
+            CODE_SIGNING_ALLOWED=NO build \
+            2>&1 | tee build/ios-att-evidence/device-build.log
+          test -d "$RUNNER_TEMP/dartscore-att-build12-device/Build/Products/Release-iphoneos/App.app"
+
+      - name: Record scope and limitations
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p build/ios-att-evidence
+          cat > build/ios-att-evidence/README.txt <<'EOF'
+          Target: DartScore Pro iOS 1.1.64 (12); base: rejected build 11 release branch.
+          This workflow only compiles and runs tests. It does not sign, upload or submit any IPA.
+          Simulator ZIP cannot be installed on a physical iOS device.
+          Apple requires a physical-device screen recording showing ATT from fresh state.
+          ATT permission presentation and live ad delivery are not proven by CI compilation.
+          EOF
+
+      - name: Save build and test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DartScorePro_iOS_build12_ATT_QA
+          path: build/ios-att-evidence/
+          retention-days: 14
+          if-no-files-found: error
