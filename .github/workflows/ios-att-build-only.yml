@@ -1,0 +1,156 @@
+name: iOS ATT build only
+run-name: iOS ATT PR53 build only (d7d07e6)
+
+on:
+  push:
+    branches:
+      - test/ios-att-build-only-20261104
+    paths:
+      - .github/workflows/ios-att-build-only.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-att-build-only
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 40
+    env:
+      SOURCE_SHA: d7d07e682d51463f35e25d095c639d3131136744
+      APP_ID: com.randis2288.dartscorepro
+    steps:
+      - name: Checkout exact PR53 source (without tracked dependencies)
+        uses: actions/checkout@v4
+        with:
+          ref: d7d07e682d51463f35e25d095c639d3131136744
+          persist-credentials: false
+          sparse-checkout: |
+            src
+            public
+            tests
+            scripts
+            ios
+            app
+          sparse-checkout-cone-mode: true
+
+      - name: Record source and toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/evidence
+          {
+            git rev-parse HEAD
+            sw_vers
+            xcodebuild -version
+            xcodebuild -showsdks
+            /usr/libexec/PlistBuddy -c "Print :NSUserTrackingUsageDescription" ios/App/App/Info.plist
+            grep -E 'MARKETING_VERSION|CURRENT_PROJECT_VERSION|PRODUCT_BUNDLE_IDENTIFIER' ios/App/App.xcodeproj/project.pbxproj
+          } | tee build/evidence/environment.txt
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install locked dependencies and run existing regression suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci 2>&1 | tee build/evidence/npm-ci.log
+          npm test 2>&1 | tee build/evidence/tests.log
+
+      - name: Build web bundle and sync Capacitor iOS
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run build 2>&1 | tee build/evidence/web-build.log
+          npx --no-install cap sync ios 2>&1 | tee build/evidence/capacitor-sync.log
+          git diff -- ios capacitor.config.json > build/evidence/generated-sync.diff
+
+      - name: Compile iOS Simulator application without signing
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/simulator-derived \
+            -resultBundlePath build/evidence/simulator-build.xcresult \
+            CODE_SIGNING_ALLOWED=NO build 2>&1 | tee build/evidence/simulator-build.log
+          test -d build/simulator-derived/Build/Products/Release-iphonesimulator/App.app
+          ditto -c -k --keepParent build/simulator-derived/Build/Products/Release-iphonesimulator/App.app build/evidence/DartScorePro-PR53-Simulator.zip
+
+      - name: Launch on iPhone and iPad simulators and capture evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcrun simctl list devices available -j > build/evidence/simulators.json
+          python3 - <<'PY' > build/evidence/selected-simulators.tsv
+          import json
+          with open('build/evidence/simulators.json') as f:
+              devices = [d for group in json.load(f)['devices'].values() for d in group if d.get('isAvailable')]
+          for family in ('iPhone', 'iPad'):
+              candidates = [d for d in devices if d['name'].startswith(family)]
+              if not candidates:
+                  raise SystemExit('No available ' + family + ' simulator')
+              chosen = next((d for d in candidates if family == 'iPad' and 'Air' in d['name']), candidates[0])
+              print(f"{family}\t{chosen['udid']}\t{chosen['name']}")
+          PY
+          while IFS=$'\t' read -r family udid name; do
+            echo "Launching $name ($udid)"
+            xcrun simctl boot "$udid"
+            xcrun simctl bootstatus "$udid" -b
+            xcrun simctl install "$udid" build/simulator-derived/Build/Products/Release-iphonesimulator/App.app
+            xcrun simctl io "$udid" recordVideo "build/evidence/$family-launch.mp4" > "build/evidence/$family-recording.log" 2>&1 &
+            video_pid=$!
+            xcrun simctl launch --terminate-running-process "$udid" "$APP_ID" | tee "build/evidence/$family-launch.txt"
+            sleep 20
+            kill -INT "$video_pid"
+            wait "$video_pid" || true
+            xcrun simctl spawn "$udid" launchctl list | grep -F "$APP_ID" | tee "build/evidence/$family-running.txt"
+            xcrun simctl io "$udid" screenshot "build/evidence/$family-launch.png"
+            xcrun simctl spawn "$udid" log show --style compact --last 2m --predicate 'process == "App"' > "build/evidence/$family-runtime.log" 2>&1 || true
+            xcrun simctl terminate "$udid" "$APP_ID"
+            xcrun simctl shutdown "$udid"
+          done < build/evidence/selected-simulators.tsv
+
+      - name: Compile for physical iOS devices without signing (not installable)
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            -derivedDataPath build/device-derived \
+            -resultBundlePath build/evidence/device-build.xcresult \
+            CODE_SIGNING_ALLOWED=NO build 2>&1 | tee build/evidence/device-build.log
+          test -d build/device-derived/Build/Products/Release-iphoneos/App.app
+
+      - name: Record verification limits
+        if: always()
+        shell: bash
+        run: |
+          cat > build/evidence/README.txt <<'EOF'
+          Exact app source: d7d07e682d51463f35e25d095c639d3131136744 (PR #53).
+          Build-only verification. No signing keys or App Store credentials used.
+          No IPA upload, TestFlight assignment, App Review submission, or release.
+          Simulator package is for simulators only, not physical devices.
+          Simulator launch checks do not establish ATT consent correctness or banner delivery.
+          Physical iPhone/iPad fresh-state ATT allow/deny, Free/Premium banner behavior,
+          and App Review recording remain required.
+          Version/build metadata is preserved from source; this is not a new store release.
+          EOF
+
+      - name: Upload build and diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DartScorePro-PR53-build-only-${{ github.run_id }}
+          path: build/evidence/
+          if-no-files-found: error
+          retention-days: 14
