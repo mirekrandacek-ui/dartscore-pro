@@ -42,6 +42,13 @@ async function ensureIOSAdMobReady() {
 
   if (!consentInfo?.canRequestAds) return false;
 
+  // UMP can show ATT itself when IDFA messages are configured. If it has
+  // not done so, request permission before initializing the ads SDK.
+  const tracking = await AdMob.trackingAuthorizationStatus();
+  if (tracking?.status === 'notDetermined') {
+    await AdMob.requestTrackingAuthorization();
+  }
+
   if (!iosAdMobInitialized) {
     await AdMob.initialize();
     iosAdMobInitialized = true;
@@ -1442,7 +1449,7 @@ function App() {
     let cancelled = false;
 
     const syncIOSBanner = async () => {
-      if (isPremium || !IOS_ADS_CONFIGURED) {
+      if (isPremium || !IOS_BANNER_CONFIGURED) {
         try { await AdMob.removeBanner(); } catch { }
         if (!cancelled) setIosBannerVisible(false);
         return;
