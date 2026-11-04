@@ -11,12 +11,40 @@ final class MetaMeasurement {
     private var updated = false
     private var initialized = false
     private var activatedThisForeground = false
+    private var trackingRequestInFlight = false
+    private var pendingTrackingCompletions: [(Bool) -> Void] = []
 
     func becameActive() {
-        // An ATT system sheet temporarily makes the scene inactive. Re-check on
-        // its dismissal without resetting the freshly obtained UMP choice.
-        guard updated else { return }
-        finish { _ in }
+        // UMP can finish while an iOS sheet is still dismissing. Only ask for
+        // ATT when UIKit reports the scene as active; retry after activation.
+        startPendingTrackingRequest()
+        if updated { finish { _ in } }
+    }
+
+    func requestTrackingAuthorizationIfNeeded(completion: @escaping (Bool) -> Void) {
+        guard ATTrackingManager.trackingAuthorizationStatus == .notDetermined else {
+            completion(ATTrackingManager.trackingAuthorizationStatus == .authorized)
+            return
+        }
+        pendingTrackingCompletions.append(completion)
+        startPendingTrackingRequest()
+    }
+
+    private func startPendingTrackingRequest() {
+        guard !trackingRequestInFlight, !pendingTrackingCompletions.isEmpty,
+              UIApplication.shared.applicationState == .active else { return }
+        trackingRequestInFlight = true
+        ATTrackingManager.requestTrackingAuthorization { status in
+            DispatchQueue.main.async {
+                self.trackingRequestInFlight = false
+                let callbacks = self.pendingTrackingCompletions
+                self.pendingTrackingCompletions.removeAll()
+                callbacks.forEach { $0(status == .authorized) }
+                // A newly authorized choice can now enable explicitly
+                // consented Meta measurement, never tracking on denial.
+                if self.updated { self.finish { _ in } }
+            }
+        }
     }
 
     func suspend() {
@@ -82,13 +110,11 @@ final class MetaMeasurement {
     }
 
     private func evaluate(completion: @escaping (Result<[String: Any], Error>) -> Void) {
-        // Ask ATT only after a specific Meta measurement choice, never to override
-        // a refused/unknown CMP choice. No additional custom consent dialog.
-        if allowed(trackingAuthorized: true), ATTrackingManager.trackingAuthorizationStatus == .notDetermined,
-           UIApplication.shared.applicationState == .active {
-            ATTrackingManager.requestTrackingAuthorization { _ in
-                DispatchQueue.main.async { self.finish(completion: completion) }
-            }
+        // Meta measurement only requests ATT after explicit UMP opt-in.
+        // The separate Free-ads path may also request ATT in non-GDPR regions;
+        // both paths share this one native, foreground-safe permission gate.
+        if allowed(trackingAuthorized: true) {
+            requestTrackingAuthorizationIfNeeded { _ in self.finish(completion: completion) }
         } else {
             finish(completion: completion)
         }
