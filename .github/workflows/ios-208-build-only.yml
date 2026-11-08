@@ -1,0 +1,64 @@
+name: iOS 2.08 build only
+on:
+  push:
+    branches:
+      - test/ios-208-build-only-20261108
+    paths:
+      - .github/workflows/ios-208-build-only.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ios-208-build-only
+  cancel-in-progress: false
+jobs:
+  compile:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Test and synchronize exact checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/evidence
+          git rev-parse HEAD | tee build/evidence/source-sha.txt
+          xcodebuild -version | tee build/evidence/xcode.txt
+          grep -q 'MARKETING_VERSION = 2.08;' ios/App/App.xcodeproj/project.pbxproj
+          grep -q 'CURRENT_PROJECT_VERSION = 12;' ios/App/App.xcodeproj/project.pbxproj
+          npm ci 2>&1 | tee build/evidence/npm-ci.log
+          npm test 2>&1 | tee build/evidence/tests.log
+          npm run build 2>&1 | tee build/evidence/web.log
+          npx --no-install cap sync ios 2>&1 | tee build/evidence/sync.log
+          node scripts/verify-ios-bundle.mjs
+      - name: Compile device architecture without signing
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            -derivedDataPath build/device-derived \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build \
+            2>&1 | tee build/evidence/device-build.log
+      - name: Compile simulator and package application
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/simulator-derived \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build \
+            2>&1 | tee build/evidence/simulator-build.log
+          ditto -c -k --keepParent build/simulator-derived/Build/Products/Release-iphonesimulator/App.app build/evidence/DartScorePro-2.08-build12-Simulator.zip
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: DartScorePro-2.08-build12-build-only
+          path: build/evidence/
+          retention-days: 14

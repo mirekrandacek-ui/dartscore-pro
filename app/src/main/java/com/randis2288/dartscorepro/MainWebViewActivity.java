@@ -8,12 +8,18 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Build;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.Voice;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
-import android.view.WindowInsets;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
@@ -65,6 +71,7 @@ import java.util.Locale;
 
 public class MainWebViewActivity extends Activity implements PurchasesUpdatedListener {
     private static final String START_URL = "https://dartscore-pro.vercel.app/";
+    private static final long KEY_HAPTIC_DURATION_MS = 12L;
     private static final String PREMIUM_PRODUCT_ID = "premium_unlock";
 
     private static final String PROD_BANNER_ID = "ca-app-pub-9232105399279318/2746750399";
@@ -82,6 +89,9 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private AdView adView;
     private boolean bannerLoaded = false;
     private int bannerHeightPx = 0;
+    private int leftSystemInsetPx = 0;
+    private int topSystemInsetPx = 0;
+    private int rightSystemInsetPx = 0;
     private int bottomSystemInsetPx = 0;
 
     private TextToSpeech textToSpeech;
@@ -110,9 +120,20 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Android 15/16: keep content out of cutouts and system controls.
+        // Do not alter the transient ConsentLauncher: v99 startup regressed there.
+        WindowCompat.enableEdgeToEdge(getWindow());
+        WindowInsetsControllerCompat insetsController =
+            WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        insetsController.setAppearanceLightStatusBars(false);
+        insetsController.setAppearanceLightNavigationBars(false);
+
         root = new FrameLayout(this);
+        root.setBackgroundColor(Color.rgb(17, 24, 39));
 
         webView = new WebView(this);
+        // Only explicitly enabled DartScore haptics may vibrate.
+        webView.setHapticFeedbackEnabled(false);
         webView.setBackgroundColor(Color.TRANSPARENT);
 
         adHost = new FrameLayout(this);
@@ -157,21 +178,24 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         );
         adHost.bringToFront();
 
-        root.setOnApplyWindowInsetsListener((v, insets) -> {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                int navBottom = insets.getInsets(WindowInsets.Type.navigationBars()).bottom;
-                int gestureBottom = insets.getInsets(WindowInsets.Type.mandatorySystemGestures()).bottom;
-                int cutoutBottom = insets.getInsets(WindowInsets.Type.displayCutout()).bottom;
-                bottomSystemInsetPx = Math.max(navBottom, Math.max(gestureBottom, cutoutBottom));
-            } else {
-                bottomSystemInsetPx = insets.getSystemWindowInsetBottom();
-            }
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            Insets safeInsets = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars()
+                    | WindowInsetsCompat.Type.displayCutout()
+            );
+            Insets mandatoryGestures = insets.getInsets(
+                WindowInsetsCompat.Type.mandatorySystemGestures()
+            );
+            leftSystemInsetPx = safeInsets.left;
+            topSystemInsetPx = safeInsets.top;
+            rightSystemInsetPx = safeInsets.right;
+            bottomSystemInsetPx = Math.max(safeInsets.bottom, mandatoryGestures.bottom);
             updateBannerLayout();
             return insets;
         });
 
         setContentView(root);
-        root.requestApplyInsets();
+        ViewCompat.requestApplyInsets(root);
 
         initInAppUpdate();
         initConsentAndAds();
@@ -244,8 +268,17 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         String scheme = uri.getScheme();
         String host = uri.getHost();
 
+        if ("dartscorepro".equals(scheme) && "show-interstitial".equals(host)) {
+            // Always launch the ad inside this app's existing task, not via an
+            // implicit VIEW intent that could change task or browser history.
+            startActivity(new Intent(this, AdMobInterstitialActivity.class).setData(uri));
+            return true;
+        }
+
         if ("dartscorepro".equals(scheme)) {
-            startActivity(new Intent(Intent.ACTION_VIEW, uri));
+            // Analytics and ad-cadence links must stay inside this installation.
+            // A side-by-side UI TEST otherwise opens the system app chooser.
+            startActivity(new Intent(Intent.ACTION_VIEW, uri).setPackage(getPackageName()));
             return true;
         }
 
@@ -316,9 +349,11 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             bannerLoaded = false;
             return;
         }
-        int widthPx = getResources().getDisplayMetrics().widthPixels;
+        int windowWidthPx = root != null && root.getWidth() > 0
+            ? root.getWidth() : getResources().getDisplayMetrics().widthPixels;
+        int safeWidthPx = Math.max(1, windowWidthPx - leftSystemInsetPx - rightSystemInsetPx);
         float density = getResources().getDisplayMetrics().density;
-        int adWidthDp = Math.max(320, (int) (widthPx / density));
+        int adWidthDp = Math.max(1, (int) (safeWidthPx / density));
 
         AdSize adSize = AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(
             this,
@@ -392,14 +427,17 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
                 : FrameLayout.LayoutParams.WRAP_CONTENT,
             Gravity.BOTTOM
         );
+        hostParams.leftMargin = leftSystemInsetPx;
+        hostParams.rightMargin = rightSystemInsetPx;
         hostParams.bottomMargin = bottomSystemInsetPx;
         adHost.setLayoutParams(hostParams);
 
         FrameLayout.LayoutParams webParams =
             (FrameLayout.LayoutParams) webView.getLayoutParams();
-        webParams.bottomMargin = visibleBannerHeight > 0
-            ? visibleBannerHeight + bottomSystemInsetPx
-            : 0;
+        webParams.leftMargin = leftSystemInsetPx;
+        webParams.topMargin = topSystemInsetPx;
+        webParams.rightMargin = rightSystemInsetPx;
+        webParams.bottomMargin = visibleBannerHeight + bottomSystemInsetPx;
         webView.setLayoutParams(webParams);
     }
 
@@ -514,6 +552,36 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
                 }
             }
         );
+    }
+
+    private void logAnalyticsEventInternal(String encodedQuery) {
+        if (encodedQuery == null || encodedQuery.length() > 512 || isFinishing() || isDestroyed()) return;
+        try {
+            // Use the existing whitelist/parser without ever opening an Activity.
+            Uri uri = Uri.parse("dartscorepro://show-interstitial?" + encodedQuery);
+            AdMobInterstitialActivity.handleAnalyticsIntent(this, uri);
+        } catch (RuntimeException e) {
+            Log.w("DartScoreAdMob", "Rejected malformed Analytics event.", e);
+        }
+    }
+
+    private void requestInterstitialEventInternal(String encodedQuery) {
+        // JavaScript interfaces run off the UI thread. This method is invoked
+        // on the UI thread by DartScoreBridge, preserving the game Activity.
+        if (currentPremiumState || isFinishing() || isDestroyed()) return;
+        if (encodedQuery == null || encodedQuery.length() > 512) return;
+        try {
+            Uri uri = Uri.parse("dartscorepro://show-interstitial?" + encodedQuery);
+            String event = uri.getQueryParameter("ad_event");
+            if (!"completed".equals(event) && !"abandoned".equals(event)
+                && !"non_x01_start".equals(event)
+                && !"non_x01_boundary".equals(event)
+                && !"legacy".equals(event)
+                && !"legacy_bridge".equals(event)) return;
+            startActivity(new Intent(this, AdMobInterstitialActivity.class).setData(uri));
+        } catch (RuntimeException e) {
+            Log.w("DartScoreAdMob", "Rejected malformed in-app ad event.", e);
+        }
     }
 
     private void showInterstitialInternal() {
@@ -1193,6 +1261,22 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
 
     private class DartScoreBridge {
         @JavascriptInterface
+        public void hapticTap() {
+            runOnUiThread(() -> {
+                Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+                if (vibrator == null || !vibrator.hasVibrator()) return;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK));
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrator.vibrate(VibrationEffect.createOneShot(KEY_HAPTIC_DURATION_MS, VibrationEffect.DEFAULT_AMPLITUDE));
+                } else {
+                    vibrator.vibrate(KEY_HAPTIC_DURATION_MS);
+                }
+            });
+        }
+
+
+        @JavascriptInterface
         public void setPremium(boolean isPremium) {
             runOnUiThread(() -> setPremiumState(isPremium));
         }
@@ -1247,6 +1331,16 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
         @JavascriptInterface
         public String getLastInterstitialShownAt() {
             return String.valueOf(InterstitialCadence.lastShownAt(getApplicationContext()));
+        }
+
+        @JavascriptInterface
+        public void logAnalyticsEvent(String encodedQuery) {
+            runOnUiThread(() -> logAnalyticsEventInternal(encodedQuery));
+        }
+
+        @JavascriptInterface
+        public void requestInterstitialEvent(String encodedQuery) {
+            runOnUiThread(() -> requestInterstitialEventInternal(encodedQuery));
         }
 
         @JavascriptInterface

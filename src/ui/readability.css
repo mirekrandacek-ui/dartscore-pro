@@ -1,0 +1,464 @@
+/* Shared presentation rules. Keep the existing scroll and keypad sizing owners. */
+.header.utilityHeader {
+  flex:0 0 auto;
+  display:flex;
+  flex-direction:row;
+  padding:6px 8px;
+  gap:6px;
+}
+.utilityHeader .languagePicker { flex:1; min-width:0; max-width:210px; }
+.utilityHeader .languagePicker .input { height:42px; min-width:0; font-size:16px; }
+.utilityHeader .iconBtn { flex:0 0 42px; height:42px; }
+.utilityHeader .shareIconBtn { margin:0; width:42px; height:42px; }
+.premiumIndicator { color:var(--accent); font-size:14px; font-weight:800; margin-bottom:8px; }
+.lobbyWrap .input, .lobbyWrap .tab { font-size:16px; }
+.lobbyWrap .btn { white-space:normal; overflow-wrap:anywhere; }
+.lobbyModeRow { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; }
+.lobbyModeGroup { min-width:0; flex-direction:column; align-items:stretch; gap:4px; }
+.lobbyModeGroup > span { font-size:14px; }
+.matchFormatControls { margin:0; align-self:end; flex-wrap:nowrap; }
+.matchFormatItem { flex-direction:column; align-items:stretch; font-size:14px; }
+.matchCountSelect { min-width:52px; }
+.lobbyOptions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.lobbyOption { display:flex; flex-direction:column; min-width:0; gap:5px; font-weight:800; }
+.lobbyOption > span { font-size:14px; }
+.lobbyOption .themedSelectWrap { width:100%; }
+.lobbyPlayThrough { display:flex; align-items:center; gap:6px; align-self:center; font-size:15px; overflow-wrap:anywhere; }
+.lobbyPlayThrough input { flex:0 0 auto; }
+.lobbyStartActions, .premiumActions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.lobbyStartActions .btn, .premiumActions .btn { min-width:0; min-height:44px; font-size:16px; line-height:1.2; }
+.lobbyStartActions > :only-child { grid-column:1 / -1; }
+.playerRow { grid-template-columns:minmax(0,1fr) auto auto; gap:6px; margin-bottom:6px; }
+.playerRow .playerName { min-width:0; }
+.playerRow .playerActions { gap:4px; }
+.playerRow .playerActions .btn { min-height:40px; min-width:30px; }
+.playerRow .playerTeam { grid-column:1 / -1; grid-row:2; }
+.gameTextAction { font-size:15px; line-height:1.2; min-height:32px; white-space:normal; overflow-wrap:anywhere; }
+.compactGameActions { flex-wrap:wrap; justify-content:flex-end; }
+.gameTopInfo { font-size:14px; white-space:normal; }
+.playersPane .playerCard { flex-shrink:0; }
+.container[data-screen="game"][data-premium] .playersPane .playerNameText { font-size:20px; line-height:1.15; }
+.container[data-screen="game"][data-premium] .playersPane .playerStats { font-size:14px; line-height:1.25; flex-wrap:wrap; white-space:normal; }
+.container[data-screen="game"] .classicMatchProgress { font-size:14px; white-space:normal; line-height:1.2; }
+.container[data-screen="game"] .classicAroundPane .classicTurn { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.container[data-screen="game"] .classicTurn .lastTotal { grid-column:1 / -1; }
+.container[data-screen="game"] .dartBox { font-size:22px; }
+.container[data-screen="game"] .lastTotal { font-size:16px; white-space:normal; line-height:1.2; height:auto; min-height:30px; }
+.checkoutHint { grid-column:1 / -1; text-align:center; font-size:16px; font-weight:800; color:var(--accent); margin:0 0 3px; overflow-wrap:anywhere; }
+.container[data-screen="game"] .aroundTargetBox { font-size:28px; }
+.container[data-screen="game"] .rouletteControls .btn { font-size:16px; line-height:1.2; min-height:50px; padding:6px 4px; overflow-wrap:anywhere; }
+.container[data-screen="game"] .rouletteScore { font-size:20px; }
+.container[data-screen="game"] .rouletteTargetBox { font-size:30px; }
+.container[data-screen="game"] .padPane.dartKeypad .multBtn { font-size:18px; min-width:0; padding:0 2px; }
+.container[data-screen="game"] .iconBackspace { width:30px; height:30px; }
+/* Explicit zero-minimum tracks keep the large iOS digits inside the existing
+   keypad box; auto tracks otherwise grow to the font's minimum content height. */
+.container[data-screen="game"]:not([data-mode="cricket"]) .padPane.dartKeypad {
+  grid-template-rows:auto repeat(5,minmax(0,1fr));
+}
+.container[data-screen="game"] .padPane.dartKeypad .key { min-height:0; }
+.container[data-screen="game"][data-mode="cricket"] .targetCell { font-size:26px; font-weight:900; }
+.playerColName { min-width:0; font-size:18px; }
+.playerColPts { flex-shrink:0; font-size:21px; font-weight:900; }
+.cricketClosedMark { display:block; width:1em; height:1em; max-height:100%; color:#22c55e; }
+.container[data-screen="game"][data-mode="cricket"] .markCell { font-size:28px; }
+.statisticsView { font-size:16px; overflow-wrap:anywhere; }
+.statisticsView .input { font-size:16px; }
+.stats-dashboard { min-width:0; }
+.stats-title { display:flex; align-items:center; gap:10px; margin:0 0 16px; font-size:22px; line-height:1.25; font-weight:900; }
+.stats-title-icon { display:flex; align-items:center; justify-content:center; width:38px; height:38px; flex-shrink:0; border-radius:11px; background:color-mix(in srgb,var(--accent) 14%,transparent); color:var(--accent); }
+.stats-title-icon svg { width:26px; height:26px; }
+.stats-dashboard button,.stats-dashboard summary { min-height:44px; }
+.stats-muted { font-size:14px; opacity:.75; line-height:1.5; }
+.stats-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.stats-actions button,.stats-more,.stats-match button { padding:10px 12px; }
+.stats-management,.stats-history,.stats-match { border:1px solid var(--line); border-radius:12px; padding:10px; margin:10px 0; }
+.stats-management>summary,.stats-history>summary,.stats-match>summary { cursor:pointer; font-weight:800; display:list-item; align-content:center; }
+.stats-filter-row { display:grid; grid-template-columns:105px minmax(0,1fr); gap:8px; align-items:start; margin-bottom:12px; }
+.stats-filter-row .stats-management { min-width:0; margin:0; padding:0 10px; }
+.stats-filter-row .stats-management>summary { box-sizing:border-box; min-height:44px; font-size:14px; }
+.stats-filter-row .stats-management[open] { padding-bottom:10px; }
+.stats-picker-row { display:grid; grid-template-columns:minmax(0,1fr); gap:8px; align-items:start; margin-bottom:12px; }
+.stats-picker-pair { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.stats-picker-pair .stats-player-picker>summary { height:100%; box-sizing:border-box; }
+.stats-player-picker { position:relative; flex:1 1 180px; min-width:0; }
+.stats-player-picker>summary { cursor:pointer; border:1px solid var(--line); border-radius:10px; padding:8px 12px; background:var(--card); overflow-wrap:anywhere; }
+.stats-field-label { display:block; font-size:14px; opacity:.75; }
+.stats-picker-panel { border:1px solid var(--line); border-radius:10px; padding:10px; margin-top:6px; }
+.stats-picker-panel label { display:block; font-size:14px; margin-bottom:6px; }
+.stats-picker-panel input { width:100%; box-sizing:border-box; min-width:0; }
+.stats-picker-results { display:grid; gap:6px; margin-top:8px; }
+.stats-picker-results button { display:flex; flex-wrap:wrap; justify-content:space-between; gap:6px; text-align:left; padding:10px; overflow-wrap:anywhere; }
+.stats-picker-results button[aria-pressed="true"] { border-color:var(--accent); }
+.stats-picker-results button span { font-size:14px; opacity:.75; }
+.stats-metric-grid { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+.stats-danger { color:#fca5a5; }
+.stats-delete-dialog { background:var(--bg,#10151e); color:var(--text,#fff); border:1px solid var(--line); border-radius:16px; max-width:480px; width:calc(100% - 48px); box-sizing:border-box; padding:20px; }
+.stats-delete-dialog::backdrop { background:rgba(0,0,0,.75); }
+.stats-delete-dialog h2 { font-size:20px; }
+/* One game toolbar replaces the separate language/audio header and action row. */
+.container[data-screen="game"] .compactGameTopBar {
+  display:grid;
+  grid-template-columns:40px minmax(0,1fr) auto;
+  align-items:center;
+  gap:4px;
+  padding:4px;
+  min-height:48px;
+}
+.compactGameTopBar .iconBtn {
+  width:40px;
+  height:40px;
+  min-width:0;
+  padding:4px;
+  flex:0 0 40px;
+}
+.compactGameTopBar .gameRestart { font-size:30px; line-height:1; }
+.compactGameTopBar .compactGameActions { flex-wrap:nowrap; gap:2px; margin:0; }
+.compactGameTopBar .gameTopInfo { font-size:14px; line-height:1.2; overflow-wrap:anywhere; }
+.premiumCard .premiumActions > :only-child { grid-column:1 / -1; }
+.premiumAppearance { display:flex; flex-direction:column; gap:8px; }
+.premiumAppearanceLabel { font-size:16px; font-weight:700; opacity:.85; }
+.premiumSwatches { display:flex; gap:10px; flex-wrap:wrap; padding:3px; }
+.premiumSwatches button { min-width:40px; min-height:40px; }
+/* Round totals have a display and four rows of three keys, not the dart grid. */
+.container[data-screen="game"][data-mode="classic"] .padPane.roundTotalKeypad {
+  flex:0 0 320px;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  grid-template-rows:40px repeat(4,minmax(40px,1fr)) auto;
+  gap:6px;
+}
+.container[data-screen="game"] .roundTotalKeypad .roundTotalDisplay {
+  grid-column:1 / -1;
+  height:100% !important;
+  margin:0 !important;
+}
+.container[data-screen="game"] .roundTotalKeypad > .padRow { display:contents; }
+.container[data-screen="game"] .roundTotalKeypad > .padRow button {
+  width:100%;
+  height:100% !important;
+  min-height:0;
+  padding:0 4px;
+  font-size:26px !important;
+}
+.container[data-screen="game"] .roundTotalKeypad > :last-child { grid-column:1 / -1; }
+@media (max-width:360px) {
+  .utilityHeader .languagePicker { max-width:none; }
+  .container[data-screen="game"][data-premium] .playersPane .playerNameText { font-size:19px; }
+  .container[data-screen="game"] .rouletteControls .btn { font-size:15px; }
+}
+
+/* 2026-11-05: annotated Android feedback, shared across all seven locales. */
+.roulettePane .playerHeader {
+  align-items:flex-start;
+}
+.roulettePane .playerNameText {
+  flex:1 1 auto;
+  font-size:clamp(19px,5vw,24px);
+}
+.container[data-screen="game"] .roulettePane .playerStats {
+  flex:0 1 52%;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:3px;
+  text-align:right;
+  font-size:clamp(14px,3.9vw,19px);
+  line-height:1.2;
+  white-space:normal;
+}
+.roulettePane .playerStats > span:nth-child(2) { display:none; }
+.roulettePane .playerStats > span:last-child { overflow-wrap:anywhere; }
+.container[data-screen="game"] .roulettePane .rouletteScore {
+  margin-top:0;
+  font-size:clamp(20px,5.4vw,26px);
+}
+.teamPane .playerHeader { align-items:flex-start; gap:8px; }
+.teamPane .playerTitleLine { flex:0 1 38%; min-width:0; }
+.container[data-screen="game"] .teamPane .playerStats {
+  flex:1 1 0;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:3px;
+  font-size:clamp(15px,4.3vw,21px);
+  line-height:1.2;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+.teamPane .playerStats > span:nth-child(2),
+.teamPane .playerStats > span:nth-child(4) { display:none; }
+.teamPane .playerStats > span:last-child { max-width:100%; }
+.container[data-screen="game"] .compactGameTopBar {
+  grid-template-columns:clamp(30px,9vw,40px) minmax(0,1fr) auto;
+  gap:3px;
+}
+.compactGameTopBar .gameTopStatus { overflow:hidden; min-width:0; }
+.container[data-screen="game"] .compactGameTopBar .iconBtn {
+  width:clamp(30px,9vw,40px);
+  height:clamp(34px,9vw,40px);
+  flex-basis:clamp(30px,9vw,40px);
+  padding:3px;
+}
+.compactGameTopBar .compactGameActions { gap:2px; }
+.compactGameTopBar .gameOutInfo {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:center;
+  gap:2px;
+  min-width:0;
+  overflow:hidden;
+  white-space:nowrap;
+  line-height:1.1;
+}
+.compactGameTopBar .gameOutCaption {
+  font-size:clamp(11px,3.2vw,15px);
+  white-space:nowrap;
+}
+.compactGameTopBar .gameOutValue {
+  font-size:clamp(11px,3.2vw,15px);
+  white-space:nowrap;
+  letter-spacing:-.025em;
+}
+.container[data-screen="game"] .roundTotalKeypad > .padRow button[data-keypad-number] {
+  font-size:clamp(32px,min(12vw,7vh),58px) !important;
+  font-weight:900;
+  line-height:1;
+  padding:0 2px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-variant-numeric:tabular-nums;
+}
+.container[data-screen="game"] .roundTotalKeypad .multBtn.backspace {
+  background:linear-gradient(180deg,#ef4444,#b91c1c) !important;
+  border-color:#f87171 !important;
+  color:#fff !important;
+}
+.container[data-screen="game"] .roundTotalKeypad .multBtn.backspace .iconBackspace {
+  width:clamp(30px,8vw,42px);
+  height:clamp(30px,8vw,42px);
+}
+/* Same unmistakable white touch feedback for every number-entry keypad. */
+.container[data-screen="game"] .padPane button[data-keypad-number]:active,
+.container[data-screen="game"] .padPane button[data-keypad-number].pressed {
+  transform:translateY(1px) scale(.985);
+  background:#fff !important;
+  color:#10151e !important;
+  border-color:#fff !important;
+  box-shadow:0 0 0 2px #fff, 0 0 15px rgba(255,255,255,.65) !important;
+}
+.utilityHeader .vibrationToggle,
+.compactGameTopBar .vibrationToggle { touch-action:manipulation; }
+.utilityHeader .vibrationToggle svg,
+.compactGameTopBar .vibrationToggle svg { width:25px; height:25px; }
+.playerRow .playerName { touch-action:pan-y; }
+.playerRow .playerName input { touch-action:pan-y; }
+.playerRow.dragging {
+  border-color:#16a34a;
+  background:#23352b;
+  box-shadow:0 0 0 2px rgba(34,197,94,.65);
+  position:relative;
+  z-index:2;
+}
+.playerRow.dragging .playerName { cursor:grabbing; }
+.playerRow.dragging .playerName input { pointer-events:none; }
+@media(max-width:360px) {
+  .utilityHeader .iconBtn { flex:0 0 36px; width:36px; height:36px; }
+  .utilityHeader .shareIconBtn { width:36px; height:36px; }
+  .utilityHeader .languagePicker .input { font-size:14px; }
+}
+
+/* Reordering replaces arrow buttons: name + delete are the only first-row columns. */
+.playerRow { grid-template-columns:minmax(0,1fr) auto; }
+.playerRow .playerTeam { grid-column:1 / -1; }
+.playerRow .playerName input { -webkit-touch-callout:none; }
+
+/* Approved two-triangle reorder handle: text | drag handle | delete. */
+.playerRow {
+  grid-template-columns:minmax(0,1fr) 40px 40px;
+  column-gap:6px;
+}
+.playerRow .playerDragHandle {
+  appearance:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  width:40px;
+  height:40px;
+  min-width:40px;
+  padding:3px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#171a1f;
+  color:#a3aab6;
+  cursor:grab;
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.playerRow .playerDragHandle svg {
+  display:block;
+  width:27px;
+  height:31px;
+  fill:currentColor;
+  pointer-events:none;
+}
+.playerRow .playerDragHandle:focus-visible {
+  outline:2px solid #22c55e;
+  outline-offset:2px;
+}
+.playerRow.dragging .playerDragHandle {
+  border-color:#22c55e;
+  color:#f8fafc;
+  cursor:grabbing;
+  background:#14532d;
+}
+
+/* Larger return button and centered status; preserve the compact action icons. */
+.container[data-screen="game"] .compactGameTopBar { grid-template-columns:clamp(42px,12vw,50px) minmax(0,1fr) auto; }
+.container[data-screen="game"] .compactGameTopBar .gameBack {
+ width:clamp(42px,12vw,50px); height:clamp(44px,12vw,50px);
+ flex-basis:clamp(42px,12vw,50px); font-size:34px; line-height:1;
+}
+.compactGameTopBar .gameTopStatus { text-align:center; }
+.compactGameTopBar .gameOutInfo { align-items:center; }
+.compactGameTopBar .gameTopInfo:not(.gameOutInfo) { display:block; font-size:clamp(16px,4.5vw,20px); line-height:1.1; }
+.container[data-screen="game"] .padPane .multBtn:active,
+.container[data-screen="game"] .padPane .multBtn.pressed {
+ transform:translateY(1px) scale(.985); background:#fff !important; color:#10151e !important;
+ border-color:#fff !important; box-shadow:0 0 0 2px #fff, 0 0 15px rgba(255,255,255,.65) !important;
+}
+
+/* Roulette actions share the tallest translated uppercase label's row height. */
+.container[data-screen="game"] .rouletteControls { align-items:stretch; }
+.container[data-screen="game"] .rouletteControls .btn {
+  text-transform:uppercase;
+  min-height:72px;
+  height:auto;
+  align-self:stretch;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:8px 4px;
+  overflow-wrap:anywhere;
+}
+.container[data-screen="game"] .rouletteControls .btn:not(:disabled):active,
+.container[data-screen="game"] .rouletteControls .btn:not(:disabled).pressed {
+  transform:translateY(1px) scale(.985);
+  background:#fff !important;
+  color:#10151e !important;
+  border-color:#fff !important;
+  box-shadow:0 0 0 2px #fff, 0 0 15px rgba(255,255,255,.65) !important;
+}
+@media(max-width:340px) {
+  .container[data-screen="game"] .rouletteControls .btn { font-size:14px; padding:8px 1px; }
+}
+
+/* Chosen bent return: centered drawing, maximum size with safe stroke clearance. */
+.container[data-screen="game"] .compactGameTopBar .gameBack {
+  display:grid;
+  place-items:center;
+  box-sizing:border-box;
+  padding:0;
+}
+.container[data-screen="game"] .compactGameTopBar .gameBack .gameBackIcon {
+  display:block;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+}
+
+/* Player cards: larger shared roulette type and a full-width Classic info grid. */
+.container[data-screen="game"] .roulettePane { --roulette-card-type:clamp(22px,6.1vw,27px); }
+.container[data-screen="game"][data-premium] .roulettePane .playerNameText,
+.container[data-screen="game"][data-premium] .roulettePane .playerStats,
+.container[data-screen="game"] .roulettePane .rouletteScore {
+  font-size:var(--roulette-card-type);
+  line-height:1.15;
+}
+.container[data-screen="game"] .roulettePane .playerNameText {
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+.container[data-screen="game"] .roulettePane .playerHeader { gap:8px; }
+.container[data-screen="game"] .roulettePane .playerStats { flex-basis:54%; }
+.container[data-screen="game"][data-mode="classic"] .classicCard {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  grid-template-areas:"head score" "info info" "hint hint" "turn turn";
+  align-items:start;
+  padding:10px 8px;
+  gap:6px 8px;
+}
+.container[data-screen="game"] .classicCard .playerHeader { grid-area:head; min-width:0; }
+.container[data-screen="game"] .classicCard .playerTitleLine { flex:1 1 auto; width:100%; }
+.container[data-screen="game"][data-premium] .classicCard .playerNameText {
+  font-size:clamp(22px,6.4vw,28px);
+  line-height:1.15;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+.container[data-screen="game"] .classicCard .playerScore {
+  grid-area:score;
+  justify-self:end;
+  margin:0;
+}
+.container[data-screen="game"][data-premium] .classicCard .classicInfo {
+  grid-area:info;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  align-items:start;
+  gap:6px 8px;
+  min-width:0;
+  width:100%;
+  font-size:clamp(16px,4.8vw,20px);
+  line-height:1.2;
+  text-align:left;
+}
+.container[data-screen="game"] .classicCard .classicInfo > span {
+  display:block;
+  min-width:0;
+  max-width:100%;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+.container[data-screen="game"] .classicCard .classicInfo .classicMatchProgress,
+.container[data-screen="game"] .classicCard .classicInfo .lastTotal {
+  font-size:inherit;
+  line-height:inherit;
+  height:auto;
+  min-height:0;
+  margin:0;
+  padding:0;
+  background:transparent;
+  border:0;
+  text-align:left;
+}
+.container[data-screen="game"] .classicCard .classicInfo .classicMembers { grid-column:1 / -1; line-height:1.3; }
+.container[data-screen="game"] .classicCard .checkoutHint { grid-area:hint; }
+.container[data-screen="game"] .classicCard .classicTurn {
+  grid-area:turn;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  align-self:end;
+  margin:0;
+  gap:4px;
+}
+
+.container[data-screen="game"][data-premium] .roulettePane .playerNameText,
+.container[data-screen="game"][data-premium] .roulettePane .playerStats,
+.container[data-screen="game"] .roulettePane .rouletteScore,
+.container[data-screen="game"][data-premium] .classicCard .playerNameText { line-height:1.3; }
+.container[data-screen="game"] .classicCard .playerScore { line-height:1.3; }
+.container[data-screen="game"] .classicCard .classicInfo .classicMatchProgress {
+  display:flex;
+  flex-wrap:wrap;
+  gap:2px 8px;
+}
+.container[data-screen="game"] .classicCard .classicMatchProgress > span { white-space:nowrap; }
