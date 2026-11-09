@@ -1,3 +1,5 @@
+import { appendMatch, teamMatchDetails } from './statisticsHistory.js';
+import StatisticsDashboard from './StatisticsDashboard.jsx';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Capacitor, registerPlugin } from '@capacitor/core';
@@ -7,6 +9,7 @@ import {
   BannerAdSize
 } from '@capacitor-community/admob';
 import './app.css';
+import './ui/readability.css';
 import { createIOSPrivacy, privacyChoicesLabel } from './iosPrivacy.js';
 import { botThrowAround, botThrowClassic, botThrowCricket, botThrowRoulette, normalizeBotLevel } from './botEngine.js';
 import { hasRecordedScore, isQuickClassic, isSupportedX01, isNonX01LobbyAdMode } from './interstitialPolicy.js';
@@ -258,6 +261,13 @@ const IconSpeaker = () => (
   </svg>
 );
 
+const IconVibration = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+    <rect x="8" y="7" width="8" height="10" rx="2" />
+    <path d="M5 9c-1 2-1 4 0 6M2 7c-2 4-2 6 0 10M19 9c1 2 1 4 0 6M22 7c2 4 2 6 0 10" />
+  </svg>
+);
+
 /* ===== Texty ===== */
 const T = {
   cs: {
@@ -285,6 +295,7 @@ const T = {
     teamC: 'Tým C',
     teamNeedPlayers: 'Alespoň dva týmy musí mít hráče.',
     rouletteTotalPoints: 'Body celkem', roundCount: 'Počet kol',
+    haptics: 'Vibrace', reorderPlayer: 'Podrž a přesuň hráče',
     sets: 'Sety', legs: 'Legy', shareApp: 'Sdílet aplikaci',
     shareText: 'DartScore Pro – počítadlo šipek', linkCopied: 'Odkaz zkopírován',
     legWon: 'Leg pro', setWon: 'Set pro',
@@ -371,6 +382,7 @@ premiumNote: "Jednorázová platba. Žádné předplatné.",
     teamC: 'Team C',
     teamNeedPlayers: 'At least two teams must have players.',
     rouletteTotalPoints: 'Total points', roundCount: 'Rounds',
+    haptics: 'Vibration', reorderPlayer: 'Hold and drag to reorder',
     sets: 'Sets', legs: 'Legs', shareApp: 'Share app',
     shareText: 'DartScore Pro – darts scorer', linkCopied: 'Link copied',
     legWon: 'Leg for', setWon: 'Set for',
@@ -456,6 +468,7 @@ activatePremium: 'Activate Premium',
     teamC: 'Team C',
     teamNeedPlayers: 'Mindestens zwei Teams müssen Spieler haben.',
     rouletteTotalPoints: 'Punkte gesamt', roundCount: 'Runden',
+    haptics: 'Vibration', reorderPlayer: 'Halten und zum Verschieben ziehen',
     sets: 'Sätze', legs: 'Legs', shareApp: 'App teilen',
     shareText: 'DartScore Pro – Darts-Zähler', linkCopied: 'Link kopiert',
     legWon: 'Leg für', setWon: 'Satz für',
@@ -541,6 +554,7 @@ premiumNote: "Einmalige Zahlung. Kein Abo.",
     teamC: 'Equipo C',
     teamNeedPlayers: 'Al menos dos equipos deben tener jugadores.',
     rouletteTotalPoints: 'Puntos totales', roundCount: 'Rondas',
+    haptics: 'Vibración', reorderPlayer: 'Mantén pulsado y arrastra para ordenar',
     sets: 'Sets', legs: 'Legs', shareApp: 'Compartir app',
     shareText: 'DartScore Pro – marcador de dardos', linkCopied: 'Enlace copiado',
     legWon: 'Leg para', setWon: 'Set para',
@@ -626,6 +640,7 @@ premiumNote: "Pago único. Sin suscripción.",
     teamC: 'Team C',
     teamNeedPlayers: 'Minstens twee teams moeten spelers hebben.',
     rouletteTotalPoints: 'Totaal punten', roundCount: 'Rondes',
+    haptics: 'Trilling', reorderPlayer: 'Houd vast en sleep om te verplaatsen',
     sets: 'Sets', legs: 'Legs', shareApp: 'App delen',
     shareText: 'DartScore Pro – dartscore', linkCopied: 'Link gekopieerd',
     legWon: 'Leg voor', setWon: 'Set voor',
@@ -711,6 +726,7 @@ premiumNote: "Eenmalige betaling. Geen abonnement.",
     teamC: 'Команда C',
     teamNeedPlayers: 'Минимум в двух командах должны быть игроки.',
     rouletteTotalPoints: 'Всего очков', roundCount: 'Раунды',
+    haptics: 'Вибрация', reorderPlayer: 'Удерживайте и перетащите для перемещения',
     sets: 'Сеты', legs: 'Леги', shareApp: 'Поделиться',
     shareText: 'DartScore Pro – счётчик дартса', linkCopied: 'Ссылка скопирована',
     legWon: 'Лег для', setWon: 'Сет для',
@@ -798,6 +814,7 @@ premiumNote: "Разовая оплата. Без подписки.",
     teamC: '团队 C',
     teamNeedPlayers: '至少两个团队必须有玩家。',
     rouletteTotalPoints: '总分', roundCount: '轮数',
+    haptics: '振动', reorderPlayer: '长按并拖动以调整顺序',
     shareApp: '分享应用',
     shareText: 'DartScore Pro – 飞镖计分器',
     linkCopied: '链接已复制',
@@ -1168,6 +1185,14 @@ async function showInterstitialAd(eventDetails) {
     // This avoids the legacy bridge bypassing the native cadence.
     const query = new URLSearchParams(eventDetails);
     if (eventDetails.ad_event !== 'non_x01_start') recordFullscreenAdRequest();
+    // Native Android WebView must not navigate away from the game to show an ad.
+    // A custom-scheme location change could leave a transient Activity as the
+    // foreground task and make the entire game appear to close after the ad.
+    if (typeof window.DartScoreAndroid?.requestInterstitialEvent === 'function') {
+      window.DartScoreAndroid.requestInterstitialEvent(query.toString());
+      return true;
+    }
+    // Preserve the original deep-link route for TWA / browser installations.
     window.location.href = `${ADMOB_INTERSTITIAL_SCHEME_URL}?${query}`;
     return true;
   } catch (err) {
@@ -1256,7 +1281,16 @@ function App() {
   useEffect(() => {
     // iOS standalone / Android cutouts fallback
     const root = document.documentElement;
-    root.style.setProperty('--sat-fallback', '28px');
+    // Native Android now applies actual status/navigation/cutout insets to
+    // the WebView itself. Do not add CSS safe-area padding a second time.
+    if (window.DartScoreAndroid) {
+      for (const side of ['--sat', '--sar', '--sab', '--sal', '--sat-fallback']) {
+        root.style.setProperty(side, '0px');
+      }
+      root.classList.add('native-android-insets');
+    } else {
+      root.style.setProperty('--sat-fallback', '28px');
+    }
 
     const setVh = () => {
       document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
@@ -1358,6 +1392,39 @@ function App() {
   });
   const [soundOn, setSoundOn] = useState(true);
   const [voiceOn, setVoiceOn] = useState(true);
+  const [hapticsOn, setHapticsOn] = useState(() => {
+    try { return localStorage.getItem('dspHapticsEnabled') === 'true'; }
+    catch { return false; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem('dspHapticsEnabled', hapticsOn ? 'true' : 'false'); }
+    catch { /* localStorage may be disabled */ }
+  }, [hapticsOn]);
+  const playKeyHaptic = () => {
+    if (!hapticsOn) return;
+    try {
+      if (IS_IOS && typeof DartScoreIOS?.hapticTap === 'function') {
+        void DartScoreIOS.hapticTap().catch(() => {});
+      } else if (typeof window.DartScoreAndroid?.hapticTap === 'function') {
+        window.DartScoreAndroid.hapticTap();
+      } else {
+        navigator.vibrate?.(12);
+      }
+    } catch { /* Optional feedback must never prevent scoring. */ }
+  };
+  const flashNumericDown = e => {
+    const key = e.target.closest?.('button[data-keypad-number], button.multBtn, .rouletteControls button');
+    if (!key || key.disabled) return;
+    if (key.dspFlashTimer) window.clearTimeout(key.dspFlashTimer);
+    key.classList.add('pressed');
+    playKeyHaptic();
+  };
+  const flashNumericUp = e => {
+    const key = e.target.closest?.('button[data-keypad-number], button.multBtn, .rouletteControls button');
+    if (!key) return;
+    if (key.dspFlashTimer) window.clearTimeout(key.dspFlashTimer);
+    key.dspFlashTimer = window.setTimeout(() => key.classList.remove('pressed'), 120);
+  };
 
   const [mode, setMode] = useState('classic');
   const [startScore, setStartScore] = useState(501);
@@ -1533,7 +1600,7 @@ function App() {
   const winAudioRef = useRef(null);
   /* persist screen */
 
-  const APP_VERSION = '1.1.68';
+  const APP_VERSION = '2.08';
   const LOBBY_DEFAULTS_VERSION = '1.1.62';
 
   /* načti lobby z localStorage */
@@ -2872,11 +2939,10 @@ const commitCricket = (value, mOverride) => {
 
       {
         try {
-          const list = JSON.parse(localStorage.getItem('finishedGames') || '[]');
           const classicTeamWin = mode === 'classic' && playerMode === 'teams' && !opts.draw;
           const gameRecord = {
             ts: Date.now(),
-            mode, startScore,
+            mode, playerMode: mode === 'classic' ? playerMode : 'individual', startScore,
             outDouble, outTriple, outMaster,
             randomOrder, playThrough,
             players: players.map(p => p.name),
@@ -2904,6 +2970,12 @@ const commitCricket = (value, mOverride) => {
             );
             gameRecord.statsVersion = 1;
           }
+          if (mode === 'classic' && playerMode === 'teams') {
+            const visits = opts.finalVisit ? [...classicVisitHistory, opts.finalVisit] : classicVisitHistory;
+            const teamStats = buildClassicPlayerStats(visits, ['A','B','C'].map(name => ({name})), opts.finalSetsWon || classicSetsWon);
+            Object.assign(gameRecord, teamMatchDetails(players.map((p, ix) => ({...p, team:playerTeam(ix)})), pIdx, teamStats, opts.draw));
+            gameRecord.statsVersion = 2;
+          }
           if (mode === 'classic' && Array.isArray(scores)) {
             gameRecord.remainingByPlayer = playerMode === 'teams'
               ? [0, 1, 2]
@@ -2917,8 +2989,7 @@ const commitCricket = (value, mOverride) => {
                   remaining: ix === pIdx ? 0 : (scores[ix] ?? 0)
                 }));
           }
-          list.unshift(gameRecord);
-          localStorage.setItem('finishedGames', JSON.stringify(list.slice(0, 200)));
+          appendMatch(localStorage, gameRecord);
         } catch { }
       }
 
@@ -3747,6 +3818,46 @@ const restorePremiumPurchase = async () => {
       return rules.length ? rules.join(' / ') : 'ANY-OUT';
     })();
 
+    const shareApp = async () => {
+      const url = IS_IOS
+        ? IOS_APP_STORE_URL
+        : 'https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro';
+      const payload = { title: 'DartScore Pro', text: t(lang, 'shareText'), url };
+
+      window.DartScoreAnalytics?.track('app_share_clicked', {
+        source: 'lobby'
+      });
+
+      try {
+        if (IS_IOS) {
+          await DartScoreIOS.shareApp({ text: payload.text, url: payload.url });
+          return;
+        }
+        if (window.DartScoreAndroid?.shareApp) {
+          window.DartScoreAndroid.shareApp(payload.title, payload.text, payload.url);
+          return;
+        }
+        if (navigator.share) {
+          await navigator.share(payload);
+          return;
+        }
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(url);
+          showToast(t(lang, 'linkCopied'));
+          return;
+        }
+        window.prompt(t(lang, 'shareApp'), url);
+      } catch (e) {
+        if (e?.name === 'AbortError') return;
+        try {
+          await navigator.clipboard?.writeText?.(url);
+          showToast(t(lang, 'linkCopied'));
+        } catch {
+          window.prompt(t(lang, 'shareApp'), url);
+        }
+      }
+    };
+
     return (
       <ErrorBoundary lang={lang}>
         <div
@@ -3756,169 +3867,38 @@ const restorePremiumPurchase = async () => {
           data-premium={isPremium ? '1' : '0'}
           style={{
             paddingTop: 'max(var(--sat, 0px), var(--sat-fallback, 28px))',
-            paddingBottom: iosBannerVisible ? 60 : 0,
+            paddingBottom: iosBannerVisible ? 'calc(60px + var(--sab, 0px))' : 'var(--sab, 0px)',
           }}
         >
-          {/* HEADER */}
-          <div
-            className="header"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 8
-            }}
-          >
-            {/* 1. řádek: logo + Premium + zvuk/hlas */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 8,
-                width: '100%'
-              }}
-            >
-              <div
-                className="left"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  minWidth: 0,
-                  flexWrap: 'wrap'
-                }}
-              >
-                {screen === 'game' && (
-                  <button
-                    type="button"
-                    className="btn ghost"
-                    onClick={returnToLobbyFromGame}
-                    title={t(lang, 'back')}
-                    style={{ flexShrink: 0 }}
-                  >
-                    ←
-                  </button>
-                )}
-
-                <div
-                  className="logo"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    flexShrink: 0,
-                    minWidth: 0,
-                    fontWeight: 900,
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  <span className="dart"></span>
-                  <span style={{ fontWeight: 900, whiteSpace: 'nowrap' }}>
-                    {t(lang, 'app')}
-                  </span>
-                </div>
-
-                {isPremium && (
-                  <span
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 800,
-                      lineHeight: 1.2,
-                      background: '#0f1318',
-                      border: '1px solid var(--accent)',
-                      color: 'var(--accent)',
-                      padding: '4px 8px',
-                      borderRadius: '999px',
-                      flexShrink: 0,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    Premium
-                  </span>
-                )}
-              </div>
-
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  flexShrink: 0
-                }}
-              >
-                <button
-                  type="button"
-                  className={`iconBtn ${!soundOn ? 'muted' : ''}`}
-                  onClick={() => setSoundOn(v => !v)}
-                  aria-label={t(lang, 'sound')}
-                >
-                  <IconSpeaker />
-                </button>
-
-                <button
-                  type="button"
-                  className={`iconBtn ${!voiceOn ? 'muted' : ''}`}
-                  onClick={() => setVoiceOn(v => !v)}
-                  aria-label={t(lang, 'voice')}
-                >
-                  <span className="iconHead" aria-hidden="true"></span>
-                </button>
-              </div>
+          {screen === 'lobby' && <div className="header utilityHeader">
+            <div className="languagePicker">
+              <ThemedSelect className="input" value={lang}
+                title={LANG_LABEL[lang]} onChange={e => setLang(e.target.value)}>
+                {['cs', 'en', 'de', 'es', 'nl', 'ru', 'zh'].map(code => (
+                  <option key={code} value={code}>{LANG_LABEL[code]}</option>
+                ))}
+              </ThemedSelect>
             </div>
-
-            {/* 2. řádek je jen v lobby. Ve hře šetříme výšku pro hráče. */}
-            {screen === 'lobby' && (
-              <div
-                className="controls"
-                style={{
-                  display: 'flex',
-                  alignItems: 'stretch',
-                  gap: 8,
-                  width: '100%'
-                }}
-              >
-                <ThemedSelect
-                  className="input"
-                  value={lang}
-                  onChange={e => setLang(e.target.value)}
-                  style={{
-                    height: 44,
-                    minWidth: 150,
-                    flex: '0 0 auto'
-                  }}
-                >
-                  {['cs', 'en', 'de', 'es', 'nl', 'ru', 'zh'].map(code => (
-                    <option key={code} value={code}>{LANG_LABEL[code]}</option>
-                  ))}
-                </ThemedSelect>
-
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={rateApp}
-                  style={{
-                    minHeight: 44,
-                    flex: '1 1 auto',
-                    minWidth: 0,
-                    fontSize: 12,
-                    padding: '7px 10px',
-                    borderColor: 'var(--accent)',
-                    whiteSpace: 'normal',
-                    lineHeight: 1.15,
-                    textAlign: 'center',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    overflowWrap: 'anywhere'
-                  }}
-                >
-                  ⭐ {t(lang, 'rateAppButton')}
-                </button>
-              </div>
-            )}
-          </div>
+            <button type="button" className={`iconBtn ${!soundOn ? 'muted' : ''}`}
+              onClick={() => setSoundOn(v => !v)} aria-label={t(lang, 'sound')} aria-pressed={soundOn}>
+              <IconSpeaker />
+            </button>
+            <button type="button" className={`iconBtn ${!voiceOn ? 'muted' : ''}`}
+              onClick={() => setVoiceOn(v => !v)} aria-label={t(lang, 'voice')} aria-pressed={voiceOn}>
+              <span className="iconHead" aria-hidden="true"></span>
+            </button>
+            <button type="button" className={'iconBtn vibrationToggle' + (!hapticsOn ? ' muted' : '')}
+              onClick={() => setHapticsOn(v => !v)} aria-label={t(lang, 'haptics')} title={t(lang, 'haptics')} aria-pressed={hapticsOn}>
+              <IconVibration />
+            </button>
+            {screen === 'lobby' && <button type="button" className="shareIconBtn" onClick={shareApp}
+              title={t(lang, 'shareApp')} aria-label={t(lang, 'shareApp')}>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="18" cy="5" r="2.5" /><circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="19" r="2.5" />
+                <path d="M8.2 10.9 15.8 6.2M8.2 13.1l7.6 4.7" />
+              </svg>
+            </button>}
+          </div>}
 
         {screen === 'lobby' ? (
   <>
@@ -3936,6 +3916,7 @@ const restorePremiumPurchase = async () => {
       scoreInputMode={scoreInputMode} setScoreInputMode={setScoreInputMode}
       playerMode={playerMode} setPlayerMode={setPlayerMode}
       players={players} setPlayers={setPlayers}
+      playKeyHaptic={playKeyHaptic}
       addPlayer={addPlayer} deletePlayer={deletePlayer}
       movePlayer={movePlayer}
       startGame={startGame}
@@ -3993,6 +3974,11 @@ const restorePremiumPurchase = async () => {
     playerMode={playerMode}
       scoreInputMode={scoreInputMode}
     isPremium={isPremium}
+    soundOn={soundOn} setSoundOn={setSoundOn}
+    voiceOn={voiceOn} setVoiceOn={setVoiceOn}
+    hapticsOn={hapticsOn} setHapticsOn={setHapticsOn}
+    flashNumericDown={flashNumericDown} flashNumericUp={flashNumericUp}
+    returnToLobbyFromGame={returnToLobbyFromGame}
     classicOutShortLabel={classicOutShortLabel}
     outDouble={outDouble}
     outTriple={outTriple}
@@ -4220,6 +4206,7 @@ function Lobby({
     scoreInputMode, setScoreInputMode,
     playerMode, setPlayerMode,
     players, setPlayers,
+    playKeyHaptic,
     addPlayer, deletePlayer, movePlayer,
     startGame, continueSaved,
     showToast,
@@ -4231,6 +4218,70 @@ function Lobby({
     privacyOptionsRequired, privacyBusy, openIOSPrivacy
   }) {
     const [showPremiumDetails, setShowPremiumDetails] = useState(false);
+    const [draggingPlayerId, setDraggingPlayerId] = useState(null);
+    const playerDragRef = useRef(null);
+    const endPlayerDrag = () => {
+      const drag = playerDragRef.current;
+      if (drag?.timer) window.clearTimeout(drag.timer);
+      playerDragRef.current = null;
+      setDraggingPlayerId(null);
+    };
+    const startPlayerDrag = (event, playerId) => {
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      const previous = playerDragRef.current;
+      if (previous?.timer) window.clearTimeout(previous.timer);
+      const node = event.currentTarget;
+      const drag = {
+        id: playerId, pointerId: event.pointerId, active: false,
+        x: event.clientX, y: event.clientY, timer: null
+      };
+      playerDragRef.current = drag;
+      drag.timer = window.setTimeout(() => {
+        if (playerDragRef.current !== drag) return;
+        drag.active = true;
+        setDraggingPlayerId(playerId);
+        // The global vibration switch also controls long-press reorder feedback.
+        playKeyHaptic();
+        try { node.setPointerCapture(drag.pointerId); } catch { /* drag still works */ }
+      }, 400);
+    };
+    const movePlayerDrag = event => {
+      const drag = playerDragRef.current;
+      if (!drag || drag.pointerId !== event.pointerId) return;
+      if (!drag.active) {
+        if (Math.hypot(event.clientX - drag.x, event.clientY - drag.y) > 10) endPlayerDrag();
+        return;
+      }
+      event.preventDefault();
+      const list = event.currentTarget.closest('.lobbyWrap');
+      const rows = [...document.querySelectorAll('.lobbyWrap [data-lobby-player-id]')];
+      const target = rows.find(row => {
+        const rect = row.getBoundingClientRect();
+        return event.clientY >= rect.top && event.clientY < rect.bottom
+          && event.clientX >= rect.left && event.clientX < rect.right;
+      });
+      const targetId = target?.getAttribute('data-lobby-player-id');
+      if (list) {
+        const bounds = list.getBoundingClientRect();
+        if (event.clientY < bounds.top + 22) list.scrollTop -= 12;
+        if (event.clientY > bounds.bottom - 22) list.scrollTop += 12;
+      }
+      if (!targetId || targetId === drag.id) return;
+      setPlayers(ps => {
+        const from = ps.findIndex(p => String(p.id) === String(drag.id));
+        const to = ps.findIndex(p => String(p.id) === targetId);
+        if (from < 0 || to < 0 || from === to) return ps;
+        const next = [...ps];
+        next.splice(to, 0, next.splice(from, 1)[0]);
+        return next;
+      });
+    };
+    const releasePlayerDrag = event => {
+      // WebKit may deliver the final move only with pointerup after a long press.
+      // Commit that drop position before clearing the drag state.
+      if (playerDragRef.current?.active) movePlayerDrag(event);
+      endPlayerDrag();
+    };
     const matchOptions = Array.from({ length: 21 }, (_, ix) => ix + 1);
     const isNativeAndroidApp =
       typeof window !== 'undefined' && Boolean(window.DartScoreAndroid);
@@ -4238,48 +4289,13 @@ function Lobby({
     const isMobileAppView = IS_IOS || isNativeAndroidApp ||
       (typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent));
 
-    const shareApp = async () => {
-      const url = IS_IOS
-        ? IOS_APP_STORE_URL
-        : 'https://play.google.com/store/apps/details?id=com.randis2288.dartscorepro';
-      const payload = { title: 'DartScore Pro', text: t(lang, 'shareText'), url };
 
-      window.DartScoreAnalytics?.track('app_share_clicked', {
-        source: 'lobby'
-      });
-
-      try {
-        if (IS_IOS) {
-          await DartScoreIOS.shareApp({ text: payload.text, url: payload.url });
-          return;
-        }
-        if (window.DartScoreAndroid?.shareApp) {
-          window.DartScoreAndroid.shareApp(payload.title, payload.text, payload.url);
-          return;
-        }
-        if (navigator.share) {
-          await navigator.share(payload);
-          return;
-        }
-        if (navigator.clipboard?.writeText) {
-          await navigator.clipboard.writeText(url);
-          showToast(t(lang, 'linkCopied'));
-          return;
-        }
-        window.prompt(t(lang, 'shareApp'), url);
-      } catch (e) {
-        if (e?.name === 'AbortError') return;
-        try {
-          await navigator.clipboard?.writeText?.(url);
-          showToast(t(lang, 'linkCopied'));
-        } catch {
-          window.prompt(t(lang, 'shareApp'), url);
-        }
-      }
-    };
 
     return (
-      <div className="lobbyWrap">
+      <div className="lobbyWrap"
+        onPointerMoveCapture={movePlayerDrag}
+        onPointerUpCapture={releasePlayerDrag}
+        onPointerCancelCapture={endPlayerDrag}>
 
         {/* Režim + zápasový formát + sdílení v jednom kompaktním řádku */}
         <div className="lobbyCard">
@@ -4317,14 +4333,7 @@ function Lobby({
               </div>
             )}
 
-            <button type="button" className="shareIconBtn" onClick={shareApp} title={t(lang, 'shareApp')} aria-label={t(lang, 'shareApp')}>
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="18" cy="5" r="2.5" />
-                <circle cx="6" cy="12" r="2.5" />
-                <circle cx="18" cy="19" r="2.5" />
-                <path d="M8.2 10.9 15.8 6.2M8.2 13.1l7.6 4.7" />
-              </svg>
-            </button>
+
           </div>
         </div>
 
@@ -4378,108 +4387,152 @@ function Lobby({
           </div>
         )}
 
-        {/* Pořadí & Robot */}
-        <div className="lobbyCard">
-          <div
-            className="lobbyControls"
-            style={{
-              flexWrap: 'wrap',
-              justifyContent: 'space-between',
-              rowGap: '8px',
-              columnGap: '12px',
-              width: '100%'
-            }}
-          >
-
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
-              <span>{t(lang, 'order')}</span>
-
-              <ThemedSelect
-                className="input"
-                value={randomOrder ? 'random' : 'fixed'}
-                onChange={e => setRandomOrder(e.target.value === 'random')}
-                style={{ height: 34 }}
-              >
-                <option value="fixed">{t(lang, 'fixed')}</option>
-                <option value="random">{t(lang, 'random')}</option>
+        <div className="lobbyCard lobbyOptions">
+          <label className="lobbyOption"><span>{t(lang, 'order')}</span>
+            <ThemedSelect className="input" value={randomOrder ? 'random' : 'fixed'}
+              onChange={e => setRandomOrder(e.target.value === 'random')}>
+              <option value="fixed">{t(lang, 'fixed')}</option><option value="random">{t(lang, 'random')}</option>
+            </ThemedSelect>
+          </label>
+          <label className="lobbyOption"><span>{t(lang, 'robot')}</span>
+            <ThemedSelect className="input" value={ai} onChange={e => setAi(e.target.value)}>
+              <option value="off">{t(lang, 'off')}</option><option value="beginner">{t(lang, 'beginner')}</option>
+              <option value="medium">{t(lang, 'medium')}</option><option value="hard">{t(lang, 'hard')}</option>
+            </ThemedSelect>
+          </label>
+          {mode === 'classic' && (<>
+            <label className="lobbyOption"><span>{t(lang, 'scoreInputType')}</span>
+              <ThemedSelect className="input" value={scoreInputMode} onChange={e => setScoreInputMode(e.target.value)}>
+                <option value="darts">{t(lang, 'scoreByDarts')}</option><option value="round">{t(lang, 'roundTotal')}</option>
               </ThemedSelect>
+            </label>
+            <label className="lobbyPlayThrough"><input type="checkbox" checked={playThrough}
+              onChange={e => setPlayThrough(e.target.checked)} />{t(lang, 'playThrough')}</label>
+          </>)}
+        </div>
 
-              {mode === 'classic' && (
-                <label
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 8
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={playThrough}
-                    onChange={e => setPlayThrough(e.target.checked)}
-                  />
-                  {t(lang, 'playThrough')}
-                </label>
-              )}
-            </div>
+        {/* Start & Pokračovat */}
+        <div className="lobbyCard">
+          <div className="lobbyStartActions">
+            <button
+              type="button"
+              className="btn green"
+              onClick={() => startGame(true)}
+            >
+              {t(lang, 'startGame')}
+            </button>
 
-              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10 }}>
-                <span>{t(lang, 'robot')}</span>
-                <ThemedSelect
-                  className="input"
-                  value={ai}
-                  onChange={e => setAi(e.target.value)}
-                  style={{ height: 34, minWidth: 104 }}
-                >
-                  <option value="off">{t(lang, 'off')}</option>
-                  <option value="beginner">{t(lang, 'beginner')}</option>
-                  <option value="medium">{t(lang, 'medium')}</option>
-                  <option value="hard">{t(lang, 'hard')}</option>
-                </ThemedSelect>
-
-                
-              </div>
-
-              {mode === 'classic' && (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    width: '100%',
-                    flex: '1 0 100%'
-                  }}
-                >
-                  <span style={{ whiteSpace: 'nowrap' }}>
-                    {t(lang, 'scoreInputType')}
-                  </span>
-
-                  <ThemedSelect
-                    className="input"
-                    value={scoreInputMode}
-                    onChange={e => setScoreInputMode(e.target.value)}
-                    style={{ height: 34, minWidth: 126 }}
-                  >
-                    <option value="darts">{t(lang, 'scoreByDarts')}</option>
-                    <option value="round">{t(lang, 'roundTotal')}</option>
-                  </ThemedSelect>
-                </div>
-              )}
-
+            {hasSaved && (
+              <button
+                type="button"
+                className="btn"
+                onClick={continueSaved}
+              >
+                {t(lang, 'continueGame')}
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Premium + vzhled */}
+        {/* Hráči */}
         <div className="lobbyCard">
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '8px',
-              marginBottom: 8
-            }}
+            {mode === 'classic' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+                <span style={{ fontSize: 12, opacity: .85 }}>{t(lang, 'playerModeLabel')}</span>
+                <ThemedSelect
+                  className="input"
+                  value={playerMode}
+                  onChange={e => setPlayerMode(e.target.value)}
+                  style={{ height: 32, minWidth: 128 }}
+                >
+                  <option value="individual">{t(lang, 'individualPlayers')}</option>
+                  <option value="teams">{t(lang, 'teamPlayers')}</option>
+                </ThemedSelect>
+              </div>
+            )}
+
+          {players.map((p, i) => (
+            <div key={p.id} className={draggingPlayerId === p.id ? 'playerRow dragging' : 'playerRow'}
+              data-lobby-player-id={p.id}>
+              <div className="playerName">
+                <input
+                  className="input"
+                  value={p.name}
+                  onChange={e => setPlayers(ps => ps.map((x, ix) => ix === i ? { ...x, name: e.target.value } : x))}
+                  onFocus={e => e.target.select()}
+                  onKeyDown={e => {
+                    if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+                      e.preventDefault();
+                      movePlayer(i, e.key === 'ArrowUp' ? -1 : 1);
+                    }
+                  }}
+                  onMouseUp={e => e.preventDefault()}
+                />
+              </div>
+
+              <button
+                type="button"
+                className="playerDragHandle"
+                aria-label={t(lang, 'reorderPlayer')}
+                title={t(lang, 'reorderPlayer')}
+                onPointerDown={event => startPlayerDrag(event, p.id)}
+                onContextMenu={event => event.preventDefault()}
+                onKeyDown={event => {
+                  if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+                    event.preventDefault();
+                    movePlayer(i, event.key === 'ArrowUp' ? -1 : 1);
+                  }
+                }}
+              >
+                <svg viewBox="0 0 28 32" width="28" height="32" aria-hidden="true" focusable="false">
+                  <polygon points="14,2 3,14 25,14" />
+                  <polygon points="3,18 25,18 14,30" />
+                </svg>
+              </button>
+
+                {mode === 'classic' && playerMode === 'teams' && (
+                  <div className="playerTeam">
+                    <ThemedSelect
+                      className="input"
+                      value={p.team || (['A', 'B', 'C'][i % 3])}
+                      onChange={e => setPlayers(ps => ps.map((x, ix) => ix === i ? { ...x, team: e.target.value } : x))}
+                      style={{ height: 34, width: '100%' }}
+                      title={t(lang, 'teamLabel')}
+                    >
+                      <option value="A">{t(lang, 'teamA')}</option>
+                      <option value="B">{t(lang, 'teamB')}</option>
+                      <option value="C">{t(lang, 'teamC')}</option>
+                    </ThemedSelect>
+                  </div>
+                )}
+
+              <div className="playerDelete">
+                <button
+                  type="button"
+                  className="trash"
+                  onClick={() => deletePlayer(i)}
+                  title="Delete"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+          ))}
+
+          <button
+            type="button"
+            className="btn"
+            onClick={addPlayer}
           >
+            + {t(lang, 'addPlayer')}
+          </button>
+        </div>
+
+        {/* Pravidla */}
+        {/* Premium + vzhled */}
+        <div className="lobbyCard premiumCard">
+          {isPremium && <div className="premiumIndicator">Premium</div>}
+          <div className="premiumActions">
             <button
   type="button"
   className="btn"
@@ -4529,7 +4582,7 @@ function Lobby({
 {showPremiumDetails && (
   <div style={{
     marginTop: '8px',
-    fontSize: 12,
+    fontSize: 16,
     color: '#fff',
     opacity: 0.85,
     lineHeight: 1.4
@@ -4540,10 +4593,10 @@ function Lobby({
   </div>
 )}
           {isPremium && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div className="premiumAppearance">
               <div
                 style={{
-                  fontSize: 12,
+                  fontSize: 16,
                   color: '#fff',
                   opacity: .8,
                   fontWeight: 600
@@ -4552,7 +4605,7 @@ function Lobby({
                 {t(lang, 'appearanceLabel')}
               </div>
 
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <div className="premiumSwatches">
 
                 <button
                   type="button"
@@ -4633,118 +4686,7 @@ function Lobby({
           )}
         </div>
 
-        {/* Start & Pokračovat */}
-        <div className="lobbyCard">
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              className="btn green"
-              onClick={() => startGame(true)}
-            >
-              {t(lang, 'startGame')}
-            </button>
 
-            {hasSaved && (
-              <button
-                type="button"
-                className="btn"
-                onClick={continueSaved}
-              >
-                {t(lang, 'continueGame')}
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Hráči */}
-        <div className="lobbyCard">
-            {mode === 'classic' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
-                <span style={{ fontSize: 12, opacity: .85 }}>{t(lang, 'playerModeLabel')}</span>
-                <ThemedSelect
-                  className="input"
-                  value={playerMode}
-                  onChange={e => setPlayerMode(e.target.value)}
-                  style={{ height: 32, minWidth: 128 }}
-                >
-                  <option value="individual">{t(lang, 'individualPlayers')}</option>
-                  <option value="teams">{t(lang, 'teamPlayers')}</option>
-                </ThemedSelect>
-              </div>
-            )}
-
-          {players.map((p, i) => (
-            <div key={p.id} className="playerRow">
-              <div className="playerName">
-                <input
-                  className="input"
-                  value={p.name}
-                  onChange={e => setPlayers(ps => ps.map((x, ix) => ix === i ? { ...x, name: e.target.value } : x))}
-                  onFocus={e => e.target.select()}
-                  onMouseUp={e => e.preventDefault()}
-                />
-              </div>
-
-                {mode === 'classic' && playerMode === 'teams' && (
-                  <div style={{ minWidth: 92 }}>
-                    <ThemedSelect
-                      className="input"
-                      value={p.team || (['A', 'B', 'C'][i % 3])}
-                      onChange={e => setPlayers(ps => ps.map((x, ix) => ix === i ? { ...x, team: e.target.value } : x))}
-                      style={{ height: 34, width: '100%' }}
-                      title={t(lang, 'teamLabel')}
-                    >
-                      <option value="A">{t(lang, 'teamA')}</option>
-                      <option value="B">{t(lang, 'teamB')}</option>
-                      <option value="C">{t(lang, 'teamC')}</option>
-                    </ThemedSelect>
-                  </div>
-                )}
-
-              <div className="playerActions">
-                <button
-                  type="button"
-                  className="btn ghost"
-                  onClick={() => movePlayer(i, -1)}
-                  title="Up"
-                  style={{ padding: '4px 8px', lineHeight: 1.1 }}
-                >
-                  ↑
-                </button>
-                <button
-                  type="button"
-                  className="btn ghost"
-                  onClick={() => movePlayer(i, 1)}
-                  title="Down"
-                  style={{ padding: '4px 8px', lineHeight: 1.1 }}
-                >
-                  ↓
-                </button>
-              </div>
-
-              <div className="playerDelete">
-                <button
-                  type="button"
-                  className="trash"
-                  onClick={() => deletePlayer(i)}
-                  title="Delete"
-                >
-                  🗑️
-                </button>
-              </div>
-            </div>
-          ))}
-
-          <button
-            type="button"
-            className="btn"
-            onClick={addPlayer}
-          >
-            + {t(lang, 'addPlayer')}
-          </button>
-        </div>
-
-        {/* Pravidla */}
         {/* >>> DARTSCORE_UNIQUE_ANCHOR__RULES_BLOCK__START__9F31 <<< */}
         <div className="lobbyCard">
           <details>
@@ -4847,230 +4789,18 @@ function Lobby({
           </section>
         )}
 
-        <StatisticsDashboard lang={lang} t={t} showToast={showToast} />
+        <StatisticsDashboard lang={lang} t={t} showToast={showToast} ThemedSelect={ThemedSelect} />
       </div>
     );
   }
 
   /* ===== SAVED GAMES (Premium) ===== */
-  function StatisticsDashboard({ lang, t, showToast }) {
-    const [list, setList] = useState(() => {
-      try { return JSON.parse(localStorage.getItem('finishedGames') || '[]'); }
-      catch { return []; }
-    });
-    const [view, setView] = useState('overview');
-    const [filter, setFilter] = useState('all');
-    const [player, setPlayer] = useState('');
-    const [p1, setP1] = useState('');
-    const [p2, setP2] = useState('');
-
-    const STATS_I18N = {
-      cs:{statistics:'Statistiky',noSaved:'Zatím nejsou odehrané žádné uložené zápasy.',overview:'Přehled',h2h:'Vzájemné zápasy',all:'Vše',week:'Týden',month:'Měsíc',year:'Rok',avg3:'Průměr / 3 šipky',first9:'Prvních 9',checkoutPct:'Checkout %',checkoutPending:'Přesná evidence pokusů bude doplněna',highestCheckout:'Nejvyšší checkout',scoring:'Náhozy',performance:'Výkony',bestLeg:'Nejlepší leg (šipky)',avgDartsLeg:'Průměr šipek / leg',highestScore:'Nejvyšší nához',winRate:'Úspěšnost výher',matches:'vzájemných zápasů',legs:'Legy',sets:'Sety',last5:'Forma posledních 5',avgTrend:'Trend průměru',matchHistory:'Historie vzájemných zápasů',won:'vyhrál',draw:'remíza',checkout:'Checkout',detailed:({detailed,total})=>`Detailní metriky jsou dostupné u ${detailed} z ${total} zápasů. Starší zápasy zůstávají započítané do výher.`,older:'Starší zápasy jsou započítané do H2H skóre a úspěšnosti výher. Detailní metriky se plní jen u nově uložených zápasů.'},
-      en:{statistics:'Statistics',noSaved:'No saved matches yet.',overview:'Overview',h2h:'Head-to-Head',all:'All',week:'Week',month:'Month',year:'Year',avg3:'3-dart AVG',first9:'First 9',checkoutPct:'Checkout %',checkoutPending:'Exact attempt tracking pending',highestCheckout:'Highest checkout',scoring:'Scoring',performance:'Performance',bestLeg:'Best leg (darts)',avgDartsLeg:'Avg darts / leg',highestScore:'Highest score',winRate:'Win rate',matches:'matches',legs:'Legs',sets:'Sets',last5:'Last 5 form',avgTrend:'AVG trend',matchHistory:'Match history',won:'won',draw:'draw',checkout:'Checkout',detailed:({detailed,total})=>`Detailed metrics are available for ${detailed} of ${total} matches. Older matches still count toward wins.`,older:'Older matches count toward H2H score and win rate. Detailed metrics populate for newly saved matches.'},
-      de:{statistics:'Statistiken',noSaved:'Noch keine gespeicherten Spiele.',overview:'Übersicht',h2h:'Direkte Duelle',all:'Alle',week:'Woche',month:'Monat',year:'Jahr',avg3:'3-Dart-Schnitt',first9:'Erste 9',checkoutPct:'Checkout %',checkoutPending:'Exakte Versuchsstatistik folgt',highestCheckout:'Höchstes Checkout',scoring:'Scoring',performance:'Leistung',bestLeg:'Bestes Leg (Darts)',avgDartsLeg:'Ø Darts / Leg',highestScore:'Höchster Score',winRate:'Siegquote',matches:'direkte Duelle',legs:'Legs',sets:'Sätze',last5:'Form letzte 5',avgTrend:'AVG-Trend',matchHistory:'Duell-Historie',won:'gewann',draw:'Unentschieden',checkout:'Checkout',detailed:({detailed,total})=>`Detaillierte Werte sind für ${detailed} von ${total} Spielen verfügbar. Ältere Spiele zählen weiter für Siege.`,older:'Ältere Spiele zählen für H2H und Siegquote. Detailwerte werden nur bei neu gespeicherten Spielen erfasst.'},
-      es:{statistics:'Estadísticas',noSaved:'Aún no hay partidas guardadas.',overview:'Resumen',h2h:'Cara a cara',all:'Todo',week:'Semana',month:'Mes',year:'Año',avg3:'Promedio / 3 dardos',first9:'Primeros 9',checkoutPct:'Checkout %',checkoutPending:'El registro exacto de intentos se añadirá',highestCheckout:'Checkout más alto',scoring:'Puntuación',performance:'Rendimiento',bestLeg:'Mejor leg (dardos)',avgDartsLeg:'Prom. dardos / leg',highestScore:'Puntuación más alta',winRate:'Porcentaje de victorias',matches:'enfrentamientos',legs:'Legs',sets:'Sets',last5:'Forma últimos 5',avgTrend:'Tendencia AVG',matchHistory:'Historial de enfrentamientos',won:'ganó',draw:'empate',checkout:'Checkout',detailed:({detailed,total})=>`Las métricas detalladas están disponibles en ${detailed} de ${total} partidas. Las anteriores siguen contando para las victorias.`,older:'Las partidas anteriores cuentan para el H2H y el porcentaje de victorias. Las métricas detalladas solo se guardan en partidas nuevas.'},
-      nl:{statistics:'Statistieken',noSaved:'Nog geen opgeslagen wedstrijden.',overview:'Overzicht',h2h:'Onderling',all:'Alles',week:'Week',month:'Maand',year:'Jaar',avg3:'Gem. / 3 darts',first9:'Eerste 9',checkoutPct:'Checkout %',checkoutPending:'Exacte pogingregistratie volgt',highestCheckout:'Hoogste checkout',scoring:'Scores',performance:'Prestaties',bestLeg:'Beste leg (darts)',avgDartsLeg:'Gem. darts / leg',highestScore:'Hoogste score',winRate:'Winstpercentage',matches:'onderlinge wedstrijden',legs:'Legs',sets:'Sets',last5:'Vorm laatste 5',avgTrend:'AVG-trend',matchHistory:'Onderlinge historie',won:'won',draw:'gelijkspel',checkout:'Checkout',detailed:({detailed,total})=>`Gedetailleerde statistieken zijn beschikbaar voor ${detailed} van ${total} wedstrijden. Oudere wedstrijden blijven meetellen voor winst.`,older:'Oudere wedstrijden tellen mee voor H2H en winstpercentage. Detailstatistieken worden alleen bij nieuwe wedstrijden opgeslagen.'},
-      ru:{statistics:'Статистика',noSaved:'Сохранённых матчей пока нет.',overview:'Обзор',h2h:'Личные встречи',all:'Все',week:'Неделя',month:'Месяц',year:'Год',avg3:'Среднее / 3 дротика',first9:'Первые 9',checkoutPct:'Checkout %',checkoutPending:'Точный учёт попыток будет добавлен',highestCheckout:'Максимальный checkout',scoring:'Наборы',performance:'Результаты',bestLeg:'Лучший лег (дротики)',avgDartsLeg:'Ср. дротиков / лег',highestScore:'Максимальный набор',winRate:'Процент побед',matches:'очных матчей',legs:'Леги',sets:'Сеты',last5:'Форма за 5 матчей',avgTrend:'Тренд среднего',matchHistory:'История личных встреч',won:'победил',draw:'ничья',checkout:'Checkout',detailed:({detailed,total})=>`Подробная статистика доступна для ${detailed} из ${total} матчей. Старые матчи по-прежнему учитываются в победах.`,older:'Старые матчи учитываются в H2H и проценте побед. Подробные метрики сохраняются только для новых матчей.'},
-      zh:{statistics:'统计',noSaved:'暂无已保存的比赛。',overview:'概览',h2h:'对战',all:'全部',week:'一周',month:'一月',year:'一年',avg3:'3镖平均',first9:'前9镖',checkoutPct:'结镖率',checkoutPending:'精确尝试次数统计稍后加入',highestCheckout:'最高结镖',scoring:'得分',performance:'表现',bestLeg:'最佳局（镖数）',avgDartsLeg:'平均镖数 / 局',highestScore:'最高得分',winRate:'胜率',matches:'场对战',legs:'局',sets:'盘',last5:'最近5场状态',avgTrend:'平均分趋势',matchHistory:'对战记录',won:'获胜',draw:'平局',checkout:'结镖',detailed:({detailed,total})=>`详细数据适用于 ${detailed}/${total} 场比赛。旧比赛仍计入胜场。`,older:'旧比赛仍计入对战比分和胜率。详细数据仅记录新保存的比赛。'}
-    };
-    const S=(key,vars)=>{const pack=STATS_I18N[lang]||STATS_I18N.en;const value=pack[key]??STATS_I18N.en[key]??key;return typeof value==='function'?value(vars||{}):value;};
-    const now = Date.now();
-    const cutoff = {
-      all: 0,
-      week: now - 7 * 24 * 60 * 60 * 1000,
-      month: now - 30 * 24 * 60 * 60 * 1000,
-      year: now - 365 * 24 * 60 * 60 * 1000
-    }[filter] || 0;
-    const filtered = list.filter(g => (g.ts || 0) >= cutoff);
-    const allPlayers = Array.from(new Set(list.flatMap(g => g.players || []))).filter(Boolean).sort();
-
-    React.useEffect(() => {
-      if (!player && allPlayers.length) setPlayer(allPlayers[0]);
-      if (!p1 && allPlayers.length) setP1(allPlayers[0]);
-      if (!p2 && allPlayers.length > 1) setP2(allPlayers[1]);
-    }, [allPlayers.join('|'), player, p1, p2]);
-
-    const fmt = (n, digits = 1) => Number.isFinite(n) ? Number(n).toFixed(digits) : '—';
-    const pct = n => Number.isFinite(n) ? `${Math.round(n)} %` : '—';
-
-    const mergePlayerStats = (games, name) => {
-      const rows = games
-        .map(g => ({ game: g, stat: (g.playerStats || []).find(s => s.name === name) }))
-        .filter(x => x.stat);
-      const matches = games.filter(g => (g.players || []).includes(name));
-      const wins = matches.filter(g => g.winner === name).length;
-      const sum = key => rows.reduce((acc, x) => acc + (Number(x.stat?.[key]) || 0), 0);
-      const darts = sum('dartsThrown');
-      const points = sum('pointsScored');
-      const f9d = sum('first9Darts');
-      const f9p = sum('first9Points');
-      const max = key => {
-        const vals = rows.map(x => Number(x.stat?.[key])).filter(Number.isFinite);
-        return vals.length ? Math.max(...vals) : null;
-      };
-      const min = key => {
-        const vals = rows.map(x => Number(x.stat?.[key])).filter(n => Number.isFinite(n) && n > 0);
-        return vals.length ? Math.min(...vals) : null;
-      };
-      return {
-        matches: matches.length,
-        wins,
-        winRate: matches.length ? wins / matches.length * 100 : null,
-        detailedMatches: rows.length,
-        avg3: darts ? points / darts * 3 : null,
-        first9Avg: f9d ? f9p / f9d * 3 : null,
-        score60: sum('score60'), score100: sum('score100'), score140: sum('score140'), score180: sum('score180'),
-        highestScore: max('highestScore'), highestCheckout: max('highestCheckout'),
-        legsWon: sum('legsWon'), setsWon: sum('setsWon'),
-        bestLeg: min('bestLeg'),
-        avgDartsPerLeg: rows.length ? (() => {
-          const vals = rows.map(x => Number(x.stat?.avgDartsPerLeg)).filter(Number.isFinite);
-          return vals.length ? vals.reduce((a,b) => a+b,0) / vals.length : null;
-        })() : null,
-        checkoutPct: null,
-        rows
-      };
-    };
-
-    const playerGames = filtered.filter(g => (g.players || []).includes(player));
-    const overview = mergePlayerStats(playerGames, player);
-    const h2hGames = filtered
-      .filter(g => p1 && p2 && p1 !== p2 && (g.players || []).includes(p1) && (g.players || []).includes(p2))
-      .sort((a,b) => (b.ts || 0) - (a.ts || 0));
-    const h1 = mergePlayerStats(h2hGames, p1);
-    const h2 = mergePlayerStats(h2hGames, p2);
-    const p1Wins = h2hGames.filter(g => g.winner === p1).length;
-    const p2Wins = h2hGames.filter(g => g.winner === p2).length;
-    const form = h2hGames.slice(0,5).map(g => g.winner === p1 ? 'W' : g.winner === p2 ? 'L' : '•');
-    const trend = h2hGames.slice(0,10).reverse().map(g => {
-      const s = (g.playerStats || []).find(x => x.name === p1);
-      return Number.isFinite(Number(s?.avg3)) ? Number(s.avg3) : null;
-    }).filter(Number.isFinite);
-
-    const sparkline = values => {
-      if (!values.length) return null;
-      const min = Math.min(...values), max = Math.max(...values);
-      const span = Math.max(1, max - min);
-      const pts = values.map((v, i) => {
-        const x = values.length === 1 ? 50 : (i / (values.length - 1)) * 100;
-        const y = 34 - ((v - min) / span) * 28;
-        return `${x},${y}`;
-      }).join(' ');
-      return <svg viewBox="0 0 100 40" preserveAspectRatio="none" style={{ width:'100%', height:52 }}><polyline points={pts} fill="none" stroke="var(--accent)" strokeWidth="3" vectorEffect="non-scaling-stroke" /></svg>;
-    };
-
-    const metricCard = (value, label, note) => (
-      <div style={{ flex:'1 1 46%', minWidth:120, padding:'12px 10px', border:'1px solid var(--line)', borderRadius:12, background:'rgba(255,255,255,.03)', textAlign:'center' }}>
-        <div style={{ fontSize:24, fontWeight:900, color:'var(--accent)' }}>{value}</div>
-        <div style={{ fontSize:12, fontWeight:800 }}>{label}</div>
-        {note && <div style={{ fontSize:10, opacity:.65, marginTop:3 }}>{note}</div>}
-      </div>
-    );
-
-    const compareRow = (a, label, b) => (
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1.2fr 1fr', gap:8, alignItems:'center', padding:'8px 0', borderBottom:'1px solid var(--line)' }}>
-        <strong style={{ textAlign:'right' }}>{a}</strong><span style={{ textAlign:'center', fontSize:12, opacity:.75 }}>{label}</span><strong>{b}</strong>
-      </div>
-    );
-
-    if (!allPlayers.length) {
-      return <div className="lobbyCard"><strong>{S('statistics')}</strong><div style={{ opacity:.7, marginTop:8 }}>{S('noSaved')}</div></div>;
-    }
-
-    return (
-      <div className="lobbyCard">
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, flexWrap:'wrap', marginBottom:10 }}>
-          <strong style={{ fontSize:18 }}>📊 {S('statistics')}</strong>
-          <div style={{ display:'flex', gap:6 }}>
-            <button type="button" className={`tab ${view === 'overview' ? 'active' : ''}`} onClick={() => setView('overview')}>{S('overview')}</button>
-            <button type="button" className={`tab ${view === 'h2h' ? 'active' : ''}`} onClick={() => setView('h2h')}>{S('h2h')}</button>
-          </div>
-        </div>
-
-        <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center', marginBottom:12 }}>
-          <ThemedSelect className="input" value={filter} onChange={e => setFilter(e.target.value)} style={{ height:32, minWidth:105 }}>
-            <option value="all">{S('all')}</option><option value="week">{S('week')}</option><option value="month">{S('month')}</option><option value="year">{S('year')}</option>
-          </ThemedSelect>
-          {view === 'overview' ? (
-            <ThemedSelect className="input" value={player} onChange={e => setPlayer(e.target.value)} style={{ height:32, minWidth:140 }}>{allPlayers.map(n => <option key={n} value={n}>{n}</option>)}</ThemedSelect>
-          ) : (
-            <>
-              <ThemedSelect className="input" value={p1} onChange={e => setP1(e.target.value)} style={{ height:32, minWidth:120 }}>{allPlayers.map(n => <option key={`p1-${n}`} value={n}>{n}</option>)}</ThemedSelect>
-              <strong>vs</strong>
-              <ThemedSelect className="input" value={p2} onChange={e => setP2(e.target.value)} style={{ height:32, minWidth:120 }}>{allPlayers.map(n => <option key={`p2-${n}`} value={n}>{n}</option>)}</ThemedSelect>
-            </>
-          )}
-        </div>
-
-        {view === 'overview' ? (
-          <>
-            <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-              {metricCard(fmt(overview.avg3), S('avg3'))}
-              {metricCard(fmt(overview.first9Avg), S('first9'))}
-              {metricCard(pct(overview.checkoutPct), S('checkoutPct'), S('checkoutPending'))}
-              {metricCard(overview.highestCheckout ?? '—', S('highestCheckout'))}
-            </div>
-            <div style={{ marginTop:14 }}><strong>{S('scoring')}</strong><div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:6, marginTop:8, textAlign:'center' }}>
-              {[['60+',overview.score60],['100+',overview.score100],['140+',overview.score140],['180',overview.score180]].map(([k,v]) => <div key={k} style={{ padding:8, border:'1px solid var(--line)', borderRadius:10 }}><div style={{ fontWeight:900, fontSize:18 }}>{v}</div><div style={{ fontSize:11, opacity:.7 }}>{k}</div></div>)}
-            </div></div>
-            <div style={{ marginTop:14 }}><strong>{S('performance')}</strong>
-              {compareRow(overview.bestLeg ?? '—', S('bestLeg'), overview.matches ? `${overview.wins}/${overview.matches}` : '—')}
-              {compareRow(fmt(overview.avgDartsPerLeg), S('avgDartsLeg'), pct(overview.winRate))}
-              {compareRow(overview.highestScore ?? '—', S('highestScore'), S('winRate'))}
-            </div>
-            {overview.detailedMatches < overview.matches && <div style={{ marginTop:10, fontSize:11, opacity:.65 }}>{S('detailed', { detailed: overview.detailedMatches, total: overview.matches })}</div>}
-          </>
-        ) : (
-          <>
-            <div style={{ textAlign:'center', padding:'6px 0 12px' }}>
-              <div style={{ fontSize:13, opacity:.75 }}>{h2hGames.length} {S('matches')}</div>
-              <div style={{ fontSize:30, fontWeight:900, marginTop:2 }}><span>{p1}</span> <span style={{ color:'var(--accent)' }}>{p1Wins} : {p2Wins}</span> <span>{p2}</span></div>
-              <div style={{ display:'flex', justifyContent:'center', gap:24, marginTop:4, fontSize:12 }}><strong>{pct(h1.winRate)}</strong><span style={{ opacity:.55 }}>{S('winRate')}</span><strong>{pct(h2.winRate)}</strong></div>
-            </div>
-
-            <div style={{ marginTop:4 }}>
-              {compareRow(h1.legsWon, S('legs'), h2.legsWon)}
-              {compareRow(h1.setsWon, S('sets'), h2.setsWon)}
-              {compareRow(fmt(h1.avg3), S('avg3'), fmt(h2.avg3))}
-              {compareRow(fmt(h1.first9Avg), S('first9'), fmt(h2.first9Avg))}
-              {compareRow(pct(h1.checkoutPct), S('checkoutPct'), pct(h2.checkoutPct))}
-              {compareRow(h1.highestCheckout ?? '—', S('highestCheckout'), h2.highestCheckout ?? '—')}
-              {compareRow(h1.score180, '180s', h2.score180)}
-            </div>
-
-            <div style={{ marginTop:14 }}><strong>{S('last5')}</strong>
-              <div style={{ display:'flex', alignItems:'center', gap:8, marginTop:8, flexWrap:'wrap' }}>
-                {form.length ? form.map((x,i) => <span key={i} style={{ width:30, height:30, borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', fontWeight:900, background:x === 'W' ? 'rgba(34,197,94,.22)' : 'rgba(239,68,68,.22)', border:'1px solid var(--line)' }}>{x}</span>) : <span style={{ opacity:.65 }}>—</span>}
-                {form.length > 0 && <span style={{ fontSize:12, opacity:.7 }}>{p1}: {form.filter(x => x === 'W').length}–{form.filter(x => x === 'L').length}</span>}
-              </div>
-            </div>
-
-            <div style={{ marginTop:14 }}><strong>{S('avgTrend')}</strong>{sparkline(trend) || <div style={{ opacity:.65, marginTop:8 }}>—</div>}</div>
-
-            {h1.detailedMatches < h2hGames.length && <div style={{ marginTop:8, fontSize:11, opacity:.65 }}>{S('older')}</div>}
-
-            <div style={{ marginTop:16 }}><strong>{S('matchHistory')}</strong>
-              <div style={{ marginTop:8, display:'grid', gap:7 }}>
-                {h2hGames.length ? h2hGames.map((g,idx) => {
-                  const s1=(g.playerStats||[]).find(s=>s.name===p1), s2=(g.playerStats||[]).find(s=>s.name===p2);
-                  return <details key={`${g.ts}-${idx}`} style={{ border:'1px solid var(--line)', borderRadius:10, padding:'8px 10px', background:'rgba(255,255,255,.02)' }}>
-                    <summary style={{ cursor:'pointer', fontWeight:800 }}>
-                      {new Date(g.ts).toLocaleDateString()} · {g.result === 'draw' ? S('draw') : `${g.winner === p1 ? p1 : p2} ${S('won')}`}
-                    </summary>
-                    <div style={{ marginTop:8 }}>{compareRow(fmt(s1?.avg3), 'AVG', fmt(s2?.avg3))}{compareRow(fmt(s1?.first9Avg), 'First 9', fmt(s2?.first9Avg))}{compareRow(s1?.legsWon ?? '—', 'Legs', s2?.legsWon ?? '—')}{compareRow(s1?.setsWon ?? '—', 'Sets', s2?.setsWon ?? '—')}{compareRow(s1?.highestCheckout ?? '—', S('checkout'), s2?.highestCheckout ?? '—')}</div>
-                  </details>;
-                }) : <div style={{ opacity:.65 }}>—</div>}
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-    );
-  }
-
   /* ===== GAME SCREEN ===== */  /* ===== GAME SCREEN ===== */
   function Game({
     lang, t, mode, playerMode, scoreInputMode, isPremium, classicOutShortLabel,
+    soundOn, setSoundOn, voiceOn, setVoiceOn,
+    hapticsOn, setHapticsOn, flashNumericDown, flashNumericUp,
+    returnToLobbyFromGame,
     outDouble, outTriple, outMaster,
     legsToWinSet, setsToWin, classicLegsWon, classicSetsWon,
     players, order, currIdx,
@@ -5333,10 +5063,19 @@ function Lobby({
       <div className="gameWrap">
         {/* KOMPAKTNÍ HERNÍ LIŠTA: jen užitečný stav + textové akce */}
         <div className="gameTopBar compactGameTopBar">
+          <button type="button" className="iconBtn gameBack" onClick={returnToLobbyFromGame}
+            aria-label={t(lang, 'back')} title={t(lang, 'back')}>
+            <svg className="gameBackIcon" viewBox="2 2 20 20" fill="none" stroke="currentColor"
+              strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+              <path d="m9 14-5-5 5-5" />
+              <path d="M4 9h9a7 7 0 0 1 7 7v4" />
+            </svg>
+          </button>
           <div className="gameTopStatus">
             {mode === 'classic' && (
-              <span className="gameTopInfo">
-                {t(lang, 'outLabel')}: {classicOutShortLabel}
+              <span className="gameTopInfo gameOutInfo">
+                <span className="gameOutCaption">{t(lang, 'outLabel')}:</span>
+                <span className="gameOutValue">{classicOutShortLabel}</span>
               </span>
             )}
 
@@ -5348,19 +5087,34 @@ function Lobby({
           </div>
 
           <div className="gameTopBtns compactGameActions">
-            <button type="button" className="gameTextAction" onClick={restartGame}>
-              {t(lang, 'restart') ?? 'Restart'}
+            <button type="button" className={`iconBtn ${!soundOn ? 'muted' : ''}`}
+              onClick={() => setSoundOn(v => !v)} aria-label={t(lang, 'sound')} title={t(lang, 'sound')} aria-pressed={soundOn}>
+              <IconSpeaker />
+            </button>
+            {mode === 'classic' && (
+            <button type="button" className={`iconBtn ${!voiceOn ? 'muted' : ''}`}
+              onClick={() => setVoiceOn(v => !v)} aria-label={t(lang, 'voice')} title={t(lang, 'voice')} aria-pressed={voiceOn}>
+              <span className="iconHead" aria-hidden="true"></span>
+            </button>
+            )}
+            <button type="button" className={'iconBtn vibrationToggle' + (!hapticsOn ? ' muted' : '')}
+              onClick={() => setHapticsOn(v => !v)} aria-label={t(lang, 'haptics')} title={t(lang, 'haptics')} aria-pressed={hapticsOn}>
+              <IconVibration />
+            </button>
+            <button type="button" className="iconBtn gameRestart" onClick={restartGame}
+              aria-label={t(lang, 'restart')} title={t(lang, 'restart')}>
+              <span aria-hidden="true">↻</span>
             </button>
 
             {isPremium && (
-              <button type="button" className="gameTextAction" onClick={saveGame}>
-                {t(lang, 'saveGame') ?? 'Uložit hru'}
+              <button type="button" className="iconBtn gameSave" onClick={saveGame}
+                aria-label={t(lang, 'saveGame')} title={t(lang, 'saveGame')}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path d="M5 3h12l4 4v14H3V3h2Z" /><path d="M7 3v6h10V3M7 21v-8h10v8" />
+                </svg>
               </button>
             )}
 
-            <button type="button" className="gameTextAction" onClick={() => setScreen('lobby')}>
-              {t(lang, 'back') ?? 'Zpět'}
-            </button>
           </div>
         </div>
 
@@ -5381,7 +5135,7 @@ function Lobby({
 
         {/* SCOREBOARD */}
           {mode === 'classic' && playerMode === 'teams' ? (
-            <div className="playersPane" data-premium={isPremium ? '1' : '0'}>
+            <div className="playersPane teamPane" data-premium={isPremium ? '1' : '0'}>
               {gameActiveTeamIndexes().map(teamIdx => {
                 const activePlayerIdx = order[currIdx];
                 const activeTeamIdx = gameTeamIndex(gamePlayerTeam(players[activePlayerIdx], activePlayerIdx));
@@ -5400,7 +5154,7 @@ function Lobby({
                   <div
                     key={`team-${teamIdx}`}
                     ref={node => { if (node) cardRefs.current[teamIdx] = node; }}
-                    className={'playerCard' + (active ? ' active' : '') + (winner === teamIdx ? ' winner' : '')}
+                    className={'playerCard classicCard' + (active ? ' active' : '') + (winner === teamIdx ? ' winner' : '')}
                     style={active ? activeStyle : undefined}
                   >
                     {winner === teamIdx && (
@@ -5421,19 +5175,18 @@ function Lobby({
                     <div className="playerHeader">
                       <div className="playerTitleLine">
                         <div className="playerNameText">{teamName}</div>
-                        <div className="classicMatchProgress">
-                          {t(lang, 'sets')} {classicSetsWon?.[teamIdx] || 0}/{setsToWin} · {t(lang, 'legs')} {classicLegsWon?.[teamIdx] || 0}/{legsToWinSet}
-                        </div>
                       </div>
-
-                      <div className="playerStats">
+                    </div>
+                      <div className="playerStats classicInfo">
                         <span>{thrown[teamIdx] || 0} {t(lang, 'darts')}</span>
-                        <span>•</span>
                         <span>{t(lang, 'avg')}: {formatAvg(averages[teamIdx])}</span>
+                        <span className="classicMatchProgress">
+                          <span>{t(lang, 'sets')} {classicSetsWon?.[teamIdx] || 0}/{setsToWin}</span>
+                          <span>{t(lang, 'legs')} {classicLegsWon?.[teamIdx] || 0}/{legsToWinSet}</span>
+                        </span>
+                        <span className="lastTotal">{t(lang, 'last')}: {lastTurn[teamIdx] || 0}</span>
                         {members.length > 0 && (
-                          <>
-                            <span>•</span>
-                            <span>
+                            <span className="classicMembers">
                               {members.map((m, mi) => (
                                 <span
                                   key={m.ix}
@@ -5443,21 +5196,19 @@ function Lobby({
                                 </span>
                               ))}
                             </span>
-                          </>
                         )}
                       </div>
-                    </div>
 
                     <div className="playerScore">
                       {scores[teamIdx] ?? 0}
                     </div>
                     {checkoutHint && (
-                      <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 800, color: 'var(--accent)', margin: '-2px 0 6px' }}>
+                      <div className="checkoutHint">
                         {t(lang, 'checkout')}: {checkoutHint}
                       </div>
                     )}
 
-                    <div className="playerTurn">
+                    <div className="playerTurn classicTurn">
                       {[0, 1, 2].map(ix => {
                         const d = currentDarts[ix];
                         return (
@@ -5466,9 +5217,6 @@ function Lobby({
                           </div>
                         );
                       })}
-                      <div className="lastTotal">
-                        {t(lang, 'last')}: {lastTurn[teamIdx] || 0}
-                      </div>
                     </div>
                   </div>
                 );
@@ -5521,7 +5269,7 @@ function Lobby({
                     </div>
 
                     <div className="playerScore rouletteScore">
-                      {t(lang, 'rouletteTotalPoints')}: {scores[pIdx] ?? 0}
+                      {t(lang, 'points')}: {scores[pIdx] ?? 0}
                     </div>
 
                     <div className="playerTurn rouletteTurn">
@@ -5539,7 +5287,11 @@ function Lobby({
                     </div>
 
                     {active && (
-                      <div className="rouletteControls">
+                      <div className="rouletteControls"
+                        onPointerDownCapture={flashNumericDown}
+                        onPointerUpCapture={flashNumericUp}
+                        onPointerCancelCapture={flashNumericUp}
+                        onPointerLeaveCapture={flashNumericUp}>
                         <button
                           type="button"
                           className="btn rouletteDrawBtn"
@@ -5595,7 +5347,7 @@ function Lobby({
                 <div
                   key={p.id}
                   ref={node => { if (node) cardRefs.current[pIdx] = node; }}
-                  className={'playerCard' + (active ? ' active' : '') + (winner === pIdx ? ' winner' : '')}
+                  className={'playerCard' + (mode === 'classic' ? ' classicCard' : '') + (active ? ' active' : '') + (winner === pIdx ? ' winner' : '')}
                   style={active ? activeStyle : undefined}
                 >
                   {winner === pIdx && (
@@ -5616,29 +5368,24 @@ function Lobby({
                   <div className="playerHeader">
                     <div className="playerTitleLine">
                       <div className="playerNameText">{p.name}</div>
-                      {mode === 'classic' && (
-                        <div className="classicMatchProgress">
-                          {t(lang, 'sets')} {classicSetsWon?.[pIdx] || 0}/{setsToWin} · {t(lang, 'legs')} {classicLegsWon?.[pIdx] || 0}/{legsToWinSet}
-                        </div>
-                      )}
+
                     </div>
 
-                    {mode === 'classic' ? (
-                      <div className="playerStats">
-                        <span>{thrown[pIdx] || 0} {t(lang, 'darts')}</span>
-                        <span>•</span>
-                        <span>
-                          {t(lang, 'avg')}: {formatAvg(averages[pIdx])}
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="playerStats">
-                        <span>
-                          {t(lang, 'target')}: {around?.[pIdx]?.next ?? 1}
-                        </span>
-                      </div>
+                    {mode !== 'classic' && (
+                      <div className="playerStats"><span>{t(lang, 'target')}: {around?.[pIdx]?.next ?? 1}</span></div>
                     )}
                   </div>
+                  {mode === 'classic' && (
+                    <div className="playerStats classicInfo">
+                      <span>{thrown[pIdx] || 0} {t(lang, 'darts')}</span>
+                      <span>{t(lang, 'avg')}: {formatAvg(averages[pIdx])}</span>
+                      <span className="classicMatchProgress">
+                        <span>{t(lang, 'sets')} {classicSetsWon?.[pIdx] || 0}/{setsToWin}</span>
+                          <span>{t(lang, 'legs')} {classicLegsWon?.[pIdx] || 0}/{legsToWinSet}</span>
+                      </span>
+                      <span className="lastTotal">{t(lang, 'last')}: {lastTurn[pIdx] || 0}</span>
+                    </div>
+                  )}
 
                   {mode === 'classic' ? (
                     <>
@@ -5646,7 +5393,7 @@ function Lobby({
                         {scores[pIdx] ?? 0}
                       </div>
                       {checkoutHint && (
-                        <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 800, color: 'var(--accent)', margin: '-2px 0 6px' }}>
+                        <div className="checkoutHint">
                           {t(lang, 'checkout')}: {checkoutHint}
                         </div>
                       )}
@@ -5659,9 +5406,7 @@ function Lobby({
                             </div>
                           );
                         })}
-                        <div className="lastTotal">
-                          {t(lang, 'last')}: {lastTurn[pIdx] || 0}
-                        </div>
+
                       </div>
                     </>
                   ) : (
@@ -5770,7 +5515,12 @@ function Lobby({
                             key={k}
                             className={'markCell' + (mk >= 3 ? ' closed' : '')}
                           >
-                            {markSymbol(mk)}
+                            {mk >= 3 ? (
+                              <svg className="cricketClosedMark" viewBox="0 0 32 32" role="img" aria-label={markSymbol(mk)}>
+                                <circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" strokeWidth="2.5" />
+                                <path d="M8 8L24 24M24 8L8 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                              </svg>
+                            ) : markSymbol(mk)}
                           </div>
                         );
                       })}
@@ -5787,6 +5537,10 @@ function Lobby({
             <div
               className={`padPane ${mode === 'classic' && scoreInputMode === 'round' ? 'roundTotalKeypad' : 'dartKeypad'}`}
               aria-disabled={inputLocked}
+              onPointerDownCapture={flashNumericDown}
+              onPointerUpCapture={flashNumericUp}
+              onPointerCancelCapture={flashNumericUp}
+              onPointerLeaveCapture={flashNumericUp}
               style={{
                 pointerEvents: inputLocked ? 'none' : 'auto',
                 opacity: inputLocked ? 0.5 : 1
@@ -5808,7 +5562,7 @@ function Lobby({
                       alignItems: 'center',
                       justifyContent: 'center',
                       textAlign: 'center',
-                      fontSize: 13,
+                      fontSize: 24,
                       lineHeight: 1,
                       letterSpacing: '-0.04em',
                       fontWeight: 900,
@@ -5901,6 +5655,7 @@ function Lobby({
                             key={`round-${key}`}
                             type="button"
                             className="btn"
+                            data-keypad-number="true"
                             onClick={() => pressRoundScoreDigit(key)}
                             style={{
                               flex: 1,
@@ -5917,7 +5672,7 @@ function Lobby({
                     </div>
                   ))}
 
-                  <div style={{ fontSize: 12, opacity: .75, textAlign: 'center', paddingTop: 4 }}>
+                  <div style={{ fontSize: 14, opacity: .75, textAlign: 'center', paddingTop: 4 }}>
                     {roundScoreInvalid ? t(lang, 'roundTotalInvalid') : t(lang, 'roundTotalHint')}
                   </div>
                 </>
@@ -5979,6 +5734,7 @@ function Lobby({
                           type="button"
                           key={n}
                           className="key"
+                          data-keypad-number="true"
                           onPointerDown={e => {
                             e.currentTarget.classList.add('pressed');
 

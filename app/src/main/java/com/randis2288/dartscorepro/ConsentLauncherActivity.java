@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
+import android.widget.FrameLayout;
 
 import com.google.android.ump.ConsentInformation;
 import com.google.android.ump.ConsentRequestParameters;
@@ -20,6 +21,11 @@ public class ConsentLauncherActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // UMP reads this Activity's decor while building its consent request.
+        // Install it on the main thread before the SDK can race Android's
+        // end-of-onCreate transition setup to initialize PhoneWindow.
+        setContentView(new FrameLayout(this));
 
         consentInformation = UserMessagingPlatform.getConsentInformation(this);
 

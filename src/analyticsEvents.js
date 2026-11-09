@@ -57,6 +57,14 @@ const sendNativeAnalyticsEvent = (eventName, params = {}, immediate = false) => 
       query.set(key, String(value));
     });
 
+    // The native bridge logs directly: never navigate the game WebView just
+    // to send Analytics, especially at the same time as a victory ad.
+    if (typeof window.DartScoreAndroid?.logAnalyticsEvent === 'function') {
+      window.DartScoreAndroid.logAnalyticsEvent(query.toString());
+      return;
+    }
+
+    // Compatibility for older Android WebView builds without the bridge.
     const url = `dartscorepro://show-interstitial?${query.toString()}`;
     if (immediate) {
       window.location.href = url;

@@ -1,0 +1,36 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {chromium} from 'file:///C:/Users/Mirek/Documents/ChatGPT/Darts/.qa-runtime/node_modules/playwright/index.mjs';
+const b=await chromium.connectOverCDP('http://127.0.0.1:9226',{noDefaults:true,timeout:20000});
+try {
+const p=b.contexts()[0].pages().find(x=>x.url()==='https://dartscore-pro.vercel.app/');
+assert.ok(p);
+await p.waitForFunction(()=>document.querySelector('.container')?.dataset.screen==='lobby');
+const buttons=p.locator('.playerName');
+await buttons.first().scrollIntoViewIfNeeded();
+const before=await p.locator('.playerName input').evaluateAll(xs=>xs.map(x=>x.value));
+const a=await buttons.first().boundingBox(),c=await buttons.nth(1).boundingBox();
+assert.ok(a&&c);
+const x=a.x+a.width/2,y=a.y+a.height/2, destY=c.y+c.height/2;
+const session=await p.context().newCDPSession(p);
+await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});
+await p.waitForTimeout(520);
+const hold=await p.evaluate(()=>document.querySelectorAll('.playerRow.dragging').length);
+await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y:destY}]});
+await p.waitForTimeout(140);
+await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+await p.waitForTimeout(180);
+const after=await p.locator('.playerName input').evaluateAll(xs=>xs.map(x=>x.value));
+const moved=before[0]===after[1]&&before[1]===after[0];
+const beforeHaptic=await p.locator('.vibrationToggle').getAttribute('aria-pressed');
+await p.locator('.vibrationToggle').click();
+const afterHaptic=await p.locator('.vibrationToggle').getAttribute('aria-pressed');
+const persisted=await p.evaluate(()=>localStorage.getItem('dspHapticsEnabled'));
+const result={before,after,hold,moved,haptics:{before:beforeHaptic,after:afterHaptic,persisted}};
+fs.writeFileSync('build/ui-physical-qa-20261105/s10/drag-haptic.json',JSON.stringify(result,null,2));
+console.log(JSON.stringify(result,null,2));
+assert.equal(hold,1,'long hold should activate dragging');
+assert.equal(moved,true,'touch drag should swap players');
+assert.equal(afterHaptic,'true');
+assert.equal(persisted,'true');
+} finally {await b.close();}

@@ -44,7 +44,7 @@ try {
   for (const [engine, type] of Object.entries({ webkit, chromium })) {
     const browser = await type.launch();
     try {
-      for (const width of [320, 375, 390, 430]) {
+      for (const width of [320, 360, 393, 430]) {
         for (const [label, mode] of modes) {
           const context = await browser.newContext({ viewport: { width, height: 844 },
             locale: 'en-US', isMobile: true, hasTouch: true,
@@ -84,7 +84,7 @@ try {
                 await page.waitForFunction(() => Math.abs(parseFloat(document.documentElement.style.getPropertyValue('--vh')) * 100 - innerHeight) < 1);
                 await measure(page, stage + '/simulated-short-window', width, true);
               }
-              await page.locator('.logo').tap();
+              await page.locator('.utilityHeader').tap({ position: { x: 2, y: 2 } });
               await measure(page, stage + `/blur-${cycle}`, width, false);
               if (cycle === 2) {
                 await page.setViewportSize({ width, height: 844 });

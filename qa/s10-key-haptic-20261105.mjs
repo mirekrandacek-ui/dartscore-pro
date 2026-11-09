@@ -1,0 +1,37 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {execFileSync} from 'node:child_process';
+import {chromium} from 'file:///C:/Users/Mirek/Documents/ChatGPT/Darts/.qa-runtime/node_modules/playwright/index.mjs';
+const adb=(...args)=>execFileSync('C:/Users/Mirek/AppData/Local/Android/Sdk/platform-tools/adb.exe',['-s','RF8M20CL3WY',...args],{encoding:'utf8',timeout:45000});
+const b=await chromium.connectOverCDP('http://127.0.0.1:9226',{noDefaults:true,timeout:20000});
+try{
+ const p=b.contexts()[0].pages().find(x=>x.url()==='https://dartscore-pro.vercel.app/');
+ assert.ok(p);p.setDefaultTimeout(15000);
+ await p.waitForFunction(()=>!!document.querySelector('.lobbyWrap'));
+ await p.evaluate(()=>document.querySelector('.lobbyModeGroup .themedSelectTrigger').click());
+ await p.waitForFunction(()=>document.querySelectorAll('.themedSelectOption').length===5);
+ await p.evaluate(()=>document.querySelectorAll('.themedSelectOption')[0].click());
+ await p.evaluate(()=>document.querySelector('.lobbyStartActions .green').click());
+ await p.waitForFunction(()=>document.querySelector('.container')?.dataset.screen==='game');
+ assert.equal(await p.locator('.vibrationToggle').getAttribute('aria-pressed'),'true','haptic enabled persists');
+ const key=p.locator('.padPane [data-keypad-number]').first();
+ const box=await key.boundingBox();assert.ok(box);
+ const vibBefore=adb('shell','dumpsys','vibrator_manager');
+ const c=await p.context().newCDPSession(p);
+ const x=box.x+box.width/2,y=box.y+box.height/2;
+ await c.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});
+ await p.waitForTimeout(70);
+ const pressed=await key.evaluate(e=>({pressed:e.classList.contains('pressed'),background:getComputedStyle(e).backgroundColor,color:getComputedStyle(e).color}));
+ adb('shell','screencap','-p','/sdcard/Download/dsp-s10-haptic-pressed.png');
+ adb('pull','/sdcard/Download/dsp-s10-haptic-pressed.png','build/ui-physical-qa-20261105/s10/haptic-pressed-native.png');
+ await c.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+ await p.waitForTimeout(170);
+ const after=await p.evaluate(()=>({darts:[...document.querySelectorAll('.playerCard.active .dartBox')].map(e=>e.textContent),score:document.querySelector('.playerCard.active .playerScore')?.textContent,screen:document.querySelector('.container')?.dataset.screen}));
+ const vibAfter=adb('shell','dumpsys','vibrator_manager');
+ const occurrences=vibAfter.split('\n').filter(x=>x.includes('com.randis2288.dartscorepro.uireview'));
+ const result={pressed,after,recordedByVibratorManager:occurrences.slice(-3),beforeHadAppVibration:vibBefore.includes('com.randis2288.dartscorepro.uireview')};
+ fs.writeFileSync('build/ui-physical-qa-20261105/s10/keypad-haptic.json',JSON.stringify(result,null,2));
+ console.log(JSON.stringify(result,null,2));
+ assert.equal(pressed.pressed,true);assert.equal(pressed.background,'rgb(255, 255, 255)');
+ assert.ok(occurrences.length>0,'S10 vibrator manager should record request by test app');
+}finally{await b.close()}

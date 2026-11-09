@@ -1625,3 +1625,6 @@ html, body{
 .container[data-screen="game"][data-mode="cricket"] .padPane.dartKeypad > .padRow:last-child .key {
   font-size:clamp(30px, min(11vw, 6vh), 44px);
 }
+
+/* Native Android applies actual safe insets to the WebView bounds. */
+.native-android-insets .header{padding-top:6px}

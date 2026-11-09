@@ -2,7 +2,7 @@
 // clickable button and the visible keypad, including Cricket's 7 columns.
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { webkit, chromium } from 'playwright';
+const { webkit, chromium } = await import(process.env.DARTSCORE_PLAYWRIGHT_MODULE || 'playwright');
 
 const base = process.env.DARTSCORE_UI_URL || 'http://127.0.0.1:4173/';
 const output = 'build/ios-keypad-evidence';

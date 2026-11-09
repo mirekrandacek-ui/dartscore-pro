@@ -27,7 +27,8 @@ test('All non-X01 interstitials are requested only after Repeat or either Back',
   assert.ok(back);
   assert.match(back[1], /requestNonX01InterstitialAfterBoundary\(\)/);
   assert.match(app, /onClick=\{returnToLobbyFromGame\}/);
-  assert.match(app, /onClick=\{\(\) => setScreen\('lobby'\)\}/);
+  // The unified toolbar has one Back button, wired to the same boundary handler.
+  assert.match(app, /returnToLobbyFromGame=\{returnToLobbyFromGame\}/);
   assert.match(app, /if \(scr === 'lobby'\) \{\s*returnToLobbyFromGame\(\)/);
   assert.match(app, /onClick=\{restartGame\}/);
 });

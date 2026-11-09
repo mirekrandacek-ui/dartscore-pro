@@ -1,0 +1,6 @@
+# R8 otherwise strips the zero-argument constructor: Room discovers
+# WorkDatabase_Impl reflectively during AndroidX WorkManager initialization.
+# Keep only this generated database and its constructor.
+-keep class androidx.work.impl.WorkDatabase_Impl {
+    public <init>();
+}

@@ -41,8 +41,8 @@ def twaManifest = [
     splashScreenFadeOutDuration: 300,
     generatorApp: 'bubblewrap-cli',
     fallbackType: 'customtabs',
-    enableSiteSettingsShortcut: 'true',
     orientation: 'portrait',
+    enableSiteSettingsShortcut: 'true',
 ]
 
 def signingProperties = new Properties()
@@ -78,8 +78,8 @@ android {
         applicationId "com.randis2288.dartscorepro"
         minSdkVersion 24
         targetSdkVersion 36
-        versionCode 103
-        versionName "1.1.69"
+        versionCode 108
+        versionName "2.08"
 
         resValue "string", "appName", twaManifest.name
         resValue "string", "launcherName", twaManifest.launcherName
@@ -91,6 +91,7 @@ android {
         resValue "string", "fullScopeUrl", 'https://dartscore-pro.vercel.app/'
 
         resValue "string", "hostName", twaManifest.hostName
+        resValue "string", "orientation", twaManifest.orientation
         resValue "color", "colorPrimary", twaManifest.themeColor
         resValue "color", "colorPrimaryDark", twaManifest.themeColorDark
         resValue "color", "navigationColor", twaManifest.navigationColor
@@ -110,7 +111,6 @@ android {
         resValue "string", "generatorApp", twaManifest.generatorApp
         resValue "string", "fallbackType", twaManifest.fallbackType
         resValue "bool", "enableSiteSettingsShortcut", twaManifest.enableSiteSettingsShortcut
-        resValue "string", "orientation", twaManifest.orientation
     }
 
     sourceSets {
@@ -119,9 +119,16 @@ android {
         }
     }
 
+    // Required in AGP 9 for generated resValue fields.
+    buildFeatures {
+        resValues = true
+    }
+
     buildTypes {
         release {
-            minifyEnabled true
+            optimization {
+                enable = true // R8 code + unused-resource shrinking (AGP 9.3+).
+            }
             if (uploadSigningConfigured) {
                 signingConfig signingConfigs.release
             }
@@ -146,8 +153,8 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    lintOptions {
-        checkReleaseBuilds false
+    lint {
+        checkReleaseBuilds = false
     }
 }
 
@@ -202,6 +209,8 @@ dependencies {
     implementation 'com.google.android.play:app-update:2.1.0'
     implementation 'com.google.android.play:review:2.0.2'
     implementation 'com.google.android.gms:play-services-ads:24.9.0'
+    // Liftoff Monetize bidding; includes Vungle SDK 7.7.0 and reads UMP consent.
+    implementation 'com.google.ads.mediation:vungle:7.7.0.1'
     implementation 'com.unity3d.ads:unity-ads:4.16.6'
     implementation 'com.google.ads.mediation:unity:4.16.6.0'
     implementation 'com.google.ads.mediation:facebook:6.21.0.1'
@@ -209,5 +218,6 @@ dependencies {
     implementation 'com.google.android.ump:user-messaging-platform:4.0.0'
     implementation 'com.android.billingclient:billing:9.1.0'
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.6.2'
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.7.4'
+    implementation 'androidx.core:core:1.17.0'
 }

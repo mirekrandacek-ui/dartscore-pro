@@ -11,6 +11,7 @@ public class DartScoreIOSPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "preparePrivacy", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "showPrivacyOptions", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "speak", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "hapticTap", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "openReview", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "shareApp", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getPremiumProduct", returnType: CAPPluginReturnPromise),
@@ -44,6 +45,13 @@ public class DartScoreIOSPlugin: CAPPlugin, CAPBridgedPlugin {
         switch result {
         case .success(let info): call.resolve(info)
         case .failure: call.reject("Privacy update unavailable; measurement disabled")
+        }
+    }
+
+    @objc func hapticTap(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            UISelectionFeedbackGenerator().selectionChanged()
+            call.resolve()
         }
     }
 
