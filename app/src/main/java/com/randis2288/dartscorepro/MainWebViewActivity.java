@@ -671,6 +671,13 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     protected void onResume() {
         super.onResume();
         checkForAppUpdate();
+        // Notify the already-running React UI after returning from a native ad.
+        // It compares the actual last-shown timestamp; failed/no-fill ads get no thanks.
+        if (webView != null) {
+            webView.evaluateJavascript(
+                "window.dispatchEvent(new Event('dartscore-native-resume'))", null
+            );
+        }
     }
 
     @Override

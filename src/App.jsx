@@ -6,13 +6,15 @@ import { Capacitor, registerPlugin } from '@capacitor/core';
 import {
   AdMob,
   BannerAdPosition,
-  BannerAdSize
+  BannerAdSize,
+  InterstitialAdPluginEvents
 } from '@capacitor-community/admob';
 import './app.css';
 import './ui/readability.css';
 import { createIOSPrivacy, privacyChoicesLabel } from './iosPrivacy.js';
 import { botThrowAround, botThrowClassic, botThrowCricket, botThrowRoulette, normalizeBotLevel } from './botEngine.js';
 import { hasRecordedScore, isQuickClassic, isSupportedX01, isNonX01LobbyAdMode } from './interstitialPolicy.js';
+import { pickNextAdThanks } from './adThanksMessages.js';
 
 const DartScoreIOS = registerPlugin('DartScoreIOS');
 const iosPrivacy = createIOSPrivacy(DartScoreIOS);
@@ -1438,6 +1440,83 @@ function App() {
   });
   const [premiumStateResolved, setPremiumStateResolved] = useState(!IS_IOS);
   const [iosBannerVisible, setIosBannerVisible] = useState(false);
+
+  // A friendly thank-you only after a full-screen ad was actually displayed and closed.
+  const [adThanks, setAdThanks] = useState(null);
+  const adThanksTimerRef = useRef(null);
+  const lastAndroidAdShownAtRef = useRef(null);
+  const showAdThanks = React.useCallback(() => {
+    if (isPremium) return;
+    let previous = -1;
+    try { previous = Number(localStorage.getItem('dspLastAdThanksIndex') ?? '-1'); }
+    catch { /* Storage is optional. */ }
+    const { index, message } = pickNextAdThanks(lang, previous);
+    try { localStorage.setItem('dspLastAdThanksIndex', String(index)); }
+    catch { /* Storage is optional. */ }
+    window.clearTimeout(adThanksTimerRef.current);
+    setAdThanks(message);
+    adThanksTimerRef.current = window.setTimeout(() => setAdThanks(null), 4200);
+  }, [lang, isPremium]);
+
+  useEffect(() => {
+    if (IS_IOS) return undefined;
+    const lastShownAt = () => {
+      try { return Number(window.DartScoreAndroid?.getLastInterstitialShownAt?.() || 0); }
+      catch { return 0; }
+    };
+    // Baseline the existing ad when opening the app; never thank for an old ad.
+    if (lastAndroidAdShownAtRef.current === null) {
+      lastAndroidAdShownAtRef.current = lastShownAt();
+    }
+    const onReturn = () => {
+      const at = lastShownAt();
+      if (!at || at <= lastAndroidAdShownAtRef.current) return;
+      lastAndroidAdShownAtRef.current = at;
+      // The timestamp is written only after the SDK confirms the ad displayed.
+      if (Date.now() >= at && Date.now() - at < 120000) showAdThanks();
+    };
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') onReturn();
+    };
+    window.addEventListener('dartscore-native-resume', onReturn);
+    window.addEventListener('focus', onReturn);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.removeEventListener('dartscore-native-resume', onReturn);
+      window.removeEventListener('focus', onReturn);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [showAdThanks]);
+
+  useEffect(() => {
+    if (!IS_IOS) return undefined;
+    let disposed = false;
+    let actuallyShown = false;
+    const listeners = [];
+    const add = async (event, callback) => {
+      const handler = await AdMob.addListener(event, callback);
+      if (disposed) await handler.remove();
+      else listeners.push(handler);
+    };
+    void (async () => {
+      try {
+        await add(InterstitialAdPluginEvents.Showed, () => { actuallyShown = true; });
+        await add(InterstitialAdPluginEvents.Dismissed, () => {
+          if (actuallyShown) showAdThanks();
+          actuallyShown = false;
+        });
+        await add(InterstitialAdPluginEvents.FailedToShow, () => { actuallyShown = false; });
+      } catch (error) {
+        console.warn('Post-ad thanks listener unavailable:', error);
+      }
+    })();
+    return () => {
+      disposed = true;
+      listeners.forEach(handler => { void handler.remove(); });
+    };
+  }, [showAdThanks]);
+
+  useEffect(() => () => window.clearTimeout(adThanksTimerRef.current), []);
   const [privacyOptionsRequired, setPrivacyOptionsRequired] = useState(false);
   const [privacyBusy, setPrivacyBusy] = useState(false);
 
@@ -4187,6 +4266,7 @@ const restorePremiumPurchase = async () => {
           </div>
         )}
         {toast && <div className="toast ok">✔️ {toast}</div>}
+        {adThanks && <div className="ad-thanks-toast" role="status" aria-live="polite">{adThanks}</div>}
       </div>
     </ErrorBoundary>
   );
