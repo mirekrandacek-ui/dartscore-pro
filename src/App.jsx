@@ -18,6 +18,9 @@ const DartScoreIOS = registerPlugin('DartScoreIOS');
 const iosPrivacy = createIOSPrivacy(DartScoreIOS);
 const PLATFORM = Capacitor.getPlatform();
 const IS_IOS = PLATFORM === 'ios';
+if (IS_IOS) {
+  window.DartScoreIOSAnalytics = payload => { void DartScoreIOS.logAnalyticsEvent(payload).catch(() => {}); };
+}
 const APP_STORE_ID = '6817341039';
 const IOS_APP_STORE_URL = `https://apps.apple.com/app/id${APP_STORE_ID}`;
 const IOS_PREMIUM_PRODUCT_ID = 'premium_unlock';
@@ -1611,7 +1614,7 @@ function App() {
   const winAudioRef = useRef(null);
   /* persist screen */
 
-  const APP_VERSION = '2.08';
+  const APP_VERSION = '2.09';
   const LOBBY_DEFAULTS_VERSION = '1.1.62';
 
   /* načti lobby z localStorage */

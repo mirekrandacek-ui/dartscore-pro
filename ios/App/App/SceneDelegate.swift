@@ -10,6 +10,7 @@ public class DartScoreIOSPlugin: CAPPlugin, CAPBridgedPlugin {
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "preparePrivacy", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "showPrivacyOptions", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "logAnalyticsEvent", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "speak", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "hapticTap", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "openReview", returnType: CAPPluginReturnPromise),
@@ -45,6 +46,15 @@ public class DartScoreIOSPlugin: CAPPlugin, CAPBridgedPlugin {
         switch result {
         case .success(let info): call.resolve(info)
         case .failure: call.reject("Privacy update unavailable; measurement disabled")
+        }
+    }
+
+    @objc func logAnalyticsEvent(_ call: CAPPluginCall) {
+        let event = call.getString("event") ?? ""
+        let values = call.getObject("params") ?? [:]
+        DispatchQueue.main.async {
+            FirebaseMeasurement.shared.log(event: event, values: values)
+            call.resolve()
         }
     }
 

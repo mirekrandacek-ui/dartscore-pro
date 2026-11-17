@@ -9,6 +9,6 @@ for(const file of files)assert.equal(hash(file),hash(path.join('ios/App/App/publ
 const assets=files.filter(f=>f.endsWith('.js')).map(f=>fs.readFileSync(f,'utf8')).join('\n');
 for(const marker of ['winnerTeamId','stats-title-icon','stats-filter-row','stats-picker-pair','requestTrackingAuthorization'])assert.ok(assets.includes(marker),marker);
 const project=fs.readFileSync('ios/App/App.xcodeproj/project.pbxproj','utf8');
-assert.ok(project.includes('MARKETING_VERSION = 2.08;'));
-assert.ok(project.includes('CURRENT_PROJECT_VERSION = 12;'));
-console.log(`PASS: ${files.length} web files match iOS bundle; UI, ATT and 2.08 / 12 identity present`);
+assert.ok(project.includes('MARKETING_VERSION = 2.09;'));
+assert.ok(project.includes('CURRENT_PROJECT_VERSION = 13;'));
+console.log(`PASS: ${files.length} web files match iOS bundle; UI, ATT and 2.09 / 13 identity present`);
