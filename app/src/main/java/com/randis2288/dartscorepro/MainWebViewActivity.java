@@ -445,6 +445,12 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private void initConsentAndAds() {
         consentInformation = UserMessagingPlatform.getConsentInformation(this);
 
+        // Started without the consent launcher (for example after process death):
+        // keep Firebase off until the consent flow below has finished.
+        if (!UnifiedConsent.isArmed()) {
+            UnifiedConsent.block(this);
+        }
+
         ConsentRequestParameters params =
             new ConsentRequestParameters.Builder().build();
 
@@ -462,6 +468,7 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
                     this,
                     formError -> {
                         refreshPrivacyOptionsEntryPoint();
+                        UnifiedConsent.arm(this);
 
                         if (formError != null && !consentInformation.canRequestAds()) {
                             nativeToast(
@@ -476,6 +483,7 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
             },
             requestConsentError -> {
                 refreshPrivacyOptionsEntryPoint();
+                UnifiedConsent.arm(this);
 
                 // If a previous consent decision is still valid, ads may continue.
                 initializeAdsIfAllowed();
@@ -522,10 +530,13 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private void showPrivacyOptionsNative() {
         if (consentInformation == null) return;
 
+        // No Firebase collection while the user changes the choice.
+        UnifiedConsent.block(this);
         UserMessagingPlatform.showPrivacyOptionsForm(
             this,
             formError -> {
                 refreshPrivacyOptionsEntryPoint();
+                UnifiedConsent.arm(this);
 
                 if (formError != null) {
                     nativeToast(
@@ -557,9 +568,9 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     private void logAnalyticsEventInternal(String encodedQuery) {
         if (encodedQuery == null || encodedQuery.length() > 512 || isFinishing() || isDestroyed()) return;
         try {
-            // Use the existing whitelist/parser without ever opening an Activity.
-            Uri uri = Uri.parse("dartscorepro://show-interstitial?" + encodedQuery);
-            AdMobInterstitialActivity.handleAnalyticsIntent(this, uri);
+            // Fixed list of events and values; nothing is logged without consent.
+            Uri uri = Uri.parse("dartscorepro://analytics?" + encodedQuery);
+            AnalyticsReporting.logFromUri(this, uri);
         } catch (RuntimeException e) {
             Log.w("DartScoreAdMob", "Rejected malformed Analytics event.", e);
         }
@@ -671,6 +682,7 @@ public class MainWebViewActivity extends Activity implements PurchasesUpdatedLis
     protected void onResume() {
         super.onResume();
         checkForAppUpdate();
+        UnifiedConsent.refresh(this);
         // Notify the already-running React UI after returning from a native ad.
         // It compares the actual last-shown timestamp; failed/no-fill ads get no thanks.
         if (webView != null) {

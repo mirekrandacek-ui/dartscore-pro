@@ -47,15 +47,32 @@ const gameSignature = (snapshot) => {
 
 const sendNativeAnalyticsEvent = (eventName, params = {}, immediate = false) => {
   try {
+    if (typeof window.DartScoreIOSAnalytics === 'function') {
+      window.DartScoreIOSAnalytics({ event: eventName, params });
+      return;
+    }
     if (!window.DartScoreAndroid) return;
+
+    // Android sends only the minimal, fixed set of events and parameters that
+    // the native allowlist (AnalyticsReporting) accepts; anything else is dropped.
+    const ANDROID_ANALYTICS_KEYS = {
+      game_started: ['game_type', 'player_mode', 'is_resume'],
+      game_completed: ['game_type', 'player_mode'],
+      game_abandoned: ['game_type', 'abandon_reason'],
+      screen_view: ['screen_name', 'screen_class']
+    };
+    const allowedKeys = ANDROID_ANALYTICS_KEYS[eventName];
+    if (!allowedKeys) return;
 
     const query = new URLSearchParams();
     query.set('analytics_event', eventName);
 
-    Object.entries(params).forEach(([key, value]) => {
+    for (const key of allowedKeys) {
+      let value = params[key];
+      if (key === 'player_mode') value = value === 'teams' ? 'teams' : 'individual';
       if (value === undefined || value === null || value === '') return;
       query.set(key, String(value));
-    });
+    }
 
     // The native bridge logs directly: never navigate the game WebView just
     // to send Analytics, especially at the same time as a victory ad.
@@ -199,6 +216,7 @@ const installStorageAnalytics = () => {
         const previous = safeJson(oldValue);
         const next = safeJson(value);
         if (!next || next.screen !== 'game') return result;
+        if (next.winner != null) return result;
 
         const previousProgress = progressOf(previous);
         const nextProgress = progressOf(next);

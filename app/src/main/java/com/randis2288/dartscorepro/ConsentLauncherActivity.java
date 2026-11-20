@@ -27,6 +27,9 @@ public class ConsentLauncherActivity extends Activity {
         // end-of-onCreate transition setup to initialize PhoneWindow.
         setContentView(new FrameLayout(this));
 
+        // No Firebase collection while the user is deciding.
+        UnifiedConsent.block(this);
+
         consentInformation = UserMessagingPlatform.getConsentInformation(this);
 
         ConsentRequestParameters params =
@@ -61,6 +64,9 @@ public class ConsentLauncherActivity extends Activity {
     private void launchMainApp() {
         if (mainLaunched || isFinishing()) return;
         mainLaunched = true;
+
+        // Consent flow finished: apply the current consent state to Firebase.
+        UnifiedConsent.arm(this);
 
         Intent intent = new Intent(this, MainWebViewActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);

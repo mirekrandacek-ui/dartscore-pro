@@ -29,6 +29,16 @@ test('falls back to English for unsupported language', () => {
 });
 
 test('the two agreed replacement lines are included', () => {
-  assert.equal(AD_THANKS_MESSAGES.cs[14], '🎯 Reklama je fuč! Teď už jen trefovat správná čísla!');
-  assert.equal(AD_THANKS_MESSAGES.cs[18], '😎 Díky za trpělivost! Vývojář teď hodil 180. Teda skoro.');
+  assert.equal(AD_THANKS_MESSAGES.cs[14], 'Reklama je fuč! Teď už jen trefovat správná čísla! 😁');
+  assert.equal(AD_THANKS_MESSAGES.cs[18], 'Díky za trpělivost! Vývojář teď hodil 180. Teda skoro. 😁');
+});
+
+test("every message ends with the laughing emoji and has no other emoji", () => {
+  const pictographs = /\p{Extended_Pictographic}/gu;
+  for (const [lang, messages] of Object.entries(AD_THANKS_MESSAGES)) {
+    for (const message of messages) {
+      assert.ok(message.endsWith(" \u{1F601}"), `${lang}: ${message}`);
+      assert.equal((message.match(pictographs) || []).length, 1, `${lang}: ${message}`);
+    }
+  }
 });

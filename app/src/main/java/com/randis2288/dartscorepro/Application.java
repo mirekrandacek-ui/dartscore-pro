@@ -20,6 +20,8 @@ public class Application extends android.app.Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        // Firebase Analytics/Crashlytics stay off until UMP consent allows them.
+        UnifiedConsent.install(this);
         // Intentionally no MobileAds.initialize() here.
         // UMP must update consent state before the first ad request.
     }

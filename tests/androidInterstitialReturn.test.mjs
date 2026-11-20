@@ -76,11 +76,11 @@ test('Completion Analytics stays in the game instead of racing the ad with a sec
   const send = vm.runInNewContext(source.slice(first, last) + '\nsendNativeAnalyticsEvent', context);
   send('game_completed', { game_type: 'classic', plan_tier: 'free' });
   send('premium_purchase_completed', { product_id: 'premium_unlock' }, true);
+  // Android only forwards the minimal allowlisted events/params; premium events are dropped.
   assert.deepEqual(calls, [
-    'analytics_event=game_completed&game_type=classic&plan_tier=free',
-    'analytics_event=premium_purchase_completed&product_id=premium_unlock'
+    'analytics_event=game_completed&game_type=classic&player_mode=individual'
   ]);
   assert.equal(window.location.href, 'https://dartscore-pro.vercel.app/');
   assert.match(main, /public void logAnalyticsEvent\(String encodedQuery\)/);
-  assert.match(main, /AdMobInterstitialActivity\.handleAnalyticsIntent\(this, uri\)/);
+  assert.match(main, /AnalyticsReporting\.logFromUri\(this, uri\)/);
 });

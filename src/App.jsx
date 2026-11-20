@@ -20,6 +20,9 @@ const DartScoreIOS = registerPlugin('DartScoreIOS');
 const iosPrivacy = createIOSPrivacy(DartScoreIOS);
 const PLATFORM = Capacitor.getPlatform();
 const IS_IOS = PLATFORM === 'ios';
+if (IS_IOS) {
+  window.DartScoreIOSAnalytics = payload => { void DartScoreIOS.logAnalyticsEvent(payload).catch(() => {}); };
+}
 const APP_STORE_ID = '6817341039';
 const IOS_APP_STORE_URL = `https://apps.apple.com/app/id${APP_STORE_ID}`;
 const IOS_PREMIUM_PRODUCT_ID = 'premium_unlock';
@@ -33,20 +36,31 @@ const IOS_BANNER_CONFIGURED = Boolean(IOS_ADMOB_APP_ID && IOS_ADMOB_BANNER_ID);
 const IOS_INTERSTITIAL_CONFIGURED = Boolean(IOS_ADMOB_APP_ID && IOS_ADMOB_INTERSTITIAL_ID);
 
 let iosAdMobInitialized = false;
+let iosAdMobReadyPromise;
 
 async function ensureIOSAdMobReady() {
   if (!IS_IOS || !IOS_ADMOB_APP_ID) return false;
 
-  const consentInfo = await iosPrivacy.prepare();
+  if (iosAdMobReadyPromise) return iosAdMobReadyPromise;
+  const request = (async () => {
+    const consentInfo = await iosPrivacy.prepare();
+    if (!consentInfo?.canRequestAds) return false;
 
-  if (!consentInfo?.canRequestAds) return false;
-
-  if (!iosAdMobInitialized) {
-    await AdMob.initialize();
-    iosAdMobInitialized = true;
-  }
-
-  return true;
+    // PR53: UMP/native privacy may already have shown ATT. Only request
+    // the system prompt if it still has no decision, before ads initialize.
+    const tracking = await AdMob.trackingAuthorizationStatus();
+    if (tracking?.status === 'notDetermined') {
+      await AdMob.requestTrackingAuthorization();
+    }
+    if (!iosAdMobInitialized) {
+      await AdMob.initialize();
+      iosAdMobInitialized = true;
+    }
+    return true;
+  })();
+  iosAdMobReadyPromise = request;
+  try { return await request; }
+  finally { if (iosAdMobReadyPromise === request) iosAdMobReadyPromise = undefined; }
 }
 
 async function showIOSBanner() {
@@ -1679,7 +1693,7 @@ function App() {
   const winAudioRef = useRef(null);
   /* persist screen */
 
-  const APP_VERSION = '2.08';
+  const APP_VERSION = '2.09';
   const LOBBY_DEFAULTS_VERSION = '1.1.62';
 
   /* načti lobby z localStorage */
