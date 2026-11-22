@@ -19,7 +19,13 @@ public class DartScoreIOSPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "restorePremium", returnType: CAPPluginReturnPromise)
     ]
 
-    private let synthesizer = AVSpeechSynthesizer()
+    // Speech runs on its own system-managed audio session so WKWebView sound
+    // effects (HTMLAudioElement) and spoken scores cannot interrupt each other.
+    private let synthesizer: AVSpeechSynthesizer = {
+        let synth = AVSpeechSynthesizer()
+        synth.usesApplicationAudioSession = false
+        return synth
+    }()
 
     @objc func preparePrivacy(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
@@ -65,17 +71,6 @@ public class DartScoreIOSPlugin: CAPPlugin, CAPBridgedPlugin {
         }
 
         DispatchQueue.main.async {
-            // Playback session mixing with other audio: speech must not duck or
-            // fight the WebView dart-hit sound, and must be audible in silent mode.
-            let session = AVAudioSession.sharedInstance()
-            do {
-                try session.setCategory(.playback, mode: .spokenAudio, options: [.mixWithOthers])
-                try session.setActive(true)
-            } catch {
-                call.reject("Could not activate iOS speech audio: \(error.localizedDescription)")
-                return
-            }
-
             // Cut the previous announcement only if one is actually playing;
             // an immediate stop right before speak() can drop the new utterance.
             if self.synthesizer.isSpeaking {
