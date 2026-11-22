@@ -65,29 +65,35 @@ public class DartScoreIOSPlugin: CAPPlugin, CAPBridgedPlugin {
         }
 
         DispatchQueue.main.async {
-            // WKWebView/AdMob may have configured an audio session that does not
-            // play spoken announcements. Use an explicit playback session so
-            // speech is audible on physical iPhones, including in silent mode.
+            // Playback session mixing with other audio: speech must not duck or
+            // fight the WebView dart-hit sound, and must be audible in silent mode.
+            let session = AVAudioSession.sharedInstance()
             do {
-                let session = AVAudioSession.sharedInstance()
-                try session.setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
+                try session.setCategory(.playback, mode: .spokenAudio, options: [.mixWithOthers])
                 try session.setActive(true)
             } catch {
                 call.reject("Could not activate iOS speech audio: \(error.localizedDescription)")
                 return
             }
 
-            self.synthesizer.stopSpeaking(at: .immediate)
+            // Cut the previous announcement only if one is actually playing;
+            // an immediate stop right before speak() can drop the new utterance.
+            if self.synthesizer.isSpeaking {
+                self.synthesizer.stopSpeaking(at: .immediate)
+            }
+
             let utterance = AVSpeechUtterance(string: text)
-            utterance.voice = AVSpeechSynthesisVoice(language: lang)
-                ?? AVSpeechSynthesisVoice(language: "en-US")
+            let prefix = String(lang.prefix(2))
+            let voices = AVSpeechSynthesisVoice.speechVoices()
+            utterance.voice = voices.first(where: { $0.language == lang })
+                ?? voices.first(where: { $0.language.hasPrefix(prefix) })
+                ?? AVSpeechSynthesisVoice(language: lang)
             utterance.rate = AVSpeechUtteranceDefaultSpeechRate
             utterance.volume = 1.0
             self.synthesizer.speak(utterance)
             call.resolve()
         }
     }
-
     @objc func openReview(_ call: CAPPluginCall) {
         let appId = call.getString("appId") ?? ""
         guard !appId.isEmpty,
