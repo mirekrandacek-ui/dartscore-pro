@@ -1,4 +1,4 @@
-import { appendMatch, teamMatchDetails } from './statisticsHistory.js';
+﻿import { appendMatch, teamMatchDetails } from './statisticsHistory.js';
 import StatisticsDashboard from './StatisticsDashboard.jsx';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -1053,13 +1053,41 @@ const defaultNameFor = (lang, n) => ({
 }[lang] || `Player ${n}`);
 const autoNameRx = [/^Hráč (\d+)$/, /^Player (\d+)$/, /^Spieler (\d+)$/, /^Jugador (\d+)$/, /^Speler (\d+)$/, /^Игрок (\d+)$/, /^玩家 (\d+)$/];
 
+// iOS: the dart-hit sound (HTML audio in WKWebView) and the native spoken score
+// fight over the shared audio session on some iPhones. Let the short hit sound
+// finish first, then speak. speak() is called just before the hit sound starts,
+// so wait one tick for play() to be issued; the cap guarantees we never stay silent.
+function afterHitSound(callback) {
+  setTimeout(() => {
+    try {
+      const playing = Array.from(document.querySelectorAll('audio')).filter(
+        (a) => /dart-hit/.test(a.currentSrc || a.src || '') && !a.paused && !a.ended
+      );
+      if (!playing.length) { callback(); return; }
+      let done = false;
+      let timer = null;
+      const check = () => { if (playing.every((a) => a.paused || a.ended)) finish(); };
+      const finish = () => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        playing.forEach((a) => { a.removeEventListener('ended', check); a.removeEventListener('pause', check); });
+        callback();
+      };
+      playing.forEach((a) => { a.addEventListener('ended', check); a.addEventListener('pause', check); });
+      timer = setTimeout(finish, 1500);
+    } catch {
+      callback();
+    }
+  }, 40);
+}
 function speak(lang, text, enabled) {
   if (!enabled || typeof window === 'undefined') return;
 
   const targetLang = SPEECH_LANG_MAP[lang] || 'en-US';
 
   if (IS_IOS) {
-    DartScoreIOS.speak({ text: String(text), lang: targetLang }).catch((err) => {
+    afterHitSound(() => DartScoreIOS.speak({ text: String(text), lang: targetLang }).catch((err) => {
       // Surface native bridge/audio errors and provide a last-resort WebKit
       // fallback instead of silently losing an entire X01 announcement.
       console.warn('iOS native speech failed, trying Web Speech:', err);
@@ -1072,7 +1100,7 @@ function speak(lang, text, enabled) {
       } catch (fallbackErr) {
         console.warn('iOS Web Speech fallback failed:', fallbackErr);
       }
-    });
+    }));
     return;
   }
 
