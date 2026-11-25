@@ -47,6 +47,10 @@ const gameSignature = (snapshot) => {
 
 const sendNativeAnalyticsEvent = (eventName, params = {}, immediate = false) => {
   try {
+    if (typeof window.DartScoreIOSAnalytics === 'function') {
+      window.DartScoreIOSAnalytics({ event: eventName, params });
+      return;
+    }
     if (!window.DartScoreAndroid) return;
 
     const query = new URLSearchParams();

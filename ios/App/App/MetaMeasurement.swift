@@ -20,6 +20,7 @@ final class MetaMeasurement {
     }
 
     func suspend() {
+        FirebaseMeasurement.shared.suspend()
         // Keep the consent update for this native app session. Returning from
         // background (or a system dialog) must not force UMP to prompt again.
         // Measurement stays off until the app becomes active and is re-checked.
@@ -95,6 +96,7 @@ final class MetaMeasurement {
     }
 
     private func finish(completion: @escaping (Result<[String: Any], Error>) -> Void) {
+        FirebaseMeasurement.shared.resolve(updated: updated)
         let enabled = allowed(trackingAuthorized: ATTrackingManager.trackingAuthorizationStatus == .authorized)
             && UIApplication.shared.applicationState == .active
         if enabled && !activatedThisForeground {

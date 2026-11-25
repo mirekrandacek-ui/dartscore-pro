@@ -20,6 +20,13 @@
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9582B6822FE993A50072D4E8 /* SceneDelegate.swift */; };
+		BF2090000000000000000001 /* FirebaseConsentPolicy.swift in build */ = {isa = PBXBuildFile; fileRef = AF2090000000000000000001 /* FirebaseConsentPolicy.swift */; };
+		BF2090000000000000000002 /* FirebaseMeasurement.swift in build */ = {isa = PBXBuildFile; fileRef = AF2090000000000000000002 /* FirebaseMeasurement.swift */; };
+		BF2090000000000000000003 /* FirebaseEventPolicy.swift in build */ = {isa = PBXBuildFile; fileRef = AF2090000000000000000003 /* FirebaseEventPolicy.swift */; };
+		BF2090000000000000000004 /* GoogleService-Info.plist in build */ = {isa = PBXBuildFile; fileRef = AF2090000000000000000004 /* GoogleService-Info.plist */; };
+		BF2090000000000000000005 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = AF2090000000000000000005 /* FirebaseCore */; };
+		BF2090000000000000000006 /* FirebaseAnalyticsCore in Frameworks */ = {isa = PBXBuildFile; productRef = AF2090000000000000000006 /* FirebaseAnalyticsCore */; };
+		BF2090000000000000000007 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = AF2090000000000000000007 /* FirebaseCrashlytics */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -36,6 +43,10 @@
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
 		9582B6822FE993A50072D4E8 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
+		AF2090000000000000000001 /* FirebaseConsentPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FirebaseConsentPolicy.swift"; sourceTree = "<group>"; };
+		AF2090000000000000000002 /* FirebaseMeasurement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FirebaseMeasurement.swift"; sourceTree = "<group>"; };
+		AF2090000000000000000003 /* FirebaseEventPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FirebaseEventPolicy.swift"; sourceTree = "<group>"; };
+		AF2090000000000000000004 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -44,6 +55,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */,
+				BF2090000000000000000007 /* FirebaseCrashlytics in Frameworks */,
+				BF2090000000000000000006 /* FirebaseAnalyticsCore in Frameworks */,
+				BF2090000000000000000005 /* FirebaseCore in Frameworks */,
 				A12900000000000000000005 /* FacebookCore in Frameworks */,
 				A12900000000000000000008 /* GoogleUserMessagingPlatform in Frameworks */,
 			);
@@ -75,6 +89,10 @@
 				9582B6822FE993A50072D4E8 /* SceneDelegate.swift */,
 				A12900000000000000000002 /* MetaMeasurement.swift */,
 				A12900000000000000000004 /* MetaConsentPolicy.swift */,
+				AF2090000000000000000001 /* FirebaseConsentPolicy.swift */,
+				AF2090000000000000000002 /* FirebaseMeasurement.swift */,
+				AF2090000000000000000003 /* FirebaseEventPolicy.swift */,
+				AF2090000000000000000004 /* GoogleService-Info.plist */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
@@ -97,6 +115,7 @@
 				504EC3001FED79650016851F /* Sources */,
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
+				AF2090000000000000000009 /* Crashlytics symbols */,
 			);
 			buildRules = (
 			);
@@ -104,6 +123,9 @@
 			);
 			name = App;
 			packageProductDependencies = (
+				AF2090000000000000000007 /* FirebaseCrashlytics */,
+				AF2090000000000000000006 /* FirebaseAnalyticsCore */,
+				AF2090000000000000000005 /* FirebaseCore */,
 				4D22ABE82AF431CB00220026 /* CapApp-SPM */,
 				A12900000000000000000006 /* FacebookCore */,
 				A12900000000000000000009 /* GoogleUserMessagingPlatform */,
@@ -138,6 +160,7 @@
 			);
 			mainGroup = 504EC2FB1FED79650016851F;
 			packageReferences = (
+				AF2090000000000000000008 /* Firebase */,
 				A12900000000000000000007 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */,
 				A1290000000000000000000A /* XCRemoteSwiftPackageReference "google-user-messaging-platform" */,
 				D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */,
@@ -157,6 +180,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */,
+				BF2090000000000000000004 /* GoogleService-Info.plist in build */,
 				50B271D11FEDC1A000F3C39B /* public in Resources */,
 				504EC30F1FED79650016851F /* Assets.xcassets in Resources */,
 				50379B232058CBB4000EE86E /* capacitor.config.json in Resources */,
@@ -167,12 +191,29 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		AF2090000000000000000009 /* Crashlytics symbols */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = ();
+			inputPaths = ("${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}", "${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${PRODUCT_NAME}", "${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist", "$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist", "$(TARGET_BUILD_DIR)/$(EXECUTABLE_PATH)");
+			name = "Crashlytics symbols";
+			outputPaths = ();
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"${PLATFORM_NAME}\" != \"iphoneos\" ] || [ \"${CODE_SIGNING_ALLOWED}\" = \"NO\" ] || [ \"${DARTSCORE_SKIP_SYMBOL_UPLOAD}\" = \"YES\" ]; then\n  echo \"Skipping symbol upload for unsigned verification build\"\n  exit 0\nfi\n\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		504EC3001FED79650016851F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
+				BF2090000000000000000003 /* FirebaseEventPolicy.swift in build */,
+				BF2090000000000000000002 /* FirebaseMeasurement.swift in build */,
+				BF2090000000000000000001 /* FirebaseConsentPolicy.swift in build */,
 				9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,
 				A12900000000000000000001 /* MetaMeasurement.swift in Sources */,
 				A12900000000000000000003 /* MetaConsentPolicy.swift in Sources */,
@@ -291,6 +332,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_DEBUG_DYLIB = NO;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -317,14 +359,16 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = MQG667M2B8;
-				CURRENT_PROJECT_VERSION = 15;
+				CURRENT_PROJECT_VERSION = 16;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_DEBUG_DYLIB = NO;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.08;
+				MARKETING_VERSION = 2.10;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = com.randis2288.dartscorepro;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -340,14 +384,16 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = MQG667M2B8;
-				CURRENT_PROJECT_VERSION = 15;
+				CURRENT_PROJECT_VERSION = 16;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_DEBUG_DYLIB = NO;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.08;
+				MARKETING_VERSION = 2.10;
 				PRODUCT_BUNDLE_IDENTIFIER = com.randis2288.dartscorepro;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
@@ -402,6 +448,9 @@
 			package = D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */;
 			productName = "CapApp-SPM";
 		};
+		AF2090000000000000000005 /* FirebaseCore */ = {isa = XCSwiftPackageProductDependency; package = AF2090000000000000000008; productName = FirebaseCore; };
+		AF2090000000000000000006 /* FirebaseAnalyticsCore */ = {isa = XCSwiftPackageProductDependency; package = AF2090000000000000000008; productName = FirebaseAnalyticsCore; };
+		AF2090000000000000000007 /* FirebaseCrashlytics */ = {isa = XCSwiftPackageProductDependency; package = AF2090000000000000000008; productName = FirebaseCrashlytics; };
 /* End XCSwiftPackageProductDependency section */
 
 /* Begin XCRemoteSwiftPackageReference section */
@@ -415,6 +464,7 @@
 			repositoryURL = "https://github.com/googleads/swift-package-manager-google-user-messaging-platform.git";
 			requirement = {kind = exactVersion; version = 3.1.0; };
 		};
+		AF2090000000000000000008 /* Firebase */ = {isa = XCRemoteSwiftPackageReference; repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git"; requirement = {kind = exactVersion; version = 13.2.0; }; };
 /* End XCRemoteSwiftPackageReference section */
 	};
 	rootObject = 504EC2FC1FED79650016851F /* Project object */;
